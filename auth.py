@@ -6,34 +6,26 @@ from werkzeug.security import generate_password_hash, check_password_hash
 auth = Blueprint('auth', __name__)
 
 
-@auth.route('/login')
-def login():
-    return render_template('login.html')
-
-
-@auth.route('/signup')
-def signup():
-    return render_template('signup.html')
-
-
 @auth.route('/signup', methods=['Post'])
 def signup_post():
-    email = request.form.get('email')
-    name = request.form.get('name')
-    password = request.form.get('password')
+    email = request.form.get('registerEmail')
+    first_name = request.form.get('firstName')
+    last_name = request.form.get('lastName')
+    password = request.form.get('registerPassword')
+    institution = request.form.get('institution')
 
     user = User.query.filter_by(email=email).first()
 
     if user:
         flash('Email address already exists!')
-        return redirect(url_for('auth.signup'))
-    
-    new_user = User(email, generate_password_hash(password), name)
+        return render_template('index.html')
+
+    new_user = User(email, generate_password_hash(password), first_name, last_name, institution)
 
     db.session.add(new_user)
     db.session.commit()
-    
-    return redirect(url_for('auth.login'))
+
+    return redirect(url_for('main.profile'))
 
 
 @auth.route('/logout')

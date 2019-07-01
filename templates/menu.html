@@ -1,0 +1,55 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="{{ url_for('main.index') }}">Project PERO OCR</a>
+    <button
+        class="navbar-toggler"
+        type="button"
+        data-toggle="collapse"
+        data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+    >
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav ml-auto">
+            {% if false %}
+
+            <li class="nav-item active">
+                <a class="nav-link my-2" href="{{ url_for('main.home') }}"
+                    >Home <span class="sr-only">(current)</span></a
+                >
+            </li>
+            <li class="nav-item">
+                <a class="nav-link my-2" href="{{ url_for('main.profile') }}">Profile</a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link my-2" href="{{ url_for('auth.logout') }}">Logout</a>
+            </li>
+
+            {% else %}
+
+            <form action="/login" method="POST" class="form-inline my-2 my-lg-0">
+                <div class="form-group mr-3">
+                    <label for="loginEmail">Email: </label>
+                    <input type="email" name="loginEmail" class="form-control ml-2" placeholder="Enter Email" />
+                </div>
+                <div class="form-group mr-3">
+                    <label for="loginPassword">Password: </label>
+                    <input
+                        type="password"
+                        name="loginPassword"
+                        class="form-control ml-2"
+                        placeholder="Enter Password"
+                    />
+                </div>
+                <button type="submit" class="btn btn-primary my-2 mr-3">Login</button>
+                <a class="lostPassword" href="#">Zapomněli jste přístup k účtu?</a>
+            </form>
+
+            {% endif %}
+        </ul>
+    </div>
+</nav>

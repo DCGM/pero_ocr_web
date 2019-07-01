@@ -1,0 +1,15 @@
+footer img {
+    height: 50px;
+}
+
+.lostPassword {
+    font-size: 13px;
+}
+
+#content {
+    min-height: 70vh;
+}
+
+#firstName, #lastName {
+    text-transform: capitalize;
+}

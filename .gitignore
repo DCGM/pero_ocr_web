@@ -103,3 +103,4 @@ venv.bak/
 # mypy
 .mypy_cache/
 .vscode/launch.json
+user.sqlite

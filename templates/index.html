@@ -1,6 +1,25 @@
 <!-- templates/index.html -->
 
 {% extends "base.html" %} {% block content %}
-<h1 class="title">Flask Login Example</h1>
-<h2 class="subtitle">Easy authentication and authorization in Flask.</h2>
+<div class="row">
+    <div class="col-md my-3">
+        <h2>Lorem, ipsum dolor.</h2>
+        <p>
+            Lorem ipsum dolor, sit amet consectetur adipisicing elit. At adipisci nesciunt doloremque molestias,
+            voluptas nostrum. Veniam quas minus voluptatum earum, quia repellendus necessitatibus, non labore commodi
+            eos delectus dolores laudantium? Autem accusantium nemo itaque odio ea quis nostrum fuga exercitationem.
+        </p>
+        <p>
+            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Commodi maiores nemo reiciendis minima numquam
+            possimus eligendi in quia adipisci voluptates deserunt, perspiciatis, pariatur tenetur tempora qui
+            consequuntur, officia quos! Ullam.
+        </p>
+    </div>
+    <div class="col-md my-3">
+        <h3 class="title">Registration</h3>
+        {% with messages = get_flashed_messages() %} {% if messages %}
+        <div class="alert alert-danger" role="alert">{{ messages[0] }}.</div>
+        {% endif %} {% endwith %} {% include 'register_form.html' %}
+    </div>
+</div>
 {% endblock %}
