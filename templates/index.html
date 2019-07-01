@@ -16,10 +16,11 @@
         </p>
     </div>
     <div class="col-md my-3">
-        <h3 class="title">Registration</h3>
         {% with messages = get_flashed_messages() %} {% if messages %}
         <div class="alert alert-danger" role="alert">{{ messages[0] }}.</div>
-        {% endif %} {% endwith %} {% include 'register_form.html' %}
+        {% endif %} {% endwith %}
+        <h3 class="title">Registration</h3>
+        {% include 'register_form.html' %}
     </div>
 </div>
 {% endblock %}
