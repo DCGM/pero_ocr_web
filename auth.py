@@ -33,7 +33,6 @@ def signup_post():
 def login_post():
     email = request.form.get('loginEmail')
     password = request.form.get('loginPassword')
-    # remember = True if request.form.get('remember') else False
 
     user = User.query.filter_by(email=email).first()
 
