@@ -13,12 +13,17 @@ def signup_post():
     first_name = request.form.get('firstName')
     last_name = request.form.get('lastName')
     password = request.form.get('registerPassword')
+    repeatPassword = request.form.get('registerRepeatPassword')
     institution = request.form.get('institution')
 
     user = User.query.filter_by(email=email).first()
 
     if user:
         flash('Email address already exists!')
+        return redirect(url_for('main.index'))
+
+    if password != repeatPassword:
+        flash('Password and Repeat Password must be same!')
         return redirect(url_for('main.index'))
 
 
