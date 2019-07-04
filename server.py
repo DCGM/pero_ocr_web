@@ -17,6 +17,7 @@ def create_app():
     login_manager.init_app(app)
 
     from models.user import User
+    from models.document import Document
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -35,5 +36,4 @@ def create_app():
 
 if __name__ == '__main__':
     app = create_app()
-
     app.run()

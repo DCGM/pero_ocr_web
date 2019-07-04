@@ -1,4 +1,29 @@
-
 {% extends "base.html" %} {% block content %}
-<a class="btn btn-primary add-document-button my-3" href="/document/new"><ion-icon name="add"></ion-icon> Add New Document</a>
+<a class="btn btn-primary add-document-button my-3" href="/document/new"
+  ><ion-icon name="add"></ion-icon> Add New Document</a
+>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Id</th>
+      <th scope="col">Name</th>
+      <th scope="col">State</th>
+      <th scope="col">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for document in documents %}
+    <tr>
+      <td>{{ document.id }}</td>
+      <td>{{ document.name }}</td>
+      <td></td>
+      <td></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div></div>
+
 {% endblock %}

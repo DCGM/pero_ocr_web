@@ -1,13 +1,17 @@
-from main import db
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
 from flask_login import UserMixin
+from server import db
+
 
 class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(100), unique=True)
-    password = db.Column(db.String(100))
-    first_name = db.Column(db.String(100))
-    last_name = db.Column(db.String(100))
-    institution = db.Column(db.String(300))
+    id = Column(Integer, primary_key=True)
+    email = Column(String(100))
+    password = Column(String(100))
+    first_name = Column(String(100))
+    last_name = Column(String(100))
+    institution = Column(String(300))
+    document = relationship('Document')
 
     def __init__(self, email, password, first_name, last_name, institution):
         self.email = email
