@@ -27,3 +27,7 @@ footer img {
 #newDocumentForm {
   max-width: 500px;
 }
+
+.table td, .table th {
+  vertical-align: middle;
+}
