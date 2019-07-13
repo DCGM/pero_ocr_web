@@ -6,8 +6,8 @@
 <table class="table">
   <thead>
     <tr>
-      <th scope="col">Id</th>
       <th scope="col">Name</th>
+      <th scope="col">Owner</th>
       <th scope="col">State</th>
       <th scope="col">Actions</th>
     </tr>
@@ -15,10 +15,16 @@
   <tbody>
     {% for document in documents %}
     <tr>
-      <td>{{ document.id }}</td>
       <td>{{ document.name }}</td>
       <td></td>
-      <td></td>
+      <td>{{ document.state.value }}</td>
+      <td>
+        {% if document.state.name == 'NEW' %}
+        <a href="/document/{{ document.id }}/edit"
+          ><ion-icon name="cloud-upload"></ion-icon
+        ></a>
+        {% endif %}
+      </td>
     </tr>
     {% endfor %}
   </tbody>
