@@ -11,7 +11,7 @@ class User(UserMixin, db.Model):
     first_name = Column(String(100))
     last_name = Column(String(100))
     institution = Column(String(300))
-    document = relationship('Document')
+    documents = relationship('Document', back_populates="user")
 
     def __init__(self, email, password, first_name, last_name, institution):
         self.email = email

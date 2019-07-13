@@ -24,10 +24,7 @@ def profile():
 @main.route('/browser')
 @login_required
 def browser():
-    documents = Document.query.filter_by(userId=int(current_user.id)).join(
-        User, Document.userId == User.id).all()
-
-    return render_template('browser.html', documents=documents)
+    return render_template('browser.html', documents=current_user.documents)
 
 
 @main.route('/document/new', methods=['GET', 'POST'])
@@ -36,7 +33,7 @@ def new_document():
     if request.method == 'POST':
         document_name = request.form.get('documentName')
         new_document = Document(
-            name=document_name, userId=current_user.id, state=DocumentState.NEW)
+            name=document_name, user=current_user, state=DocumentState.NEW)
         db.session.add(new_document)
         db.session.commit()
         db.session.refresh(new_document)
