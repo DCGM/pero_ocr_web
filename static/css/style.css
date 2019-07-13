@@ -1,28 +1,29 @@
 footer img {
-    height: 50px;
+  height: 50px;
 }
 
 .lostPassword {
-    font-size: 13px;
+  font-size: 13px;
 }
 
 #content {
-    min-height: 70vh;
+  min-height: 70vh;
 }
 
-#firstName, #lastName {
-    text-transform: capitalize;
+#firstName,
+#lastName {
+  text-transform: capitalize;
 }
 
-.add-document-button{
-    display: inline-flex;
-    align-items: center;
+.add-document-button {
+  display: inline-flex;
+  align-items: center;
 }
 
-.add-document-button ion-icon{
-    margin-right: 0.5rem;
+ion-icon {
+  margin-right: 0.5rem;
 }
 
-#newDocumentForm{
-    max-width: 500px;
+#newDocumentForm {
+  max-width: 500px;
 }

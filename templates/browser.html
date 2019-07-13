@@ -3,7 +3,7 @@
   ><ion-icon name="add"></ion-icon> Add New Document</a
 >
 
-<table class="table">
+<table class="table table-hover">
   <thead>
     <tr>
       <th scope="col">Name</th>
@@ -16,13 +16,13 @@
     {% for document in documents %}
     <tr>
       <td>{{ document.name }}</td>
-      <td></td>
+      <td>{{ document.user.first_name }} {{ document.user.last_name }}</td>
       <td>{{ document.state.value }}</td>
       <td>
         {% if document.state.name == 'NEW' %}
-        <a href="/document/{{ document.id }}/edit"
-          ><ion-icon name="cloud-upload"></ion-icon
-        ></a>
+        <a class="btn btn-primary" href="/document/{{ document.id }}/edit"
+          ><ion-icon name="cloud-upload"></ion-icon>Upload Images</a
+        >
         {% endif %}
       </td>
     </tr>
