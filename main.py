@@ -46,3 +46,9 @@ def new_document():
 @login_required
 def document_edit(id):
     return id
+
+
+@main.route('/document/<string:id>/upload')
+@login_required
+def document_upload(id):
+    return 'Upload ' + id

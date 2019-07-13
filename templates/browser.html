@@ -19,9 +19,15 @@
       <td>{{ document.user.first_name }} {{ document.user.last_name }}</td>
       <td>{{ document.state.value }}</td>
       <td>
+          {% if document.state.name == 'NEW' %}
+          <a class="btn btn-secondary" href="/document/{{ document.id }}/upload" data-toggle="tooltip" data-placement="right" title="Edit Collaborators"
+            > <ion-icon name="contacts"></ion-icon></ion-icon></a
+          >
+          {% endif %}
+         
         {% if document.state.name == 'NEW' %}
-        <a class="btn btn-primary" href="/document/{{ document.id }}/edit"
-          ><ion-icon name="cloud-upload"></ion-icon>Upload Images</a
+        <a class="btn btn-secondary" href="/document/{{ document.id }}/upload" data-toggle="tooltip" data-placement="right" title="Upload Images"
+          ><ion-icon name="cloud-upload"></ion-icon></a
         >
         {% endif %}
       </td>
@@ -32,4 +38,10 @@
 
 <div></div>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+$('[data-toggle="tooltip"]').tooltip()
+</script>
 {% endblock %}
