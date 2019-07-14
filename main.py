@@ -4,7 +4,8 @@ from flask_login import current_user, login_required
 from models.document import Document
 from models.user import User
 from enums.document_state import DocumentState
-
+from sqlalchemy import create_engine
+from sqlalchemy_utils import create_database
 main = Blueprint('main', __name__)
 
 
@@ -37,15 +38,18 @@ def new_document():
         db.session.add(new_document)
         db.session.commit()
         db.session.refresh(new_document)
+        engine = create_engine(
+            "sqlite:///db/documents/{}.sqlite".format(new_document.id))
+        create_database(engine.url)
         return redirect(url_for('main.browser'))
     else:
         return render_template('new_document.html')
 
 
-@main.route('/document/<string:id>/edit')
+@main.route('/document/<string:id>/collaborators')
 @login_required
 def document_edit(id):
-    return id
+    return 'Collaborators ' + id
 
 
 @main.route('/document/<string:id>/upload')

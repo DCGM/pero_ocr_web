@@ -20,7 +20,7 @@
       <td>{{ document.state.value }}</td>
       <td>
           {% if document.user.id == current_user.id %}
-          <a class="btn btn-secondary" href="/document/{{ document.id }}/upload" data-toggle="tooltip" data-placement="right" title="Edit Collaborators"
+          <a class="btn btn-secondary" href="/document/{{ document.id }}/collaborators" data-toggle="tooltip" data-placement="right" title="Edit Collaborators"
             > <ion-icon name="contacts"></ion-icon></ion-icon></a
           >
           {% endif %}
