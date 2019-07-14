@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request
+from flask import Blueprint, render_template, redirect, url_for, request, abort
 from server import db
 from flask_login import current_user, login_required
 from models.document import Document
@@ -56,3 +56,15 @@ def document_edit(id):
 @login_required
 def document_upload(id):
     return 'Upload ' + id
+
+
+@main.route('/document/<string:id>/delete')
+@login_required
+def document_remove(id):
+    document = Document.query.get(id)
+    if document and document.user.id == current_user.id:
+        Document.query.filter_by(id=id).delete()
+        db.session.commit()
+        return redirect(url_for('main.browser'))
+    else:
+        return abort(403)

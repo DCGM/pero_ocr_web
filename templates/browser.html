@@ -19,16 +19,35 @@
       <td>{{ document.user.first_name }} {{ document.user.last_name }}</td>
       <td>{{ document.state.value }}</td>
       <td>
-          {% if document.user.id == current_user.id %}
-          <a class="btn btn-secondary" href="/document/{{ document.id }}/collaborators" data-toggle="tooltip" data-placement="right" title="Edit Collaborators"
-            > <ion-icon name="contacts"></ion-icon></ion-icon></a
-          >
-          {% endif %}
-         
-        {% if document.state.name == 'NEW' %}
-        <a class="btn btn-secondary" href="/document/{{ document.id }}/upload" data-toggle="tooltip" data-placement="right" title="Upload Images"
-          ><ion-icon name="cloud-upload"></ion-icon></a
+        {% if document.user.id == current_user.id %}
+        <a
+          class="btn btn-secondary"
+          href="/document/{{ document.id }}/collaborators"
+          data-toggle="tooltip"
+          data-placement="right"
+          title="Edit Collaborators"
         >
+          <ion-icon name="contacts"></ion-icon
+        ></a>
+        {% endif %} {% if document.state.name == 'NEW' %}
+        <a
+          class="btn btn-secondary"
+          href="/document/{{ document.id }}/upload"
+          data-toggle="tooltip"
+          data-placement="right"
+          title="Upload Images"
+          ><ion-icon name="cloud-upload"></ion-icon
+        ></a>
+        {% endif %} {% if document.user.id == current_user.id %}
+        <a
+          class="btn btn-secondary"
+          href="/document/{{ document.id }}/delete"
+          data-toggle="tooltip"
+          data-placement="right"
+          title="Remove Document"
+        >
+          <ion-icon name="trash"></ion-icon
+        ></a>
         {% endif %}
       </td>
     </tr>
@@ -38,10 +57,8 @@
 
 <div></div>
 
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script>
-$('[data-toggle="tooltip"]').tooltip()
+  $('[data-toggle="tooltip"]').tooltip();
 </script>
 {% endblock %}
