@@ -4,15 +4,17 @@ from server import db, Base
 from flask_login import current_user, login_required
 from models.document import Document
 from models.user import User
+from models.image import Image
 from enums.document_state import DocumentState
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Enum
 from sqlalchemy_utils import create_database
+from sqlalchemy.orm import sessionmaker
 from models.guid import GUID
 import uuid
 
 
 main = Blueprint('main', __name__)
-
+base_image_path = 'C:/Users/David/Documents/pero_ocr_web/static'
 
 @main.route('/')
 def index():
@@ -62,7 +64,13 @@ def document_edit(id):
 @login_required
 def document_upload_get(id):
     document = Document.query.get(id)
-    return render_template('upload_images.html', document=document)
+    engine = create_engine(
+            "sqlite:///db/documents/{}.sqlite".format(id))
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    images = session.query(Image.id, Image.filename).all()
+    session.close()
+    return render_template('upload_images.html', document=document, images=images, base_image_url=base_image_path)
 
 
 @main.route('/document/<string:id>/upload', methods=['POST'])
@@ -70,15 +78,23 @@ def document_upload_get(id):
 def document_upload_post(id):
     extensions = ('jpg', 'png', 'pdf')
     files = request.files.getlist('document_uploaded_files')
-    path = 'C:/Users/David/Documents/pero_ocr_web' + \
+    path = base_image_path + \
         '/upload_images/' + id  # GET DIRECTORY FROM CONFIG
     create_dirs(path)
+    engine = create_engine(
+            "sqlite:///db/documents/{}.sqlite".format(id))
+    Session = sessionmaker(bind=engine)
+    session = Session()
 
     for file in files:
         if file.filename != '' and is_allowed(file, extensions):
             file_path = os.path.join(path, file.filename)
             file.save(file_path)
-    return 'uploaded' + id
+            image_db = Image(file.filename)
+            session.add(image_db)
+    session.commit()
+    session.close()
+    return redirect('/document/{}/upload'.format(id))
 
 
 @main.route('/document/<string:id>/delete')

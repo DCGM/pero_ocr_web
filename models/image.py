@@ -10,4 +10,4 @@ class Image(Base):
     filename = Column(String(100))
 
     def __init__(self, name):
-        self.name = name
+        self.filename = name
