@@ -1,11 +1,16 @@
+import os
 from flask import Blueprint, render_template, redirect, url_for, request, abort
-from server import db
+from server import db, Base
 from flask_login import current_user, login_required
 from models.document import Document
 from models.user import User
 from enums.document_state import DocumentState
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Enum
 from sqlalchemy_utils import create_database
+from models.guid import GUID
+import uuid
+
+
 main = Blueprint('main', __name__)
 
 
@@ -40,7 +45,8 @@ def new_document():
         db.session.refresh(new_document)
         engine = create_engine(
             "sqlite:///db/documents/{}.sqlite".format(new_document.id))
-        create_database(engine.url)
+        Base.metadata.create_all(engine)
+
         return redirect(url_for('main.browser'))
     else:
         return render_template('new_document.html')
@@ -52,10 +58,27 @@ def document_edit(id):
     return 'Collaborators ' + id
 
 
-@main.route('/document/<string:id>/upload')
+@main.route('/document/<string:id>/upload', methods=['GET'])
 @login_required
-def document_upload(id):
-    return 'Upload ' + id
+def document_upload_get(id):
+    document = Document.query.get(id)
+    return render_template('upload_images.html', document=document)
+
+
+@main.route('/document/<string:id>/upload', methods=['POST'])
+@login_required
+def document_upload_post(id):
+    extensions = ('jpg', 'png', 'pdf')
+    files = request.files.getlist('document_uploaded_files')
+    path = 'C:/Users/David/Documents/pero_ocr_web' + \
+        '/upload_images/' + id  # GET DIRECTORY FROM CONFIG
+    create_dirs(path)
+
+    for file in files:
+        if file.filename != '' and is_allowed(file, extensions):
+            file_path = os.path.join(path, file.filename)
+            file.save(file_path)
+    return 'uploaded' + id
 
 
 @main.route('/document/<string:id>/delete')
@@ -68,3 +91,15 @@ def document_remove(id):
         return redirect(url_for('main.browser'))
     else:
         return abort(403)
+
+
+def is_allowed(file, extensions):
+    if str(file.filename).lower().endswith(extensions):
+        return True
+
+    return False
+
+
+def create_dirs(path):
+    if not os.path.exists(path):
+        os.makedirs(path)

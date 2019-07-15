@@ -1,14 +1,18 @@
 from flask import Flask
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.ext.declarative import declarative_base
 
 db = SQLAlchemy()
+user_database_url = 'sqlite:///db/user.sqlite'
+Base = declarative_base()
+
 
 def create_app():
     app = Flask(__name__)
-    
+
     app.config['SECRET_KEY'] = '9OLWxND4o83j4K4iuopO'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db/user.sqlite'
+    app.config['SQLALCHEMY_DATABASE_URI'] = user_database_url
 
     db.init_app(app)
 
@@ -18,6 +22,7 @@ def create_app():
 
     from models.user import User
     from models.document import Document
+    from models.image import Image
 
     @login_manager.user_loader
     def load_user(user_id):

@@ -26,13 +26,14 @@ def signup_post():
         flash('Password and Repeat Password must be same!')
         return redirect(url_for('main.index'))
 
-
-    new_user = User(email, generate_password_hash(password), first_name, last_name, institution)
+    new_user = User(email, generate_password_hash(
+        password), first_name, last_name, institution)
 
     db.session.add(new_user)
     db.session.commit()
 
     return redirect(url_for('main.index'))
+
 
 @auth.route('/login', methods=['Post'])
 def login_post():
@@ -41,7 +42,7 @@ def login_post():
 
     user = User.query.filter_by(email=email).first()
 
-    if not user or not check_password_hash(user.password, password): 
+    if not user or not check_password_hash(user.password, password):
         flash('Please check your login details and try again.')
         return redirect(url_for('main.index'))
 
