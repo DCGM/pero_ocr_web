@@ -31,6 +31,8 @@ def signup_post():
 
     db.session.add(new_user)
     db.session.commit()
+    db.session.refresh(new_user)
+    login_user(new_user, remember=True)
 
     return redirect(url_for('main.index'))
 
