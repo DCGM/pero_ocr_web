@@ -1,19 +1,5 @@
 {% extends "base.html" %} {% block content %}
 <h3>{{ document.name }}</h3>
-<div>
-  {% for image in images %}
-  <div class="thumbnail d-inline-block m-3">
-    <img
-      src="/static/upload_images/{{ document.id }}/{{ image.filename }}"
-      alt="{{ image.filename }}"
-      class="uploaded_image"
-    />
-    <div class="caption text-center">
-      {{ image.filename }}
-    </div>
-  </div>
-  {% endfor %}
-</div>
 
 <form
   class="my-3"
@@ -48,6 +34,20 @@
     />
   </div>
 </form>
+<div>
+  {% for image in images %}
+  <div class="card d-inline-block m-3">
+    <img
+      src="/static/upload_images/{{ document.id }}/{{ image.filename }}"
+      alt="{{ image.filename }}"
+      class="uploaded_image card-img-top"
+    />
+    <div class="card-body text-center">
+      {{ image.filename }}
+    </div>
+  </div>
+  {% endfor %}
+</div>
 {% endblock %} {% block styles%}
 <style>
   .uploaded_image {
