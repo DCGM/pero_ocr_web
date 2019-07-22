@@ -16,6 +16,7 @@ import uuid
 main = Blueprint('main', __name__)
 base_image_path = 'C:/Users/David/Documents/pero_ocr_web/static'
 
+
 @main.route('/')
 def index():
     if current_user.is_authenticated:
@@ -54,10 +55,20 @@ def new_document():
         return render_template('new_document.html')
 
 
-@main.route('/document/<string:id>/collaborators')
+@main.route('/document/<string:id>/collaborators', methods=['POST'])
 @login_required
-def document_edit(id):
-    return 'Collaborators ' + id
+def document_edit_colaborators_post(id):
+    request_form = request.form.getlist('collaborators')
+    return 'Edit'
+
+
+@main.route('/document/<string:id>/collaborators', methods=['GET'])
+@login_required
+def document_edit_colaborators_post_get(id):
+    document = Document.query.get(id)
+    users = User.query.all()
+    users = list(filter(lambda user: user.id != document.user.id, users))
+    return render_template('edit_collaborators.html', document=document, users=users)
 
 
 @main.route('/document/<string:id>/upload', methods=['GET'])
@@ -65,7 +76,7 @@ def document_edit(id):
 def document_upload_get(id):
     document = Document.query.get(id)
     engine = create_engine(
-            "sqlite:///db/documents/{}.sqlite".format(id))
+        "sqlite:///db/documents/{}.sqlite".format(id))
     Session = sessionmaker(bind=engine)
     session = Session()
     images = session.query(Image.id, Image.filename).all()
@@ -82,7 +93,7 @@ def document_upload_post(id):
         '/upload_images/' + id  # GET DIRECTORY FROM CONFIG
     create_dirs(path)
     engine = create_engine(
-            "sqlite:///db/documents/{}.sqlite".format(id))
+        "sqlite:///db/documents/{}.sqlite".format(id))
     Session = sessionmaker(bind=engine)
     session = Session()
 
