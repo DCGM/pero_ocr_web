@@ -1,0 +1,35 @@
+{% extends "base/base.html" %} {% block content %}
+<h3>{{ document.name }} - Edit Collaborators</h3>
+<form class="d-none" action="/document/{{ document.id }}/collaborators" method="POST">
+<select class="js-example-basic-single" name="collaborators" multiple="multiple" style="width:100%">
+  {% for user in users %}
+  <option value="{{ user.id }}">{{user.first_name }} {{ user.last_name }} ({{ user.email }})</option>
+  {% endfor %}
+  
+</select>
+<input class="btn btn-primary my-3" type="submit" value="Submit">
+</form>
+</div>
+{% endblock %} {% block scripts%}
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+  $('.js-example-basic-single').select2({
+    placeholder: 'Select Collaborators'
+  });
+
+  $('form').removeClass('d-none');
+});
+</script>
+
+{% endblock %}
+
+{% block styles%}
+<style>
+.select2-search__field{
+  width: 100% !important;
+}
+</style>
+{% endblock%}
