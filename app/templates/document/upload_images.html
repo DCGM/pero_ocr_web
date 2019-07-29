@@ -1,59 +1,86 @@
 {% extends "base/base.html" %} {% block content %}
-<h3>{{ document.name }} - Upload Images</h3>
+    <h3>{{ document.name }} - Upload Images</h3>
 
-<form
-  class="my-3"
-  id="newDocumentForm"
-  action="/document/{{ document.id }}/upload"
-  method="POST"
-  enctype="multipart/form-data"
->
-  <div class="form-group">
-    <div class="input-group">
-      <div class="custom-file">
-        <input
-          type="file"
-          class="custom-file-input"
-          name="document_uploaded_files"
-          id="document_upload_file_input"
-          aria-describedby="document_upload_file_input"
-          multiple
-        />
-        <label
-          class="custom-file-label"
-          id="document_upload_label"
-          for="document_upload_file_input"
-          >Choose file</label
-        >
-      </div>
+    <form
+            class="my-3"
+            id="newDocumentForm"
+            action="/document/{{ document.id }}/upload"
+            method="POST"
+            enctype="multipart/form-data"
+    >
+        <div class="form-group">
+            <div class="input-group">
+                <div class="custom-file">
+                    <input
+                            type="file"
+                            class="custom-file-input"
+                            name="document_uploaded_files"
+                            id="document_upload_file_input"
+                            aria-describedby="document_upload_file_input"
+                            multiple
+                    />
+                    <label
+                            class="custom-file-label"
+                            id="document_upload_label"
+                            for="document_upload_file_input"
+                    >Choose file</label
+                    >
+                </div>
+            </div>
+            <input
+                    class="btn btn-primary my-3 btn-lg btn-block"
+                    type="submit"
+                    value="Upload"
+            />
+        </div>
+    </form>
+    <div>
+        {% for image in images %}
+            <div class="card d-inline-block m-3">
+                <img
+                        src="/get_image/{{ document.id }}/{{ image.id }}"
+                        alt="{{ image.filename }}"
+                        class="uploaded_image card-img-top"
+                />
+                <div class="card-body text-center">
+                    {{ image.filename }}
+                </div>
+            </div>
+        {% endfor %}
     </div>
-    <input
-      class="btn btn-primary my-3 btn-lg btn-block"
-      type="submit"
-      value="Upload"
-    />
-  </div>
-</form>
-<div>
-  {% for image in images %}
-  <div class="card d-inline-block m-3">
-    <img
-      src="/get_image/{{ document.id }}/{{ image.id }}"
-      alt="{{ image.filename }}"
-      class="uploaded_image card-img-top"
-    />
-    <div class="card-body text-center">
-      {{ image.filename }}
-    </div>
-  </div>
-  {% endfor %}
-</div>
-{% endblock %} {% block styles%}
-<style>
-  .uploaded_image {
-    max-width: 100px;
-    max-height: 200px;
-  }
-</style>
+{% endblock %} {% block styles %}
+    <style>
+        .uploaded_image {
+            max-width: 100px;
+            max-height: 200px;
+        }
+    </style>
+
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        $(document).ready(function () {
+            let uploadInput = document.getElementById("document_upload_file_input");
+            let uploadLabel = document.getElementById("document_upload_label");
+
+            if (uploadInput != null) {
+                uploadInput.addEventListener("change", updateNumberOfFiles);
+            }
+
+
+            function updateNumberOfFiles() {
+                let selectedFiles = uploadInput.files;
+
+                console.log(selectedFiles);
+
+                if (selectedFiles.length === 0) {
+                    uploadLabel.innerText = "Choose file";
+                } else {
+                    uploadLabel.innerText = "Selected files: " + selectedFiles.length;
+                }
+            }
+        })
+    </script>
 
 {% endblock %}
