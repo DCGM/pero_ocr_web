@@ -38,7 +38,7 @@
   {% for image in images %}
   <div class="card d-inline-block m-3">
     <img
-      src="/static/upload_images/{{ document.id }}/{{ image.filename }}"
+      src="/get_image/{{ document.id }}/{{ image.id }}"
       alt="{{ image.filename }}"
       class="uploaded_image card-img-top"
     />

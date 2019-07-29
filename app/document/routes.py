@@ -1,8 +1,8 @@
 from app.document import bp
 from flask_login import login_required, current_user
-from flask import render_template, redirect, url_for, abort
-from app.document.general import create_document, check_and_remove_document
-from app.db.general import get_user_documents
+from flask import render_template, redirect, url_for, abort, request, send_file
+from app.document.general import create_document, check_and_remove_document, save_images, get_image_url
+from app.db.general import get_user_documents, get_document_by_id
 from app.document.forms import CreateDocumentForm
 
 
@@ -30,3 +30,28 @@ def document_remove(document_id):
         return redirect(url_for('document.documents'))
     else:
         return abort(403)
+
+
+@bp.route('/document/<string:document_id>/upload', methods=['GET'])
+@login_required
+def document_upload_get(document_id):
+    # TODO check user document permission
+    document = get_document_by_id(document_id)
+    return render_template('document/upload_images.html', document=document, images=document.images)
+
+
+@bp.route('/document/<string:document_id>/upload', methods=['POST'])
+@login_required
+def document_upload_post(document_id):
+    # TODO check user document permission
+    files = request.files.getlist('document_uploaded_files')
+    save_images(files, document_id)
+    return redirect('/document/{}/upload'.format(document_id))
+
+
+@bp.route('/get_image/<string:document_id>/<string:image_id>')
+@login_required
+def get_image(document_id, image_id):
+    # TODO check user document permission
+    image_url = get_image_url(document_id, image_id)
+    return send_file(image_url)

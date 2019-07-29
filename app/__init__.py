@@ -4,6 +4,7 @@ from flask_login import LoginManager
 import os
 from flask_bootstrap import Bootstrap
 
+
 database_url = 'sqlite:///db.sqlite'
 engine = create_engine(database_url, convert_unicode=True)
 SECRET_KEY = os.urandom(32)

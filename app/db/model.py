@@ -19,9 +19,18 @@ class Document(Base):
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", back_populates="documents")
     deleted = Column(Boolean(), default=False)
+    images = relationship('Image', secondary='documentimages', lazy='dynamic')
 
 
 class Image(Base):
     __tablename__ = 'images'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     filename = Column(String(100))
+    directory = Column(String(255))
+
+
+class DocumentImage(Base):
+    __tablename__ = 'documentimages'
+    id = Column(Integer(), primary_key=True)
+    document_id = Column(GUID(), ForeignKey('documents.id'), nullable=False)
+    image_id = Column(GUID(), ForeignKey('images.id'), nullable=False)

@@ -4,5 +4,5 @@ from wtforms.validators import DataRequired
 
 
 class CreateDocumentForm(FlaskForm):
-    document_name = StringField('DocumentName', validators=[DataRequired()])
+    document_name = StringField('Document Name', validators=[DataRequired()])
     submit = SubmitField('Create')

@@ -33,3 +33,9 @@ def save_document(document):
     db_session.commit()
     db_session.refresh(document)
     return document
+
+
+def save_image_to_document(document, image):
+    document.images.append(image)
+    db_session.commit()
+
