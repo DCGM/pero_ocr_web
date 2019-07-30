@@ -1,7 +1,8 @@
 from app.document import bp
 from flask_login import login_required, current_user
 from flask import render_template, redirect, url_for, abort, request, send_file
-from app.document.general import create_document, check_and_remove_document, save_images, get_image_url
+from app.document.general import create_document, check_and_remove_document, save_images, get_image_url, \
+    get_possible_collaborators
 from app.db.general import get_user_documents, get_document_by_id
 from app.document.forms import CreateDocumentForm
 
@@ -55,3 +56,11 @@ def get_image(document_id, image_id):
     # TODO check user document permission
     image_url = get_image_url(document_id, image_id)
     return send_file(image_url)
+
+
+@bp.route('/document/<string:document_id>/collaborators', methods=['GET'])
+@login_required
+def document_edit_collaborators_post_get(document_id):
+    document = get_document_by_id(document_id)
+    users = get_possible_collaborators(document)
+    return render_template('document/edit_collaborators.html', document=document, users=users)

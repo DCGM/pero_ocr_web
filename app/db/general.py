@@ -43,3 +43,6 @@ def save_image_to_document(document, image):
     document.images.append(image)
     db_session.commit()
 
+
+def get_all_users():
+    return User.query.all()

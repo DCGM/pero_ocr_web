@@ -6,12 +6,13 @@ from flask_bootstrap import Bootstrap
 
 
 database_url = 'sqlite:///db.sqlite'
-engine = create_engine(database_url, convert_unicode=True)
+engine = create_engine(database_url, convert_unicode=True, connect_args={'check_same_thread': False})
 SECRET_KEY = os.urandom(32)
 
 
 def create_app():
     app = Flask(__name__)
+    app.config.from_object('config')
     app.config['SECRET_KEY'] = SECRET_KEY
     init_db()
     Bootstrap(app)

@@ -1,11 +1,8 @@
 from app.db.model import Document, DocumentState, Image
-from app.db.general import get_document_by_id, remove_document_by_id, save_document, save_image_to_document
+from app.db.general import get_document_by_id, remove_document_by_id, save_document, save_image_to_document,\
+    get_all_users
 import os
-
-
-# TODO Temporary Will be in Config
-image_path = 'C:\\Users\\rykk0\\OneDrive\\Dokumenty\\uploaded_images\\'
-extensions = ('jpg', 'png', 'pdf')
+from flask import current_app as app
 
 
 def create_document(name, user):
@@ -36,13 +33,13 @@ def save_images(files, document_id):
 
 
 def get_and_create_document_image_directory(document_id):
-    directory_path = image_path + document_id  # TODO GET DIRECTORY FROM CONFIG
+    directory_path = app.config['UPLOAD_IMAGE_FOLDER'] + document_id
     create_dirs(directory_path)
     return directory_path
 
 
 def is_allowed_file(file):
-    if file.filename != '' and is_allowed_extension(file, extensions):
+    if file.filename != '' and is_allowed_extension(file, app.config['EXTENSIONS']):
         return True
     return False
 
@@ -62,3 +59,8 @@ def get_image_url(document_id, image_id):
     document = get_document_by_id(document_id)
     image = document.images.filter_by(id=image_id).first()
     return os.path.join(image.directory, image.filename)
+
+
+def get_possible_collaborators(document):
+    users = get_all_users()
+    return list(filter(lambda user: user.id != document.user.id, users))

@@ -1,0 +1,3 @@
+DEBUG = True
+UPLOAD_IMAGE_FOLDER = 'SOME PATH'
+EXTENSIONS = ('jpg', 'png', 'pdf')
