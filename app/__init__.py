@@ -21,10 +21,11 @@ def create_app():
     login_manager.login_message = 'Please log in to access this page.'
 
     from app.db.user import User
+    from app.db.general import get_user_by_id
 
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return get_user_by_id(user_id)
 
     login_manager.init_app(app)
 

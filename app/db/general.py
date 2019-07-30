@@ -22,6 +22,10 @@ def get_user_documents(user):
     return user.documents.filter_by(deleted=False)
 
 
+def get_user_by_id(id):
+    return User.query.get(int(id))
+
+
 def remove_document_by_id(document_id):
     document = get_document_by_id(document_id)
     document.deleted = True
