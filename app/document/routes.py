@@ -2,15 +2,16 @@ from app.document import bp
 from flask_login import login_required, current_user
 from flask import render_template, redirect, url_for, abort, request, send_file
 from app.document.general import create_document, check_and_remove_document, save_images, get_image_url, \
-    get_possible_collaborators
-from app.db.general import get_user_documents, get_document_by_id
+    get_collaborators_select_data, save_collaborators
+from app.db.general import get_user_documents, get_document_by_id, get_user_by_id
 from app.document.forms import CreateDocumentForm
 
 
 @bp.route('/documents')
 @login_required
 def documents():
-    return render_template('document/documents.html', documents=get_user_documents(current_user))
+    user_created_documents = get_user_documents(current_user)
+    return render_template('document/documents.html', documents= user_created_documents)
 
 
 @bp.route('/document/new', methods=['GET', 'POST'])
@@ -62,5 +63,13 @@ def get_image(document_id, image_id):
 @login_required
 def document_edit_collaborators_post_get(document_id):
     document = get_document_by_id(document_id)
-    users = get_possible_collaborators(document)
-    return render_template('document/edit_collaborators.html', document=document, users=users)
+    select_data = get_collaborators_select_data(document)
+    return render_template('document/edit_collaborators.html', document=document, select_items=select_data)
+
+
+@bp.route('/document/<string:document_id>/collaborators', methods=['POST'])
+@login_required
+def document_edit_collaborators_post(document_id):
+    collaborators_ids = request.form.getlist('collaborators')
+    save_collaborators(document_id, collaborators_ids)
+    return redirect('/document/{}/collaborators'.format(document_id))

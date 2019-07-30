@@ -19,7 +19,9 @@ def get_document_by_id(document_id):
 
 
 def get_user_documents(user):
-    return user.documents.filter_by(deleted=False)
+    user_created_documents = user.documents.filter_by(deleted=False).all()
+    collaborators_documents = user.collaborator_documents.filter_by(deleted=False).all()
+    return user_created_documents + collaborators_documents
 
 
 def get_user_by_id(id):
@@ -46,3 +48,4 @@ def save_image_to_document(document, image):
 
 def get_all_users():
     return User.query.all()
+

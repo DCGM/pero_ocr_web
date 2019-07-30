@@ -14,6 +14,7 @@ class User(UserMixin, Base):
     last_name = Column(String(100))
     institution = Column(String(300))
     documents = relationship('Document', back_populates="user", lazy='dynamic')
+    collaborator_documents = relationship('Document', secondary='userdocuments', lazy='dynamic')
 
     def set_password(self, password):
         self.password = generate_password_hash(password)

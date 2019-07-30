@@ -2,8 +2,8 @@
 <h3>{{ document.name }} - Edit Collaborators</h3>
 <form class="d-none" action="/document/{{ document.id }}/collaborators" method="POST">
 <select class="js-example-basic-single" name="collaborators" multiple="multiple" style="width:100%">
-  {% for user in users %}
-  <option value="{{ user.id }}">{{user.first_name }} {{ user.last_name }} ({{ user.email }})</option>
+  {% for select_item in  select_items %}
+  <option {% if select_item.is_selected == True %} selected {% endif %} value="{{ select_item.user.id }}">{{select_item.user.first_name }} {{ select_item.user.last_name }} ({{ select_item.user.email }})</option>
   {% endfor %}
   
 </select>

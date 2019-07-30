@@ -20,6 +20,7 @@ class Document(Base):
     user = relationship("User", back_populates="documents")
     deleted = Column(Boolean(), default=False)
     images = relationship('Image', secondary='documentimages', lazy='dynamic')
+    collaborators = relationship('User', secondary='userdocuments')
 
 
 class Image(Base):
@@ -34,3 +35,10 @@ class DocumentImage(Base):
     id = Column(Integer(), primary_key=True)
     document_id = Column(GUID(), ForeignKey('documents.id'), nullable=False)
     image_id = Column(GUID(), ForeignKey('images.id'), nullable=False)
+
+
+class UserDocument(Base):
+    __tablename__ = 'userdocuments'
+    id = Column(Integer(), primary_key=True)
+    user_id = Column(Integer(), ForeignKey('users.id'), nullable=False)
+    document_id = Column(GUID(), ForeignKey('documents.id'), nullable=False)
