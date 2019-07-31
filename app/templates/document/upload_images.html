@@ -48,11 +48,32 @@
             </div>
         {% endfor %}
     </div>
+    <div class="modal"><!-- Place at bottom of page --></div>
+
 {% endblock %} {% block styles %}
     <style>
         .uploaded_image {
             max-width: 100px;
             max-height: 200px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background: rgba(255, 255, 255, .8) url('https://i.stack.imgur.com/FhHRx.gif') 50% 50% no-repeat;
+        }
+
+        body.loading {
+            overflow: hidden;
+        }
+
+        body.loading .modal {
+            display: block;
         }
     </style>
 
@@ -68,6 +89,9 @@
                 uploadInput.addEventListener("change", updateNumberOfFiles);
             }
 
+            $('input[type="submit"]').on('click', function (event) {
+                $('body').addClass('loading')
+            });
 
             function updateNumberOfFiles() {
                 let selectedFiles = uploadInput.files;

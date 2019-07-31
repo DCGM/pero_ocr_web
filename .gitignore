@@ -108,3 +108,4 @@ static/upload_images/*
 !static/upload_images/.gitkeep
 .idea/*
 db.sqlite
+config.py
