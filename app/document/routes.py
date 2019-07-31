@@ -1,6 +1,6 @@
 from app.document import bp
 from flask_login import login_required, current_user
-from flask import render_template, redirect, url_for, abort, request, send_file
+from flask import render_template, redirect, url_for, abort, request, send_file, Response
 from app.document.general import create_document, check_and_remove_document, save_images, get_image_url, \
     get_collaborators_select_data, save_collaborators
 from app.db.general import get_user_documents, get_document_by_id, get_user_by_id
@@ -29,9 +29,9 @@ def new_document():
 @login_required
 def document_remove(document_id):
     if check_and_remove_document(document_id, current_user):
-        return redirect(url_for('document.documents'))
+        return document_id
     else:
-        return abort(403)
+        return None
 
 
 @bp.route('/document/<string:document_id>/upload', methods=['GET'])
