@@ -1,30 +1,26 @@
 <!-- templates/index.html -->
 
 {% extends "base/base.html" %} {% block content %}
-<div class="row">
-    <div class="col-md my-3">
-        <h2>Lorem, ipsum dolor.</h2>
-        <p>
-            Lorem ipsum dolor, sit amet consectetur adipisicing elit. At adipisci nesciunt doloremque molestias,
-            voluptas nostrum. Veniam quas minus voluptatum earum, quia repellendus necessitatibus, non labore commodi
-            eos delectus dolores laudantium? Autem accusantium nemo itaque odio ea quis nostrum fuga exercitationem.
-        </p>
-        <p>
-            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Commodi maiores nemo reiciendis minima numquam
-            possimus eligendi in quia adipisci voluptates deserunt, perspiciatis, pariatur tenetur tempora qui
-            consequuntur, officia quos! Ullam.
-        </p>
+    <div class="row">
+        <div class="col-md my-3">
+            <h2>Lorem, ipsum dolor.</h2>
+            <p>
+                Lorem ipsum dolor, sit amet consectetur adipisicing elit. At adipisci nesciunt doloremque molestias,
+                voluptas nostrum. Veniam quas minus voluptatum earum, quia repellendus necessitatibus, non labore
+                commodi
+                eos delectus dolores laudantium? Autem accusantium nemo itaque odio ea quis nostrum fuga exercitationem.
+            </p>
+            <p>
+                Lorem ipsum dolor sit amet consectetur, adipisicing elit. Commodi maiores nemo reiciendis minima numquam
+                possimus eligendi in quia adipisci voluptates deserunt, perspiciatis, pariatur tenetur tempora qui
+                consequuntur, officia quos! Ullam.
+            </p>
+        </div>
+        <div class="col-md my-3">
+        </div>
     </div>
-    <div class="col-md my-3">
-        {% with messages = get_flashed_messages() %} {% if messages %}
-        <div class="alert alert-danger" role="alert">{{ messages[0] }}.</div>
-        {% endif %} {% endwith %}
-        <h3 class="title">Registration</h3>
-        {% include 'forms/register_form.html' %}
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
-<script src="../static/js/PasswordRepeat.js"></script>
+    <script src="../static/js/PasswordRepeat.js"></script>
 {% endblock %}

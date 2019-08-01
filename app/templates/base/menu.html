@@ -1,3 +1,4 @@
+
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container">
         <a class="navbar-brand" href="{{ url_for('main.index') }}">Project PERO OCR</a>
@@ -16,41 +17,35 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav ml-auto">
                 {% if current_user.is_authenticated %}
+                    <li class="nav-item{%- if request.path == "/documents" %} active{% endif %}" >
+                        <a class="nav-link my-2" href="{{ url_for('document.documents') }}">Browser</a>
+                    </li>
+                    <li class="nav-item{%- if request.path == "/profile" %} active{% endif %}">
+                        <a class="nav-link my-2" href="{{ url_for('profile.profile') }}">Profile</a>
+                    </li>
 
-                <li class="nav-item{%- if request.path == "/documents" %} active{% endif %}" >
-                    <a class="nav-link my-2" href="{{ url_for('document.documents') }}">Browser</a>
-                </li>
-                <li class="nav-item{%- if request.path == "/profile" %} active{% endif %}">
-                    <a class="nav-link my-2" href="{{ url_for('profile.profile') }}">Profile</a>
-                </li>
+                    <li class="nav-item">
+                        <a class="nav-link my-2" href="{{ url_for('auth.logout') }}">Logout</a>
+                    </li>
 
-                <li class="nav-item">
-                    <a class="nav-link my-2" href="{{ url_for('auth.logout') }}">Logout</a>
-                </li>
-
-                {% else %}
-
-                <form action="/login" method="POST" class="form-inline my-2 my-lg-0">
-                    <div class="form-group mr-3">
-                        <label for="Email">Email: </label>
-                        <input id="Email" type="email" name="Email" class="form-control ml-2" placeholder="Enter Email" />
-                    </div>
-                    <div class="form-group mr-3">
-                        <label for="Password">Password: </label>
-                        <input
-                                id="Password"
-                            type="password"
-                            name="Password"
-                            class="form-control ml-2"
-                            placeholder="Enter Password"
-                        />
-                    </div>
-                    <button type="submit" class="btn btn-primary my-2 mr-3">Login</button>
-{#                    <a class="lostPassword" href="#">Lost Password?</a>#}
-                </form>
-
+                    {% elif request.path != '/signup' %}
+                    {% import  "bootstrap/wtf.html" as wtf %}
+                    {{ wtf.quick_form(form_login, action="/login", extra_classes="form-inline my-2 my-lg-0 login-form") }}
+                    <a href="/signup" class="btn btn-primary ml-3">Sign Up</a>
                 {% endif %}
             </ul>
         </div>
     </div>
 </nav>
+
+{% block styles %}
+    <style>
+        .login-form .form-group{
+            margin-right: 15px;
+        }
+
+        .login-form .form-group label{
+            margin-right: 10px;
+        }
+    </style>
+{% endblock %}

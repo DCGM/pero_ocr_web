@@ -1,0 +1,11 @@
+<!-- templates/index.html -->
+
+{% extends "base/base.html" %} {% block content %}
+    <h3>Register</h3>
+    {% import  "bootstrap/wtf.html" as wtf %}
+    {{ wtf.quick_form(form, extra_classes="register-form") }}
+{% endblock %}
+
+{% block scripts %}
+    <script src="../static/js/PasswordRepeat.js"></script>
+{% endblock %}

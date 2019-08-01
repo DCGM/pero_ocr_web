@@ -11,7 +11,7 @@ from app.document.forms import CreateDocumentForm
 @login_required
 def documents():
     user_created_documents = get_user_documents(current_user)
-    return render_template('document/documents.html', documents= user_created_documents)
+    return render_template('document/documents.html', documents=user_created_documents)
 
 
 @bp.route('/document/new', methods=['GET', 'POST'])
