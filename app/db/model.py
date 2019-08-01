@@ -27,7 +27,7 @@ class Image(Base):
     __tablename__ = 'images'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     filename = Column(String(100))
-    directory = Column(String(255))
+    path = Column(String(255))
 
 
 class DocumentImage(Base):

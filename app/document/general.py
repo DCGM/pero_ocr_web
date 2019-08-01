@@ -4,6 +4,7 @@ from app.db.general import get_document_by_id, remove_document_by_id, save_docum
 import os
 from flask import current_app as app
 from app.db import db_session
+import uuid
 
 
 def create_document(name, user):
@@ -27,9 +28,11 @@ def save_images(files, document_id):
 
     for file in files:
         if is_allowed_file(file):
-            file_path = os.path.join(directory_path, file.filename)
+            image_id = str(uuid.uuid4())
+            extension = os.path.splitext(file.filename)[1]
+            file_path = os.path.join(directory_path, "{}{}".format(image_id, extension))
             file.save(file_path)
-            image_db = Image(filename=file.filename, directory=directory_path)
+            image_db = Image(id=image_id, filename=file.filename, path=file_path)
             save_image_to_document(document, image_db)
 
 
@@ -59,7 +62,7 @@ def create_dirs(path):
 def get_image_url(document_id, image_id):
     document = get_document_by_id(document_id)
     image = document.images.filter_by(id=image_id).first()
-    return os.path.join(image.directory, image.filename)
+    return image.path
 
 
 def get_possible_collaborators(document):
