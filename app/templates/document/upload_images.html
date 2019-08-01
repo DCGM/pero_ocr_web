@@ -48,7 +48,10 @@
             </div>
         {% endfor %}
     </div>
-    <div class="modal"><!-- Place at bottom of page --></div>
+    <div class="modal">
+        <img class="mb-2" src="https://i.stack.imgur.com/FhHRx.gif" alt="loading">
+        <h2>Your images are uploading, please wait...</h2>
+    </div>
 
 {% endblock %} {% block styles %}
     <style>
@@ -65,7 +68,10 @@
             left: 0;
             height: 100%;
             width: 100%;
-            background: rgba(255, 255, 255, .8) url('https://i.stack.imgur.com/FhHRx.gif') 50% 50% no-repeat;
+            background: rgba(255, 255, 255, .8);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
         }
 
         body.loading {
@@ -73,7 +79,7 @@
         }
 
         body.loading .modal {
-            display: block;
+            display: flex;
         }
     </style>
 
