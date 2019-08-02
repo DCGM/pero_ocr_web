@@ -15,9 +15,25 @@ def create_document(name, user):
 
 
 def check_and_remove_document(document_id, user):
+    if is_document_owner(document_id, user):
+        remove_document_by_id(document_id)
+        return True
+    return False
+
+
+def is_document_owner(document_id, user):
     document = get_document_by_id(document_id)
     if document and document.user.id == user.id:
-        remove_document_by_id(document_id)
+        return True
+    else:
+        return False
+
+
+def is_user_owner_or_collaborator(document_id, user):
+    document = get_document_by_id(document_id)
+    if is_document_owner(document_id, user):
+        return True
+    if user in document.collaborators:
         return True
     return False
 
@@ -25,6 +41,8 @@ def check_and_remove_document(document_id, user):
 def save_images(files, document_id):
     document = get_document_by_id(document_id)
     directory_path = get_and_create_document_image_directory(document_id)
+
+    all_correct = True
 
     for file in files:
         if is_allowed_file(file):
@@ -34,6 +52,9 @@ def save_images(files, document_id):
             file.save(file_path)
             image_db = Image(id=image_id, filename=file.filename, path=file_path)
             save_image_to_document(document, image_db)
+        else:
+            all_correct = False
+    return all_correct
 
 
 def get_and_create_document_image_directory(document_id):

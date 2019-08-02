@@ -13,11 +13,11 @@ def signup_post():
         user = get_user_by_email(form.email.data)
 
         if user:
-            flash('Email address already exists!')
+            flash(u'Email address already exists!', 'danger')
             return render_template('forms/signup.html', form=form)
 
         if form.password.data != form.password2.data:
-            flash('Passwords are not same!')
+            flash(u'Passwords are not same!', 'danger')
             return render_template('forms/signup.html', form=form)
 
         new_user = create_user(form.email.data, form.password.data, form.first_name.data, form.last_name.data, form.institution.data)
@@ -36,7 +36,7 @@ def login_post():
         user = check_user(form.email.data, form.password.data)
 
         if not user:
-            flash('Please check your login details and try again.')
+            flash(u'Please check your login details and try again.', 'danger')
             return redirect(url_for('main.index'))
 
         login_user(user, remember=True)

@@ -99,6 +99,7 @@
       $.get("/document/" + last_document_id + "/delete").done(function (document_id){
           $('tr[data-document="' + document_id + '"').remove();
           $modal.modal('hide')
+          location.reload()
       });
   });
 
