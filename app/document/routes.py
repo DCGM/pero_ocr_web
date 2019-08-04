@@ -2,7 +2,8 @@ from app.document import bp
 from flask_login import login_required, current_user
 from flask import render_template, redirect, url_for, request, send_file, flash
 from app.document.general import create_document, check_and_remove_document, save_images, get_image_url, \
-    get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator
+    get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
+    remove_image, get_document_images
 from app.db.general import get_user_documents, get_document_by_id
 from app.document.forms import CreateDocumentForm
 
@@ -45,7 +46,8 @@ def document_upload_get(document_id):
         return redirect(url_for('main.index'))
 
     document = get_document_by_id(document_id)
-    return render_template('document/upload_images.html', document=document, images=document.images)
+    images = get_document_images(document)
+    return render_template('document/upload_images.html', document=document, images=images)
 
 
 @bp.route('/document/<string:document_id>/upload', methods=['POST'])
@@ -76,6 +78,17 @@ def get_image(document_id, image_id):
         return redirect(url_for('main.index'))
     image_url = get_image_url(document_id, image_id)
     return send_file(image_url)
+
+
+@bp.route('/remove_image/<string:document_id>/<string:image_id>')
+@login_required
+def remove_image_get(document_id, image_id):
+    if not is_user_owner_or_collaborator(document_id, current_user):
+        flash(u'You do not have sufficient rights to get this image!', 'danger')
+        return redirect(url_for('main.index'))
+    if remove_image(document_id, image_id):
+        flash(u'Image successfully removed!', 'success')
+    return redirect('/document/{}/upload'.format(document_id))
 
 
 @bp.route('/document/<string:document_id>/collaborators', methods=['GET'])

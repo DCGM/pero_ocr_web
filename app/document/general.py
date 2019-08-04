@@ -82,8 +82,18 @@ def create_dirs(path):
 
 def get_image_url(document_id, image_id):
     document = get_document_by_id(document_id)
-    image = document.images.filter_by(id=image_id).first()
+    image = document.images.filter_by(id=image_id, deleted=False).first()
     return image.path
+
+
+def remove_image(document_id, image_id):
+    document = get_document_by_id(document_id)
+    image = document.images.filter_by(id=image_id, deleted=False).first()
+    if image:
+        image.deleted = True
+        db_session.commit()
+        return True
+    return False
 
 
 def get_possible_collaborators(document):
@@ -126,3 +136,7 @@ def is_user_collaborator(document, user):
     if user in document.collaborators:
         return True
     return False
+
+
+def get_document_images(document):
+    return document.images.filter_by(deleted=False)

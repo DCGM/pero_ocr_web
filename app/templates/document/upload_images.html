@@ -1,4 +1,26 @@
 {% extends "base/base.html" %} {% block content %}
+
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Remove Image</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete this image?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button id="modal-remove-button" type="button" class="btn btn-danger">Remove</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <h3>{{ document.name }} - Upload Images</h3>
 
     <form
@@ -43,7 +65,9 @@
                         class="uploaded_image card-img-top"
                 />
                 <div class="card-body text-center">
-                    {{ image.filename }}
+                    <p>{{ image.filename }}</p>
+                    <a data-document="{{ document.id }}" data-image="{{ image.id }}"
+                       class="btn btn-danger delete-image-button text-white">Remove</a>
                 </div>
             </div>
         {% endfor %}
@@ -81,6 +105,10 @@
         body.loading .modal {
             display: flex;
         }
+
+        .modal-backdrop {
+            z-index: auto;
+        }
     </style>
 
 {% endblock %}
@@ -90,6 +118,10 @@
         $(document).ready(function () {
             let uploadInput = document.getElementById("document_upload_file_input");
             let uploadLabel = document.getElementById("document_upload_label");
+            let $modal = $('#exampleModal');
+
+            let lastImageId = null;
+            let lastDocumentId = null;
 
             if (uploadInput != null) {
                 uploadInput.addEventListener("change", updateNumberOfFiles);
@@ -97,6 +129,21 @@
 
             $('input[type="submit"]').on('click', function (event) {
                 $('body').addClass('loading')
+            });
+
+            $('.delete-image-button').on('click', function (event) {
+                event.preventDefault();
+                lastImageId = $(this).data('image');
+                lastDocumentId = $(this).data('document');
+
+                $modal.modal('show');
+            });
+
+            $('#modal-remove-button').on('click', function (event) {
+                event.preventDefault();
+                $.get("/remove_image/" + lastDocumentId + "/" + lastImageId).done(function (){
+                    location.reload();
+                } );
             });
 
             function updateNumberOfFiles() {
