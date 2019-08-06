@@ -59,6 +59,14 @@
           title="Upload Images"
           ><ion-icon name="cloud-upload"></ion-icon
         ></a>
+
+         <a
+          class="btn btn-secondary text-white"
+          href="/layout_analysis/{{ document.id }}/start"
+          data-toggle="tooltip"
+          data-placement="right"
+          title="Run layout analysis"
+          ><ion-icon name="fastforward"></ion-icon></a>
         {% endif %} {% if document.user.id == current_user.id %}
         <a
           class="btn btn-secondary text-white delete-document-button"

@@ -1,14 +1,28 @@
 from app.db import Base
-from sqlalchemy import Column, Enum, ForeignKey, Integer, String, Boolean
+from sqlalchemy import Column, Enum, ForeignKey, Integer, String, Boolean, DateTime
 from app.db.guid import GUID
 import enum
 from sqlalchemy.orm import relationship
 import uuid
+import datetime
 
 
 class DocumentState(enum.Enum):
     NEW = 'New'
-    UPLOADED_IMAGES = 'Uploaded images'
+    WAITING_LAYOUT_ANALYSIS = 'Waiting on start of layout analysis'
+    RUNNING_LAYOUT_ANALYSIS = 'Running layout analysis'
+
+
+class RequestState(enum.Enum):
+    PENDING = 0
+    IN_PROGRESS = 1
+    SUCCESS = 2
+    FAILURE = 3
+    CANCELED = 4
+
+
+class RequestType(enum.Enum):
+    LAYOUT_ANALYSIS = 0
 
 
 class Document(Base):
@@ -21,6 +35,7 @@ class Document(Base):
     deleted = Column(Boolean(), default=False)
     images = relationship('Image', secondary='documentimages', lazy='dynamic')
     collaborators = relationship('User', secondary='userdocuments')
+    requests = relationship('Request', back_populates="document", lazy='dynamic')
 
 
 class Image(Base):
@@ -43,3 +58,13 @@ class UserDocument(Base):
     id = Column(Integer(), primary_key=True)
     user_id = Column(Integer(), ForeignKey('users.id'), nullable=False)
     document_id = Column(GUID(), ForeignKey('documents.id'), nullable=False)
+
+
+class Request(Base):
+    __tablename__ = 'requests'
+    id = Column(GUID(), primary_key=True)
+    document_id = Column(GUID(), ForeignKey('documents.id'))
+    document = relationship('Document', back_populates="requests")
+    state = Column(Enum(RequestState))
+    created_date = Column(DateTime, default=datetime.datetime.utcnow)
+    request_type = Column(Enum(RequestType))

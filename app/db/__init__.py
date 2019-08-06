@@ -10,4 +10,4 @@ db_session = scoped_session(sessionmaker(autocommit=False,
 Base.query = db_session.query_property()
 
 from app.db.user import User
-from app.db.model import Document, Image
+from app.db.model import Document, Image, Request

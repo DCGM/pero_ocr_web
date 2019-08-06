@@ -42,6 +42,9 @@ def create_app():
     from app.profile import bp as profile_bp
     app.register_blueprint(profile_bp)
 
+    from app.layout_analysis import bp as layout_analysis_bp
+    app.register_blueprint(layout_analysis_bp)
+
     return app
 
 

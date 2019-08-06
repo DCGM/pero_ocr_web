@@ -71,11 +71,11 @@ def document_remove_image(document_id, image_id):
 
 
 @bp.route('/get_image/<string:document_id>/<string:image_id>')
-@login_required
+# @login_required
 def get_image(document_id, image_id):
-    if not is_user_owner_or_collaborator(document_id, current_user):
-        flash(u'You do not have sufficient rights to get this image!', 'danger')
-        return redirect(url_for('main.index'))
+    # if not is_user_owner_or_collaborator(document_id, current_user):
+    #     flash(u'You do not have sufficient rights to get this image!', 'danger')
+    #     return redirect(url_for('main.index'))
     image_url = get_image_url(document_id, image_id)
     return send_file(image_url)
 
