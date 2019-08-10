@@ -59,11 +59,13 @@
     <div>
         {% for image in images %}
             <div class="card d-inline-block m-3">
-                <img
-                        src="/get_image/{{ document.id }}/{{ image.id }}"
-                        alt="{{ image.filename }}"
-                        class="uploaded_image card-img-top"
-                />
+                <div class="card-image-container">
+                    <img
+                            src="/get_image/{{ document.id }}/{{ image.id }}"
+                            alt="{{ image.filename }}"
+                            class="uploaded_image card-img-top"
+                    />
+                </div>
                 <div class="card-body text-center">
                     <p>{{ image.filename }}</p>
                     <a data-document="{{ document.id }}" data-image="{{ image.id }}"
@@ -109,6 +111,10 @@
         .modal-backdrop {
             z-index: auto;
         }
+        .card-image-container{
+            display: flex;;
+            justify-content: center;
+        }
     </style>
 
 {% endblock %}
@@ -141,9 +147,9 @@
 
             $('#modal-remove-button').on('click', function (event) {
                 event.preventDefault();
-                $.get("/remove_image/" + lastDocumentId + "/" + lastImageId).done(function (){
+                $.get("/remove_image/" + lastDocumentId + "/" + lastImageId).done(function () {
                     location.reload();
-                } );
+                });
             });
 
             function updateNumberOfFiles() {

@@ -28,10 +28,18 @@ def get_first_layout_request():
         .order_by(Request.created_date).first()
 
 
-def change_layout_request_and_document_state(request):
-    # request.state = RequestState.IN_PROGRESS
-    request.document.state = DocumentState.RUNNING_LAYOUT_ANALYSIS
+def change_layout_request_and_document_state(request, request_state, document_state):
+    request.state = request_state
+    request.document.state = document_state
     db_session.commit()
+
+
+def change_layout_request_and_document_state_in_progress(request):
+    change_layout_request_and_document_state(request, RequestState.IN_PROGRESS, DocumentState.RUNNING_LAYOUT_ANALYSIS)
+
+
+def change_layout_request_and_document_state_on_success(request):
+    change_layout_request_and_document_state(request, RequestState.SUCCESS, DocumentState.COMPLETED_LAYOUT_ANALYSIS)
 
 
 def create_json_from_request(request):

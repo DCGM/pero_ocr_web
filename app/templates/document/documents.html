@@ -1,115 +1,137 @@
 {% extends "base/base.html" %} {% block content %}
-<a class="btn btn-primary add-document-button my-3" href="/document/new"
-  ><ion-icon name="add"></ion-icon> Add New Document</a
->
+    <a class="btn btn-primary add-document-button my-3" href="/document/new"
+    >
+        <ion-icon name="add"></ion-icon>
+        Add New Document</a
+    >
 
-<!-- Modal -->
-<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Remove Document</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        Are you sure you want to delete this document?
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button id="modal-remove-button" type="button" class="btn btn-danger">Remove</button>
-      </div>
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Remove Document</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete this document?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button id="modal-remove-button" type="button" class="btn btn-danger">Remove</button>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
 
-<table class="table table-hover">
-  <thead>
-    <tr>
-      <th scope="col">Name</th>
-      <th scope="col">Owner</th>
-      <th scope="col">State</th>
-      <th scope="col">Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for document in documents %}
-    <tr data-document="{{ document.id }}">
-      <td>{{ document.name }}</td>
-      <td>{{ document.user.first_name }} {{ document.user.last_name }}</td>
-      <td>{{ document.state.value }}</td>
-      <td>
-        {% if document.user.id == current_user.id %}
-        <a
-          class="btn btn-secondary"
-          href="/document/{{ document.id }}/collaborators"
-          data-toggle="tooltip"
-          data-placement="right"
-          title="Edit Collaborators"
-        >
-          <ion-icon name="contacts"></ion-icon
-        ></a>
-        {% endif %} {% if document.state.name == 'NEW' %}
-        <a
-          class="btn btn-secondary"
-          href="/document/{{ document.id }}/upload"
-          data-toggle="tooltip"
-          data-placement="right"
-          title="Upload Images"
-          ><ion-icon name="cloud-upload"></ion-icon
-        ></a>
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Owner</th>
+            <th scope="col">State</th>
+            <th scope="col">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for document in documents %}
+            <tr data-document="{{ document.id }}">
+                <td>{{ document.name }}</td>
+                <td>{{ document.user.first_name }} {{ document.user.last_name }}</td>
+                <td>{{ document.state.value }}</td>
+                <td>
+                    {% if document.user.id == current_user.id %}
+                        <a
+                                class="btn btn-secondary"
+                                href="/document/{{ document.id }}/collaborators"
+                                data-toggle="tooltip"
+                                data-placement="right"
+                                title="Edit Collaborators"
+                        >
+                            <ion-icon name="contacts"></ion-icon
+                            >
+                        </a>
+                    {% endif %} {% if document.state.name == 'NEW' %}
+                    <a
+                            class="btn btn-secondary"
+                            href="/document/{{ document.id }}/upload"
+                            data-toggle="tooltip"
+                            data-placement="right"
+                            title="Upload Images"
+                    >
+                        <ion-icon name="cloud-upload"></ion-icon
+                        >
+                    </a>
 
-         <a
-          class="btn btn-secondary text-white"
-          href="/layout_analysis/{{ document.id }}/start"
-          data-toggle="tooltip"
-          data-placement="right"
-          title="Run layout analysis"
-          ><ion-icon name="fastforward"></ion-icon></a>
-        {% endif %} {% if document.user.id == current_user.id %}
-        <a
-          class="btn btn-secondary text-white delete-document-button"
-          data-toggle="tooltip"
-          data-placement="right"
-          title="Remove Document"
-          data-document="{{ document.id }}"
-        >
-          <ion-icon name="trash"></ion-icon
-        ></a>
-        {% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+                    <a
+                            class="btn btn-secondary text-white"
+                            href="/layout_analysis/{{ document.id }}/start"
+                            data-toggle="tooltip"
+                            data-placement="right"
+                            title="Run layout analysis"
+                    >
+                        <ion-icon name="fastforward"></ion-icon>
+                    </a>
+                {% endif %}
+                    {% if document.state.name == 'COMPLETED_LAYOUT_ANALYSIS' %}
+                        <a
+                                class="btn btn-secondary text-white"
+                                href="/layout_analysis/{{ document.id }}/results"
+                                data-toggle="tooltip"
+                                data-placement="right"
+                                title="Show layout analysis results"
+                        >
+                            <ion-icon name="eye"></ion-icon>
+                        </a>
+                    {% endif %}
 
-<div></div>
+                    {% if document.user.id == current_user.id %}
+                        <a
+                                class="btn btn-secondary text-white delete-document-button"
+                                data-toggle="tooltip"
+                                data-placement="right"
+                                title="Remove Document"
+                                data-document="{{ document.id }}"
+                        >
+                            <ion-icon name="trash"></ion-icon
+                            >
+                        </a>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <div></div>
 
 {% endblock %} {% block scripts %}
-<script>
-  let $modal = $('#exampleModal');
-  let last_document_id = null;
-  $('[data-toggle="tooltip"]').tooltip();
-  $modal.modal({
-      show: false
-  });
+    <script>
+        let $modal = $('#exampleModal');
+        let last_document_id = null;
+        $('[data-toggle="tooltip"]').tooltip();
+        $modal.modal({
+            show: false
+        });
 
-  $('.delete-document-button').on('click', function (event) {
-      event.preventDefault();
-      last_document_id =  $(this).data('document');
-      $modal.modal('show');
-  });
+        $('.delete-document-button').on('click', function (event) {
+            event.preventDefault();
+            last_document_id = $(this).data('document');
+            $modal.modal('show');
+        });
 
-  $('#modal-remove-button').on('click',function (event) {
-      event.preventDefault();
-      console.log(last_document_id);
-      $.get("/document/" + last_document_id + "/delete").done(function (document_id){
-          $('tr[data-document="' + document_id + '"').remove();
-          $modal.modal('hide')
-          location.reload()
-      });
-  });
+        $('#modal-remove-button').on('click', function (event) {
+            event.preventDefault();
+            console.log(last_document_id);
+            $.get("/document/" + last_document_id + "/delete").done(function (document_id) {
+                $('tr[data-document="' + document_id + '"').remove();
+                $modal.modal('hide')
+                location.reload()
+            });
+        });
 
-</script>
+    </script>
 {% endblock %}

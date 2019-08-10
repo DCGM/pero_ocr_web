@@ -11,6 +11,7 @@ class DocumentState(enum.Enum):
     NEW = 'New'
     WAITING_LAYOUT_ANALYSIS = 'Waiting on start of layout analysis'
     RUNNING_LAYOUT_ANALYSIS = 'Running layout analysis'
+    COMPLETED_LAYOUT_ANALYSIS = 'Layout analysis completed'
 
 
 class RequestState(enum.Enum):
