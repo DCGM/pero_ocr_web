@@ -12,6 +12,7 @@ class DocumentState(enum.Enum):
     WAITING_LAYOUT_ANALYSIS = 'Waiting on start of layout analysis'
     RUNNING_LAYOUT_ANALYSIS = 'Running layout analysis'
     COMPLETED_LAYOUT_ANALYSIS = 'Layout analysis completed'
+    WAITING_OCR = 'Waiting on start of OCR'
 
 
 class RequestState(enum.Enum):
@@ -24,7 +25,7 @@ class RequestState(enum.Enum):
 
 class RequestType(enum.Enum):
     LAYOUT_ANALYSIS = 0
-
+    OCR = 1
 
 class Document(Base):
     __tablename__ = 'documents'
@@ -44,7 +45,7 @@ class Image(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     filename = Column(String(100))
     path = Column(String(255))
-    # text_regions = relationship('TextRegion', back_populates="image", lazy='dynamic')
+    textregions = relationship('TextRegion', back_populates="image", lazy='dynamic')
     deleted = Column(Boolean(), default=False)
 
 
@@ -71,10 +72,10 @@ class Request(Base):
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
     request_type = Column(Enum(RequestType))
 
-# class TextRegion(Base):
-#     __tablename__ = 'textregions'
-#     id = Column(GUID(), primary_key=True)
-#     image_id = Column(GUID(), ForeignKey('images.id'))
-#     image = relationship('Image', back_populates="textregions")
-#     points = Column(String())
-#     deleted = Column(Boolean())
+class TextRegion(Base):
+    __tablename__ = 'textregions'
+    id = Column(GUID(), primary_key=True)
+    image_id = Column(GUID(), ForeignKey('images.id'))
+    image = relationship('Image', back_populates="textregions")
+    points = Column(String())
+    deleted = Column(Boolean())
