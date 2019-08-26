@@ -1,0 +1,166 @@
+{% extends "base/base.html" %} {% block content %}
+    <h3 class="text-left">{{ document.name }} - Layout Analysis Results</h3>
+    <div class="results-preview-container my-3">
+        <div class="results-preview-btn prev-btn disabled">
+            <ion-icon name="arrow-dropleft"></ion-icon>
+        </div>
+        <div class="images-container">
+            {% for image in images %}
+                <div class="image-item-container d-inline-flex flex-column" data-document="{{ document.id }}"
+                     data-image="{{ image.id }}">
+                    <div class="image-container">
+                        <img
+                                src="/get_result_preview/{{ document.id }}/{{ image.id }}"
+                                alt="{{ image.filename }}"
+                                class="uploaded_image card-img-top"
+                        />
+                    </div>
+                    <div class="text-center">
+                        <p>{{ image.filename }}</p>
+                    </div>
+                    <div class="d-none image-item-active"></div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="results-preview-btn next-btn">
+            <ion-icon name="arrow-dropright"></ion-icon>
+        </div>
+    </div>
+    <div class="current-result-container" data-document="{{ document.id }}" data-image="{{ images[0].id }}">
+        <a href="/layout_analysis/{{ document.id }}/get_xml/{{ images[0].id }}" id="download-xml-btn"
+           class="btn btn-lg btn-primary my-3">Download XML</a>
+
+        <div id="map-container">
+            <div id="mapid"></div>
+        </div>
+    </div>
+{% endblock %} {% block styles %}
+    <link rel="stylesheet" href="/static/leaflet/leaflet.css">
+    <style>
+        #content {
+            text-align: center;
+        }
+
+        .uploaded_image {
+            max-width: 100px;
+            max-height: 200px;
+        }
+
+        .image-item-container:not(:last-child) {
+            border-right: 1px solid lightgray;
+        }
+
+        .images-container {
+            display: inline-flex;
+            flex-direction: row;
+            overflow-x: auto;
+            margin: 0 auto;
+            border: 1px solid lightgray;
+        }
+
+        .results-preview-container {
+            display: inline-flex;
+            align-items: center;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        ion-icon {
+            width: 3em;
+            height: 3em;
+            cursor: pointer;
+        }
+
+        .image-item-container {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .image-item-active {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            opacity: 0.45;
+            background: yellow;
+        }
+
+        .results-preview-btn.disabled ion-icon {
+            cursor: not-allowed;
+            color: lightgray;
+        }
+
+        #mapid {
+            height: 75vh;
+        }
+    </style>
+
+{% endblock %}
+
+{% block scripts %}
+    <script src="/static/leaflet/leaflet.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('.image-item-container').on('click', function (event) {
+                let old_image_id = $('.current-result-container').data('image');
+                let document_id = $(this).data('document');
+                let image_id = $(this).data('image');
+
+                if (old_image_id !== image_id) {
+                    $('.current-result-container').data('document', document_id);
+                    $('.current-result-container').data('image', image_id);
+                    $('#download-xml-btn').attr('href', `/layout_analysis/${document_id}/get_xml/${image_id}`);
+                    changeImage(image_id);
+                    $('.image-item-active').addClass('d-none');
+                    $(`[data-image="${image_id}"] .image-item-active`).removeClass('d-none')
+                }
+            });
+
+            let $image_containers = $('.image-item-container');
+            if ($image_containers.length) {
+                let $image_container = $($image_containers[0]);
+                $image_container.find('.image-item-active').removeClass('d-none');
+            }
+
+            function changeImage(image_id) {
+                $.post(`/layout_analysis/{{ document.id }}/result/${image_id}`).done(function (data) {
+                    console.log('Data', data);
+                    var map_region = document.getElementById('map-container');
+                    map_region.innerHTML = "<div id='mapid'></div>";
+
+                    var mymap = L.map('mapid', {
+                        crs: L.CRS.Simple,
+                        minZoom: -3,
+                        maxZoom: 3,
+                        center: [0, 0],
+                        zoom: 0,
+                        editable: true,
+                        fadeAnimation: false,
+                        zoomAnimation: false,
+                        zoomSnap: 0.25
+                    });
+
+                    var yx = L.latLng;
+                    var xy = function (x, y) {
+                        if (L.Util.isArray(x)) {    // When doing xy([x, y]);
+                            return yx(x[1], x[0]);
+                        }
+                        return yx(y, x);  // When doing xy(x, y);
+                    };
+                    var image_width = data.width;
+                    var image_height = data.height;
+                    var bounds = [xy(0, -image_height), xy(image_width, 0)];
+                    mymap.setView(xy(image_width / 2, -image_height / 2), -2);
+                    var image = L.imageOverlay(`/get_image/{{ document.id }}/${image_id}`, bounds).addTo(mymap);
+
+                    //zoom_level = Math.log(annotator_data.width / 256.0) / Math.log(2)
+                    mymap.fitBounds(bounds);
+                });
+            }
+
+            changeImage('{{ images[0].id }}')
+        });
+
+    </script>
+{% endblock %}

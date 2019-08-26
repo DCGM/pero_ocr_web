@@ -28,7 +28,7 @@
                         <a class="nav-link my-2" href="{{ url_for('auth.logout') }}">Logout</a>
                     </li>
 
-                    {% elif request.path != '/signup' %}
+                    {% elif request.path == '/' or request.path == '/index' %}
                     {% import  "bootstrap/wtf.html" as wtf %}
                     {{ wtf.quick_form(form_login, action="/login", extra_classes="form-inline my-2 my-lg-0 login-form") }}
                     <a href="/signup" class="btn btn-primary ml-3">Sign Up</a>

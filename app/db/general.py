@@ -1,6 +1,6 @@
 from app.db import db_session
 from app.db.user import User
-from app.db.model import Document, Request
+from app.db.model import Document, Request, Image
 
 
 def save_user(user):
@@ -53,3 +53,6 @@ def get_all_users():
 def get_request_by_id(request_id):
     return Request.query.filter_by(id=request_id).first()
 
+
+def get_image_by_id(image_id):
+    return Image.query.filter_by(id=image_id, deleted=False).first()

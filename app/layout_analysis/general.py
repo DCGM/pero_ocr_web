@@ -1,7 +1,10 @@
 import uuid
 from app.db.model import RequestState, RequestType, Request, DocumentState
 from app.db import db_session
-from flask import jsonify
+from flask import jsonify, current_app
+import xml.etree.ElementTree as ET
+from PIL import Image, ImageDraw, ImageColor
+import os
 
 
 def create_layout_analysis_request(document):
@@ -48,3 +51,19 @@ def create_json_from_request(request):
         if not image.deleted:
             val['document']['images'].append(image.id)
     return jsonify(val)
+
+def make_image_result_preview(image_path, xml_path, image_id):
+    image = Image.open(image_path)
+    image = image.convert('RGB')
+    root = ET.parse(xml_path).getroot()
+    for region in root.iter('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15}TextRegion'):
+        for coords in region.iter('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15}Coords'):
+            coords_string = coords.get('points').split(' ')
+            region_points = []
+            for point_string in coords_string:
+                point = point_string.split(',')
+                region_points.append((int(point[1]), int(point[0])))
+            region_points.append(region_points[0])
+            ImageDraw.Draw(image).line(region_points, width=35, fill=(0, 255, 0))
+        image.save(os.path.join(os.path.dirname(xml_path), str(image_id) + '.jpg'))
+    return

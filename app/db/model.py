@@ -44,6 +44,7 @@ class Image(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     filename = Column(String(100))
     path = Column(String(255))
+    # text_regions = relationship('TextRegion', back_populates="image", lazy='dynamic')
     deleted = Column(Boolean(), default=False)
 
 
@@ -69,3 +70,11 @@ class Request(Base):
     state = Column(Enum(RequestState))
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
     request_type = Column(Enum(RequestType))
+
+# class TextRegion(Base):
+#     __tablename__ = 'textregions'
+#     id = Column(GUID(), primary_key=True)
+#     image_id = Column(GUID(), ForeignKey('images.id'))
+#     image = relationship('Image', back_populates="textregions")
+#     points = Column(String())
+#     deleted = Column(Boolean())

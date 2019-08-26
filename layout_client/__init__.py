@@ -9,6 +9,7 @@ base_url = 'http://127.0.0.1:5000'
 route = '/layout_analysis/get_request'
 folder = 'C:\\Users\\rykk0\\Documents\\pero_ocr_web_data\\client_images'
 output_folder = 'C:\\Users\\rykk0\\Documents\\pero_ocr_web_data\\client_images_results'
+layout_detector = 'C:\\Users\\rykk0\\OneDrive\\Dokumenty\\source\\detect_paragraphs.py'
 
 
 def get_document_images_folder_path(document_id):
@@ -30,13 +31,13 @@ def get_and_save_document_images(document_id, images):
 
 
 def get_and_save_document():
-    r = requests.get('{}{}'.format(base_url, route))
+    r = requests. get('{}{}'.format(base_url, route))
     return_json = r.json()
     if 'document' in return_json.keys():
         document = return_json['document']
         get_and_save_document_images(document['id'], document['images'])
         return return_json['id'], document
-    return None
+    return None, None
 
 
 def make_post_request_data(document):

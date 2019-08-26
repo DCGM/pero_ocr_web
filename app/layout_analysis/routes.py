@@ -1,11 +1,15 @@
 from app.layout_analysis import bp
-from flask import render_template, url_for, redirect, flash, jsonify, request, current_app
-from flask_login import login_required
-from app.db.general import get_document_by_id, get_request_by_id
+from flask import render_template, url_for, redirect, flash, jsonify, request, current_app, send_file, abort, make_response
+from flask_login import login_required, current_user
+from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id
 from app.layout_analysis.general import create_layout_analysis_request, can_start_layout_analysis, \
     add_layout_request_and_change_document_state, get_first_layout_request, change_layout_request_and_document_state_in_progress, \
-    create_json_from_request, change_layout_request_and_document_state_on_success
+    create_json_from_request, change_layout_request_and_document_state_on_success, make_image_result_preview
 import os
+from app.db.model import DocumentState
+import xml.etree.ElementTree as ET
+from app.document.general import get_document_images, is_user_owner_or_collaborator
+from PIL import Image
 
 
 @bp.route('/layout_analysis/<string:document_id>/start')
@@ -34,6 +38,9 @@ def get_request():
 @bp.route('/layout_analysis/<string:request_id>/post_result', methods=['POST'])
 def post_result(request_id):
     analysis_request = get_request_by_id(request_id)
+    document = get_document_by_id(analysis_request.document_id)
+    folder_path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document.id))
+
     if not analysis_request:
         return
 
@@ -44,12 +51,65 @@ def post_result(request_id):
     files = request.files
     for file_id in files:
         file = files[file_id]
-        file.save(os.path.join(path, file.filename))
+        xml_path = os.path.join(path, file.filename)
+        file.save(xml_path)
+
+    for image in document.images.all():
+        if not image.deleted:
+            image_id = str(image.id)
+            xml_path = os.path.join(folder_path, image_id + '.xml')
+            make_image_result_preview(image.path, xml_path, image.id)
 
     change_layout_request_and_document_state_on_success(analysis_request)
-    return
+    return 'OK'
 
 
 @bp.route('/layout_analysis/<string:document_id>/results', methods=['GET'])
+@login_required
 def show_results(document_id):
-    return '<h1>LAYOUT RESULTS</h1><p>{}</p>'.format(document_id)
+    document = get_document_by_id(document_id)
+    if document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
+        return  # Bad Request or something like that
+    folder_path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document_id))
+    xml_files = dict()
+    images = get_document_images(document)
+    for image in document.images.all():
+        if not image.deleted:
+            image_id = str(image.id)
+            xml_path = os.path.join(folder_path, image_id + '.xml')
+            et = ET.parse(xml_path)
+            xml_string = ET.tostring(et.getroot(), encoding='utf8', method='xml')
+            xml_files[image_id] = xml_string
+
+    return render_template('layout_analysis/layout_results.html', document=document, images=images, xml_files=xml_files)
+
+
+@bp.route('/layout_analysis/<string:document_id>/get_xml/<string:image_id>')
+@login_required
+def download_result_xml(document_id, image_id):
+    if not is_user_owner_or_collaborator(document_id, current_user):
+        return abort(403)
+
+    xml_path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], document_id, image_id + '.xml')
+    return send_file(xml_path)
+
+
+@bp.route('/layout_analysis/<string:document_id>/result/<string:image_id>', methods=['POST'])
+@login_required
+def get_image_result(document_id, image_id):
+    image = get_image_by_id(image_id)
+    # TODO Test prav uzivatele
+    xml_path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], document_id, image_id + '.xml')
+
+    img = Image.open(image.path)
+    width, height = img.size
+    return {'width': width, 'height': height}
+
+@bp.route('/get_result_preview/<string:document_id>/<string:image_id>')
+@login_required
+def get_result_preview(document_id, image_id):
+    if not is_user_owner_or_collaborator(document_id, current_user):
+        flash(u'You do not have sufficient rights to get this image!', 'danger')
+        return redirect(url_for('main.index'))
+    image_url = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], document_id, image_id + '.jpg')
+    return send_file(image_url)
