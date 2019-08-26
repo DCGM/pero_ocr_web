@@ -45,6 +45,8 @@ class Image(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     filename = Column(String(100))
     path = Column(String(255))
+    width = Column(Integer())
+    height = Column(Integer())
     textregions = relationship('TextRegion', back_populates="image", lazy='dynamic')
     deleted = Column(Boolean(), default=False)
 

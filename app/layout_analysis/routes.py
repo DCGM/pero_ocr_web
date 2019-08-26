@@ -53,7 +53,6 @@ def get_request():
 def get_ocr_request():
     ocr_request = get_first_ocr_request()
     if ocr_request:
-        change_layout_request_and_document_state_in_progress(ocr_request)
         return create_json_from_request(ocr_request)
     else:
         return jsonify({})

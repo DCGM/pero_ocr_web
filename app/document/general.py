@@ -5,6 +5,7 @@ import os
 from flask import current_app as app
 from app.db import db_session
 import uuid
+from PIL import Image as PILImage
 
 
 def create_document(name, user):
@@ -50,7 +51,9 @@ def save_images(files, document_id):
             extension = os.path.splitext(file.filename)[1]
             file_path = os.path.join(directory_path, "{}{}".format(image_id, extension))
             file.save(file_path)
-            image_db = Image(id=image_id, filename=file.filename, path=file_path)
+            img = PILImage.open(file_path)
+            width, height = img.size
+            image_db = Image(id=image_id, filename=file.filename, path=file_path, width=width, height=height)
             save_image_to_document(document, image_db)
         else:
             all_correct = False
