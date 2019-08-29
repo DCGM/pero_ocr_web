@@ -14,20 +14,7 @@ from PIL import Image
 from app.db import db_session
 import uuid
 
-@bp.route('/ocr/<string:document_id>/start')
-@login_required
-def start_ocr(document_id):
-    document = get_document_by_id(document_id)
-    request = create_ocr_analysis_request(document)
-    if can_start_ocr(document):
-        add_ocr_request_and_change_document_state(request)
-        flash(u'Request for ocr successfully created!', 'success')
-    else:
-        flash(u'Request for ocr is already pending or document is in unsupported state!', 'danger')
-    return redirect(url_for('document.documents'))
-
-
-@bp.route('/layout_analysis/<string:document_id>/start')
+@bp.route('/start/<string:document_id>')
 @login_required
 def start_layout_analysis(document_id):
     document = get_document_by_id(document_id)
@@ -40,7 +27,7 @@ def start_layout_analysis(document_id):
     return redirect(url_for('document.documents'))
 
 
-@bp.route('/layout_analysis/get_request')
+@bp.route('/get_request')
 def get_request():
     analysis_request = get_first_layout_request()
     if analysis_request:
@@ -49,16 +36,7 @@ def get_request():
     else:
         return jsonify({})
 
-@bp.route('/ocr/get_request')
-def get_ocr_request():
-    ocr_request = get_first_ocr_request()
-    if ocr_request:
-        return create_json_from_request(ocr_request)
-    else:
-        return jsonify({})
-
-
-@bp.route('/layout_analysis/<string:request_id>/post_result', methods=['POST'])
+@bp.route('/post_result/<string:request_id>', methods=['POST'])
 def post_result(request_id):
     analysis_request = get_request_by_id(request_id)
     document = get_document_by_id(analysis_request.document_id)
@@ -91,7 +69,7 @@ def post_result(request_id):
     return 'OK'
 
 
-@bp.route('/layout_analysis/<string:document_id>/results', methods=['GET'])
+@bp.route('/results/<string:document_id>', methods=['GET'])
 @login_required
 def show_results(document_id):
     document = get_document_by_id(document_id)
@@ -111,7 +89,7 @@ def show_results(document_id):
     return render_template('layout_analysis/layout_results.html', document=document, images=images, xml_files=xml_files)
 
 
-@bp.route('/layout_analysis/<string:document_id>/get_xml/<string:image_id>')
+@bp.route('/get_xml/<string:document_id>/<string:image_id>')
 @login_required
 def download_result_xml(document_id, image_id):
     if not is_user_owner_or_collaborator(document_id, current_user):
@@ -121,7 +99,7 @@ def download_result_xml(document_id, image_id):
     return send_file(xml_path)
 
 
-@bp.route('/layout_analysis/<string:document_id>/result/<string:image_id>', methods=['POST'])
+@bp.route('/get_image_result/<string:document_id>/<string:image_id>', methods=['POST'])
 @login_required
 def get_image_result(document_id, image_id):
     image = get_image_by_id(image_id)
