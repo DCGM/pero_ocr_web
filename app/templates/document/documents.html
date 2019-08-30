@@ -68,7 +68,7 @@
 
                     <a
                             class="btn btn-secondary text-white"
-                            href="/layout_analysis/{{ document.id }}/start"
+                            href="/layout_analysis/start/{{ document.id }}"
                             data-toggle="tooltip"
                             data-placement="right"
                             title="Run layout analysis"
@@ -79,7 +79,7 @@
                     {% if document.state.name == 'COMPLETED_LAYOUT_ANALYSIS' %}
                         <a
                                 class="btn btn-secondary text-white"
-                                href="/layout_analysis/{{ document.id }}/results"
+                                href="/layout_analysis/results/{{ document.id }}"
                                 data-toggle="tooltip"
                                 data-placement="right"
                                 title="Show layout analysis results"
@@ -88,7 +88,7 @@
                         </a>
                         <a
                             class="btn btn-secondary text-white"
-                            href="/ocr/{{ document.id }}/start"
+                            href="/ocr/start_ocr/{{ document.id }}"
                             data-toggle="tooltip"
                             data-placement="right"
                             title="Run ocr"

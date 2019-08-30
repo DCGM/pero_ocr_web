@@ -1,8 +1,8 @@
-from app.layout_analysis import bp
+from app.ocr import bp
 from flask import render_template, url_for, redirect, flash, jsonify, request, current_app, send_file, abort, make_response
 from flask_login import login_required, current_user
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id
-from app.ocr.general import create_json_from_request, change_layout_request_and_document_state_on_success,\
+from app.ocr.general import create_json_from_request, create_ocr_analysis_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request
 import os
 from app.db.model import DocumentState, TextRegion

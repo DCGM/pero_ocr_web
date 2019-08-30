@@ -10,7 +10,7 @@
                      data-image="{{ image.id }}">
                     <div class="image-container">
                         <img
-                                src="/get_result_preview/{{ document.id }}/{{ image.id }}"
+                                src="/layout_analysis/get_result_preview/{{ document.id }}/{{ image.id }}"
                                 alt="{{ image.filename }}"
                                 class="uploaded_image card-img-top"
                         />
@@ -127,7 +127,7 @@
             }
 
             function changeImage(image_id) {
-                $.post(`/layout_analysis/{{ document.id }}/result/${image_id}`).done(function (data) {
+                $.post(`/layout_analysis/get_image_result/{{ document.id }}/${image_id}`).done(function (data) {
                     console.log('Data', data);
                     var map_region = document.getElementById('map-container');
                     map_region.innerHTML = "<div id='mapid'></div>";

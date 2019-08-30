@@ -27,15 +27,17 @@ class RequestType(enum.Enum):
     LAYOUT_ANALYSIS = 0
     OCR = 1
 
+
 class Document(Base):
     __tablename__ = 'documents'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(100))
     state = Column(Enum(DocumentState))
+    deleted = Column(Boolean(), default=False)
+
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", back_populates="documents")
-    deleted = Column(Boolean(), default=False)
-    images = relationship('Image', secondary='documentimages', lazy='dynamic')
+    images = relationship('Image', back_populates="document", lazy='dynamic')
     collaborators = relationship('User', secondary='userdocuments')
     requests = relationship('Request', back_populates="document", lazy='dynamic')
 
@@ -47,15 +49,11 @@ class Image(Base):
     path = Column(String(255))
     width = Column(Integer())
     height = Column(Integer())
-    textregions = relationship('TextRegion', back_populates="image", lazy='dynamic')
     deleted = Column(Boolean(), default=False)
 
-
-class DocumentImage(Base):
-    __tablename__ = 'documentimages'
-    id = Column(Integer(), primary_key=True)
-    document_id = Column(GUID(), ForeignKey('documents.id'), nullable=False)
-    image_id = Column(GUID(), ForeignKey('images.id'), nullable=False)
+    document_id = Column(GUID(), ForeignKey('documents.id'))
+    document = relationship('Document', back_populates="images")
+    textregions = relationship('TextRegion', back_populates="image", lazy='dynamic')
 
 
 class UserDocument(Base):
@@ -68,17 +66,19 @@ class UserDocument(Base):
 class Request(Base):
     __tablename__ = 'requests'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    document_id = Column(GUID(), ForeignKey('documents.id'))
-    document = relationship('Document', back_populates="requests")
-    state = Column(Enum(RequestState))
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
     request_type = Column(Enum(RequestType))
+    state = Column(Enum(RequestState))
 
+    document_id = Column(GUID(), ForeignKey('documents.id'))
+    document = relationship('Document', back_populates="requests")
 
 class TextRegion(Base):
     __tablename__ = 'textregions'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    image_id = Column(GUID(), ForeignKey('images.id'))
-    image = relationship('Image', back_populates="textregions")
     points = Column(String())
     deleted = Column(Boolean())
+
+    image_id = Column(GUID(), ForeignKey('images.id'))
+    image = relationship('Image', back_populates="textregions")
+

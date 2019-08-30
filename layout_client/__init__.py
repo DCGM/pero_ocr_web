@@ -52,7 +52,7 @@ def make_post_request_data(document):
 
 
 def get_post_route(document_id):
-    return '/layout_analysis/{}/post_result'.format(document_id)
+    return '/layout_analysis/post_result/{}'.format(document_id)
 
 
 def run_layout_analysis(document):
