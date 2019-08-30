@@ -1,19 +1,20 @@
-import uuid
-from app.db.model import RequestState, RequestType, Request, DocumentState, TextRegion
+from app.db.model import RequestState, RequestType, Request, DocumentState
 from app.db import db_session
-from flask import jsonify, current_app
+from flask import jsonify
 import xml.etree.ElementTree as ET
-from PIL import Image, ImageDraw, ImageColor
+from PIL import Image, ImageDraw
 import os
 
 
 def create_layout_analysis_request(document):
-    return Request(id=str(uuid.uuid4()), document=document, document_id=document.id,
+    return Request(document=document, document_id=document.id,
                    request_type=RequestType.LAYOUT_ANALYSIS, state=RequestState.PENDING)
 
+
 def create_ocr_analysis_request(document):
-    return Request(id=str(uuid.uuid4()), document=document, document_id=document.id,
+    return Request(document=document, document_id=document.id,
                    request_type=RequestType.OCR, state=RequestState.PENDING)
+
 
 def can_start_layout_analysis(document):
     if not Request.query.filter_by(document_id=document.id, request_type=RequestType.LAYOUT_ANALYSIS,
@@ -21,11 +22,13 @@ def can_start_layout_analysis(document):
         return True
     return False
 
+
 def can_start_ocr(document):
     if not Request.query.filter_by(document_id=document.id, request_type=RequestType.OCR,
                                    state=RequestState.PENDING).first() and document.state == DocumentState.COMPLETED_LAYOUT_ANALYSIS:
         return True
     return False
+
 
 def add_layout_request_and_change_document_state(request):
     request.document.state = DocumentState.WAITING_LAYOUT_ANALYSIS

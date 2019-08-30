@@ -4,7 +4,6 @@ from app.db.general import get_document_by_id, remove_document_by_id, save_docum
 import os
 from flask import current_app as app
 from app.db import db_session
-import uuid
 from PIL import Image as PILImage
 
 
@@ -47,13 +46,17 @@ def save_images(files, document_id):
 
     for file in files:
         if is_allowed_file(file):
-            image_id = str(uuid.uuid4())
+            image_db = Image(filename=file.filename)
+            image_id = str(Image.id)
             extension = os.path.splitext(file.filename)[1]
             file_path = os.path.join(directory_path, "{}{}".format(image_id, extension))
             file.save(file_path)
             img = PILImage.open(file_path)
             width, height = img.size
-            image_db = Image(id=image_id, filename=file.filename, path=file_path, width=width, height=height)
+
+            image_db.path = file_path
+            image_db.width = width
+            image_db.height = height
             save_image_to_document(document, image_db)
         else:
             all_correct = False

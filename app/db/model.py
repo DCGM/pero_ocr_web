@@ -77,7 +77,7 @@ class TextRegion(Base):
     __tablename__ = 'textregions'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     points = Column(String())
-    deleted = Column(Boolean())
+    deleted = Column(Boolean(), default=False)
 
     image_id = Column(GUID(), ForeignKey('images.id'))
     image = relationship('Image', back_populates="textregions")

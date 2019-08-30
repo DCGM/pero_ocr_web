@@ -1,18 +1,17 @@
 from app.layout_analysis import bp
-from flask import render_template, url_for, redirect, flash, jsonify, request, current_app, send_file, abort, make_response
+from flask import render_template, url_for, redirect, flash, jsonify, request, current_app, send_file, abort
 from flask_login import login_required, current_user
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id
 from app.layout_analysis.general import create_layout_analysis_request, can_start_layout_analysis, \
     add_layout_request_and_change_document_state, get_first_layout_request, change_layout_request_and_document_state_in_progress, \
-    create_json_from_request, change_layout_request_and_document_state_on_success, make_image_result_preview,\
-    create_ocr_analysis_request, can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request
+    create_json_from_request, change_layout_request_and_document_state_on_success, make_image_result_preview
 import os
 from app.db.model import DocumentState, TextRegion
 import xml.etree.ElementTree as ET
 from app.document.general import get_document_images, is_user_owner_or_collaborator
 from PIL import Image
 from app.db import db_session
-import uuid
+
 
 @bp.route('/start/<string:document_id>')
 @login_required
@@ -61,7 +60,7 @@ def post_result(request_id):
             xml_path = os.path.join(folder_path, image_id + '.xml')
             regions_coords = make_image_result_preview(image.path, xml_path, image.id)
             for region_coords in regions_coords:
-                text_region = TextRegion(id=uuid.uuid4(),image_id=image_id, points=region_coords, deleted=False)
+                text_region = TextRegion(image_id=image_id, points=region_coords)
                 image.textregions.append(text_region)
                 db_session.commit()
 
