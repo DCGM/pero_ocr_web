@@ -43,7 +43,10 @@ def create_app():
     app.register_blueprint(profile_bp)
 
     from app.layout_analysis import bp as layout_analysis_bp
-    app.register_blueprint(layout_analysis_bp)
+    app.register_blueprint(layout_analysis_bp, url_prefix='/layout_analysis')
+
+    from app.ocr import bp as ocr_bp
+    app.register_blueprint(ocr_bp, url_prefix='/ocr')
 
     return app
 
