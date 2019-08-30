@@ -82,7 +82,7 @@ def get_xml(document_id, image_id):
                                  {"imageFilename": path.splitext(image.filename)[0], "imageWidth": str(image.width), "imageHeight": str(image.height)})
     region_index = 1
     for text_region in image.textregions:
-        text_region_element = ET.SubElement(page_element, 'TextRegion', {"id": "r{}".format(region_index)})
+        text_region_element = ET.SubElement(page_element, 'TextRegion', {"id": str(text_region.id)})
         ET.SubElement(text_region_element, 'Coords', {"points": text_region.points})
         region_index += 1
 
