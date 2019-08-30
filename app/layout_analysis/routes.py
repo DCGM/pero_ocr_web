@@ -83,7 +83,7 @@ def post_result(request_id):
             xml_path = os.path.join(folder_path, image_id + '.xml')
             regions_coords = make_image_result_preview(image.path, xml_path, image.id)
             for region_coords in regions_coords:
-                text_region = TextRegion(id=uuid.uuid4(),image_id=image_id,image=image,points=region_coords,deleted=False)
+                text_region = TextRegion(id=uuid.uuid4(),image_id=image_id, points=region_coords, deleted=False)
                 image.textregions.append(text_region)
                 db_session.commit()
 
@@ -130,7 +130,16 @@ def get_image_result(document_id, image_id):
 
     img = Image.open(image.path)
     width, height = img.size
-    return {'width': width, 'height': height}
+    textregions = []
+    for textregion in image.textregions:
+        textregion_points_string = textregion.points.split(' ')
+        textregion_points = []
+        for textregion_point_string in textregion_points_string:
+            point = textregion_point_string.split(',')
+            textregion_points.append([int(point[1]), int(point[0])])
+        textregions.append(textregion_points)
+
+    return {'width': width, 'height': height, 'textregions': textregions}
 
 @bp.route('/get_result_preview/<string:document_id>/<string:image_id>')
 @login_required

@@ -27,7 +27,7 @@
         </div>
     </div>
     <div class="current-result-container" data-document="{{ document.id }}" data-image="{{ images[0].id }}">
-        <a href="/layout_analysis/{{ document.id }}/get_xml/{{ images[0].id }}" id="download-xml-btn"
+        <a href="/get_xml/{{ document.id }}/{{ images[0].id }}" id="download-xml-btn"
            class="btn btn-lg btn-primary my-3">Download XML</a>
 
         <div id="map-container">
@@ -100,8 +100,11 @@
 
 {% block scripts %}
     <script src="/static/leaflet/leaflet.js"></script>
+    <script src="/static/leaflet/Leaflet.Editable.js"></script>
     <script>
         $(document).ready(function () {
+
+
             $('.image-item-container').on('click', function (event) {
                 let old_image_id = $('.current-result-container').data('image');
                 let document_id = $(this).data('document');
@@ -110,7 +113,7 @@
                 if (old_image_id !== image_id) {
                     $('.current-result-container').data('document', document_id);
                     $('.current-result-container').data('image', image_id);
-                    $('#download-xml-btn').attr('href', `/layout_analysis/${document_id}/get_xml/${image_id}`);
+                    $('#download-xml-btn').attr('href', `/get_xml/${document_id}/${image_id}`);
                     changeImage(image_id);
                     $('.image-item-active').addClass('d-none');
                     $(`[data-image="${image_id}"] .image-item-active`).removeClass('d-none')
@@ -138,8 +141,43 @@
                         editable: true,
                         fadeAnimation: false,
                         zoomAnimation: false,
-                        zoomSnap: 0.25
+                        zoomSnap: 0.25,
                     });
+
+                    L.EditControl = L.Control.extend({
+                        options: {
+                            position: 'topleft',
+                            callback: null,
+                            kind: '',
+                            html: ''
+                        },
+                        onAdd: function (map) {
+                            var container = L.DomUtil.create('div', 'leaflet-control leaflet-bar'),
+                                link = L.DomUtil.create('a', '', container);
+                            link.href = '#';
+                            link.title = 'Create a new ' + this.options.kind;
+                            link.innerHTML = this.options.html;
+                            L.DomEvent.on(link, 'click', L.DomEvent.stop)
+                                .on(link, 'click', function () {
+                                    window.LAYER = this.options.callback.call(mymap.editTools);
+                                }, this);
+                            return container;
+                        }
+                    });
+                    L.NewPolygonControl = L.EditControl.extend({
+                        options: {
+                            position: 'topleft',
+                            callback: mymap.editTools.startPolygon,
+                            kind: 'polygon',
+                            html: '▰'
+                        }
+                    });
+                    mymap.addControl(new L.NewPolygonControl());
+                    data.textregions.forEach(function (item) {
+                        var polyline = L.polyline(item).addTo(mymap);
+                        polyline.enableEdit();
+                    });
+
 
                     var yx = L.latLng;
                     var xy = function (x, y) {

@@ -67,16 +67,17 @@ class UserDocument(Base):
 
 class Request(Base):
     __tablename__ = 'requests'
-    id = Column(GUID(), primary_key=True)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     document_id = Column(GUID(), ForeignKey('documents.id'))
     document = relationship('Document', back_populates="requests")
     state = Column(Enum(RequestState))
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
     request_type = Column(Enum(RequestType))
 
+
 class TextRegion(Base):
     __tablename__ = 'textregions'
-    id = Column(GUID(), primary_key=True)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     image_id = Column(GUID(), ForeignKey('images.id'))
     image = relationship('Image', back_populates="textregions")
     points = Column(String())

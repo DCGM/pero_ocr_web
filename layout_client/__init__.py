@@ -9,7 +9,8 @@ base_url = 'http://127.0.0.1:5000'
 route = '/layout_analysis/get_request'
 folder = 'C:\\Users\\rykk0\\Documents\\pero_ocr_web_data\\client_images'
 output_folder = 'C:\\Users\\rykk0\\Documents\\pero_ocr_web_data\\client_images_results'
-layout_detector = 'C:\\Users\\rykk0\\OneDrive\\Dokumenty\\source\\detect_paragraphs.py'
+layout_detector_path = 'C:\\Users\\rykk0\\OneDrive\\Dokumenty\\source\\'
+layout_detector = layout_detector_path + 'detect_paragraphs.py'
 
 
 def get_document_images_folder_path(document_id):
@@ -54,12 +55,21 @@ def get_post_route(document_id):
     return '/layout_analysis/{}/post_result'.format(document_id)
 
 
+def run_layout_analysis(document):
+    document_id = document['id']
+    return os.system('python {} -o "{}" -i "{}/" -m "{}"'.format(layout_detector, os.path.join(output_folder, document_id), os.path.join(folder, document_id), os.path.join(layout_detector_path, 'model')))
+
+
 def check_and_process_request():
     request_id, document = get_and_save_document()
     if document:
-        # CALL LAYOUT ANALYSIS
-        data = make_post_request_data(document)  # Make post request
-        requests.post('{}{}'.format(base_url, get_post_route(request_id)), files=data)  # Send post request
+        status = run_layout_analysis(document)
+        if status == 0:
+            data = make_post_request_data(document)  # Make post request
+            requests.post('{}{}'.format(base_url, get_post_route(request_id)), files=data)  # Send post request
+        else:
+            # TODO FAILED
+            return True
         return True
 
     return False
@@ -70,7 +80,6 @@ def main():
         print('Check request')
         if check_and_process_request():
             print('Request completed')
-            break  # Only for development
         else:
             print('No request')
             time.sleep(10)  # No request so sleep for some time
