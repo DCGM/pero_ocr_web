@@ -7,25 +7,13 @@ import os
 
 
 def create_layout_analysis_request(document):
-    return Request(document=document, document_id=document.id,
+    return Request(document=document,
                    request_type=RequestType.LAYOUT_ANALYSIS, state=RequestState.PENDING)
-
-
-def create_ocr_analysis_request(document):
-    return Request(document=document, document_id=document.id,
-                   request_type=RequestType.OCR, state=RequestState.PENDING)
 
 
 def can_start_layout_analysis(document):
     if not Request.query.filter_by(document_id=document.id, request_type=RequestType.LAYOUT_ANALYSIS,
                                    state=RequestState.PENDING).first() and document.state == DocumentState.NEW:
-        return True
-    return False
-
-
-def can_start_ocr(document):
-    if not Request.query.filter_by(document_id=document.id, request_type=RequestType.OCR,
-                                   state=RequestState.PENDING).first() and document.state == DocumentState.COMPLETED_LAYOUT_ANALYSIS:
         return True
     return False
 
@@ -37,20 +25,10 @@ def add_layout_request_and_change_document_state(request):
     db_session.refresh(request)
 
 
-def add_ocr_request_and_change_document_state(request):
-    request.document.state = DocumentState.WAITING_OCR
-    db_session.add(request)
-    db_session.commit()
-    db_session.refresh(request)
-
 def get_first_layout_request():
     return Request.query.filter_by(state=RequestState.PENDING, request_type=RequestType.LAYOUT_ANALYSIS) \
         .order_by(Request.created_date).first()
 
-
-def get_first_ocr_request():
-    return Request.query.filter_by(state=RequestState.PENDING, request_type=RequestType.OCR) \
-        .order_by(Request.created_date).first()
 
 def change_layout_request_and_document_state(request, request_state, document_state):
     request.state = request_state
@@ -69,11 +47,12 @@ def change_layout_request_and_document_state_on_success(request):
 
 
 def create_json_from_request(request):
-    val = {'id': request.id, 'document': {'id': request.document.id, 'images': []}}
+    value = {'id': request.id, 'document': {'id': request.document.id, 'images': []}}
     for image in request.document.images:
         if not image.deleted:
-            val['document']['images'].append(image.id)
-    return jsonify(val)
+            value['document']['images'].append(image.id)
+    return jsonify(value)
+
 
 def make_image_result_preview(image_path, xml_path, image_id):
     image = Image.open(image_path)
