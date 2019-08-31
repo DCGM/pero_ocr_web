@@ -17,14 +17,16 @@ from app.db import db_session
 @login_required
 def start_layout_analysis(document_id):
     document = get_document_by_id(document_id)
-    request = create_layout_analysis_request(document)
+    if len(document.images.all()) == 0:
+        flash(u'Can\'t create request without uploading images.', 'danger')
+        return redirect(request.referrer)
+    layout_request = create_layout_analysis_request(document)
     if can_start_layout_analysis(document):
-        add_layout_request_and_change_document_state(request)
+        add_layout_request_and_change_document_state(layout_request)
         flash(u'Request for layout analysis successfully created!', 'success')
     else:
         flash(u'Request for layout analysis is already pending or document is in unsupported state!', 'danger')
     return redirect(url_for('document.documents'))
-
 
 @bp.route('/get_request')
 def get_request():
