@@ -1,11 +1,12 @@
 from app.db.model import Document, DocumentState, Image
 from app.db.general import get_document_by_id, remove_document_by_id, save_document, save_image_to_document,\
-    get_all_users, get_user_by_id
+    get_all_users, get_user_by_id, get_image_by_id
 import os
 from flask import current_app as app
 from app.db import db_session
 from PIL import Image as PILImage
 import uuid
+import xml.etree.ElementTree as ET
 
 
 def create_document(name, user):
@@ -145,3 +146,17 @@ def is_user_collaborator(document, user):
 
 def get_document_images(document):
     return document.images.filter_by(deleted=False)
+
+
+def get_image_xml(image_id):
+    image = get_image_by_id(image_id)
+    root = ET.Element('PcGts')
+    root.set('xmlns', 'http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15')
+
+    page_element = ET.SubElement(root, 'Page',
+                                 {"imageFilename": os.path.splitext(image.filename)[0], "imageWidth": str(image.width),
+                                  "imageHeight": str(image.height)})
+
+    for text_region in image.textregions:
+        text_region_element = ET.SubElement(page_element, 'TextRegion', {"id": str(text_region.id)})
+        ET.SubElement(text_region_element, 'Coords', {"points": text_region.points})

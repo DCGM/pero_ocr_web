@@ -3,11 +3,10 @@ from flask_login import login_required, current_user
 from flask import render_template, redirect, url_for, request, send_file, flash, Response
 from app.document.general import create_document, check_and_remove_document, save_images, get_image_url, \
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
-    remove_image, get_document_images
+    remove_image, get_document_images, get_image_xml
 from app.db.general import get_user_documents, get_document_by_id, get_image_by_id
 from app.document.forms import CreateDocumentForm
 import xml.etree.ElementTree as ET
-from os import path
 
 
 @bp.route('/documents')
@@ -69,20 +68,10 @@ def upload_document_post(document_id):
 
 @bp.route('/get_xml/<string:document_id>/<string:image_id>')
 def get_xml(document_id, image_id):
-    image = get_image_by_id(image_id)
-    root = ET.Element('PcGts')
-    root.set('xmlns', 'http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15')
-
-    page_element = ET.SubElement(root, 'Page',
-                                 {"imageFilename": path.splitext(image.filename)[0], "imageWidth": str(image.width), "imageHeight": str(image.height)})
-    region_index = 1
-    for text_region in image.textregions:
-        text_region_element = ET.SubElement(page_element, 'TextRegion', {"id": str(text_region.id)})
-        ET.SubElement(text_region_element, 'Coords', {"points": text_region.points})
-        region_index += 1
-
+    root = get_image_xml(image_id)
     xml_string = ET.tostring(root, encoding='utf-8')
     return Response(xml_string, mimetype='text/xml')
+
 
 @bp.route('/get_image/<string:document_id>/<string:image_id>')
 # @login_required
