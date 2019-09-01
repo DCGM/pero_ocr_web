@@ -17,7 +17,7 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav ml-auto">
                 {% if current_user.is_authenticated %}
-                    <li class="nav-item{%- if request.path == "/documents" %} active{% endif %}" >
+                    <li class="nav-item{%- if request.path == "/document/documents" %} active{% endif %}" >
                         <a class="nav-link my-2" href="{{ url_for('document.documents') }}">Browser</a>
                     </li>
                     <li class="nav-item{%- if request.path == "/profile" %} active{% endif %}">

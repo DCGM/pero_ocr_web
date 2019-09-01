@@ -70,7 +70,7 @@ def post_result(request_id):
     return 'OK'
 
 
-@bp.route('/results/<string:document_id>', methods=['GET'])
+@bp.route('/show_results/<string:document_id>', methods=['GET'])
 @login_required
 def show_results(document_id):
     document = get_document_by_id(document_id)

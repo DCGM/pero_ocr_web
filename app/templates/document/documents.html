@@ -1,5 +1,5 @@
 {% extends "base/base.html" %} {% block content %}
-    <a class="btn btn-primary add-document-button my-3" href="/document/new"
+    <a class="btn btn-primary add-document-button my-3" href="{{ url_for('document.new_document') }}"
     >
         <ion-icon name="add"></ion-icon>
         Add New Document</a
@@ -46,7 +46,7 @@
                     {% if document.user.id == current_user.id %}
                         <a
                                 class="btn btn-secondary"
-                                href="/document/{{ document.id }}/collaborators"
+                                href="{{ url_for('document.collaborators_get', document_id=document.id) }}"
                                 data-toggle="tooltip"
                                 data-placement="right"
                                 title="Edit Collaborators"
@@ -57,7 +57,7 @@
                     {% endif %} {% if document.state.name == 'NEW' %}
                     <a
                             class="btn btn-secondary"
-                            href="/document/{{ document.id }}/upload"
+                            href="{{ url_for('document.upload_document_get', document_id=document.id) }}"
                             data-toggle="tooltip"
                             data-placement="right"
                             title="Upload Images"
@@ -68,7 +68,7 @@
 
                     <a
                             class="btn btn-secondary text-white"
-                            href="/layout_analysis/start/{{ document.id }}"
+                            href="{{ url_for('layout_analysis.start_layout_analysis', document_id=document.id) }}"
                             data-toggle="tooltip"
                             data-placement="right"
                             title="Run layout analysis"
@@ -79,7 +79,7 @@
                     {% if document.state.name == 'COMPLETED_LAYOUT_ANALYSIS' %}
                         <a
                                 class="btn btn-secondary text-white"
-                                href="/layout_analysis/results/{{ document.id }}"
+                                href="{{ url_for('layout_analysis.show_results', document_id=document.id) }}"
                                 data-toggle="tooltip"
                                 data-placement="right"
                                 title="Show layout analysis results"
@@ -88,7 +88,7 @@
                         </a>
                         <a
                             class="btn btn-secondary text-white"
-                            href="/ocr/start_ocr/{{ document.id }}"
+                            href="{{ url_for('ocr.start_ocr', document_id=document.id) }}"
                             data-toggle="tooltip"
                             data-placement="right"
                             title="Run ocr"
@@ -135,7 +135,7 @@
         $('#modal-remove-button').on('click', function (event) {
             event.preventDefault();
             console.log(last_document_id);
-            $.get("/document/" + last_document_id + "/delete").done(function (document_id) {
+            $.get("/document/delete_document/" + last_document_id).done(function (document_id) {
                 $('tr[data-document="' + document_id + '"').remove();
                 $modal.modal('hide')
                 location.reload()

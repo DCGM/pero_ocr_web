@@ -27,7 +27,7 @@
         </div>
     </div>
     <div class="current-result-container" data-document="{{ document.id }}" data-image="{{ images[0].id }}">
-        <a href="/get_xml/{{ document.id }}/{{ images[0].id }}" id="download-xml-btn"
+        <a href="/document/get_xml/{{ document.id }}/{{ images[0].id }}" id="download-xml-btn"
            class="btn btn-lg btn-primary my-3">Download XML</a>
 
         <div id="map-container">
@@ -36,66 +36,7 @@
     </div>
 {% endblock %} {% block styles %}
     <link rel="stylesheet" href="/static/leaflet/leaflet.css">
-    <style>
-        #content {
-            text-align: center;
-        }
-
-        .uploaded_image {
-            max-width: 100px;
-            max-height: 200px;
-        }
-
-        .image-item-container:not(:last-child) {
-            border-right: 1px solid lightgray;
-        }
-
-        .images-container {
-            display: inline-flex;
-            flex-direction: row;
-            overflow-x: auto;
-            margin: 0 auto;
-            border: 1px solid lightgray;
-        }
-
-        .results-preview-container {
-            display: inline-flex;
-            align-items: center;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        ion-icon {
-            width: 3em;
-            height: 3em;
-            cursor: pointer;
-        }
-
-        .image-item-container {
-            cursor: pointer;
-            position: relative;
-        }
-
-        .image-item-active {
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            opacity: 0.45;
-            background: yellow;
-        }
-
-        .results-preview-btn.disabled ion-icon {
-            cursor: not-allowed;
-            color: lightgray;
-        }
-
-        #mapid {
-            height: 75vh;
-        }
-    </style>
-
+    <link rel="stylesheet" href="/static/css/LayoutResults.css">
 {% endblock %}
 
 {% block scripts %}
@@ -103,8 +44,6 @@
     <script src="/static/leaflet/Leaflet.Editable.js"></script>
     <script>
         $(document).ready(function () {
-
-
             $('.image-item-container').on('click', function (event) {
                 let old_image_id = $('.current-result-container').data('image');
                 let document_id = $(this).data('document');
@@ -113,7 +52,7 @@
                 if (old_image_id !== image_id) {
                     $('.current-result-container').data('document', document_id);
                     $('.current-result-container').data('image', image_id);
-                    $('#download-xml-btn').attr('href', `/get_xml/${document_id}/${image_id}`);
+                    $('#download-xml-btn').attr('href', `/document/get_xml/${document_id}/${image_id}`);
                     changeImage(image_id);
                     $('.image-item-active').addClass('d-none');
                     $(`[data-image="${image_id}"] .image-item-active`).removeClass('d-none')
@@ -174,6 +113,7 @@
                     });
                     mymap.addControl(new L.NewPolygonControl());
                     data.textregions.forEach(function (item) {
+                        item.push(item[0])
                         var polyline = L.polyline(item).addTo(mymap);
                         polyline.enableEdit();
                     });
@@ -190,7 +130,7 @@
                     var image_height = data.height;
                     var bounds = [xy(0, -image_height), xy(image_width, 0)];
                     mymap.setView(xy(image_width / 2, -image_height / 2), -2);
-                    var image = L.imageOverlay(`/get_image/{{ document.id }}/${image_id}`, bounds).addTo(mymap);
+                    var image = L.imageOverlay(`/document/get_image/{{ document.id }}/${image_id}`, bounds).addTo(mymap);
 
                     //zoom_level = Math.log(annotator_data.width / 256.0) / Math.log(2)
                     mymap.fitBounds(bounds);

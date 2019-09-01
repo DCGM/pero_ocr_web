@@ -23,7 +23,7 @@ def get_document_images_folder_path(document_id):
 def get_and_save_document_images(document_id, images):
     folder_path = get_document_images_folder_path(document_id)
     for image in images:
-        image_request = requests.get("{}/get_image/{}/{}".format(base_url, document_id, image))
+        image_request = requests.get("{}/document/get_image/{}/{}".format(base_url, document_id, image))
         file_type = image_request.headers['content-type'].split('/')[-1]
         path = '{}\\{}.{}'.format(folder_path, image, file_type)
         if image_request.status_code == 200:
