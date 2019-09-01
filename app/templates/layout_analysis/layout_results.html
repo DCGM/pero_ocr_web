@@ -1,37 +1,50 @@
 {% extends "base/base.html" %} {% block content %}
-    <h3 class="text-left">{{ document.name }} - Layout Analysis Results</h3>
-    <div class="results-preview-container my-3">
-        <div class="results-preview-btn prev-btn disabled">
-            <ion-icon name="arrow-dropleft"></ion-icon>
-        </div>
-        <div class="images-container">
-            {% for image in images %}
-                <div class="image-item-container d-inline-flex flex-column" data-document="{{ document.id }}"
-                     data-image="{{ image.id }}">
-                    <div class="image-container">
-                        <img
-                                src="/layout_analysis/get_result_preview/{{ document.id }}/{{ image.id }}"
-                                alt="{{ image.filename }}"
-                                class="uploaded_image card-img-top"
-                        />
+    <div onkeypress="editor_keypress(event)">
+        <h3 class="text-left">{{ document.name }} - Layout Analysis Results</h3>
+        <div class="results-preview-container my-3">
+            <div class="results-preview-btn prev-btn disabled">
+                <ion-icon name="arrow-dropleft"></ion-icon>
+            </div>
+            <div class="images-container">
+                {% for image in images %}
+                    <div class="image-item-container d-inline-flex flex-column" data-document="{{ document.id }}"
+                         data-image="{{ image.id }}">
+                        <div class="image-container">
+                            <img
+                                    src="/layout_analysis/get_result_preview/{{ document.id }}/{{ image.id }}"
+                                    alt="{{ image.filename }}"
+                                    class="uploaded_image card-img-top"
+                            />
+                        </div>
+                        <div class="text-center">
+                            <p>{{ image.filename }}</p>
+                        </div>
+                        <div class="d-none image-item-active"></div>
                     </div>
-                    <div class="text-center">
-                        <p>{{ image.filename }}</p>
-                    </div>
-                    <div class="d-none image-item-active"></div>
-                </div>
-            {% endfor %}
+                {% endfor %}
+            </div>
+            <div class="results-preview-btn next-btn">
+                <ion-icon name="arrow-dropright"></ion-icon>
+            </div>
         </div>
-        <div class="results-preview-btn next-btn">
-            <ion-icon name="arrow-dropright"></ion-icon>
-        </div>
-    </div>
-    <div class="current-result-container" data-document="{{ document.id }}" data-image="{{ images[0].id }}">
-        <a href="/document/get_xml/{{ document.id }}/{{ images[0].id }}" id="download-xml-btn"
-           class="btn btn-lg btn-primary my-3">Download XML</a>
-
-        <div id="map-container">
-            <div id="mapid"></div>
+        <div class="current-result-container" data-document="{{ document.id }}" data-image="{{ images[0].id }}">
+            <a href="/document/get_xml/{{ document.id }}/{{ images[0].id }}" id="download-xml-btn"
+               class="btn btn-lg btn-primary my-3">Download XML</a>
+            <br>
+            <div class="my-2">
+                <button class="btn btn-secondary" onclick="get_image(annotator_data.uuid)">Reset</button>
+    {#            <button onclick="next_image();">Next (n)</button>#}
+    {#            <button onclick="previous_image();">Back (b)</button>#}
+                <button class="btn btn-secondary" onclick="create_new_object();">New object (c)</button>
+                <button class="btn btn-secondary" onclick="toggle_delete_object();">Toggle delete(g)</button>
+{#                <button class="btn btn-secondary" onclick="resize2x()">2x</button>#}
+{#                <button class="btn btn-secondary" onclick="fix_ar()">fix_ar</button>#}
+                <button class="btn btn-secondary" onclick="save_image()">save</button>
+            </div>
+            <div id="map-container">
+                <div id="mapid"></div>
+            </div>
+            <p id="status"></p>
         </div>
     </div>
 {% endblock %} {% block styles %}
@@ -43,102 +56,8 @@
     <script src="/static/leaflet/leaflet.js"></script>
     <script src="/static/leaflet/Leaflet.Editable.js"></script>
     <script>
-        $(document).ready(function () {
-            $('.image-item-container').on('click', function (event) {
-                let old_image_id = $('.current-result-container').data('image');
-                let document_id = $(this).data('document');
-                let image_id = $(this).data('image');
-
-                if (old_image_id !== image_id) {
-                    $('.current-result-container').data('document', document_id);
-                    $('.current-result-container').data('image', image_id);
-                    $('#download-xml-btn').attr('href', `/document/get_xml/${document_id}/${image_id}`);
-                    changeImage(image_id);
-                    $('.image-item-active').addClass('d-none');
-                    $(`[data-image="${image_id}"] .image-item-active`).removeClass('d-none')
-                }
-            });
-
-            let $image_containers = $('.image-item-container');
-            if ($image_containers.length) {
-                let $image_container = $($image_containers[0]);
-                $image_container.find('.image-item-active').removeClass('d-none');
-            }
-
-            function changeImage(image_id) {
-                $.post(`/layout_analysis/get_image_result/{{ document.id }}/${image_id}`).done(function (data) {
-                    console.log('Data', data);
-                    var map_region = document.getElementById('map-container');
-                    map_region.innerHTML = "<div id='mapid'></div>";
-
-                    var mymap = L.map('mapid', {
-                        crs: L.CRS.Simple,
-                        minZoom: -3,
-                        maxZoom: 3,
-                        center: [0, 0],
-                        zoom: 0,
-                        editable: true,
-                        fadeAnimation: false,
-                        zoomAnimation: false,
-                        zoomSnap: 0.25,
-                    });
-
-                    L.EditControl = L.Control.extend({
-                        options: {
-                            position: 'topleft',
-                            callback: null,
-                            kind: '',
-                            html: ''
-                        },
-                        onAdd: function (map) {
-                            var container = L.DomUtil.create('div', 'leaflet-control leaflet-bar'),
-                                link = L.DomUtil.create('a', '', container);
-                            link.href = '#';
-                            link.title = 'Create a new ' + this.options.kind;
-                            link.innerHTML = this.options.html;
-                            L.DomEvent.on(link, 'click', L.DomEvent.stop)
-                                .on(link, 'click', function () {
-                                    window.LAYER = this.options.callback.call(mymap.editTools);
-                                }, this);
-                            return container;
-                        }
-                    });
-                    L.NewPolygonControl = L.EditControl.extend({
-                        options: {
-                            position: 'topleft',
-                            callback: mymap.editTools.startPolygon,
-                            kind: 'polygon',
-                            html: '▰'
-                        }
-                    });
-                    mymap.addControl(new L.NewPolygonControl());
-                    data.textregions.forEach(function (item) {
-                        item.push(item[0])
-                        var polyline = L.polyline(item).addTo(mymap);
-                        polyline.enableEdit();
-                    });
-
-
-                    var yx = L.latLng;
-                    var xy = function (x, y) {
-                        if (L.Util.isArray(x)) {    // When doing xy([x, y]);
-                            return yx(x[1], x[0]);
-                        }
-                        return yx(y, x);  // When doing xy(x, y);
-                    };
-                    var image_width = data.width;
-                    var image_height = data.height;
-                    var bounds = [xy(0, -image_height), xy(image_width, 0)];
-                    mymap.setView(xy(image_width / 2, -image_height / 2), -2);
-                    var image = L.imageOverlay(`/document/get_image/{{ document.id }}/${image_id}`, bounds).addTo(mymap);
-
-                    //zoom_level = Math.log(annotator_data.width / 256.0) / Math.log(2)
-                    mymap.fitBounds(bounds);
-                });
-            }
-
-            changeImage('{{ images[0].id }}')
-        });
-
+        var document_id = '{{ document.id }}';
+        var first_image = '{{ images[0].id }}';
     </script>
+    <script src="/static/js/LayoutResults.js"></script>
 {% endblock %}

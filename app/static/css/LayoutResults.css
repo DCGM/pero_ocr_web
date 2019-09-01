@@ -48,6 +48,9 @@
             background: yellow;
         }
 
+        .results-preview-btn{
+            display: none !important;
+        }
         .results-preview-btn.disabled ion-icon {
             cursor: not-allowed;
             color: lightgray;

@@ -1,7 +1,7 @@
 from app.layout_analysis import bp
 from flask import render_template, url_for, redirect, flash, jsonify, request, current_app, send_file, abort
 from flask_login import login_required, current_user
-from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id
+from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_text_region_by_id
 from app.layout_analysis.general import create_layout_analysis_request, can_start_layout_analysis, \
     add_layout_request_and_change_document_state, get_first_layout_request, change_layout_request_and_document_state_in_progress, \
     create_json_from_request, change_layout_request_and_document_state_on_success, make_image_result_preview
@@ -28,6 +28,7 @@ def start_layout_analysis(document_id):
         flash(u'Request for layout analysis is already pending or document is in unsupported state!', 'danger')
     return redirect(url_for('document.documents'))
 
+
 @bp.route('/get_request')
 def get_request():
     analysis_request = get_first_layout_request()
@@ -36,6 +37,7 @@ def get_request():
         return create_json_from_request(analysis_request)
     else:
         return jsonify({})
+
 
 @bp.route('/post_result/<string:request_id>', methods=['POST'])
 def post_result(request_id):
@@ -100,7 +102,7 @@ def download_result_xml(document_id, image_id):
     return send_file(xml_path)
 
 
-@bp.route('/get_image_result/<string:document_id>/<string:image_id>', methods=['POST'])
+@bp.route('/get_image_result/<string:document_id>/<string:image_id>', methods=['GET'])
 @login_required
 def get_image_result(document_id, image_id):
     image = get_image_by_id(image_id)
@@ -116,9 +118,8 @@ def get_image_result(document_id, image_id):
         for textregion_point_string in textregion_points_string:
             point = textregion_point_string.split(',')
             textregion_points.append([int(point[1]), int(point[0])])
-        textregions.append(textregion_points)
-
-    return {'width': width, 'height': height, 'textregions': textregions}
+        textregions.append({'uuid': textregion.id, 'deleted': textregion.deleted, 'points': textregion_points})
+    return {"uuid": image_id, 'width': width, 'height': height, 'objects': textregions}
 
 @bp.route('/get_result_preview/<string:document_id>/<string:image_id>')
 @login_required
@@ -128,3 +129,23 @@ def get_result_preview(document_id, image_id):
         return redirect(url_for('main.index'))
     image_url = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], document_id, image_id + '.jpg')
     return send_file(image_url)
+
+
+@bp.route('/edit_layout/<string:image_id>', methods=['POST'])
+@login_required
+def edit_layout(image_id):
+    regions = request.get_json()
+    image = get_image_by_id(image_id)
+    for region in regions:
+        region_db = get_text_region_by_id(region['uuid'])
+        points = ''
+        for point in region['points']:
+            points += '{},{} '.format(int(point[1]), int(point[0]))
+        points = points.strip()
+        if region_db:
+            region_db.points = points
+            region_db.deleted = region['deleted']
+        else:
+            image.textregions.append(TextRegion(id=region['uuid'], deleted=region['deleted'], points=points, image_id=image_id))
+    db_session.commit()
+    return 'OK'
