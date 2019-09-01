@@ -69,6 +69,7 @@ class Request(Base):
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
     request_type = Column(Enum(RequestType))
     state = Column(Enum(RequestState))
+    log = Column(String())
 
     document_id = Column(GUID(), ForeignKey('documents.id'))
     document = relationship('Document', back_populates="requests")
