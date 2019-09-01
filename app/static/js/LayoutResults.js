@@ -156,7 +156,11 @@ function save_image() {
         $.ajax("/layout_analysis/edit_layout/" + annotator_data.uuid, {
             data: data,
             contentType: 'application/json', type: 'POST'
-        });
+        }).done(function () {
+            let $image = $(`.image-item-container[data-image="${annotator_data.uuid}"]`).find('img')
+            let src = $image.attr('src') + "?" + new Date().getTime();
+            $image.attr('src', src);
+        })
     }
 }
 

@@ -4,7 +4,8 @@ from flask_login import login_required, current_user
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_text_region_by_id
 from app.layout_analysis.general import create_layout_analysis_request, can_start_layout_analysis, \
     add_layout_request_and_change_document_state, get_first_layout_request, change_layout_request_and_document_state_in_progress, \
-    create_json_from_request, change_layout_request_and_document_state_on_success, make_image_result_preview
+    create_json_from_request, change_layout_request_and_document_state_on_success, get_coords_and_make_preview, \
+    make_image_result_preview
 import os
 from app.db.model import DocumentState, TextRegion
 import xml.etree.ElementTree as ET
@@ -62,7 +63,7 @@ def post_result(request_id):
         if not image.deleted:
             image_id = str(image.id)
             xml_path = os.path.join(folder_path, image_id + '.xml')
-            regions_coords = make_image_result_preview(image.path, xml_path, image.id)
+            regions_coords = get_coords_and_make_preview(image.path, xml_path, image.id)
             for region_coords in regions_coords:
                 text_region = TextRegion(image_id=image_id, points=region_coords)
                 image.textregions.append(text_region)
@@ -128,7 +129,7 @@ def get_result_preview(document_id, image_id):
         flash(u'You do not have sufficient rights to get this image!', 'danger')
         return redirect(url_for('main.index'))
     image_url = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], document_id, image_id + '.jpg')
-    return send_file(image_url)
+    return send_file(image_url, cache_timeout=0)
 
 
 @bp.route('/edit_layout/<string:image_id>', methods=['POST'])
@@ -136,16 +137,25 @@ def get_result_preview(document_id, image_id):
 def edit_layout(image_id):
     regions = request.get_json()
     image = get_image_by_id(image_id)
+    preview_coords = []
     for region in regions:
         region_db = get_text_region_by_id(region['uuid'])
         points = ''
+        curr_points = []
         for point in region['points']:
             points += '{},{} '.format(int(point[1]), int(point[0]))
+            curr_points.append((int(point[0]), int(point[1])))
         points = points.strip()
         if region_db:
             region_db.points = points
             region_db.deleted = region['deleted']
         else:
             image.textregions.append(TextRegion(id=region['uuid'], deleted=region['deleted'], points=points, image_id=image_id))
+
+        if not region['deleted']:
+            curr_points.append(curr_points[0])
+            preview_coords.append(curr_points)
+    make_image_result_preview(preview_coords, get_image_by_id(image_id).path, image_id)
     db_session.commit()
+
     return 'OK'

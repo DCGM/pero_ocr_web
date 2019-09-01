@@ -1,10 +1,10 @@
 from app.db.model import RequestState, RequestType, Request, DocumentState
 from app.db import db_session
-from flask import jsonify
+from flask import jsonify, current_app
 import xml.etree.ElementTree as ET
 from PIL import Image, ImageDraw
 import os
-
+from app.db.general import get_image_by_id
 
 def create_layout_analysis_request(document):
     return Request(document=document,
@@ -54,11 +54,20 @@ def create_json_from_request(request):
     return jsonify(value)
 
 
-def make_image_result_preview(image_path, xml_path, image_id):
+def make_image_result_preview(regions, image_path, image_id):
+    image_db = get_image_by_id(image_id)
     image = Image.open(image_path)
     image = image.convert('RGB')
+    for region in regions:
+        ImageDraw.Draw(image).line(region, width=35, fill=(0, 255, 0))
+    new_path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(image_db.document_id), str(image_id) + '.jpg')
+    image.save(new_path)
+
+
+def get_coords_and_make_preview(image_path, xml_path, image_id):
     root = ET.parse(xml_path).getroot()
     region_coords = []
+    preview_coords = []
     for region in root.iter('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15}TextRegion'):
         for coords in region.iter('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15}Coords'):
             coords_string = coords.get('points')
@@ -68,7 +77,7 @@ def make_image_result_preview(image_path, xml_path, image_id):
                 point = point_string.split(',')
                 region_points.append((int(point[1]), int(point[0])))
             region_points.append(region_points[0])
+            preview_coords.append(region_points)
             region_coords.append(coords_string)
-            ImageDraw.Draw(image).line(region_points, width=35, fill=(0, 255, 0))
-        image.save(os.path.join(os.path.dirname(xml_path), str(image_id) + '.jpg'))
+    make_image_result_preview(preview_coords, image_path, image_id)
     return region_coords
