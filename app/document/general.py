@@ -158,7 +158,7 @@ def get_image_xml(image_id):
                                   "imageHeight": str(image.height)})
 
     for text_region in image.textregions:
-        if text_region.deleted == False:
+        if not text_region.deleted:
             text_region_element = ET.SubElement(page_element, 'TextRegion', {"id": str(text_region.id)})
             ET.SubElement(text_region_element, 'Coords', {"points": text_region.points})
     return root

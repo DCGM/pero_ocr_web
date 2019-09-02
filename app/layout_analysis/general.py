@@ -6,6 +6,7 @@ from PIL import Image, ImageDraw
 import os
 from app.db.general import get_image_by_id
 
+
 def create_layout_analysis_request(document):
     return Request(document=document,
                    request_type=RequestType.LAYOUT_ANALYSIS, state=RequestState.PENDING)

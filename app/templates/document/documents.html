@@ -45,7 +45,7 @@
                 <td>
                     {% if document.user.id == current_user.id %}
                         <a
-                                class="btn btn-secondary"
+                                class="document-action-btn btn btn-secondary"
                                 href="{{ url_for('document.collaborators_get', document_id=document.id) }}"
                                 data-toggle="tooltip"
                                 data-placement="right"
@@ -56,7 +56,7 @@
                         </a>
                     {% endif %} {% if document.state.name == 'NEW' %}
                     <a
-                            class="btn btn-secondary"
+                            class="document-action-btn btn btn-secondary"
                             href="{{ url_for('document.upload_document_get', document_id=document.id) }}"
                             data-toggle="tooltip"
                             data-placement="right"
@@ -67,7 +67,7 @@
                     </a>
 
                     <a
-                            class="btn btn-secondary text-white"
+                            class="document-action-btn btn btn-secondary text-white"
                             href="{{ url_for('layout_analysis.start_layout_analysis', document_id=document.id) }}"
                             data-toggle="tooltip"
                             data-placement="right"
@@ -78,7 +78,7 @@
                 {% endif %}
                     {% if document.state.name == 'COMPLETED_LAYOUT_ANALYSIS' %}
                         <a
-                                class="btn btn-secondary text-white"
+                                class="document-action-btn btn btn-secondary text-white"
                                 href="{{ url_for('layout_analysis.show_results', document_id=document.id) }}"
                                 data-toggle="tooltip"
                                 data-placement="right"
@@ -87,7 +87,7 @@
                             <ion-icon name="eye"></ion-icon>
                         </a>
                         <a
-                            class="btn btn-secondary text-white"
+                            class="document-action-btn btn btn-secondary text-white"
                             href="{{ url_for('ocr.start_ocr', document_id=document.id) }}"
                             data-toggle="tooltip"
                             data-placement="right"
@@ -99,7 +99,7 @@
 
                     {% if document.user.id == current_user.id %}
                         <a
-                                class="btn btn-secondary text-white delete-document-button"
+                                class="document-action-btn btn btn-secondary text-white delete-document-button"
                                 data-toggle="tooltip"
                                 data-placement="right"
                                 title="Remove Document"
@@ -117,7 +117,15 @@
 
     <div></div>
 
-{% endblock %} {% block scripts %}
+{% endblock %}
+{% block styles %}
+    <style>
+        .document-action-btn{
+            min-height: 25px;
+        }
+    </style>
+{% endblock %}
+{% block scripts %}
     <script>
         let $modal = $('#exampleModal');
         let last_document_id = null;

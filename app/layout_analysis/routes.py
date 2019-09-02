@@ -122,6 +122,7 @@ def get_image_result(document_id, image_id):
         textregions.append({'uuid': textregion.id, 'deleted': textregion.deleted, 'points': textregion_points})
     return {"uuid": image_id, 'width': width, 'height': height, 'objects': textregions}
 
+
 @bp.route('/get_result_preview/<string:document_id>/<string:image_id>')
 @login_required
 def get_result_preview(document_id, image_id):
