@@ -1,6 +1,7 @@
 import sys
 sys.path.insert(1, '../')
 from client_helper import get_and_save_document_images_and_xmls
+from baseline_detection import detect_document_baselines
 
 import os
 import time
@@ -8,9 +9,15 @@ import time
 
 base_url = 'http://127.0.0.1:5000'
 route = '/ocr/get_request'
-images_folder = "images"
-xmls_folder = "xmls"
-output_folder = "ocr_output"
+
+images_folder = "/home/ikohut/projects_new/pero_ocr_web/ocr_client/images"
+xmls_folder = "/home/ikohut/projects_new/pero_ocr_web/ocr_client/xmls"
+output_folder = "/home/ikohut/projects_new/pero_ocr_web/ocr_client/output"
+logits_folder = "/home/ikohut/projects_new/pero_ocr_web/ocr_client/output/logits"
+pages_folder = "/home/ikohut/projects_new/pero_ocr_web/ocr_client/output/page"
+
+config_path = "/home/ikohut/projects_new/pero_ocr_web/ocr_client/config.ini"
+ocr_json = "/home/ikohut/projects_new/pero_ocr_web/ocr_client/models/ocr/IMPACT_2019-03-18/ocr_engine.json"
 
 
 def get_post_route(document_id):
@@ -24,6 +31,8 @@ def check_and_process_request():
     if document:
         print(request_id)
         print(document)
+
+        detect_document_baselines(images_folder, xmls_folder, output_folder, config_path)
         return True
     '''
         # CALL LAYOUT ANALYSIS
