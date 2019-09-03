@@ -7,7 +7,7 @@ from app.auth.general import create_user, check_user
 
 
 @bp.route('/signup', methods=['GET', 'Post'])
-def signup_post():
+def signup():
     form = RegistrationForm()
     if form.validate_on_submit():
         user = get_user_by_email(form.email.data)
@@ -30,7 +30,7 @@ def signup_post():
 
 
 @bp.route('/login', methods=['Post'])
-def login_post():
+def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = check_user(form.email.data, form.password.data)

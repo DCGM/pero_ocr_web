@@ -1,5 +1,5 @@
 {% extends "base/base.html" %} {% block content %}
-    <a class="btn btn-primary add-document-button my-3" href="/document/new"
+    <a class="btn btn-primary add-document-button my-3" href="{{ url_for('document.new_document') }}"
     >
         <ion-icon name="add"></ion-icon>
         Add New Document</a
@@ -45,8 +45,8 @@
                 <td>
                     {% if document.user.id == current_user.id %}
                         <a
-                                class="btn btn-secondary"
-                                href="/document/{{ document.id }}/collaborators"
+                                class="document-action-btn btn btn-secondary"
+                                href="{{ url_for('document.collaborators_get', document_id=document.id) }}"
                                 data-toggle="tooltip"
                                 data-placement="right"
                                 title="Edit Collaborators"
@@ -56,8 +56,8 @@
                         </a>
                     {% endif %} {% if document.state.name == 'NEW' %}
                     <a
-                            class="btn btn-secondary"
-                            href="/document/{{ document.id }}/upload"
+                            class="document-action-btn btn btn-secondary"
+                            href="{{ url_for('document.upload_document_get', document_id=document.id) }}"
                             data-toggle="tooltip"
                             data-placement="right"
                             title="Upload Images"
@@ -67,8 +67,8 @@
                     </a>
 
                     <a
-                            class="btn btn-secondary text-white"
-                            href="/layout_analysis/start/{{ document.id }}"
+                            class="document-action-btn btn btn-secondary text-white"
+                            href="{{ url_for('layout_analysis.start_layout_analysis', document_id=document.id) }}"
                             data-toggle="tooltip"
                             data-placement="right"
                             title="Run layout analysis"
@@ -78,8 +78,8 @@
                 {% endif %}
                     {% if document.state.name == 'COMPLETED_LAYOUT_ANALYSIS' %}
                         <a
-                                class="btn btn-secondary text-white"
-                                href="/layout_analysis/results/{{ document.id }}"
+                                class="document-action-btn btn btn-secondary text-white"
+                                href="{{ url_for('layout_analysis.show_results', document_id=document.id) }}"
                                 data-toggle="tooltip"
                                 data-placement="right"
                                 title="Show layout analysis results"
@@ -87,8 +87,8 @@
                             <ion-icon name="eye"></ion-icon>
                         </a>
                         <a
-                            class="btn btn-secondary text-white"
-                            href="/ocr/start_ocr/{{ document.id }}"
+                            class="document-action-btn btn btn-secondary text-white"
+                            href="{{ url_for('ocr.start_ocr', document_id=document.id) }}"
                             data-toggle="tooltip"
                             data-placement="right"
                             title="Run ocr"
@@ -99,7 +99,7 @@
 
                     {% if document.user.id == current_user.id %}
                         <a
-                                class="btn btn-secondary text-white delete-document-button"
+                                class="document-action-btn btn btn-secondary text-white delete-document-button"
                                 data-toggle="tooltip"
                                 data-placement="right"
                                 title="Remove Document"
@@ -117,7 +117,15 @@
 
     <div></div>
 
-{% endblock %} {% block scripts %}
+{% endblock %}
+{% block styles %}
+    <style>
+        .document-action-btn{
+            min-height: 25px;
+        }
+    </style>
+{% endblock %}
+{% block scripts %}
     <script>
         let $modal = $('#exampleModal');
         let last_document_id = null;
@@ -135,7 +143,7 @@
         $('#modal-remove-button').on('click', function (event) {
             event.preventDefault();
             console.log(last_document_id);
-            $.get("/document/" + last_document_id + "/delete").done(function (document_id) {
+            $.get("/document/delete_document/" + last_document_id).done(function (document_id) {
                 $('tr[data-document="' + document_id + '"').remove();
                 $modal.modal('hide')
                 location.reload()

@@ -1,0 +1,61 @@
+#content {
+            text-align: center;
+        }
+
+        .uploaded_image {
+            max-width: 100px;
+            max-height: 200px;
+        }
+
+        .image-item-container:not(:last-child) {
+            border-right: 1px solid lightgray;
+        }
+
+        .images-container {
+            display: inline-flex;
+            flex-direction: row;
+            overflow-x: auto;
+            margin: 0 auto;
+            border: 1px solid lightgray;
+            max-width: 50vw;
+        }
+
+        .results-preview-container {
+            display: inline-flex;
+            align-items: center;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        ion-icon {
+            width: 3em;
+            height: 3em;
+            cursor: pointer;
+        }
+
+        .image-item-container {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .image-item-active {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            opacity: 0.45;
+            background: yellow;
+        }
+
+        .results-preview-btn{
+            display: none !important;
+        }
+        .results-preview-btn.disabled ion-icon {
+            cursor: not-allowed;
+            color: lightgray;
+        }
+
+        #mapid {
+            height: 75vh;
+        }

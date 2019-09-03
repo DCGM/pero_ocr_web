@@ -34,10 +34,10 @@ def create_app():
     app.register_blueprint(main_bp)
 
     from app.auth import bp as auth_bp
-    app.register_blueprint(auth_bp)
+    app.register_blueprint(auth_bp, url_prefix='/auth')
 
     from app.document import bp as document_bp
-    app.register_blueprint(document_bp)
+    app.register_blueprint(document_bp, url_prefix='/document')
 
     from app.profile import bp as profile_bp
     app.register_blueprint(profile_bp)

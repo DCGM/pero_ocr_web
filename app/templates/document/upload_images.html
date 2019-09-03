@@ -22,11 +22,16 @@
         </div>
     </div>
     <h3>{{ document.name }} - Upload Images</h3>
-
+    <a
+            class="btn btn-primary text-white"
+            href="{{ url_for('layout_analysis.start_layout_analysis', document_id=document.id) }}"
+    >
+        Run layout analysis
+    </a>
     <form
             class="my-3"
             id="newDocumentForm"
-            action="/document/{{ document.id }}/upload"
+            action="{{ url_for('document.upload_document_post', document_id=document.id) }}"
             method="POST"
             enctype="multipart/form-data"
     >
@@ -61,7 +66,7 @@
             <div class="card d-inline-block m-3">
                 <div class="card-image-container">
                     <img
-                            src="/get_image/{{ document.id }}/{{ image.id }}"
+                            src="{{url_for('document.get_image' ,document_id=document.id, image_id=image.id)}}"
                             alt="{{ image.filename }}"
                             class="uploaded_image card-img-top"
                     />
@@ -111,7 +116,8 @@
         .modal-backdrop {
             z-index: auto;
         }
-        .card-image-container{
+
+        .card-image-container {
             display: flex;;
             justify-content: center;
         }
@@ -147,7 +153,7 @@
 
             $('#modal-remove-button').on('click', function (event) {
                 event.preventDefault();
-                $.get("/remove_image/" + lastDocumentId + "/" + lastImageId).done(function () {
+                $.get("/document/remove_image/" + lastDocumentId + "/" + lastImageId).done(function () {
                     location.reload();
                 });
             });

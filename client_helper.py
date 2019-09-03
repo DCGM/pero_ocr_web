@@ -15,7 +15,7 @@ def get_document_folder_path(folder, document_id):
 def get_and_save_images(folder, base_url, document_id, images):
     folder_path = get_document_folder_path(folder, document_id)
     for image in images:
-        image_request = requests.get("{}/get_image/{}/{}".format(base_url, document_id, image))
+        image_request = requests.get("{}/document/get_image/{}/{}".format(base_url, document_id, image))
         file_type = image_request.headers['content-type'].split('/')[-1]
         path = os.path.join(folder_path, '{}.{}'.format(image, file_type))
         if image_request.status_code == 200:
@@ -26,7 +26,7 @@ def get_and_save_images(folder, base_url, document_id, images):
 def get_and_save_xmls(folder, base_url, document_id, images):
     folder_path = get_document_folder_path(folder, document_id)
     for image in images:
-        xml_request = requests.get("{}/get_xml/{}/{}".format(base_url, document_id, image))
+        xml_request = requests.get("{}/document/get_xml/{}/{}".format(base_url, document_id, image))
         path = os.path.join(folder_path, '{}.xml'.format(image))
         if xml_request.status_code == 200:
             with open(path, 'wb') as f:
