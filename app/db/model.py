@@ -5,6 +5,7 @@ import enum
 from sqlalchemy.orm import relationship
 import uuid
 import datetime
+import numpy as np
 
 
 class DocumentState(enum.Enum):
@@ -13,6 +14,7 @@ class DocumentState(enum.Enum):
     RUNNING_LAYOUT_ANALYSIS = 'Running layout analysis'
     COMPLETED_LAYOUT_ANALYSIS = 'Layout analysis completed'
     WAITING_OCR = 'Waiting on start of OCR'
+    COMPLETED_OCR = 'OCR completed'
 
 
 class RequestState(enum.Enum):
@@ -77,9 +79,74 @@ class Request(Base):
 class TextRegion(Base):
     __tablename__ = 'textregions'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    order = Column(Integer())
     points = Column(String())
     deleted = Column(Boolean(), default=False)
 
     image_id = Column(GUID(), ForeignKey('images.id'))
     image = relationship('Image', back_populates="textregions")
+    textlines = relationship('TextLine')
 
+
+class TextLine(Base):
+    __tablename__ = 'textlines'
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    region_id = Column(GUID(), ForeignKey('textregions.id'))
+    order = Column(Integer())
+    points = Column(String())
+    baseline = Column(String())
+    heights = Column(String())
+    confidences = Column(String())
+    deleted = Column(Boolean())
+    text = Column(String())
+
+    region = relationship('TextRegion')
+
+
+    @property
+    def np_points(self):
+        return str_points2D_to_np(self.points)
+
+    @np_points.setter
+    def np_points(self, ps):
+       self.points = points2D_to_str(ps)
+
+    @property
+    def np_baseline(self):
+        return str_points2D_to_np(self.baseline)
+
+    @np_baseline.setter
+    def np_baseline(self, bs):
+        self.baseline = points2D_to_str(bs)
+
+    @property
+    def np_heights(self):
+        return str_points_to_np(self.heights)
+
+    @np_heights.setter
+    def np_heights(self, hs):
+        self.heights = points_to_str(hs)
+
+    @property
+    def np_confidences(self):
+        return str_points_to_np(self.confidences)
+
+    @np_confidences.setter
+    def np_confidences(self, cs):
+        self.confidences = confidences_to_str(cs)
+
+
+def str_points2D_to_np(str_points):
+    return np.asarray([[float(x) for x in point.split(',')] for point in str_points.split()])
+
+def points2D_to_str(points):
+    return ' '.join(['{:.1f},{:.1f}'.format(point[0], point[1]) for point in points])
+
+def str_points_to_np(str_heights):
+    return np.asarray([float(x) for x in str_heights.split()])
+
+def points_to_str(heights):
+    return ' '.join(['{:.1f}'.format(x) for x in heights])
+
+def confidences_to_str(cs):
+    return ' '.join(['{:.3f}'.format(x) for x in heights])

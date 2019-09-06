@@ -5,7 +5,10 @@ from flask import url_for, redirect, flash, jsonify
 from flask_login import login_required
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_text_region_by_id
 from app.ocr.general import create_json_from_request, create_ocr_analysis_request, \
-                            can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request
+                            can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
+                            insert_lines_to_db, change_ocr_request_and_document_state_on_success
+from app.document.general import get_document_images
+from app.db.model import DocumentState
 
 
 @bp.route('/start_ocr/<string:document_id>')
@@ -50,12 +53,37 @@ def post_result(request_id):
         xml_path = os.path.join(ocr_result_folder, file.filename)
         file.save(xml_path)
 
-    '''
-    files = request.files
-    for file_id in files:
-        file = files[file_id]
-        xml_path = os.path.join(path, file.filename)
-        file.save(xml_path)
-    '''
+    insert_lines_to_db(ocr_result_folder)
+    change_ocr_request_and_document_state_on_success(ocr_request)
 
     return 'OK'
+
+@bp.route('/show_results/<string:document_id>', methods=['GET'])
+@login_required
+def show_results(document_id):
+    document = get_document_by_id(document_id)
+    if document.state != DocumentState.COMPLETED_OCR:
+        return  # Bad Request or something like that
+    images = get_document_images(document)
+
+    return render_template('ocr/ocr_results.html', document=document, images=images)
+
+@bp.route('/get_lines/<string:document_id>/<string:image_id>', methods=['GET'])
+@login_required
+def get_lines(document_id, image_id):
+    lines_dict = {'document_id':document_id, 'image_id':image_id, 'lines':[]}
+    image = get_image_by_id(image_id)
+    lines_dict['height'] = image.height
+    lines_dict['width'] = image.width
+    textregions = sorted(list(image.textregions), key=lambda x: x.order)
+    for textregion in textregions:
+        textlines = sorted(list(textregion.textlines), key=lambda x: x.order)
+        for line in textlines:
+            line_dict = {}
+            line_dict['np_points'] = line.np_points.tolist()
+            line_dict['np_baseline'] = line.np_baseline.tolist()
+            line_dict['np_heights'] = line.np_heights.tolist()
+            line_dict['np_confidences'] = line.np_confidences.tolist()
+            line_dict['text'] = line.text
+            lines_dict['lines'].append(line_dict)
+    return jsonify(lines_dict)

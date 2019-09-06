@@ -33,14 +33,16 @@ def get_post_route(request_id):
 
 def check_and_process_request():
     request_id, document = get_and_save_document_images_and_xmls(images_folder, xmls_folder, base_url, route)
-    document_id = document['id']
 
     if document:
+        document_id = document['id']
+
         print(request_id)
         print(document)
-        '''
-        detect_document_baselines(images_folder, xmls_folder, output_folder, document_id, config_path)
 
+
+        detect_document_baselines(images_folder, xmls_folder, output_folder, document_id, config_path)
+        
         xmls_confidences_folder_doc = os.path.join(xmls_confidences_folder, document_id)
         if os.path.exists(xmls_confidences_folder_doc):
             shutil.rmtree(xmls_confidences_folder_doc)
@@ -56,7 +58,8 @@ def check_and_process_request():
             logits_path = os.path.join(output_logits_folder, "{}.logits".format(file_name))
             save_xml_with_confidences(xml_path, logits_path, chars, xmls_confidences_folder_doc)
 
-        '''
+
+
         data = make_post_request_data(xmls_confidences_folder, document)
         requests.post('{}{}'.format(base_url, get_post_route(request_id)), files=data)
 

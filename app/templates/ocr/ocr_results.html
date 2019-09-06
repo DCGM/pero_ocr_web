@@ -1,0 +1,49 @@
+{% extends "base/base.html" %} {% block content %}
+    <div onkeypress="editor_keypress(event)">
+        <h3 class="text-left">{{ document.name }} - OCR Results</h3>
+        <div class="results-preview-container my-3">
+            <div class="results-preview-btn prev-btn disabled">
+                <ion-icon name="arrow-dropleft"></ion-icon>
+            </div>
+            <div class="images-container">
+                {% for image in images %}
+                    <div class="image-item-container d-inline-flex flex-column" data-document="{{ document.id }}"
+                         data-image="{{ image.id }}">
+                        <div class="image-container">
+                            <img
+                                    src="/layout_analysis/get_result_preview/{{ document.id }}/{{ image.id }}"
+                                    alt="{{ image.filename }}"
+                                    class="uploaded_image card-img-top"
+                            />
+                        </div>
+                        <div class="text-center">
+                            <p>{{ image.filename }}</p>
+                        </div>
+                        <div class="d-none image-item-active"></div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="results-preview-btn next-btn">
+                <ion-icon name="arrow-dropright"></ion-icon>
+            </div>
+        </div>
+
+            <div id="map-container"></div>
+            <p id="status"></p>
+        </div>
+    </div>
+{% endblock %} {% block styles %}
+    <link rel="stylesheet" href="/static/leaflet/leaflet.css">
+    <link rel="stylesheet" href="/static/css/LayoutResults.css">
+{% endblock %}
+
+{% block scripts %}
+    <script src="/static/leaflet/leaflet.js"></script>
+    <script src="/static/leaflet/Leaflet.Editable.js"></script>
+    <script src="/static/leaflet/Path.Drag.js"></script>
+    <script>
+        var document_id = '{{ document.id }}';
+        var first_image = '{{ images[0].id }}';
+    </script>
+    <script src="/static/js/OCRResults.js"></script>
+{% endblock %}

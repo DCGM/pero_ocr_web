@@ -64,8 +64,8 @@ def post_result(request_id):
             image_id = str(image.id)
             xml_path = os.path.join(folder_path, image_id + '.xml')
             regions_coords = get_coords_and_make_preview(image.path, xml_path, image.id)
-            for region_coords in regions_coords:
-                text_region = TextRegion(image_id=image_id, points=region_coords)
+            for order, region_coords in enumerate(regions_coords):
+                text_region = TextRegion(order=order, image_id=image_id, points=region_coords)
                 image.textregions.append(text_region)
                 db_session.commit()
 
