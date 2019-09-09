@@ -59,3 +59,14 @@
         #mapid {
             height: 75vh;
         }
+
+        .editor-map {
+            height: 500px;
+        }
+
+        #text-container {
+            height: 200px;
+            overflow-y: auto;
+        }
+
+

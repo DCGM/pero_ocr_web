@@ -6,6 +6,32 @@ xy = function(x, y) {
     return yx(y, x);  // When doing xy(x, y);
 };
 
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgbToHex(r, g, b) {
+    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
+function setColor(color) {
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand('foreColor', false, color);
+}
+
+function handle_key(e) {
+
+    for (let child of e.target.childNodes)
+    {
+        if (child.innerHTML == "")
+        {
+            e.target.removeChild(child);
+        }
+    }
+    setColor("#028700");
+}
+
 class ImageEditor{
     constructor(container) {
         this.container = container;
@@ -30,9 +56,9 @@ class ImageEditor{
         this.height = data['height'];
         this.lines = data['lines'];
 
-        let map_element = this.container.getElementsByClassName("editor-map")[0]
+        this.map_element = this.container.getElementsByClassName("editor-map")[0]
 
-        this.map = L.map(map_element, {
+        this.map = L.map(this.map_element, {
             crs: L.CRS.Simple,
             minZoom: -3,
             maxZoom: 3,
@@ -55,8 +81,19 @@ class ImageEditor{
         for (let line of this.lines) {
             this.add_line_to_map(line);
         }
-        map_element.focus();
+        this.map_element.focus();
         //map_element.onkeydown = this.basic_keypress.bind(this);
+    }
+
+    set_confidences_line(text_line_div, line){
+        var chars = line.text.split("");
+        for(let i in line.np_confidences)
+        {
+            var char_span = document.createElement('span');
+            char_span.setAttribute("style", "background: " + rgbToHex(255, Math.floor(line.np_confidences[i] * 255), Math.floor(line.np_confidences[i] * 255)));
+            char_span.innerHTML = chars[i];
+            text_line_div.appendChild(char_span);
+        }
     }
 
     add_line_to_map(line, polygon){
@@ -70,12 +107,32 @@ class ImageEditor{
             line.polygon = L.polygon(points);
         }
         line.polygon.addTo(this.map);
-        line.polygon.on('click', this.obj_click.bind(this, line));
+        line.polygon.on('click', this.polygon_click.bind(this, line));
         //this.update_style(position);
+
+        var text_line_div = document.createElement('div');
+        text_line_div.setAttribute("contentEditable", "true");
+        text_line_div.setAttribute("onkeypress", "handle_key(event)");
+        this.set_confidences_line(text_line_div, line);
+        text_line_div.addEventListener('click', this.line_click.bind(this, line));
+        document.getElementById('text-container').appendChild(text_line_div);
     }
 
-    obj_click(line){
-        console.log(line.text)
+    polygon_click(line){
+        console.log(line.text);
+    }
+
+    line_click(line){
+        console.log(line.text);
+        var start_x = line.np_baseline[0][0];
+        var start_y = line.np_baseline[0][1];
+        var end_x = line.np_baseline[line.np_baseline.length - 1][0];
+        var end_y = line.np_baseline[line.np_baseline.length - 1][1];
+        var line_length = end_x - start_x;
+        var y_pad = line_length / 10;
+        var middle_x = start_x + line_length / 2;
+        var middle_y = (start_y + end_y) / 2
+        this.map.fitBounds([xy(start_x, -start_y + y_pad), xy(end_x, -end_y + y_pad)]);
     }
 
     update_style(position){
