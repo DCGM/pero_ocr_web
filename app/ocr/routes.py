@@ -9,6 +9,7 @@ from app.ocr.general import create_json_from_request, create_ocr_analysis_reques
                             insert_lines_to_db, change_ocr_request_and_document_state_on_success
 from app.document.general import get_document_images
 from app.db.model import DocumentState
+import json
 
 
 @bp.route('/start_ocr/<string:document_id>')
@@ -80,6 +81,7 @@ def get_lines(document_id, image_id):
         textlines = sorted(list(textregion.textlines), key=lambda x: x.order)
         for line in textlines:
             line_dict = {}
+            line_dict['id'] = line.id;
             line_dict['np_points'] = line.np_points.tolist()
             line_dict['np_baseline'] = line.np_baseline.tolist()
             line_dict['np_heights'] = line.np_heights.tolist()
@@ -87,3 +89,11 @@ def get_lines(document_id, image_id):
             line_dict['text'] = line.text
             lines_dict['lines'].append(line_dict)
     return jsonify(lines_dict)
+
+
+@bp.route('/save_lines', methods=['POST'])
+def save_lines():
+
+    print(json.loads(request.form['lines']))
+
+    return 'OK'
