@@ -13,18 +13,18 @@ import time
 import requests
 
 
-base_url = 'http://127.0.0.1:5000'
+base_url = 'http://127.0.0.1:2000'
 route = '/ocr/get_request'
 
-images_folder = "/home/ikohut/projects_new/pero_ocr_web/ocr_client/images"
-xmls_folder = "/home/ikohut/projects_new/pero_ocr_web/ocr_client/xmls"
-output_folder = "/home/ikohut/projects_new/pero_ocr_web/ocr_client/output"
-logits_folder = "/home/ikohut/projects_new/pero_ocr_web/ocr_client/output/logits"
-pages_folder = "/home/ikohut/projects_new/pero_ocr_web/ocr_client/output/page"
-xmls_confidences_folder = "/home/ikohut/projects_new/pero_ocr_web/ocr_client/xmls_confidences_folder"
+images_folder = "/home/ikohut/projects_new/pero_ocr_web_new/ocr_client/images"
+xmls_folder = "/home/ikohut/projects_new/pero_ocr_web_new/ocr_client/xmls"
+output_folder = "/home/ikohut/projects_new/pero_ocr_web_new/ocr_client/output"
+logits_folder = "/home/ikohut/projects_new/pero_ocr_web_new/ocr_client/output/logits"
+pages_folder = "/home/ikohut/projects_new/pero_ocr_web_new/ocr_client/output/page"
+xmls_confidences_folder = "/home/ikohut/projects_new/pero_ocr_web_new/ocr_client/xmls_confidences_folder"
 
-config_path = "/home/ikohut/projects_new/pero_ocr_web/ocr_client/config.ini"
-ocr_json = "/home/ikohut/projects_new/pero_ocr_web/ocr_client/models/ocr/IMPACT_2019-03-18/ocr_engine.json"
+config_path = "/home/ikohut/projects_new/pero_ocr_web_new/ocr_client/config.ini"
+ocr_json = "/home/ikohut/projects_new/pero_ocr_web_new/ocr_client/models/ocr/IMPACT_2019-03-18/ocr_engine.json"
 
 
 def get_post_route(request_id):

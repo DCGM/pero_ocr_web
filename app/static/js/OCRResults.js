@@ -15,9 +15,15 @@ function rgbToHex(r, g, b) {
     return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
 
-function setColor(color) {
+function setColor(front_color, back_color) {
     document.execCommand('styleWithCSS', false, true);
-    document.execCommand('foreColor', false, color);
+    document.execCommand('foreColor', false, front_color);
+    document.execCommand('BackColor', false, back_color);
+}
+
+function replaceNbsps(str) {
+  var re = new RegExp(String.fromCharCode(160), "g");
+  return str.replace(re, " ");
 }
 
 class ImageEditor{
@@ -121,15 +127,37 @@ class ImageEditor{
         {
             l.polygon.setStyle({ color: "#0059ff", opacity: 1, fillColor: "#0059ff", fillOpacity: 0.1});
         }
+
         var start_x = line.np_baseline[0][0];
         var start_y = line.np_baseline[0][1];
         var end_x = line.np_baseline[line.np_baseline.length - 1][0];
         var end_y = line.np_baseline[line.np_baseline.length - 1][1];
         var line_length = end_x - start_x;
-        var y_pad = line_length / 10;
-        var middle_x = start_x + line_length / 2;
-        var middle_y = (start_y + end_y) / 2;
-        this.map.fitBounds([xy(start_x, -start_y + y_pad), xy(end_x, -end_y + y_pad)]);
+
+        if (line_length < (this.map_element.offsetWidth / 2))
+        {
+            var height = line.np_heights[0] + line.np_heights[1];
+            var new_line_height = this.map_element.offsetHeight / 4;
+            var height_scale = new_line_height / height;
+
+            console.log(height, new_line_height, height_scale);
+
+            var new_line_length = line_length * height_scale;
+            var pad = (this.map_element.offsetWidth - new_line_length) / 2 + ((new_line_length - line_length) / 2);
+
+            var y_pad = (new_line_length + 2 * pad) / 8;
+
+            console.log(line_length, new_line_length, pad);
+
+            this.map.fitBounds([xy(start_x - pad, -start_y + y_pad), xy(end_x + pad, -end_y + y_pad)]);
+        }
+        else
+        {
+            var y_pad = line_length / 5;
+
+            console.log("line is longer")
+            this.map.fitBounds([xy(start_x, -start_y + y_pad), xy(end_x, -end_y + y_pad)]);
+        }
         line.polygon.setStyle({ color: "#028700", opacity: 1, fillColor: "#028700", fillOpacity: 0.1});
     }
 
@@ -141,10 +169,11 @@ class ImageEditor{
                 e.target.removeChild(child);
             }
         }
-        setColor("#028700");
+        setColor("#028700", "#ffffff");
 
         if (e.keyCode == 13)
         {
+            line.text_line_element.style.backgroundColor = "#d0ffcf";
             e.preventDefault();
             var line_number = parseInt(e.target.getAttribute("id"), 10);
             document.getElementById((line_number + 1).toString()).focus();
@@ -152,6 +181,7 @@ class ImageEditor{
 
         if (e.keyCode != 13 && e.keyCode != 9)
         {
+            line.text_line_element.style.backgroundColor = "#ffcc54";
             line.edited = true;
         }
     }
@@ -169,24 +199,25 @@ class ImageEditor{
                     {
                         if (child.childNodes[0].childNodes.length > 0)
                         {
-                            line_text += child.childNodes[0].innerHTML;
+                            line_text += child.childNodes[0].textContent;
                             line_text += child.childNodes[1].textContent;
                         }
                         else
                         {
                             line_text += child.childNodes[0].textContent;
-                            line_text += child.childNodes[1].innerHTML;
+                            line_text += child.childNodes[1].textContent;
                         }
                     }
                     else
                     {
-                        line_text += child.innerHTML;
+                        line_text += child.textContent;
                     }
                 }
                 var line_dict = {};
                 line_dict["id"] = l.id;
                 line_dict["text"] = line_text;
                 edited_lines.push(line_dict);
+                console.log(l.text_line_element.innerHTML);
                 console.log(l.id, line_text);
             }
         }

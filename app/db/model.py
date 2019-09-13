@@ -101,6 +101,7 @@ class TextLine(Base):
     text = Column(String())
 
     region = relationship('TextRegion')
+    annotations = relationship('Annotation')
 
 
     @property
@@ -134,6 +135,18 @@ class TextLine(Base):
     @np_confidences.setter
     def np_confidences(self, cs):
         self.confidences = confidences_to_str(cs)
+
+
+class Annotation(Base):
+    __tablename__ = 'annotations'
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    text_line_id = Column(GUID(), ForeignKey('textlines.id'))
+    text_original = Column(String())
+    text_edited = Column(String())
+    created_date = Column(DateTime, default=datetime.datetime.utcnow)
+    deleted = Column(Boolean())
+
+    text_line = relationship('TextLine')
 
 
 def str_points2D_to_np(str_points):
