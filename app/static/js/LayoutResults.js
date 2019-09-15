@@ -127,8 +127,14 @@ function editor_keypress(e) {
         create_new_object();
     } else if (e.key == 'g') {
         toggle_delete_object();
-    }else if (e.key == 's') {
+    } else if (e.key == 's') {
         save_image();
+    } else if(e.key == 'n') {
+        save_image();
+        next_image();
+    } else if(e.key == 'b'){
+        save_image();
+        previous_image();
     }
 }
 

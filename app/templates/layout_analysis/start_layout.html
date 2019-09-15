@@ -1,0 +1,22 @@
+{% extends "base/base.html" %} {% block content %}
+    <div>
+        <h3 class="text-left">{{ document.name }} - Start Layout Analysis</h3>
+        <form action="{{ url_for('layout_analysis.start_layout_analysis_post', document_id=document.id) }}" method="POST">
+            <select class="js-example-basic-single" name="layout_analysis_type" style="width:100%">
+                <option value="NO_LAYOUT">No Layout Analysis</option>
+                <option value="BASIC">Basic Layout Analysis</option>
+            </select>
+            <input class="btn btn-primary my-3" type="submit" value="Submit">
+        </form>
+
+    </div>
+{% endblock %} {% block styles %}
+<link href="/static/select2/select2.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block scripts %}
+    <script src="/static/select2/select2.min.js"></script>
+    <script>
+
+    </script>
+{% endblock %}

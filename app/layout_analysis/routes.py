@@ -5,28 +5,39 @@ from app.db.general import get_document_by_id, get_request_by_id, get_image_by_i
 from app.layout_analysis.general import create_layout_analysis_request, can_start_layout_analysis, \
     add_layout_request_and_change_document_state, get_first_layout_request, change_layout_request_and_document_state_in_progress, \
     create_json_from_request, change_layout_request_and_document_state_on_success, get_coords_and_make_preview, \
-    make_image_result_preview
+    make_image_result_preview, change_document_state_on_complete_layout_analysis
 import os
 from app.db.model import DocumentState, TextRegion
-import xml.etree.ElementTree as ET
 from app.document.general import get_document_images, is_user_owner_or_collaborator
 from PIL import Image
 from app.db import db_session
 
 
-@bp.route('/start/<string:document_id>')
+@bp.route('/start/<string:document_id>', methods=['GET'])
 @login_required
-def start_layout_analysis(document_id):
+def start_layout_analysis_get(document_id):
     document = get_document_by_id(document_id)
-    if len(document.images.all()) == 0:
-        flash(u'Can\'t create request without uploading images.', 'danger')
-        return redirect(request.referrer)
-    layout_request = create_layout_analysis_request(document)
-    if can_start_layout_analysis(document):
-        add_layout_request_and_change_document_state(layout_request)
-        flash(u'Request for layout analysis successfully created!', 'success')
+    return render_template('layout_analysis/start_layout.html', document=document)
+
+@bp.route('/start/<string:document_id>', methods=['POST'])
+def start_layout_analysis_post(document_id):
+    document = get_document_by_id(document_id)
+    type = request.form['layout_analysis_type']
+    if type == 'BASIC':
+        if len(document.images.all()) == 0:
+            flash(u'Can\'t create request without uploading images.', 'danger')
+            return redirect(request.referrer)
+        layout_request = create_layout_analysis_request(document)
+        if can_start_layout_analysis(document):
+            add_layout_request_and_change_document_state(layout_request)
+            flash(u'Request for layout analysis successfully created!', 'success')
+        else:
+            flash(u'Request for layout analysis is already pending or document is in unsupported state!', 'danger')
     else:
-        flash(u'Request for layout analysis is already pending or document is in unsupported state!', 'danger')
+        os.makedirs(os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document_id)))
+        for image in document.images:
+            make_image_result_preview([], image.path, image.id)
+        change_document_state_on_complete_layout_analysis(document)
     return redirect(url_for('document.documents'))
 
 
@@ -79,18 +90,8 @@ def show_results(document_id):
     document = get_document_by_id(document_id)
     if document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
         return  # Bad Request or something like that
-    folder_path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document_id))
-    xml_files = dict()
     images = get_document_images(document)
-    for image in document.images.all():
-        if not image.deleted:
-            image_id = str(image.id)
-            xml_path = os.path.join(folder_path, image_id + '.xml')
-            et = ET.parse(xml_path)
-            xml_string = ET.tostring(et.getroot(), encoding='utf8', method='xml')
-            xml_files[image_id] = xml_string
-
-    return render_template('layout_analysis/layout_results.html', document=document, images=images, xml_files=xml_files)
+    return render_template('layout_analysis/layout_results.html', document=document, images=images)
 
 
 @bp.route('/get_xml/<string:document_id>/<string:image_id>')

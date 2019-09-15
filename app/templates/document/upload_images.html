@@ -24,7 +24,7 @@
     <h3>{{ document.name }} - Upload Images</h3>
     <a
             class="btn btn-primary text-white"
-            href="{{ url_for('layout_analysis.start_layout_analysis', document_id=document.id) }}"
+            href="{{ url_for('layout_analysis.start_layout_analysis_get', document_id=document.id) }}"
     >
         Run layout analysis
     </a>

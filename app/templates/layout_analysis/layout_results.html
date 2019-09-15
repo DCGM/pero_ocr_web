@@ -32,14 +32,12 @@
 {#               class="btn btn-lg btn-primary my-3">Download XML</a>#}
 {#            <br>#}
             <div class="my-2">
-                <button class="btn btn-secondary" onclick="get_image(annotator_data.uuid)">Reset</button>
-    {#            <button onclick="next_image();">Next (n)</button>#}
-    {#            <button onclick="previous_image();">Back (b)</button>#}
+                <button class="btn btn-secondary" onclick="get_image(annotator_data.uuid)">Reset (r)</button>
+                <button class="btn btn-secondary" onclick="next_image();">Next (n)</button>
+                <button class="btn btn-secondary" onclick="previous_image();">Back (b)</button>
                 <button class="btn btn-secondary" onclick="create_new_object();">New object (c)</button>
-                <button class="btn btn-secondary" onclick="toggle_delete_object();">Toggle delete(g)</button>
-{#                <button class="btn btn-secondary" onclick="resize2x()">2x</button>#}
-{#                <button class="btn btn-secondary" onclick="fix_ar()">fix_ar</button>#}
-                <button class="btn btn-secondary" onclick="save_image()">save</button>
+                <button class="btn btn-secondary" onclick="toggle_delete_object();">Toggle delete (g)</button>
+                <button class="btn btn-secondary" onclick="save_image()">save (s)</button>
             </div>
             <div id="map-container">
                 <div id="mapid"></div>
