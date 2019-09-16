@@ -25,7 +25,7 @@ from parse_folder import save_outputs
 
 
 
-def detect_document_baselines(images_folder, xmls_folder, output_folder, config_path):
+def detect_document_baselines(images_folder, xmls_folder, output_folder, document_id, config_path):
     images_path = os.path.join(images_folder, os.listdir(images_folder)[0])
     xmls_path = os.path.join(xmls_folder, os.listdir(xmls_folder)[0])
 
@@ -37,7 +37,7 @@ def detect_document_baselines(images_folder, xmls_folder, output_folder, config_
     config['INPUTS']['PAGE_PARAGRAPHS'] = xmls_path
     source_page = config['INPUTS']['SOURCE_PAGE']
     page_lines = config['INPUTS']['PAGE_LINES']
-    output_path = output_folder
+    output_path = os.path.join(output_folder, document_id)
     if os.path.exists(output_path):
         shutil.rmtree(output_path)
     os.makedirs(output_path)

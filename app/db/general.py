@@ -1,6 +1,6 @@
 from app.db import db_session
 from app.db.user import User
-from app.db.model import Document, Request, Image, TextRegion
+from app.db.model import Document, Request, Image, TextRegion, TextLine
 
 
 def save_user(user):
@@ -60,3 +60,6 @@ def get_image_by_id(image_id):
 
 def get_text_region_by_id(id):
     return TextRegion.query.get(id)
+
+def get_text_line_by_id(id):
+    return TextLine.query.get(id)
