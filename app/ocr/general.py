@@ -1,6 +1,6 @@
 import uuid
-from app.db.model import RequestState, RequestType, Request, DocumentState, TextRegion, TextLine
-from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_text_region_by_id
+from app.db.model import RequestState, RequestType, Request, DocumentState, TextRegion, TextLine, Annotation
+from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_text_region_by_id, get_text_line_by_id
 from app.db import db_session
 from flask import jsonify, current_app
 import xml.etree.ElementTree as ET
@@ -59,6 +59,13 @@ def insert_lines_to_db(ocr_results_folder):
                                      heights=heights, confidences=confidences, text=line_text, deleted=False)
                 textregion.textlines.append(text_line)
         db_session.commit()
+
+def insert_annotations_to_db(annotations):
+    for annotation in annotations:
+        text_line = get_text_line_by_id(annotation['id'])
+        annotation_db = Annotation(text_original=annotation['text_original'], text_edited=annotation['text_edited'], deleted=False)
+        text_line.annotations.append(annotation_db)
+    db_session.commit()
 
 def change_ocr_request_and_document_state(request, request_state, document_state):
     request.state = request_state

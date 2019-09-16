@@ -26,12 +26,56 @@ function replaceNbsps(str) {
   return str.replace(re, " ");
 }
 
+function get_edited_text(text_line_element){
+    var line_text = "";
+    for (let child of text_line_element.childNodes)
+    {
+        if (child.childNodes.length > 1)
+        {
+            if (child.childNodes[0].childNodes.length > 0)
+            {
+                line_text += child.childNodes[0].textContent;
+                line_text += child.childNodes[1].textContent;
+            }
+            else
+            {
+                line_text += child.childNodes[0].textContent;
+                line_text += child.childNodes[1].textContent;
+            }
+        }
+        else
+        {
+            line_text += child.textContent;
+        }
+    }
+    return line_text;
+}
+
+function post_annotations(annotations)
+{
+    console.log(annotations);
+    console.log(JSON.stringify(annotations));
+    var route = Flask.url_for('ocr.save_annotations', {});
+    console.log(route);
+    $.post(route, {annotations: JSON.stringify(annotations)}, function(data, status) {});
+}
+
+function set_line_background_to_save(text_line_element)
+{
+    text_line_element.style.backgroundColor = "#d0ffcf";
+    for (let child of text_line_element.childNodes)
+    {
+        child.style.backgroundColor = "#ffffff";
+    }
+}
+
+
 class ImageEditor{
     constructor(container) {
         this.container = container;
         this.container.innerHTML = "<div class='editor-map'></div><div class='status'></div>";
         var save_btn = document.getElementById('save-btn')
-        save_btn.addEventListener('click', this.save_lines.bind(this));
+        save_btn.addEventListener('click', this.save_annotations.bind(this));
     }
 
     get_image(document_id, image_id) {
@@ -46,7 +90,12 @@ class ImageEditor{
         this.width = data['width'];
         this.height = data['height'];
         this.lines = data['lines'];
-        this.edited = false;
+
+        for (let l of this.lines)
+        {
+            l.edited = false;
+            l.saved = false;
+        }
 
         this.map_element = this.container.getElementsByClassName("editor-map")[0]
 
@@ -127,37 +176,13 @@ class ImageEditor{
         {
             l.polygon.setStyle({ color: "#0059ff", opacity: 1, fillColor: "#0059ff", fillOpacity: 0.1});
         }
-
-        var start_x = line.np_baseline[0][0];
+        var start_x = line.np_textregion[1][1];
         var start_y = line.np_baseline[0][1];
-        var end_x = line.np_baseline[line.np_baseline.length - 1][0];
+        var end_x = line.np_textregion[2][1];
         var end_y = line.np_baseline[line.np_baseline.length - 1][1];
         var line_length = end_x - start_x;
-
-        if (line_length < (this.map_element.offsetWidth / 2))
-        {
-            var height = line.np_heights[0] + line.np_heights[1];
-            var new_line_height = this.map_element.offsetHeight / 4;
-            var height_scale = new_line_height / height;
-
-            console.log(height, new_line_height, height_scale);
-
-            var new_line_length = line_length * height_scale;
-            var pad = (this.map_element.offsetWidth - new_line_length) / 2 + ((new_line_length - line_length) / 2);
-
-            var y_pad = (new_line_length + 2 * pad) / 8;
-
-            console.log(line_length, new_line_length, pad);
-
-            this.map.fitBounds([xy(start_x - pad, -start_y + y_pad), xy(end_x + pad, -end_y + y_pad)]);
-        }
-        else
-        {
-            var y_pad = line_length / 5;
-
-            console.log("line is longer")
-            this.map.fitBounds([xy(start_x, -start_y + y_pad), xy(end_x, -end_y + y_pad)]);
-        }
+        var y_pad = line_length / 5;
+        this.map.fitBounds([xy(start_x, -start_y + y_pad), xy(end_x, -end_y + y_pad)]);
         line.polygon.setStyle({ color: "#028700", opacity: 1, fillColor: "#028700", fillOpacity: 0.1});
     }
 
@@ -173,7 +198,19 @@ class ImageEditor{
 
         if (e.keyCode == 13)
         {
-            line.text_line_element.style.backgroundColor = "#d0ffcf";
+            if (!line.saved)
+            {
+                set_line_background_to_save(line.text_line_element);
+                var annotations = [];
+                var annotation_dict = {};
+                annotation_dict["id"] = line.id;
+                annotation_dict["text_original"] = line.text;
+                annotation_dict["text_edited"] = get_edited_text(line.text_line_element);
+                annotations.push(annotation_dict);
+                post_annotations(annotations);
+                line.edited = false;
+                line.saved = true;
+            }
             e.preventDefault();
             var line_number = parseInt(e.target.getAttribute("id"), 10);
             document.getElementById((line_number + 1).toString()).focus();
@@ -183,49 +220,27 @@ class ImageEditor{
         {
             line.text_line_element.style.backgroundColor = "#ffcc54";
             line.edited = true;
+            line.saved = false;
         }
     }
 
-    save_lines(){
-        var edited_lines = [];
+    save_annotations(){
+        var annotations = [];
         for (let l of this.lines)
         {
             if (l.edited)
             {
-                var line_text = "";
-                for (let child of l.text_line_element.childNodes)
-                {
-                    if (child.childNodes.length > 1)
-                    {
-                        if (child.childNodes[0].childNodes.length > 0)
-                        {
-                            line_text += child.childNodes[0].textContent;
-                            line_text += child.childNodes[1].textContent;
-                        }
-                        else
-                        {
-                            line_text += child.childNodes[0].textContent;
-                            line_text += child.childNodes[1].textContent;
-                        }
-                    }
-                    else
-                    {
-                        line_text += child.textContent;
-                    }
-                }
-                var line_dict = {};
-                line_dict["id"] = l.id;
-                line_dict["text"] = line_text;
-                edited_lines.push(line_dict);
-                console.log(l.text_line_element.innerHTML);
-                console.log(l.id, line_text);
+                set_line_background_to_save(l.text_line_element);
+                var annotation_dict = {};
+                annotation_dict["id"] = l.id;
+                annotation_dict["text_original"] = l.text;
+                annotation_dict["text_edited"] = get_edited_text(l.text_line_element);
+                annotations.push(annotation_dict);
+                l.edited = false;
+                l.saved = true;
             }
         }
-        console.log(edited_lines);
-        console.log(JSON.stringify(edited_lines));
-        var route = Flask.url_for('ocr.save_lines', {});
-        console.log(route);
-        $.post(route, {lines: JSON.stringify(edited_lines)}, function(data, status) {});
+        post_annotations(annotations);
     }
 
 
@@ -262,6 +277,24 @@ var image_editor = new ImageEditor(document.getElementById('map-container'));
 $('.image-item-container').on('click', function (event) {
     let document_id = $(this).data('document');
     let image_id = $(this).data('image');
+    if (typeof image_editor.lines !== 'undefined')
+    {
+        unsaved_lines = false;
+        for (let l of image_editor.lines)
+        {
+            if (l.edited)
+            {
+                unsaved_lines = true;
+            }
+        }
+        if (unsaved_lines)
+        {
+            if (confirm("Save changes?"))
+            {
+                image_editor.save_annotations();
+            }
+        }
+    }
     image_editor.get_image(document_id, image_id)
 });
 

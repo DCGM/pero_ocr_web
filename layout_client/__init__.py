@@ -5,7 +5,7 @@ from io import open as image_open
 import time
 
 
-base_url = 'http://127.0.0.1:5000'
+base_url = 'http://127.0.0.1:2000'
 route = '/layout_analysis/get_request'
 folder = '/home/ikohut/projects_new/pero_ocr_web_data/client_images'
 output_folder = '/home/ikohut/projects_new/pero_ocr_web_data/client_images_results'

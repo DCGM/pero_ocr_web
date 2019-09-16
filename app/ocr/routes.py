@@ -6,7 +6,7 @@ from flask_login import login_required
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_text_region_by_id
 from app.ocr.general import create_json_from_request, create_ocr_analysis_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
-                            insert_lines_to_db, change_ocr_request_and_document_state_on_success
+                            insert_lines_to_db, change_ocr_request_and_document_state_on_success, insert_annotations_to_db
 from app.document.general import get_document_images
 from app.db.model import DocumentState
 import json
@@ -86,14 +86,14 @@ def get_lines(document_id, image_id):
             line_dict['np_baseline'] = line.np_baseline.tolist()
             line_dict['np_heights'] = line.np_heights.tolist()
             line_dict['np_confidences'] = line.np_confidences.tolist()
+            line_dict['np_textregion'] = textregion.np_points.tolist()
             line_dict['text'] = line.text
             lines_dict['lines'].append(line_dict)
     return jsonify(lines_dict)
 
 
-@bp.route('/save_lines', methods=['POST'])
-def save_lines():
-
-    print(json.loads(request.form['lines']))
-
+@bp.route('/save_annotations', methods=['POST'])
+def save_annotations():
+    insert_annotations_to_db(json.loads(request.form['annotations']))
+    print(json.loads(request.form['annotations']))
     return 'OK'

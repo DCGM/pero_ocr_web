@@ -88,6 +88,15 @@ class TextRegion(Base):
     textlines = relationship('TextLine')
 
 
+    @property
+    def np_points(self):
+        return str_points2D_to_np(self.points)
+
+    @np_points.setter
+    def np_points(self, ps):
+        self.points = points2D_to_str(ps)
+
+
 class TextLine(Base):
     __tablename__ = 'textlines'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
