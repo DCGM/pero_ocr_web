@@ -19,6 +19,7 @@ def start_layout_analysis_get(document_id):
     document = get_document_by_id(document_id)
     return render_template('layout_analysis/start_layout.html', document=document)
 
+
 @bp.route('/start/<string:document_id>', methods=['POST'])
 def start_layout_analysis_post(document_id):
     document = get_document_by_id(document_id)
@@ -91,7 +92,7 @@ def show_results(document_id):
     if document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
         return  # Bad Request or something like that
     images = get_document_images(document)
-    return render_template('layout_analysis/layout_results.html', document=document, images=images)
+    return render_template('layout_analysis/layout_results.html', document=document, images=images.all())
 
 
 @bp.route('/get_xml/<string:document_id>/<string:image_id>')
@@ -115,6 +116,8 @@ def get_image_result(document_id, image_id):
     width, height = img.size
     textregions = []
     for textregion in image.textregions:
+        if textregion.deleted:
+            continue
         textregion_points_string = textregion.points.split(' ')
         textregion_points = []
         for textregion_point_string in textregion_points_string:

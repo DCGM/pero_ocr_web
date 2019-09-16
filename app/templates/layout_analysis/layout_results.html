@@ -57,6 +57,10 @@
     <script>
         var document_id = '{{ document.id }}';
         var first_image = '{{ images[0].id }}';
+        var imagesId = [];
+        {% for image in images %}
+            imagesId.push('{{ image.id }}');
+        {% endfor %}
     </script>
     <script src="/static/js/LayoutResults.js"></script>
 {% endblock %}
