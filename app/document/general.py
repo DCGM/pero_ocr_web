@@ -6,7 +6,7 @@ from flask import current_app as app
 from app.db import db_session
 from PIL import Image as PILImage
 import uuid
-import xml.etree.ElementTree as ET
+from lxml import etree as ET
 
 
 def create_document(name, user):

@@ -97,6 +97,18 @@
                     </a>
                     {% endif %}
 
+                    {% if document.state.name == 'COMPLETED_OCR' %}
+                        <a
+                                class="document-action-btn btn btn-secondary text-white"
+                                href="{{ url_for('ocr.show_results', document_id=document.id) }}"
+                                data-toggle="tooltip"
+                                data-placement="right"
+                                title="Show ocr results"
+                        >
+                            <ion-icon name="eye"></ion-icon>
+                        </a>
+                    {% endif %}
+
                     {% if document.user.id == current_user.id %}
                         <a
                                 class="document-action-btn btn btn-secondary text-white delete-document-button"

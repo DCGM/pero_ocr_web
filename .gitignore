@@ -109,3 +109,9 @@ static/upload_images/*
 .idea/*
 db.sqlite
 config.py
+
+*.jpeg
+
+*.logits
+
+*.xml

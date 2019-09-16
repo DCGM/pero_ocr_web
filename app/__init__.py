@@ -3,6 +3,8 @@ from sqlalchemy import create_engine
 from flask_login import LoginManager
 import os
 from flask_bootstrap import Bootstrap
+from flask_jsglue import JSGlue
+
 
 
 database_url = 'sqlite:///db.sqlite'
@@ -16,6 +18,9 @@ def create_app():
     app.config['SECRET_KEY'] = SECRET_KEY
     init_db()
     Bootstrap(app)
+
+    jsglue = JSGlue()
+    jsglue.init_app(app)
 
     login_manager = LoginManager()
     login_manager.login_view = 'main.index'

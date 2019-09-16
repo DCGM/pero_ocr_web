@@ -67,6 +67,9 @@ def make_image_result_preview(regions, image_path, image_id):
     for region in regions:
         ImageDraw.Draw(image).line(region, width=35, fill=(0, 255, 0))
     new_path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(image_db.document_id), str(image_id) + '.jpg')
+    scale = (100000.0 / (image.width * image.height))**0.5
+    image = image.resize((int(image.width * scale + 0.5), int(image.height * scale + 0.5)), resample=Image.LANCZOS)
+    print(image.width, image.height, scale)
     image.save(new_path)
 
 

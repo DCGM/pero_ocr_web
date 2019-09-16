@@ -69,6 +69,6 @@ def make_post_request_data(output_folder, document):
     data = dict()
     images = document['images']
     for image in images:
-        data[image] = open('{}\\{}\\{}.xml'.format(output_folder, document_id, image), 'rb')
+        data[image] = open(os.path.join(output_folder, document_id, "{}.xml".format(image)), 'rb')
     print('Data:', data)
     return data
