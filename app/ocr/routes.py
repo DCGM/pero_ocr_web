@@ -86,7 +86,7 @@ def get_lines(document_id, image_id):
             line_dict['np_baseline'] = line.np_baseline.tolist()
             line_dict['np_heights'] = line.np_heights.tolist()
             line_dict['np_confidences'] = line.np_confidences.tolist()
-            line_dict['np_textregion'] = textregion.np_points.tolist()
+            line_dict['np_textregion_width'] = [min(textregion.np_points[:,1]), max(textregion.np_points[:,1])]
             line_dict['text'] = line.text
             lines_dict['lines'].append(line_dict)
     return jsonify(lines_dict)

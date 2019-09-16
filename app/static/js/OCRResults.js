@@ -32,16 +32,8 @@ function get_edited_text(text_line_element){
     {
         if (child.childNodes.length > 1)
         {
-            if (child.childNodes[0].childNodes.length > 0)
-            {
-                line_text += child.childNodes[0].textContent;
-                line_text += child.childNodes[1].textContent;
-            }
-            else
-            {
-                line_text += child.childNodes[0].textContent;
-                line_text += child.childNodes[1].textContent;
-            }
+            line_text += child.childNodes[0].textContent;
+            line_text += child.childNodes[1].textContent;
         }
         else
         {
@@ -65,7 +57,7 @@ function set_line_background_to_save(text_line_element)
     text_line_element.style.backgroundColor = "#d0ffcf";
     for (let child of text_line_element.childNodes)
     {
-        child.style.backgroundColor = "#ffffff";
+        child.style.backgroundColor = "#d0ffcf";
     }
 }
 
@@ -176,9 +168,9 @@ class ImageEditor{
         {
             l.polygon.setStyle({ color: "#0059ff", opacity: 1, fillColor: "#0059ff", fillOpacity: 0.1});
         }
-        var start_x = line.np_textregion[1][1];
+        var start_x = line.np_textregion_width[0];
         var start_y = line.np_baseline[0][1];
-        var end_x = line.np_textregion[2][1];
+        var end_x = line.np_textregion_width[1];
         var end_y = line.np_baseline[line.np_baseline.length - 1][1];
         var line_length = end_x - start_x;
         var y_pad = line_length / 5;
@@ -194,7 +186,7 @@ class ImageEditor{
                 e.target.removeChild(child);
             }
         }
-        setColor("#028700", "#ffffff");
+        setColor("#028700", "#ffffff00");
 
         if (e.keyCode == 13)
         {
