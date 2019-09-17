@@ -67,6 +67,12 @@ def insert_annotations_to_db(annotations):
         text_line.annotations.append(annotation_db)
     db_session.commit()
 
+def update_text_lines(annotations):
+    for annotation in annotations:
+        text_line = get_text_line_by_id(annotation['id'])
+        text_line.text = annotation['text_edited']
+    db_session.commit()
+
 def change_ocr_request_and_document_state(request, request_state, document_state):
     request.state = request_state
     request.document.state = document_state
