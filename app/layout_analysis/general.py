@@ -47,6 +47,11 @@ def change_layout_request_and_document_state_on_success(request):
     return
 
 
+def change_document_state_on_complete_layout_analysis(document):
+    document.state = DocumentState.COMPLETED_LAYOUT_ANALYSIS
+    db_session.commit()
+
+
 def create_json_from_request(request):
     value = {'id': request.id, 'document': {'id': request.document.id, 'images': []}}
     for image in request.document.images:

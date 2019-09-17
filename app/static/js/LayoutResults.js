@@ -1,3 +1,5 @@
+var loaded_json = "";
+
 annotator_data = {
     uuid: '', past_uuid: [], future_uuid: [],
     unselect_objects: function () {
@@ -107,8 +109,6 @@ function toggle_ignore_object() {
 }
 
 function editor_keypress(e) {
-    console.log('Keypress', e);
-
     // g - not deleted
     // h - not ignored
     // o - reset original object annotation
@@ -120,15 +120,21 @@ function editor_keypress(e) {
 
     // r - previous annotated??
     // t - next annotated
-
-    if (e.key == "r") {
+    var k = e.key = e.key.toLowerCase()
+    if (k == "r") {
         get_image(annotator_data.uuid)
-    } else if (e.key == "c") {
+    } else if (k == "c") {
         create_new_object();
-    } else if (e.key == 'g') {
+    } else if (k == 'g') {
         toggle_delete_object();
-    }else if (e.key == 's') {
+    } else if (k == 's') {
         save_image();
+    } else if(k == 'n') {
+        save_image();
+        next_image();
+    } else if(k == 'b'){
+        save_image();
+        previous_image();
     }
 }
 
@@ -153,11 +159,12 @@ function save_image() {
         }
         console.log(obj_to_send);
         var data = JSON.stringify(obj_to_send);
-        $.ajax("/layout_analysis/edit_layout/" + annotator_data.uuid, {
+        var imageId = annotator_data.uuid;
+        $.ajax("/layout_analysis/edit_layout/" + imageId, {
             data: data,
             contentType: 'application/json', type: 'POST'
         }).done(function () {
-            let $image = $(`.image-item-container[data-image="${annotator_data.uuid}"]`).find('img')
+            let $image = $(`.image-item-container[data-image="${imageId}"]`).find('img');
             let src = $image.attr('src') + "?" + new Date().getTime();
             $image.attr('src', src);
         })
@@ -220,23 +227,19 @@ class LP_object {
 
 function next_image() {
     if (annotator_data.uuid) {
-        annotator_data.past_uuid.push(annotator_data.uuid);
+        var index = imagesId.indexOf(annotator_data.uuid);
+        if(index < imagesId.length - 1){
+            $(`.image-item-container[data-image="${imagesId[index + 1]}"]`).trigger('click');
+        }
     }
-    if (annotator_data.future_uuid.length > 0) {
-        new_uuid = annotator_data.future_uuid.pop();
-    } else {
-        new_uuid = null;
-    }
-    get_image(new_uuid);
 }
 
 function previous_image() {
-    if (annotator_data.past_uuid.length > 0) {
-        new_uuid = annotator_data.past_uuid.pop();
-        if (annotator_data.uuid) {
-            annotator_data.future_uuid.push(annotator_data.uuid);
+    if (annotator_data.uuid) {
+        var index = imagesId.indexOf(annotator_data.uuid);
+        if(index > 0){
+            $(`.image-item-container[data-image="${imagesId[index - 1]}"]`).trigger('click');
         }
-        get_image(new_uuid);
     }
 }
 
@@ -273,6 +276,7 @@ function new_image_callback(data, status) {
             annotator_data.objects[i].deleted, false,
             annotator_data.objects[i].points, '');
     }
+
     report_status('Got image: ' + data['uuid'])
 }
 
@@ -280,9 +284,12 @@ function get_image(image_uuid) {
     annotator_data.uuid = null;
     annotator_data.objects = null;
     try {
-        annotator_data.map.remove();
+        if(annotator_data.map){
+            annotator_data.map.remove();
+            annotator_data.map = null;
+        }
     } catch (e) {
-        1;
+        console.log(e);
     }
 
     var url = `/layout_analysis/get_image_result/${document_id}/${image_uuid}`;
@@ -335,7 +342,6 @@ function fix_ar() {
 
 get_image(first_image)
 
-
 $('.image-item-container').on('click', function (event) {
     let old_image_id = $('.current-result-container').data('image');
     let document_id = $(this).data('document');
@@ -344,7 +350,6 @@ $('.image-item-container').on('click', function (event) {
     if (old_image_id !== image_id) {
         $('.current-result-container').data('document', document_id);
         $('.current-result-container').data('image', image_id);
-        $('#download-xml-btn').attr('href', `/document/get_xml/${document_id}/${image_id}`);
         get_image(image_id);
         $('.image-item-active').addClass('d-none');
         $(`[data-image="${image_id}"] .image-item-active`).removeClass('d-none')
