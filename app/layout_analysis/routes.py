@@ -36,7 +36,8 @@ def start_layout_analysis_post(document_id):
         else:
             flash(u'Request for layout analysis is already pending or document is in unsupported state!', 'danger')
     else:
-        os.makedirs(os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document_id)))
+        if not os.path.exists(os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document_id))):
+            os.makedirs(os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document_id)))
         for image in document.images:
             make_image_result_preview([], image.path, image.id)
         change_document_state_on_complete_layout_analysis(document)
