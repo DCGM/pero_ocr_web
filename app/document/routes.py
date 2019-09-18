@@ -56,14 +56,15 @@ def upload_document_get(document_id):
 def upload_document_post(document_id):
     if not is_user_owner_or_collaborator(document_id, current_user):
         flash(u'You do not have sufficient rights to upload images!', 'danger')
-        return redirect(url_for('main.index'))
-    files = request.files.getlist('document_uploaded_files')
-    all_correct = save_images(files, document_id)
-    if all_correct:
-        flash(u'Images successfully uploaded!', 'success')
-    else:
-        flash(u'Some images were not successfully uploaded!', 'danger')
-    return redirect(url_for('document.upload_document_get', document_id=document_id))
+        return '', 404
+
+    if request.method == 'POST':
+        f = request.files.get('file')
+        all_correct = save_images(f, document_id)
+        if all_correct:
+            return '', 204
+        return 'Unable to add.', 409
+    return '', 204
 
 
 @bp.route('/get_xml/<string:document_id>/<string:image_id>')

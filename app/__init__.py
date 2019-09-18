@@ -4,7 +4,7 @@ from flask_login import LoginManager
 import os
 from flask_bootstrap import Bootstrap
 from flask_jsglue import JSGlue
-
+from flask_dropzone import Dropzone
 
 
 database_url = 'sqlite:///db.sqlite'
@@ -18,6 +18,8 @@ def create_app():
     app.config['SECRET_KEY'] = SECRET_KEY
     init_db()
     Bootstrap(app)
+
+    dropzone = Dropzone(app)
 
     jsglue = JSGlue()
     jsglue.init_app(app)

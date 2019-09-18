@@ -40,26 +40,25 @@ def is_user_owner_or_collaborator(document_id, user):
     return False
 
 
-def save_images(files, document_id):
+def save_images(file, document_id):
     document = get_document_by_id(document_id)
     directory_path = get_and_create_document_image_directory(document_id)
     all_correct = True
 
-    for file in files:
-        if is_allowed_file(file):
-            image_db = Image(id=uuid.uuid4(), filename=file.filename)
-            image_id = str(image_db.id)
-            extension = os.path.splitext(file.filename)[1]
-            file_path = os.path.join(directory_path, "{}{}".format(image_id, extension))
-            file.save(file_path)
-            img = PILImage.open(file_path)
-            width, height = img.size
-            image_db.path = file_path
-            image_db.width = width
-            image_db.height = height
-            save_image_to_document(document, image_db)
-        else:
-            all_correct = False
+    if is_allowed_file(file):
+        image_db = Image(id=uuid.uuid4(), filename=file.filename)
+        image_id = str(image_db.id)
+        extension = os.path.splitext(file.filename)[1]
+        file_path = os.path.join(directory_path, "{}{}".format(image_id, extension))
+        file.save(file_path)
+        img = PILImage.open(file_path)
+        width, height = img.size
+        image_db.path = file_path
+        image_db.width = width
+        image_db.height = height
+        save_image_to_document(document, image_db)
+    else:
+        all_correct = False
     return all_correct
 
 

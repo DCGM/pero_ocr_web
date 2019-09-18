@@ -11,6 +11,7 @@ from app.db.model import DocumentState, TextRegion
 from app.document.general import get_document_images, is_user_owner_or_collaborator
 from PIL import Image
 from app.db import db_session
+from flask import jsonify
 
 
 @bp.route('/start/<string:document_id>', methods=['GET'])
@@ -124,7 +125,7 @@ def get_image_result(document_id, image_id):
             point = textregion_point_string.split(',')
             textregion_points.append([int(point[1]), int(point[0])])
         textregions.append({'uuid': textregion.id, 'deleted': textregion.deleted, 'points': textregion_points})
-    return {"uuid": image_id, 'width': width, 'height': height, 'objects': textregions}
+    return jsonify({"uuid": image_id, 'width': width, 'height': height, 'objects': textregions})
 
 
 @bp.route('/get_result_preview/<string:document_id>/<string:image_id>')
