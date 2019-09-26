@@ -146,6 +146,8 @@ def edit_layout(image_id):
     image = get_image_by_id(image_id)
     preview_coords = []
     for region in regions:
+        if not region:
+            continue
         region_db = get_text_region_by_id(region['uuid'])
         points = ''
         curr_points = []
