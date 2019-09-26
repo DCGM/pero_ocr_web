@@ -361,3 +361,5 @@ if ($image_containers.length) {
     let $image_container = $($image_containers[0]);
     $image_container.find('.image-item-active').removeClass('d-none');
 }
+
+$('[data-toggle="tooltip"]').tooltip();

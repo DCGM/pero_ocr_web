@@ -17,7 +17,11 @@
                             />
                         </div>
                         <div class="text-center">
-                            <p>{{ image.filename }}</p>
+                            <p class="image-item-name"
+                               data-toggle="tooltip"
+                               data-placement="right"
+                               title="{{ image.filename }}">
+                                {{ image.filename }}</p>
                         </div>
                         <div class="d-none image-item-active"></div>
                     </div>

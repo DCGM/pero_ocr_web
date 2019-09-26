@@ -63,7 +63,12 @@ this.on("success",function (file, response){import_success(file.name, response)}
                     />
                 </div>
                 <div class="card-body text-center">
-                    <p>{{ image.filename }}</p>
+                    <p class="image-filename"
+                        data-toggle="tooltip"
+                        data-placement="right"
+                        title="{{ image.filename }}">
+                        {{ image.filename }}
+                    </p>
                     <a data-document="{{ document.id }}" data-image="{{ image.id }}"
                        class="btn btn-danger delete-image-button text-white">Remove</a>
                 </div>
@@ -78,6 +83,17 @@ this.on("success",function (file, response){import_success(file.name, response)}
     {{ dropzone.style('border: 2px dashed #0087F7; margin-top: 10px; min-height: 400px;') }}
 
    <style>
+        .card{
+            width: 150px;
+        }
+
+        .image-filename{
+            text-overflow: ellipsis;
+            overflow: hidden;
+            padding: 5px;
+            white-space: nowrap;
+        }
+
         .uploaded_image {
             max-width: 100px;
             max-height: 200px;
@@ -135,7 +151,7 @@ this.on("success",function (file, response){import_success(file.name, response)}
             error_log = [];
         }
         $(document).ready(function () {
-            console.log('DOCUMENT');
+            $('[data-toggle="tooltip"]').tooltip();
             let $modal = $('#exampleModal');
 
             let lastImageId = null;
