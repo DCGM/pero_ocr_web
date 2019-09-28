@@ -61,5 +61,11 @@ def get_image_by_id(image_id):
 def get_text_region_by_id(id):
     return TextRegion.query.get(id)
 
+
 def get_text_line_by_id(id):
     return TextLine.query.get(id)
+
+
+def is_image_duplicate(document_id, imagehash):
+    image_db = Image.query.filter_by(imagehash=imagehash, deleted=False, document_id= document_id).first()
+    return image_db != None

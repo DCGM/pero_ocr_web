@@ -1,12 +1,13 @@
 from app.db.model import Document, DocumentState, Image
 from app.db.general import get_document_by_id, remove_document_by_id, save_document, save_image_to_document,\
-    get_all_users, get_user_by_id, get_image_by_id
+    get_all_users, get_user_by_id, get_image_by_id, is_image_duplicate
 import os
 from flask import current_app as app
 from app.db import db_session
 from PIL import Image as PILImage
 import uuid
 from lxml import etree as ET
+import imagehash
 
 
 def create_document(name, user):
@@ -43,7 +44,6 @@ def is_user_owner_or_collaborator(document_id, user):
 def save_images(file, document_id):
     document = get_document_by_id(document_id)
     directory_path = get_and_create_document_image_directory(document_id)
-    all_correct = True
 
     if is_allowed_file(file):
         image_db = Image(id=uuid.uuid4(), filename=file.filename)
@@ -52,14 +52,18 @@ def save_images(file, document_id):
         file_path = os.path.join(directory_path, "{}{}".format(image_id, extension))
         file.save(file_path)
         img = PILImage.open(file_path)
+        img_hash = str(imagehash.average_hash(img))
+        if is_image_duplicate(document_id, img_hash):
+            return 'Image is already uploaded.'
         width, height = img.size
         image_db.path = file_path
         image_db.width = width
         image_db.height = height
+        image_db.imagehash = img_hash
         save_image_to_document(document, image_db)
     else:
-        all_correct = False
-    return all_correct
+        return 'Not allowed extension.'
+    return ''
 
 
 def get_and_create_document_image_directory(document_id):

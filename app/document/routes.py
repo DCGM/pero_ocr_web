@@ -60,11 +60,10 @@ def upload_document_post(document_id):
 
     if request.method == 'POST':
         f = request.files.get('file')
-        all_correct = save_images(f, document_id)
-        if all_correct:
-            return '', 204
-        return 'Unable to add.', 409
-    return '', 204
+        status = save_images(f, document_id)
+        if status == '':
+            return '', 200
+        return status, 409
 
 
 @bp.route('/get_xml/<string:document_id>/<string:image_id>')

@@ -52,6 +52,7 @@ class Image(Base):
     width = Column(Integer())
     height = Column(Integer())
     deleted = Column(Boolean(), default=False)
+    imagehash = Column(String())
 
     document_id = Column(GUID(), ForeignKey('documents.id'))
     document = relationship('Document', back_populates="images")
@@ -81,6 +82,7 @@ class TextRegion(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     order = Column(Integer())
     points = Column(String())
+    read_order = Column(Integer())
     deleted = Column(Boolean(), default=False)
 
     image_id = Column(GUID(), ForeignKey('images.id'))
