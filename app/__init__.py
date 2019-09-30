@@ -16,6 +16,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object('config')
     app.config['SECRET_KEY'] = SECRET_KEY
+    app.secret_key = SECRET_KEY
     init_db()
     Bootstrap(app)
 
