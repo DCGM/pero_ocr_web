@@ -7,9 +7,9 @@ import time
 
 base_url = 'http://127.0.0.1:2000'
 route = '/layout_analysis/get_request'
-folder = '/home/ikohut/projects_new/pero_ocr_web_data/client_images'
-output_folder = '/home/ikohut/projects_new/pero_ocr_web_data/client_images_results'
-layout_detector_path = '/home/ikohut/projects_new/BP/bp_source/'
+folder = '/mnt/data/pero_ocr_web_data/layout_analysis/client_images'
+output_folder = '/mnt/data/pero_ocr_web_data/layout_analysis/client_images_results'
+layout_detector_path = '/home/pero/Projects/BP/bp_source/'
 layout_detector = layout_detector_path + 'detect_paragraphs.py'
 
 

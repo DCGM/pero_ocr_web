@@ -8,15 +8,10 @@ import os
 import configparser
 import traceback
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../pero/src'))
 import engine_line_ocr as ocr
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../pero/pero'))
-import document_ocr.IO_utils as io
-import document_ocr.parser_utils as parser
 import document_ocr.crop_engine as cropper
 import document_ocr.baseline_engine as detector
-import document_ocr.layout as layout
 
 from decoding.decoding_itf import decode_page, get_decoder
 
