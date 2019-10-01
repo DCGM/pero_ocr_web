@@ -1,7 +1,6 @@
 from flask import Flask
 from sqlalchemy import create_engine
 from flask_login import LoginManager
-import os
 from flask_bootstrap import Bootstrap
 from flask_jsglue import JSGlue
 from flask_dropzone import Dropzone
