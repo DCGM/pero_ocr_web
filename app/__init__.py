@@ -6,17 +6,13 @@ from flask_bootstrap import Bootstrap
 from flask_jsglue import JSGlue
 from flask_dropzone import Dropzone
 
+from config import *
 
-database_url = 'sqlite:///db.sqlite'
 engine = create_engine(database_url, convert_unicode=True, connect_args={'check_same_thread': False})
-SECRET_KEY = os.urandom(32)
-
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object('config')
-    app.config['SECRET_KEY'] = SECRET_KEY
-    app.secret_key = SECRET_KEY
+    app.config.from_object(Config)
     init_db()
     Bootstrap(app)
 
