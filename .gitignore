@@ -115,3 +115,4 @@ config.py
 *.logits
 
 *.xml
+.vscode/settings.json

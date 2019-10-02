@@ -151,6 +151,10 @@ def edit_layout(image_id):
         region_db = get_text_region_by_id(region['uuid'])
         points = ''
         curr_points = []
+        if 'points' not in region:
+            continue
+        if len(region['points']) <= 2:
+            continue
         for point in region['points']:
             points += '{},{} '.format(int(point[1]), int(point[0]))
             curr_points.append((int(point[0]), int(point[1])))
