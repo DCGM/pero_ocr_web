@@ -61,7 +61,7 @@ def get_and_save_document_images_and_xmls(images_folder, xmls_folder, base_url, 
         get_and_save_images(images_folder, base_url, document['id'], document['images'])
         get_and_save_xmls(xmls_folder, base_url, document['id'], document['images'])
         return return_json['id'], return_json['parse_folder_config_path'], return_json['ocr_json_path'], document
-    return None, None, None
+    return None, None, None, None
 
 
 def make_post_request_data(output_folder, document):
