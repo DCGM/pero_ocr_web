@@ -10,7 +10,7 @@ import os
 from app.db.model import DocumentState, TextRegion
 from app.document.general import get_document_images, is_user_owner_or_collaborator
 from PIL import Image
-from app.db import db_session
+from app import db_session
 from flask import jsonify
 
 

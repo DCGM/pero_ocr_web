@@ -3,7 +3,7 @@ from app.db.general import get_document_by_id, remove_document_by_id, save_docum
     get_all_users, get_user_by_id, get_image_by_id, is_image_duplicate
 import os
 from flask import current_app as app
-from app.db import db_session
+from app import db_session
 from PIL import Image as PILImage
 import uuid
 from lxml import etree as ET

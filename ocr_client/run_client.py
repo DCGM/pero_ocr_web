@@ -11,28 +11,27 @@ from process_logits import save_xml_with_confidences
 import os
 import time
 import requests
-
-
-base_url = 'http://127.0.0.1:2000'
-route = '/ocr/get_request'
-
-images_folder = "/mnt/data/pero_ocr_web_data/ocr/ocr_client/images"
-xmls_folder = "/mnt/data/pero_ocr_web_data/ocr/ocr_client/xmls"
-output_folder = "/mnt/data/pero_ocr_web_data/ocr/ocr_client/output"
-logits_folder = "/mnt/data/pero_ocr_web_data/ocr/ocr_client/output/logits"
-pages_folder = "/mnt/data/pero_ocr_web_data/ocr/ocr_client/output/page"
-xmls_confidences_folder = "/mnt/data/pero_ocr_web_data/ocr/ocr_client/xmls_confidences_folder"
-
-config_path = "/mnt/data/pero_ocr_web_data/ocr/ocr_client/config.ini"
-ocr_json = "/mnt/data/pero_ocr_web_data/ocr/models/ocr/IMPACT_2019-03-18/ocr_engine.json"
+import configparser
 
 
 def get_post_route(request_id):
     return '/ocr/post_result/{}'.format(request_id)
 
 
-def check_and_process_request():
-    request_id, document = get_and_save_document_images_and_xmls(images_folder, xmls_folder, base_url, route)
+def check_and_process_request(config):
+    base_url = config['SERVER']['base_url']
+    route = config['SERVER']['ocr_get_request_route']
+
+    images_folder = config['OCR']['images_folder']
+    xmls_folder = config['OCR']['xmls_folder']
+    output_folder = config['OCR']['output_folder']
+    xmls_confidences_folder = config['OCR']['xmls_confidences_folder']
+
+    models_path = config['PARSE_FOLDER']['models_path']
+    parse_folder_configs_path = config['PARSE_FOLDER']['parse_folder_configs_path']
+    parse_folder_path = config['PARSE_FOLDER']['parse_folder_path']
+
+    request_id, parse_folder_config_path, ocr_json_path, document = get_and_save_document_images_and_xmls(images_folder, xmls_folder, base_url, route)
 
     if document:
         document_id = document['id']
@@ -40,14 +39,13 @@ def check_and_process_request():
         print(request_id)
         print(document)
 
-
-        detect_document_baselines(images_folder, xmls_folder, output_folder, document_id, config_path)
+        detect_document_baselines(parse_folder_path, images_folder, xmls_folder, output_folder, document_id, parse_folder_configs_path, parse_folder_config_path)
         
         xmls_confidences_folder_doc = os.path.join(xmls_confidences_folder, document_id)
         if os.path.exists(xmls_confidences_folder_doc):
             shutil.rmtree(xmls_confidences_folder_doc)
         os.makedirs(xmls_confidences_folder_doc)
-        with open(ocr_json, 'r',  encoding='utf8') as f:
+        with open(os.path.join(models_path, "ocr", ocr_json_path), 'r',  encoding='utf8') as f:
             ocr_config = json.load(f)
         chars = ocr_config['characters']
         output_xmls_folder = os.path.join(output_folder, document_id, 'page')
@@ -58,25 +56,19 @@ def check_and_process_request():
             logits_path = os.path.join(output_logits_folder, "{}.logits".format(file_name))
             save_xml_with_confidences(xml_path, logits_path, chars, xmls_confidences_folder_doc)
 
-
-
         data = make_post_request_data(xmls_confidences_folder, document)
         requests.post('{}{}'.format(base_url, get_post_route(request_id)), files=data)
 
         return True
-    '''
-        # CALL LAYOUT ANALYSIS
-        data = make_post_request_data(document)  # Make post request
-        requests.post('{}{}'.format(base_url, get_post_route(request_id)), files=data)  # Send post request
-        return True
-    '''
     return False
 
 
 def main():
+    config = configparser.ConfigParser()
+    config.read("config.ini")
     while True:
         print('Check request')
-        if check_and_process_request():
+        if check_and_process_request(config):
             print('Request completed')
             break  # Only for development
         else:

@@ -1,16 +1,15 @@
 import uuid
-from app.db.model import RequestState, RequestType, Request, DocumentState, TextRegion, TextLine, Annotation
-from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_text_region_by_id, get_text_line_by_id
-from app.db import db_session
-from flask import jsonify, current_app
+from app.db.model import RequestState, RequestType, Request, DocumentState, TextLine, Annotation, OCR
+from app.db.general import get_text_region_by_id, get_text_line_by_id
+from app import db_session
+from flask import jsonify
 import xml.etree.ElementTree as ET
-from PIL import Image, ImageDraw, ImageColor
 import os
 
 
-def create_ocr_analysis_request(document):
-    return Request(id=str(uuid.uuid4()), document=document, document_id=document.id,
-                   request_type=RequestType.OCR, state=RequestState.PENDING)
+def create_ocr_request(document, ocr_id):
+    return Request(document=document,
+                   request_type=RequestType.OCR, state=RequestState.PENDING, ocr_id=ocr_id)
 
 def can_start_ocr(document):
     if not Request.query.filter_by(document_id=document.id, request_type=RequestType.OCR,
@@ -29,7 +28,9 @@ def get_first_ocr_request():
         .order_by(Request.created_date).first()
 
 def create_json_from_request(request):
-    val = {'id': request.id, 'document': {'id': request.document.id, 'images': []}}
+    val = {'id': request.id, 'parse_folder_config_path': request.ocr.parse_folder_config_path,
+           'ocr_json_path': request.ocr.ocr_json_path,
+           'document': {'id': request.document.id, 'images': []}}
     for image in request.document.images:
         if not image.deleted:
             val['document']['images'].append(image.id)

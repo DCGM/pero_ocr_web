@@ -1,5 +1,5 @@
 from app.db.model import RequestState, RequestType, Request, DocumentState
-from app.db import db_session
+from app import db_session
 from flask import jsonify, current_app
 import xml.etree.ElementTree as ET
 from PIL import Image, ImageDraw

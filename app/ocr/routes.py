@@ -4,22 +4,31 @@ from flask import render_template, url_for, redirect, flash, jsonify, request, c
 from flask import url_for, redirect, flash, jsonify
 from flask_login import login_required
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_text_region_by_id
-from app.ocr.general import create_json_from_request, create_ocr_analysis_request, \
+from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
                             insert_lines_to_db, change_ocr_request_and_document_state_on_success, insert_annotations_to_db, \
                             update_text_lines
 from app.document.general import get_document_images
-from app.db.model import DocumentState
+from app.db import DocumentState, OCR
+from app import db_session
+
 import json
 
+@bp.route('/select_ocr/<string:document_id>', methods=['GET'])
+@login_required
+def select_ocr(document_id):
+    document = get_document_by_id(document_id)
+    ocr_engines = db_session.query(OCR).filter(OCR.active).all()
+    return render_template('ocr/ocr_select.html', document=document, ocr_engines=ocr_engines)
 
-@bp.route('/start_ocr/<string:document_id>')
+@bp.route('/start_ocr/<string:document_id>', methods=['POST'])
 @login_required
 def start_ocr(document_id):
     document = get_document_by_id(document_id)
-    request = create_ocr_analysis_request(document)
+    ocr_id = request.form['ocr_id']
+    ocr_request = create_ocr_request(document, ocr_id)
     if can_start_ocr(document):
-        add_ocr_request_and_change_document_state(request)
+        add_ocr_request_and_change_document_state(ocr_request)
         flash(u'Request for ocr successfully created!', 'success')
     else:
         flash(u'Request for ocr is already pending or document is in unsupported state!', 'danger')

@@ -1,6 +1,5 @@
-from app.db import db_session
-from app.db.user import User
-from app.db.model import Document, Request, Image, TextRegion, TextLine
+from app import db_session
+from app.db import User, Document, Request, Image, TextRegion, TextLine
 
 
 def save_user(user):
