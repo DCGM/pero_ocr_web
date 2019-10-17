@@ -176,7 +176,7 @@ def get_document_images(document):
     return document.images.filter_by(deleted=False)
 
 
-def get_image_xml(image_id):
+def get_region_xml_root(image_id):
     image = get_image_by_id(image_id)
     root = ET.Element('PcGts')
     root.set('xmlns', 'http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15')
@@ -190,3 +190,58 @@ def get_image_xml(image_id):
             text_region_element = ET.SubElement(page_element, 'TextRegion', {"id": str(text_region.id)})
             ET.SubElement(text_region_element, 'Coords', {"points": text_region.points})
     return root
+
+
+def get_page_xml_root(image_id):
+    image = get_image_by_id(image_id)
+    root = ET.Element("PcGts")
+    root.set("xmlns", "http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15")
+
+    page_element = ET.SubElement(root, "Page")
+    page_element.set("imageFilename", os.path.splitext(image.filename)[0])
+    page_element.set("imageWidth", str(image.width))
+    page_element.set("imageHeight", str(image.height))
+
+    for text_region in image.textregions:
+        if not text_region.deleted:
+            text_region_element = ET.SubElement(page_element, "TextRegion")
+            text_region_element.set("id", str(text_region.id))
+            coords = ET.SubElement(text_region_element, "Coords")
+            coords.set("points", text_region.points)
+
+            for text_line in text_region.textlines:
+                if not text_line.deleted:
+                    text_line_element = ET.SubElement(text_region_element, "TextLine")
+                    text_line_element.set("id", str(text_line.id))
+                    heights = text_line.np_heights
+                    text_line_element.set("custom", "heights {" + str(int(heights[0])) + ", " + str(int(heights[1])) + "}")
+
+                    coords_element = ET.SubElement(text_line_element, "Coords")
+                    points = text_line.np_points
+                    points = ["{},{}".format(int(x[0]), int(x[1])) for x in points]
+                    points = " ".join(points)
+                    coords_element.set("points", points)
+
+                    baseline_element = ET.SubElement(text_line_element, "Baseline")
+                    points = text_line.np_baseline
+                    points = ["{},{}".format(int(x[0]), int(x[1])) for x in points]
+                    points = " ".join(points)
+                    baseline_element.set("points", points)
+
+                    text_element = ET.SubElement(text_line_element, "TextEquiv")
+                    text_element = ET.SubElement(text_element, "Unicode")
+                    text_element.text = text_line.text
+
+    return root
+
+
+def get_page_text_content(image_id):
+    image = get_image_by_id(image_id)
+    text = ""
+    for text_region in image.textregions:
+        if not text_region.deleted:
+            for text_line in text_region.textlines:
+                if not text_line.deleted:
+                    text += text_line.text + '\n'
+
+    return text

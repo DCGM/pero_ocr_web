@@ -26,7 +26,7 @@ def get_and_save_images(folder, base_url, document_id, images):
 def get_and_save_xmls(folder, base_url, document_id, images):
     folder_path = get_document_folder_path(folder, document_id)
     for image in images:
-        xml_request = requests.get("{}/document/get_xml/{}/{}".format(base_url, document_id, image))
+        xml_request = requests.get("{}/document/get_region_xml/{}/{}".format(base_url, document_id, image))
         path = os.path.join(folder_path, '{}.xml'.format(image))
         if xml_request.status_code == 200:
             with open(path, 'wb') as f:

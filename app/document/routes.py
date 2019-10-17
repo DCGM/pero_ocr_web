@@ -3,11 +3,13 @@ from flask_login import login_required, current_user
 from flask import render_template, redirect, url_for, request, send_file, flash, Response
 from app.document.general import create_document, check_and_remove_document, save_images, get_image_url, \
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
-    remove_image, get_document_images, get_image_xml
+    remove_image, get_document_images, get_region_xml_root, get_page_xml_root, get_page_text_content
 from app.db.general import get_user_documents, get_document_by_id, get_image_by_id
 from app.document.forms import CreateDocumentForm
-import xml.etree.ElementTree as ET
-
+from lxml import etree as ET
+from io import BytesIO
+import zipfile
+import time
 
 @bp.route('/documents')
 @login_required
@@ -66,12 +68,38 @@ def upload_document_post(document_id):
         return status, 409
 
 
-@bp.route('/get_xml/<string:document_id>/<string:image_id>')
-def get_xml(document_id, image_id):
-    root = get_image_xml(image_id)
-    xml_string = ET.tostring(root, encoding='utf-8')
+@bp.route('/get_region_xml/<string:document_id>/<string:image_id>')
+def get_region_xml(document_id, image_id):
+    root = get_region_xml_root(image_id)
+    xml_string = ET.tostring(root, pretty_print=True, encoding="utf-8")
     return Response(xml_string, mimetype='text/xml')
 
+
+@bp.route('/get_page_text/<string:image_id>')
+def get_page_text(image_id):
+    text = get_page_text_content(image_id)
+    return Response(text, mimetype='text')
+
+
+@bp.route('/get_page_xml/<string:image_id>')
+def get_page_xml(image_id):
+    root = get_page_xml_root(image_id)
+    xml_string = ET.tostring(root, pretty_print=True, encoding="utf-8")
+    return Response(xml_string, mimetype='text/xml')
+
+
+@bp.route('/get_document_xml_pages/<string:document_id>')
+def get_document_xml_pages(document_id):
+    memory_file = BytesIO()
+    with zipfile.ZipFile(memory_file, 'w') as zf:
+        document = get_document_by_id(document_id)
+        for image in document.images:
+            d = zipfile.ZipInfo(str(image.id))
+            d.date_time = time.localtime(time.time())[:6]
+            d.compress_type = zipfile.ZIP_DEFLATED
+            zf.writestr(d, ET.tostring(get_page_xml_root(str(image.id)), pretty_print=True, encoding="utf-8"))
+    memory_file.seek(0)
+    return send_file(memory_file, attachment_filename='page_xmls.zip', as_attachment=True)
 
 @bp.route('/get_image/<string:document_id>/<string:image_id>')
 # @login_required
