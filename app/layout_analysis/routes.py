@@ -10,7 +10,8 @@ import os
 from app.db.model import DocumentState, TextRegion
 from app.document.general import get_document_images, is_user_owner_or_collaborator
 from PIL import Image
-from app.db import db_session
+from app import db_session
+from flask import jsonify
 
 
 @bp.route('/start/<string:document_id>', methods=['GET'])
@@ -35,7 +36,8 @@ def start_layout_analysis_post(document_id):
         else:
             flash(u'Request for layout analysis is already pending or document is in unsupported state!', 'danger')
     else:
-        os.makedirs(os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document_id)))
+        if not os.path.exists(os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document_id))):
+            os.makedirs(os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document_id)))
         for image in document.images:
             make_image_result_preview([], image.path, image.id)
         change_document_state_on_complete_layout_analysis(document)
@@ -124,7 +126,7 @@ def get_image_result(document_id, image_id):
             point = textregion_point_string.split(',')
             textregion_points.append([int(point[1]), int(point[0])])
         textregions.append({'uuid': textregion.id, 'deleted': textregion.deleted, 'points': textregion_points})
-    return {"uuid": image_id, 'width': width, 'height': height, 'objects': textregions}
+    return jsonify({"uuid": image_id, 'width': width, 'height': height, 'objects': textregions})
 
 
 @bp.route('/get_result_preview/<string:document_id>/<string:image_id>')
@@ -144,9 +146,15 @@ def edit_layout(image_id):
     image = get_image_by_id(image_id)
     preview_coords = []
     for region in regions:
+        if not region:
+            continue
         region_db = get_text_region_by_id(region['uuid'])
         points = ''
         curr_points = []
+        if 'points' not in region:
+            continue
+        if len(region['points']) <= 2:
+            continue
         for point in region['points']:
             points += '{},{} '.format(int(point[1]), int(point[0]))
             curr_points.append((int(point[0]), int(point[1])))

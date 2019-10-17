@@ -130,10 +130,8 @@ function editor_keypress(e) {
     } else if (k == 's') {
         save_image();
     } else if(k == 'n') {
-        save_image();
         next_image();
     } else if(k == 'b'){
-        save_image();
         previous_image();
     }
 }
@@ -350,6 +348,7 @@ $('.image-item-container').on('click', function (event) {
     if (old_image_id !== image_id) {
         $('.current-result-container').data('document', document_id);
         $('.current-result-container').data('image', image_id);
+        save_image();
         get_image(image_id);
         $('.image-item-active').addClass('d-none');
         $(`[data-image="${image_id}"] .image-item-active`).removeClass('d-none')
@@ -361,3 +360,5 @@ if ($image_containers.length) {
     let $image_container = $($image_containers[0]);
     $image_container.find('.image-item-active').removeClass('d-none');
 }
+
+$('[data-toggle="tooltip"]').tooltip();

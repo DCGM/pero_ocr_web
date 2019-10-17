@@ -5,11 +5,11 @@ from io import open as image_open
 import time
 
 
-base_url = 'http://127.0.0.1:2000'
+base_url = 'https://pchradis-stud.fit.vutbr.cz:2000'
 route = '/layout_analysis/get_request'
-folder = '/home/ikohut/projects_new/pero_ocr_web_data/client_images'
-output_folder = '/home/ikohut/projects_new/pero_ocr_web_data/client_images_results'
-layout_detector_path = '/home/ikohut/projects_new/BP/bp_source/'
+folder = '/mnt/data/pero_ocr_web_data/layout_analysis/client_images'
+output_folder = '/mnt/data/pero_ocr_web_data/layout_analysis/client_images_results'
+layout_detector_path = '/home/pero/Projects/Layout-analysis/src/'
 layout_detector = layout_detector_path + 'detect_paragraphs.py'
 
 
@@ -57,7 +57,7 @@ def get_post_route(document_id):
 
 def run_layout_analysis(document):
     document_id = document['id']
-    return os.system('python3 {} -o "{}" -i "{}/" -m "{}"'.format(layout_detector, os.path.join(output_folder, document_id), os.path.join(folder, document_id), os.path.join(layout_detector_path, 'model')))
+    return os.system('python {} -o "{}" -i "{}/" -m "{}"'.format(layout_detector, os.path.join(output_folder, document_id), os.path.join(folder, document_id), os.path.join(layout_detector_path, 'model')))
 
 
 def check_and_process_request():

@@ -26,7 +26,7 @@ def get_and_save_images(folder, base_url, document_id, images):
 def get_and_save_xmls(folder, base_url, document_id, images):
     folder_path = get_document_folder_path(folder, document_id)
     for image in images:
-        xml_request = requests.get("{}/document/get_xml/{}/{}".format(base_url, document_id, image))
+        xml_request = requests.get("{}/document/get_region_xml/{}/{}".format(base_url, document_id, image))
         path = os.path.join(folder_path, '{}.xml'.format(image))
         if xml_request.status_code == 200:
             with open(path, 'wb') as f:
@@ -60,8 +60,8 @@ def get_and_save_document_images_and_xmls(images_folder, xmls_folder, base_url, 
         document = return_json['document']
         get_and_save_images(images_folder, base_url, document['id'], document['images'])
         get_and_save_xmls(xmls_folder, base_url, document['id'], document['images'])
-        return return_json['id'], document
-    return None, None
+        return return_json['id'], return_json['parse_folder_config_path'], return_json['ocr_json_path'], document
+    return None, None, None, None
 
 
 def make_post_request_data(output_folder, document):

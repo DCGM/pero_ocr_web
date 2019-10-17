@@ -1,23 +1,28 @@
 from flask import Flask
 from sqlalchemy import create_engine
+from sqlalchemy.orm import scoped_session, sessionmaker
 from flask_login import LoginManager
-import os
 from flask_bootstrap import Bootstrap
 from flask_jsglue import JSGlue
+from flask_dropzone import Dropzone
 
+from config import *
+from .db import Base
 
-
-database_url = 'sqlite:///db.sqlite'
 engine = create_engine(database_url, convert_unicode=True, connect_args={'check_same_thread': False})
-SECRET_KEY = os.urandom(32)
+
+db_session = scoped_session(sessionmaker(autocommit=False,
+                                         autoflush=False,
+                                         bind=engine))
+Base.query = db_session.query_property()
 
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object('config')
-    app.config['SECRET_KEY'] = SECRET_KEY
+    app.config.from_object(Config)
     init_db()
     Bootstrap(app)
+    Dropzone(app)
 
     jsglue = JSGlue()
     jsglue.init_app(app)

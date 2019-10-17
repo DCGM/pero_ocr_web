@@ -1,5 +1,5 @@
 from app.db.model import RequestState, RequestType, Request, DocumentState
-from app.db import db_session
+from app import db_session
 from flask import jsonify, current_app
 import xml.etree.ElementTree as ET
 from PIL import Image, ImageDraw
@@ -62,15 +62,16 @@ def create_json_from_request(request):
 
 def make_image_result_preview(regions, image_path, image_id):
     image_db = get_image_by_id(image_id)
-    image = Image.open(image_path)
-    image = image.convert('RGB')
-    for region in regions:
-        ImageDraw.Draw(image).line(region, width=35, fill=(0, 255, 0))
-    new_path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(image_db.document_id), str(image_id) + '.jpg')
-    scale = (100000.0 / (image.width * image.height))**0.5
-    image = image.resize((int(image.width * scale + 0.5), int(image.height * scale + 0.5)), resample=Image.LANCZOS)
-    print(image.width, image.height, scale)
-    image.save(new_path)
+    if image_db:
+        image = Image.open(image_path)
+        image = image.convert('RGB')
+        for region in regions:
+            ImageDraw.Draw(image).line(region, width=35, fill=(0, 255, 0))
+        new_path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(image_db.document_id), str(image_id) + '.jpg')
+        scale = (100000.0 / (image.width * image.height))**0.5
+        image = image.resize((int(image.width * scale + 0.5), int(image.height * scale + 0.5)), resample=Image.LANCZOS)
+        print(image.width, image.height, scale)
+        image.save(new_path)
 
 
 def get_coords_and_make_preview(image_path, xml_path, image_id):

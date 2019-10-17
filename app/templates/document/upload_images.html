@@ -28,40 +28,31 @@
     >
         Run layout analysis
     </a>
-    <form
-            class="my-3"
-            id="newDocumentForm"
-            action="{{ url_for('document.upload_document_post', document_id=document.id) }}"
-            method="POST"
-            enctype="multipart/form-data"
-    >
-        <div class="form-group">
-            <div class="input-group">
-                <div class="custom-file">
-                    <input
-                            type="file"
-                            class="custom-file-input"
-                            name="document_uploaded_files"
-                            id="document_upload_file_input"
-                            aria-describedby="document_upload_file_input"
-                            multiple
-                    />
-                    <label
-                            class="custom-file-label"
-                            id="document_upload_label"
-                            for="document_upload_file_input"
-                    >Choose file</label
-                    >
-                </div>
+    <div class="row">
+        <div class="col-xl-12 col-sm-6 mb-12">
+            <div id="import_complete_alert" class="alert alert-warning alert-dismissible collapse" role="alert">
+                <p id="import_complete"></p>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
-            <input
-                    class="btn btn-primary my-3 btn-lg btn-block"
-                    type="submit"
-                    value="Upload"
-            />
         </div>
-    </form>
-    <div>
+    </div>
+
+{{ dropzone.create(action= url_for('document.upload_document_post', document_id=document.id) ) }}
+{{ dropzone.load_js() }}
+{{ dropzone.config(custom_init='this.on("error", function (file, response) {import_error(file.name, response)});
+this.on("queuecomplete",function (file, response){import_complete()});
+this.on("success",function (file, response){import_success(file.name, response)});', upload_multiple=false, max_file_size=8) }}
+
+<div class="row">
+    <div class="col-xl-12 col-sm-6 mb-12">
+        <div id="import_complete_log">
+        </div>
+    </div>
+</div>
+
+<div>
         {% for image in images %}
             <div class="card d-inline-block m-3">
                 <div class="card-image-container">
@@ -72,20 +63,37 @@
                     />
                 </div>
                 <div class="card-body text-center">
-                    <p>{{ image.filename }}</p>
+                    <p class="image-filename"
+                        data-toggle="tooltip"
+                        data-placement="right"
+                        title="{{ image.filename }}">
+                        {{ image.filename }}
+                    </p>
                     <a data-document="{{ document.id }}" data-image="{{ image.id }}"
                        class="btn btn-danger delete-image-button text-white">Remove</a>
                 </div>
             </div>
         {% endfor %}
     </div>
-    <div class="modal">
-        <img class="mb-2" src="https://i.stack.imgur.com/FhHRx.gif" alt="loading">
-        <h2>Your images are being uploaded, please wait...</h2>
-    </div>
 
-{% endblock %} {% block styles %}
-    <style>
+{% endblock %}
+
+{% block styles %}
+    {{ dropzone.load_css() }}
+    {{ dropzone.style('border: 2px dashed #0087F7; margin-top: 10px; min-height: 400px;') }}
+
+   <style>
+        .card{
+            width: 150px;
+        }
+
+        .image-filename{
+            text-overflow: ellipsis;
+            overflow: hidden;
+            padding: 5px;
+            white-space: nowrap;
+        }
+
         .uploaded_image {
             max-width: 100px;
             max-height: 200px;
@@ -105,14 +113,6 @@
             flex-direction: column;
         }
 
-        body.loading {
-            overflow: hidden;
-        }
-
-        body.loading .modal {
-            display: flex;
-        }
-
         .modal-backdrop {
             z-index: auto;
         }
@@ -127,27 +127,40 @@
 
 {% block scripts %}
     <script>
+        var success_cnt = 0;
+        var error_cnt = 0;
+        var error_log = [];
+
+        function import_error(filename, response) {
+            error_log.push(filename + ";" + response + "<br>");
+            error_cnt++;
+        }
+
+        function import_success(filename, response) {
+            success_cnt++;
+        }
+
+        function import_complete() {
+            console.log("complete ", error_cnt, success_cnt, error_log);
+            let text = "Import complete, success: " + success_cnt + " errors: "+ error_cnt;
+            $('#import_complete').text(text);
+            $('#import_complete_alert').show();
+            $('#import_complete_log').html(error_log);
+            error_cnt = 0;
+            success_cnt = 0;
+            error_log = [];
+        }
         $(document).ready(function () {
-            let uploadInput = document.getElementById("document_upload_file_input");
-            let uploadLabel = document.getElementById("document_upload_label");
+            $('[data-toggle="tooltip"]').tooltip();
             let $modal = $('#exampleModal');
 
             let lastImageId = null;
             let lastDocumentId = null;
 
-            if (uploadInput != null) {
-                uploadInput.addEventListener("change", updateNumberOfFiles);
-            }
-
-            $('input[type="submit"]').on('click', function (event) {
-                $('body').addClass('loading')
-            });
-
             $('.delete-image-button').on('click', function (event) {
                 event.preventDefault();
                 lastImageId = $(this).data('image');
                 lastDocumentId = $(this).data('document');
-
                 $modal.modal('show');
             });
 
@@ -157,16 +170,6 @@
                     location.reload();
                 });
             });
-
-            function updateNumberOfFiles() {
-                let selectedFiles = uploadInput.files;
-
-                if (selectedFiles.length === 0) {
-                    uploadLabel.innerText = "Choose file";
-                } else {
-                    uploadLabel.innerText = "Selected files: " + selectedFiles.length;
-                }
-            }
         })
     </script>
 

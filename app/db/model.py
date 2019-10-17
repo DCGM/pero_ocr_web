@@ -52,6 +52,7 @@ class Image(Base):
     width = Column(Integer())
     height = Column(Integer())
     deleted = Column(Boolean(), default=False)
+    imagehash = Column(String())
 
     document_id = Column(GUID(), ForeignKey('documents.id'))
     document = relationship('Document', back_populates="images")
@@ -68,19 +69,23 @@ class UserDocument(Base):
 class Request(Base):
     __tablename__ = 'requests'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    ocr_id = Column(GUID(), ForeignKey('ocr.id'))
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
     request_type = Column(Enum(RequestType))
     state = Column(Enum(RequestState))
     log = Column(String())
-
     document_id = Column(GUID(), ForeignKey('documents.id'))
+
     document = relationship('Document', back_populates="requests")
+    ocr = relationship('OCR')
+
 
 class TextRegion(Base):
     __tablename__ = 'textregions'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     order = Column(Integer())
     points = Column(String())
+    order = Column(Integer())
     deleted = Column(Boolean(), default=False)
 
     image_id = Column(GUID(), ForeignKey('images.id'))
@@ -156,6 +161,18 @@ class Annotation(Base):
     deleted = Column(Boolean())
 
     text_line = relationship('TextLine')
+
+
+class OCR(Base):
+    __tablename__ = 'ocr'
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    name = Column(String(), nullable=False)
+    description = Column(String())
+    parse_folder_config_path = Column(String(), nullable=False)
+    ocr_json_path = Column(String(), nullable=False)
+    active = Column(Boolean(), default=True, nullable=False)
+
+    requests = relationship('Request')
 
 
 def str_points2D_to_np(str_points):

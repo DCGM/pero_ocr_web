@@ -1,0 +1,23 @@
+{% extends "base/base.html" %} {% block content %}
+    <div>
+        <h3 class="text-left">{{ document.name }} - Start OCR</h3>
+        <form action="{{ url_for('ocr.start_ocr', document_id=document.id) }}" method="POST">
+            <select class="js-example-basic-single" name="ocr_id" style="width:100%">
+                {% for ocr in ocr_engines %}
+                    <option value="{{ ocr. id }}">{{ocr.name}}</option>
+                {% endfor %}
+            </select>
+            <input class="btn btn-primary my-3" type="submit" value="Submit">
+        </form>
+
+    </div>
+{% endblock %} {% block styles %}
+<link href="/static/select2/select2.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block scripts %}
+    <script src="/static/select2/select2.min.js"></script>
+    <script>
+
+    </script>
+{% endblock %}

@@ -1,72 +1,81 @@
 #content {
-            text-align: center;
-        }
+    text-align: center;
+}
 
-        .uploaded_image {
-            max-width: 100px;
-            max-height: 200px;
-        }
+.uploaded_image {
+    max-width: 100px;
+    max-height: 200px;
+}
 
-        .image-item-container:not(:last-child) {
-            border-right: 1px solid lightgray;
-        }
+.image-item-container:not(:last-child) {
+    border-right: 1px solid lightgray;
+}
 
-        .images-container {
-            display: inline-flex;
-            flex-direction: row;
-            overflow-x: auto;
-            margin: 0 auto;
-            border: 1px solid lightgray;
-            max-width: 50vw;
-        }
+.images-container {
+    display: inline-flex;
+    flex-direction: row;
+    overflow-x: auto;
+    margin: 0 auto;
+    border: 1px solid lightgray;
+    max-width: 50vw;
+}
 
-        .results-preview-container {
-            display: inline-flex;
-            align-items: center;
-            user-select: none;
-            -webkit-user-select: none;
-        }
+.results-preview-container {
+    display: inline-flex;
+    align-items: center;
+    user-select: none;
+    -webkit-user-select: none;
+}
 
-        ion-icon {
-            width: 3em;
-            height: 3em;
-            cursor: pointer;
-        }
+ion-icon {
+    width: 3em;
+    height: 3em;
+    cursor: pointer;
+}
 
-        .image-item-container {
-            cursor: pointer;
-            position: relative;
-        }
+.image-item-container {
+    cursor: pointer;
+    position: relative;
+    width: 100px;
+}
 
-        .image-item-active {
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            opacity: 0.45;
-            background: yellow;
-        }
+.image-item-name {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    padding: 5px;
+    white-space: nowrap;
+}
 
-        .results-preview-btn{
-            display: none !important;
-        }
-        .results-preview-btn.disabled ion-icon {
-            cursor: not-allowed;
-            color: lightgray;
-        }
+.image-item-active {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    opacity: 0.45;
+    background: yellow;
+}
 
-        #mapid {
-            height: 75vh;
-        }
+.results-preview-btn {
+    display: none !important;
+}
 
-        .editor-map {
-            height: 500px;
-        }
+.results-preview-btn.disabled ion-icon {
+    cursor: not-allowed;
+    color: lightgray;
+}
 
-        #text-container {
-            height: 200px;
-            overflow-y: auto;
-        }
+#mapid {
+    height: 75vh;
+}
+
+.editor-map {
+    height: 500px;
+}
+
+#text-container {
+    height: 200px;
+    overflow-y: auto;
+}
 
 
