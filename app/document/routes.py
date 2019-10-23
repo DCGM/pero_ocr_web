@@ -88,18 +88,39 @@ def get_page_xml(image_id):
     return Response(xml_string, mimetype='text/xml')
 
 
-@bp.route('/get_document_xml_pages/<string:document_id>')
-def get_document_xml_pages(document_id):
+@bp.route('/get_document_pages/<string:document_id>')
+def get_document_pages(document_id):
     memory_file = BytesIO()
     with zipfile.ZipFile(memory_file, 'w') as zf:
         document = get_document_by_id(document_id)
         for image in document.images:
-            d = zipfile.ZipInfo(str(image.id))
-            d.date_time = time.localtime(time.time())[:6]
-            d.compress_type = zipfile.ZIP_DEFLATED
-            zf.writestr(d, ET.tostring(get_page_xml_root(str(image.id)), pretty_print=True, encoding="utf-8"))
+            d_XML = zipfile.ZipInfo(str(image.id) + ".xml")
+            d_XML.date_time = time.localtime(time.time())[:6]
+            d_XML.compress_type = zipfile.ZIP_DEFLATED
+            zf.writestr(d_XML, ET.tostring(get_page_xml_root(str(image.id)), pretty_print=True, encoding="utf-8"))
+            d_text = zipfile.ZipInfo(str(image.id) + ".txt")
+            d_text.date_time = time.localtime(time.time())[:6]
+            d_text.compress_type = zipfile.ZIP_DEFLATED
+            zf.writestr(d_text, get_page_text_content(str(image.id)))
+
     memory_file.seek(0)
-    return send_file(memory_file, attachment_filename='page_xmls.zip', as_attachment=True)
+    return send_file(memory_file, attachment_filename='pages.zip', as_attachment=True)
+
+
+@bp.route('/get_document_annotated_pages/<string:document_id>')
+def get_document_annotated_pages(document_id):
+    memory_file = BytesIO()
+    with zipfile.ZipFile(memory_file, 'w') as zf:
+        document = get_document_by_id(document_id)
+        for image in document.images:
+            d_XML = zipfile.ZipInfo(str(image.id) + ".xml")
+            d_XML.date_time = time.localtime(time.time())[:6]
+            d_XML.compress_type = zipfile.ZIP_DEFLATED
+            zf.writestr(d_XML, ET.tostring(get_page_xml_root(str(image.id), only_annotated=True), pretty_print=True, encoding="utf-8"))
+
+    memory_file.seek(0)
+    return send_file(memory_file, attachment_filename='pages.zip', as_attachment=True)
+
 
 @bp.route('/get_image/<string:document_id>/<string:image_id>')
 # @login_required

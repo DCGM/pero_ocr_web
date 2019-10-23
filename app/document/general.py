@@ -192,7 +192,7 @@ def get_region_xml_root(image_id):
     return root
 
 
-def get_page_xml_root(image_id):
+def get_page_xml_root(image_id, only_annotated=False):
     image = get_image_by_id(image_id)
     root = ET.Element("PcGts")
     root.set("xmlns", "http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15")
@@ -202,15 +202,21 @@ def get_page_xml_root(image_id):
     page_element.set("imageWidth", str(image.width))
     page_element.set("imageHeight", str(image.height))
 
-    for text_region in image.textregions:
+    textregions = sorted(list(image.textregions), key=lambda x: x.order)
+    for text_region in textregions:
         if not text_region.deleted:
             text_region_element = ET.SubElement(page_element, "TextRegion")
             text_region_element.set("id", str(text_region.id))
             coords = ET.SubElement(text_region_element, "Coords")
             coords.set("points", text_region.points)
 
-            for text_line in text_region.textlines:
-                if not text_line.deleted:
+            textlines = sorted(list(text_region.textlines), key=lambda x: x.order)
+            for text_line in textlines:
+                annotated_text_line = True
+                if only_annotated:
+                    if len(text_line.annotations) == 0:
+                        annotated_text_line = False
+                if not text_line.deleted and annotated_text_line:
                     text_line_element = ET.SubElement(text_region_element, "TextLine")
                     text_line_element.set("id", str(text_line.id))
                     heights = text_line.np_heights
@@ -238,9 +244,11 @@ def get_page_xml_root(image_id):
 def get_page_text_content(image_id):
     image = get_image_by_id(image_id)
     text = ""
-    for text_region in image.textregions:
+    textregions = sorted(list(image.textregions), key=lambda x: x.order)
+    for text_region in textregions:
         if not text_region.deleted:
-            for text_line in text_region.textlines:
+            textlines = sorted(list(text_region.textlines), key=lambda x: x.order)
+            for text_line in textlines:
                 if not text_line.deleted:
                     text += text_line.text + '\n'
 
