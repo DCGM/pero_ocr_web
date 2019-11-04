@@ -17,7 +17,9 @@ ocr_engines = [
     {"name": "IMPACT", "description": "IMPACT", "parse_folder_config_path": "IMPACT_2019-03-18/config1.ini",
      "ocr_json_path": "IMPACT_2019-03-18/ocr_engine.json"},
     {"name": "DTA", "description": "DTA", "parse_folder_config_path": "DTA_2019-09-30/config1.ini",
-     "ocr_json_path": "DTA_2019-09-30/ocr_engine.json"}
+     "ocr_json_path": "DTA_2019-09-30/ocr_engine.json"},
+    {"name": "IMPACT_LN", "description": "Net for LIDOVE NOVINY", "parse_folder_config_path": "IMPACT_LN_2019-10-30/config1.ini",
+     "ocr_json_path": "IMPACT_LN_2019-10-30/ocr_engine.json"}
 ]
 
 
