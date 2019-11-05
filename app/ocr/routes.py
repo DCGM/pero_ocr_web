@@ -86,9 +86,23 @@ def get_lines(document_id, image_id):
     image = get_image_by_id(image_id)
     lines_dict['height'] = image.height
     lines_dict['width'] = image.width
-    textregions = sorted(list(image.textregions), key=lambda x: x.order)
+    skip_textregion_sorting = False
+    for tr in image.textregions:
+        if tr.order is None:
+            skip_textregion_sorting = True
+    if not skip_textregion_sorting:
+        textregions = sorted(list(image.textregions), key=lambda x: x.order)
+    else:
+        textregions = image.textregions
     for textregion in textregions:
-        textlines = sorted(list(textregion.textlines), key=lambda x: x.order)
+        skip_textline_sorting = False
+        for tl in textregion.textlines:
+            if tl.order is None:
+                skip_textline_sorting = True
+        if not skip_textline_sorting:
+            textlines = sorted(list(textregion.textlines), key=lambda x: x.order)
+        else:
+            textlines = textregion.textlines
         for line in textlines:
             line_dict = {}
             line_dict['id'] = line.id;

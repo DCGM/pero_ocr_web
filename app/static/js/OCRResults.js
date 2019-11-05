@@ -71,8 +71,12 @@ class ImageEditor{
     }
 
     get_image(document_id, image_id) {
-         var route = Flask.url_for('ocr.get_lines', {'document_id': document_id, 'image_id': image_id});
+        var route = Flask.url_for('ocr.get_lines', {'document_id': document_id, 'image_id': image_id});
         $.get(route, this.new_image_callback.bind(this));
+        var text_container = document.getElementById('text-container');
+        while (text_container.firstChild) {
+            text_container.firstChild.remove();
+        }
     }
 
     new_image_callback(data, status) {
@@ -155,11 +159,6 @@ class ImageEditor{
     }
 
     polygon_click(line){
-        for (let l of this.lines)
-        {
-            l.polygon.setStyle({ color: "#0059ff", opacity: 1, fillColor: "#0059ff", fillOpacity: 0.1});
-        }
-        line.polygon.setStyle({ color: "#028700", opacity: 1, fillColor: "#028700", fillOpacity: 0.1});
         line.text_line_element.focus();
     }
 
