@@ -61,10 +61,10 @@ def insert_lines_to_db(ocr_results_folder):
                 textregion.textlines.append(text_line)
         db_session.commit()
 
-def insert_annotations_to_db(annotations):
+def insert_annotations_to_db(user, annotations):
     for annotation in annotations:
         text_line = get_text_line_by_id(annotation['id'])
-        annotation_db = Annotation(text_original=annotation['text_original'], text_edited=annotation['text_edited'], deleted=False)
+        annotation_db = Annotation(text_original=annotation['text_original'], text_edited=annotation['text_edited'], deleted=False, user_id=user.id)
         text_line.annotations.append(annotation_db)
     db_session.commit()
 
@@ -72,6 +72,7 @@ def update_text_lines(annotations):
     for annotation in annotations:
         text_line = get_text_line_by_id(annotation['id'])
         text_line.text = annotation['text_edited']
+        text_line.confidences = ' '.join([str(1) for _ in annotation['text_edited']])
     db_session.commit()
 
 def change_ocr_request_and_document_state(request, request_state, document_state):

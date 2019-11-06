@@ -1,6 +1,6 @@
 from app.document import bp
 from flask_login import login_required, current_user
-from flask import render_template, redirect, url_for, request, send_file, flash, Response
+from flask import render_template, redirect, url_for, request, send_file, flash, Response, jsonify
 from app.document.general import create_document, check_and_remove_document, save_images, get_image_url, \
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
     remove_image, get_document_images, get_region_xml_root, get_page_xml_root, get_page_text_content
@@ -166,3 +166,5 @@ def collaborators_post(document_id):
         save_collaborators(document_id, collaborators_ids)
         flash(u'Collaborators saved successfully.', 'success')
         return redirect(url_for('document.collaborators_get', document_id=document_id))
+
+

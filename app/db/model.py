@@ -159,8 +159,10 @@ class Annotation(Base):
     text_edited = Column(String())
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
     deleted = Column(Boolean())
+    user_id = Column(Integer, ForeignKey('users.id'))
 
     text_line = relationship('TextLine')
+    user = relationship('User')
 
 
 class OCR(Base):
@@ -182,6 +184,8 @@ def points2D_to_str(points):
     return ' '.join(['{:.1f},{:.1f}'.format(point[0], point[1]) for point in points])
 
 def str_points_to_np(str_heights):
+    if str_heights is None:
+        return np.asarray([])
     return np.asarray([float(x) for x in str_heights.split()])
 
 def points_to_str(heights):

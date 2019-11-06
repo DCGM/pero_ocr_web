@@ -202,15 +202,28 @@ def get_page_xml_root(image_id, only_annotated=False):
     page_element.set("imageWidth", str(image.width))
     page_element.set("imageHeight", str(image.height))
 
-    textregions = sorted(list(image.textregions), key=lambda x: x.order)
+    skip_textregion_sorting = False
+    for tr in image.textregions:
+        if tr.order is None:
+            skip_textregion_sorting = True
+    if not skip_textregion_sorting:
+        textregions = sorted(list(image.textregions), key=lambda x: x.order)
+    else:
+        textregions = image.textregions
     for text_region in textregions:
         if not text_region.deleted:
             text_region_element = ET.SubElement(page_element, "TextRegion")
             text_region_element.set("id", str(text_region.id))
             coords = ET.SubElement(text_region_element, "Coords")
             coords.set("points", text_region.points)
-
-            textlines = sorted(list(text_region.textlines), key=lambda x: x.order)
+            skip_textline_sorting = False
+            for tl in text_region.textlines:
+                if tl.order is None:
+                    skip_textline_sorting = True
+            if not skip_textline_sorting:
+                textlines = sorted(list(text_region.textlines), key=lambda x: x.order)
+            else:
+                textlines = text_region.textlines
             for text_line in textlines:
                 annotated_text_line = True
                 if only_annotated:

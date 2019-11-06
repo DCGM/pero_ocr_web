@@ -18,7 +18,7 @@ function rgbToHex(r, g, b) {
 function setColor(front_color, back_color) {
     document.execCommand('styleWithCSS', false, true);
     document.execCommand('foreColor', false, front_color);
-    document.execCommand('BackColor', false, back_color);
+    document.execCommand('backColor', false, back_color);
 }
 
 function replaceNbsps(str) {
@@ -48,7 +48,6 @@ function post_annotations(annotations)
     console.log(annotations);
     console.log(JSON.stringify(annotations));
     var route = Flask.url_for('ocr.save_annotations', {});
-    console.log(route);
     $.post(route, {annotations: JSON.stringify(annotations)}, function(data, status) {});
 }
 
@@ -127,7 +126,7 @@ class ImageEditor{
         for(let i in line.np_confidences)
         {
             var char_span = document.createElement('span');
-            char_span.setAttribute("style", "background: " + rgbToHex(255, Math.floor(line.np_confidences[i] * 255), Math.floor(line.np_confidences[i] * 255)));
+            char_span.setAttribute("style", "font-size: 150%; background: " + rgbToHex(255, Math.floor(line.np_confidences[i] * 255), Math.floor(line.np_confidences[i] * 255)));
             char_span.innerHTML = chars[i];
             text_line_div.appendChild(char_span);
         }
@@ -156,6 +155,9 @@ class ImageEditor{
         line.text_line_element = text_line_div;
         text_line_div.addEventListener('focus', this.line_click.bind(this, line));
         text_line_div.addEventListener('keypress', this.line_press.bind(this, line));
+        if (line.annotated) {
+            set_line_background_to_save(text_line_div);
+        }
     }
 
     polygon_click(line){
@@ -185,7 +187,7 @@ class ImageEditor{
                 e.target.removeChild(child);
             }
         }
-        setColor("#028700", "#ffffff00");
+        setColor("#028700", "#ffffff");
 
         if (e.keyCode == 13)
         {
