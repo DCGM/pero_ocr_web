@@ -1,6 +1,6 @@
 from app.document import bp
 from flask_login import login_required, current_user
-from flask import render_template, redirect, url_for, request, send_file, flash, Response, jsonify
+from flask import render_template, redirect, url_for, request, send_file, flash, Response, jsonify, current_app
 from app.document.general import create_document, check_and_remove_document, save_images, get_image_url, \
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
     remove_image, get_document_images, get_region_xml_root, get_page_xml_root
@@ -10,6 +10,8 @@ from lxml import etree as ET
 from io import BytesIO
 import zipfile
 import time
+import os
+import shutil
 
 @bp.route('/documents')
 @login_required
@@ -131,6 +133,15 @@ def get_image(document_id, image_id):
     #     return redirect(url_for('main.index'))
     image_url = get_image_url(document_id, image_id)
     return send_file(image_url)
+
+
+@bp.route('/get_models/<string:ocr_id>')
+def get_models(ocr_id):
+    models_folder = os.path.join(current_app.config['MODELS_FOLDER'], ocr_id)
+    zip_path = os.path.join(current_app.config['MODELS_FOLDER'], "{}.zip".format(ocr_id))
+    if not os.path.exists(zip_path):
+        shutil.make_archive(zip_path, 'zip', models_folder)
+    return send_file(zip_path, attachment_filename='models.zip', as_attachment=True)
 
 
 @bp.route('/remove_image/<string:document_id>/<string:image_id>')
