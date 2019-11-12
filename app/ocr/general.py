@@ -28,7 +28,7 @@ def get_first_ocr_request():
         .order_by(Request.created_date).first()
 
 def create_json_from_request(request):
-    val = {'id': request.id, 'parse_folder_config_path': request.ocr.parse_folder_config_path,
+    val = {'id': request.id, 'ocr_id': request.ocr.id, 'parse_folder_config_path': request.ocr.parse_folder_config_path,
            'ocr_json_path': request.ocr.ocr_json_path,
            'document': {'id': request.document.id, 'images': []}}
     for image in request.document.images:
