@@ -170,8 +170,6 @@ class OCR(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(), nullable=False)
     description = Column(String())
-    parse_folder_config_path = Column(String(), nullable=False)
-    ocr_json_path = Column(String(), nullable=False)
     active = Column(Boolean(), default=True, nullable=False)
 
     requests = relationship('Request')
