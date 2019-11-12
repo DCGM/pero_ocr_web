@@ -142,7 +142,7 @@ def get_models(ocr_id):
     if not os.path.exists(zip_path):
         print("Creating archive:", zip_path)
         shutil.make_archive(zip_path, 'zip', models_folder)
-    return send_file(zip_path, attachment_filename='models.zip', as_attachment=True)
+    return send_file("{}.zip".format(zip_path), attachment_filename='models.zip', as_attachment=True)
 
 
 @bp.route('/remove_image/<string:document_id>/<string:image_id>')
