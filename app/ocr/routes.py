@@ -2,7 +2,7 @@ import os
 from app.ocr import bp
 from flask import render_template, url_for, redirect, flash, jsonify, request, current_app, send_file, abort
 from flask import url_for, redirect, flash, jsonify
-from flask_login import login_required
+from flask_login import login_required, current_user
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_text_region_by_id
 from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
@@ -79,6 +79,7 @@ def show_results(document_id):
 
     return render_template('ocr/ocr_results.html', document=document, images=images)
 
+
 @bp.route('/get_lines/<string:document_id>/<string:image_id>', methods=['GET'])
 @login_required
 def get_lines(document_id, image_id):
@@ -86,25 +87,48 @@ def get_lines(document_id, image_id):
     image = get_image_by_id(image_id)
     lines_dict['height'] = image.height
     lines_dict['width'] = image.width
-    textregions = sorted(list(image.textregions), key=lambda x: x.order)
+    skip_textregion_sorting = False
+    for tr in image.textregions:
+        if tr.order is None:
+            skip_textregion_sorting = True
+    if not skip_textregion_sorting:
+        textregions = sorted(list(image.textregions), key=lambda x: x.order)
+    else:
+        textregions = image.textregions
     for textregion in textregions:
-        textlines = sorted(list(textregion.textlines), key=lambda x: x.order)
+        skip_textline_sorting = False
+        for tl in textregion.textlines:
+            if tl.order is None:
+                skip_textline_sorting = True
+        if not skip_textline_sorting:
+            textlines = sorted(list(textregion.textlines), key=lambda x: x.order)
+        else:
+            textlines = textregion.textlines
         for line in textlines:
             line_dict = {}
-            line_dict['id'] = line.id;
+            line_dict['id'] = line.id
             line_dict['np_points'] = line.np_points.tolist()
             line_dict['np_baseline'] = line.np_baseline.tolist()
             line_dict['np_heights'] = line.np_heights.tolist()
             line_dict['np_confidences'] = line.np_confidences.tolist()
             line_dict['np_textregion_width'] = [min(textregion.np_points[:,1]), max(textregion.np_points[:,1])]
-            line_dict['text'] = line.text
+            if line.text is None:
+                line_dict['text'] = ""
+            else:
+                line_dict['text'] = line.text
+            if len(line.annotations) > 0:
+                annotated = True
+            else:
+                annotated = False
+            line_dict['annotated'] = annotated
             lines_dict['lines'].append(line_dict)
     return jsonify(lines_dict)
 
 
 @bp.route('/save_annotations', methods=['POST'])
+@login_required
 def save_annotations():
-    insert_annotations_to_db(json.loads(request.form['annotations']))
+    insert_annotations_to_db(current_user, json.loads(request.form['annotations']))
     update_text_lines(json.loads(request.form['annotations']))
     print(json.loads(request.form['annotations']))
     return 'OK'

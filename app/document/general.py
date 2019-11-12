@@ -7,6 +7,7 @@ from app import db_session
 from PIL import Image as PILImage
 import uuid
 from lxml import etree as ET
+from app.db import Document, Image, TextLine, Annotation
 
 
 def dhash(image, hash_size=8):
@@ -193,6 +194,8 @@ def get_region_xml_root(image_id):
 
 
 def get_page_xml_root(image_id, only_annotated=False):
+    print(image_id)
+    text = ""
     image = get_image_by_id(image_id)
     root = ET.Element("PcGts")
     root.set("xmlns", "http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15")
@@ -202,7 +205,14 @@ def get_page_xml_root(image_id, only_annotated=False):
     page_element.set("imageWidth", str(image.width))
     page_element.set("imageHeight", str(image.height))
 
-    textregions = sorted(list(image.textregions), key=lambda x: x.order)
+    skip_textregion_sorting = False
+    for tr in image.textregions:
+        if tr.order is None:
+            skip_textregion_sorting = True
+    if not skip_textregion_sorting:
+        textregions = sorted(list(image.textregions), key=lambda x: x.order)
+    else:
+        textregions = image.textregions
     for text_region in textregions:
         if not text_region.deleted:
             text_region_element = ET.SubElement(page_element, "TextRegion")
@@ -210,13 +220,13 @@ def get_page_xml_root(image_id, only_annotated=False):
             coords = ET.SubElement(text_region_element, "Coords")
             coords.set("points", text_region.points)
 
-            textlines = sorted(list(text_region.textlines), key=lambda x: x.order)
+            textlines = TextLine.query.filter_by(region_id=text_region.id).distinct()
+            if only_annotated:
+                textlines = textlines.join(Annotation)
+            textlines = textlines.order_by(TextLine.order)
+            textlines = textlines.all()
             for text_line in textlines:
-                annotated_text_line = True
-                if only_annotated:
-                    if len(text_line.annotations) == 0:
-                        annotated_text_line = False
-                if not text_line.deleted and annotated_text_line:
+                if not text_line.deleted:
                     text_line_element = ET.SubElement(text_region_element, "TextLine")
                     text_line_element.set("id", str(text_line.id))
                     heights = text_line.np_heights
@@ -236,20 +246,11 @@ def get_page_xml_root(image_id, only_annotated=False):
 
                     text_element = ET.SubElement(text_line_element, "TextEquiv")
                     text_element = ET.SubElement(text_element, "Unicode")
-                    text_element.text = text_line.text
+                    text_tmp = ""
+                    if text_line.text is not None:
+                        text_tmp = text_line.text
+                    text_element.text = text_tmp
+                    text += text_tmp + '\n'
 
-    return root
+    return root, text
 
-
-def get_page_text_content(image_id):
-    image = get_image_by_id(image_id)
-    text = ""
-    textregions = sorted(list(image.textregions), key=lambda x: x.order)
-    for text_region in textregions:
-        if not text_region.deleted:
-            textlines = sorted(list(text_region.textlines), key=lambda x: x.order)
-            for text_line in textlines:
-                if not text_line.deleted:
-                    text += text_line.text + '\n'
-
-    return text
