@@ -135,10 +135,10 @@ def get_image(document_id, image_id):
     return send_file(image_url)
 
 
-@bp.route('/get_models/<string:ocr_id>')
-def get_models(ocr_id):
-    models_folder = os.path.join(current_app.config['MODELS_FOLDER'], ocr_id)
-    zip_path = os.path.join(current_app.config['MODELS_FOLDER'], ocr_id)
+@bp.route('/get_models/<string:ocr_name>')
+def get_models(ocr_name):
+    models_folder = os.path.join(current_app.config['MODELS_FOLDER'], ocr_name)
+    zip_path = os.path.join(current_app.config['MODELS_FOLDER'], ocr_name)
     if not os.path.exists("{}.zip".format(zip_path)):
         print("Creating archive:", zip_path)
         shutil.make_archive(zip_path, 'zip', models_folder)
