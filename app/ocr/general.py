@@ -28,8 +28,7 @@ def get_first_ocr_request():
         .order_by(Request.created_date).first()
 
 def create_json_from_request(request):
-    val = {'id': request.id, 'ocr_name': request.ocr.name, 'parse_folder_config_path': request.ocr.parse_folder_config_path,
-           'ocr_json_path': request.ocr.ocr_json_path,
+    val = {'id': request.id, 'ocr_name': request.ocr.name,
            'document': {'id': request.document.id, 'images': []}}
     for image in request.document.images:
         if not image.deleted:
