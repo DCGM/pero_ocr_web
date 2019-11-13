@@ -85,7 +85,7 @@ def get_page_text(image_id):
 
 @bp.route('/get_page_xml/<string:image_id>')
 def get_page_xml(image_id):
-    root = get_page_xml_root(image_id)
+    root, _ = get_page_xml_root(image_id)
     xml_string = ET.tostring(root, pretty_print=True, encoding="utf-8")
     return Response(xml_string, mimetype='text/xml')
 

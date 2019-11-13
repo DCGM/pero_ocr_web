@@ -263,7 +263,7 @@ function new_image_callback(data, status) {
 
     var bounds = [xy(0, -annotator_data.height), xy(annotator_data.width, 0)];
     annotator_data.map.setView(xy(annotator_data.width / 2, -annotator_data.height / 2), -2);
-    var image = L.imageOverlay(`/document/get_image/${document_id}/${annotator_data.uuid}`, bounds).addTo(annotator_data.map);
+    var image = L.imageOverlay(`/document/get_image/${annotator_data.uuid}`, bounds).addTo(annotator_data.map);
 
     //zoom_level = Math.log(annotator_data.width / 256.0) / Math.log(2)
     annotator_data.map.fitBounds(bounds);

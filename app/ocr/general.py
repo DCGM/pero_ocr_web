@@ -13,7 +13,7 @@ def create_ocr_request(document, ocr_id):
 
 def can_start_ocr(document):
     if not Request.query.filter_by(document_id=document.id, request_type=RequestType.OCR,
-                                   state=RequestState.PENDING).first() and document.state == DocumentState.COMPLETED_LAYOUT_ANALYSIS:
+                                   state=RequestState.PENDING).first() and (document.state == DocumentState.COMPLETED_LAYOUT_ANALYSIS or document.state == DocumentState.COMPLETED_OCR):
         return True
     return False
 
@@ -28,8 +28,15 @@ def get_first_ocr_request():
         .order_by(Request.created_date).first()
 
 def create_json_from_request(request):
+    processed = False
+    for image in request.document.images:
+        if not image.deleted:
+            for textregion in image.textregions:
+                if not textregion.deleted:
+                    if len(textregion.textlines) > 0:
+                        processed = True
     val = {'id': request.id, 'ocr_name': request.ocr.name,
-           'document': {'id': request.document.id, 'state': request.document.state, 'images': []}}
+           'document': {'id': request.document.id, 'processed': processed, 'images': []}}
     for image in request.document.images:
         if not image.deleted:
             val['document']['images'].append(image.id)
@@ -49,7 +56,13 @@ def insert_lines_to_db(ocr_results_folder):
                 if text_line is not None:
                     if len(text_line.annotations) > 0:
                         print("SKIPPING", line_id)
-                        continue
+                    else:
+                        text_line.text = line[2][0].text
+                        text_line.confidences = line[3].text
+                        print("Confidences:", text_line.confidences)
+                        print("Text:", text_line.text)
+                    print()
+                    continue
                 coords = line[0].get('points')
                 baseline = line[1].get('points')
                 heights_split = line.get('custom').split()
@@ -60,7 +73,8 @@ def insert_lines_to_db(ocr_results_folder):
                 print("Baseline:", baseline)
                 print("Heights:", heights)
                 print("Confidences:", confidences)
-                print(line_text)
+                print("Text:", line_text)
+                print()
                 text_line = TextLine(order=order, points=coords, baseline=baseline,
                                      heights=heights, confidences=confidences, text=line_text, deleted=False)
                 textregion.textlines.append(text_line)
