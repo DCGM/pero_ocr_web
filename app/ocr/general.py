@@ -69,7 +69,10 @@ def insert_lines_to_db(ocr_results_folder):
 def insert_annotations_to_db(user, annotations):
     for annotation in annotations:
         text_line = get_text_line_by_id(annotation['id'])
-        annotation_db = Annotation(text_original=annotation['text_original'], text_edited=annotation['text_edited'], deleted=False, user_id=user.id)
+        text_edited = annotation['text_edited']
+        if u"\u00A0" in text_edited:
+            text_edited = text_edited.replace(u"\u00A0", ' ')
+        annotation_db = Annotation(text_original=annotation['text_original'], text_edited=text_edited, deleted=False, user_id=user.id)
         text_line.annotations.append(annotation_db)
     db_session.commit()
 
