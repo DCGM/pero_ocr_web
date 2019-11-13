@@ -93,7 +93,10 @@ def insert_annotations_to_db(user, annotations):
 def update_text_lines(annotations):
     for annotation in annotations:
         text_line = get_text_line_by_id(annotation['id'])
-        text_line.text = annotation['text_edited']
+        text_edited = annotation['text_edited']
+        if u"\u00A0" in text_edited:
+            text_edited = text_edited.replace(u"\u00A0", ' ')
+        text_line.text = text_edited
         text_line.confidences = ' '.join([str(1) for _ in annotation['text_edited']])
     db_session.commit()
 
