@@ -51,11 +51,12 @@ def check_and_process_request(config):
 
         get_models(base_url, models_route, ocr_name, models_folder)
 
-        if document['document_state'] == "COMPLETED_OCR":
+        if document['processed']:
             config = configparser.ConfigParser()
             config.read(config_path)
             config['INPUTS']['PAGE_LINES'] = "./xmls"
-            config.write(config_path)
+            with open(config_path, 'w') as f:
+                config.write(f)
 
         get_and_save_request_document_images_and_xmls(base_url, images_folder, xmls_folder, request_json)
 

@@ -23,13 +23,14 @@ def get_and_save_images(folder, base_url, images):
                 f.write(image_request.content)
 
 
-def get_and_save_xmls(folder, base_url, document_state, images):
+def get_and_save_xmls(folder, base_url, document_processed, images):
     for image in images:
-        if document_state == "COMPLETED_OCR":
+        if document_processed:
             xml_request = requests.get("{}/document/get_page_xml/{}".format(base_url, image))
         else:
             xml_request = requests.get("{}/document/get_region_xml/{}".format(base_url, image))
         path = os.path.join(folder, '{}.xml'.format(image))
+        print("Saving", path)
         if xml_request.status_code == 200:
             with open(path, 'wb') as f:
                 f.write(xml_request.content)
@@ -61,7 +62,7 @@ def get_and_save_document_images_and_xmls(images_folder, xmls_folder, base_url, 
     if 'document' in request_json.keys():
         document = request_json['document']
         get_and_save_images(images_folder, base_url, document['images'])
-        get_and_save_xmls(xmls_folder, base_url, document['state'], document['images'])
+        get_and_save_xmls(xmls_folder, base_url, document['processed'], document['images'])
         return request_json['id'], request_json['parse_folder_config_path'], request_json['ocr_json_path'], document
     return None, None, None, None
 
@@ -70,7 +71,7 @@ def get_and_save_request_document_images_and_xmls(base_url, images_folder, xmls_
     if 'document' in request_json.keys():
         document = request_json['document']
         get_and_save_images(images_folder, base_url, document['images'])
-        get_and_save_xmls(xmls_folder, base_url, document['state'], document['images'])
+        get_and_save_xmls(xmls_folder, base_url, document['processed'], document['images'])
 
 
 def make_post_request_data(output_folder, document):
