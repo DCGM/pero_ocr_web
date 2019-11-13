@@ -38,6 +38,7 @@ def check_and_process_request(config):
         output_folder = os.path.join(working_dir, 'output')
         xmls_confidences_folder = os.path.join(working_dir, 'xmls_confidences_folder')
         models_folder = os.path.join(working_dir, 'models')
+        config_path = os.path.join(models_folder, 'config.ini')
 
         if os.path.exists(working_dir):
             shutil.rmtree(working_dir)
@@ -50,11 +51,17 @@ def check_and_process_request(config):
 
         get_models(base_url, models_route, ocr_name, models_folder)
 
+        if document['document_state'] == "COMPLETED_OCR":
+            config = configparser.ConfigParser()
+            config.read(config_path)
+            config['INPUTS']['PAGE_LINES'] = "./xmls"
+            config.write(config_path)
+
         get_and_save_request_document_images_and_xmls(base_url, images_folder, xmls_folder, request_json)
 
         print(request_id)
         print(document)
-        parse_folder_process = subprocess.Popen(['python', parse_folder_path, '-c', os.path.join(models_folder, 'config.ini')], cwd=working_dir)
+        parse_folder_process = subprocess.Popen(['python', parse_folder_path, '-c', config_path], cwd=working_dir)
         parse_folder_process.wait()
 
         with open(os.path.join(models_folder, 'ocr', 'ocr_engine.json'), 'r',  encoding='utf8') as f:

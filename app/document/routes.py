@@ -70,8 +70,8 @@ def upload_document_post(document_id):
         return status, 409
 
 
-@bp.route('/get_region_xml/<string:document_id>/<string:image_id>')
-def get_region_xml(document_id, image_id):
+@bp.route('/get_region_xml/<string:image_id>')
+def get_region_xml(image_id):
     root = get_region_xml_root(image_id)
     xml_string = ET.tostring(root, pretty_print=True, encoding="utf-8")
     return Response(xml_string, mimetype='text/xml')
@@ -79,7 +79,7 @@ def get_region_xml(document_id, image_id):
 
 @bp.route('/get_page_text/<string:image_id>')
 def get_page_text(image_id):
-    text = get_page_text_content(image_id)
+    _, text = get_page_xml_root(image_id)
     return Response(text, mimetype='text')
 
 
@@ -125,13 +125,13 @@ def get_document_annotated_pages(document_id):
     return send_file(memory_file, attachment_filename='pages.zip', as_attachment=True)
 
 
-@bp.route('/get_image/<string:document_id>/<string:image_id>')
+@bp.route('/get_image/<string:image_id>')
 # @login_required
-def get_image(document_id, image_id):
+def get_image(image_id):
     # if not is_user_owner_or_collaborator(document_id, current_user):
     #     flash(u'You do not have sufficient rights to get this image!', 'danger')
     #     return redirect(url_for('main.index'))
-    image_url = get_image_url(document_id, image_id)
+    image_url = get_image_url(image_id)
     return send_file(image_url)
 
 

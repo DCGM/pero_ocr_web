@@ -29,7 +29,7 @@ def get_first_ocr_request():
 
 def create_json_from_request(request):
     val = {'id': request.id, 'ocr_name': request.ocr.name,
-           'document': {'id': request.document.id, 'images': []}}
+           'document': {'id': request.document.id, 'state': request.document.state, 'images': []}}
     for image in request.document.images:
         if not image.deleted:
             val['document']['images'].append(image.id)
@@ -44,6 +44,12 @@ def insert_lines_to_db(ocr_results_folder):
             textregion = get_text_region_by_id(region_id)
             print(region_id)
             for order, line in enumerate(region.iter('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15}TextLine')):
+                line_id = line.get('id')
+                text_line = get_text_line_by_id(line_id)
+                if text_line is not None:
+                    if len(text_line.annotations) > 0:
+                        print("SKIPPING", line_id)
+                        continue
                 coords = line[0].get('points')
                 baseline = line[1].get('points')
                 heights_split = line.get('custom').split()

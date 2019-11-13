@@ -107,6 +107,15 @@
                         >
                             <ion-icon name="eye"></ion-icon>
                         </a>
+                        <a
+                            class="document-action-btn btn btn-secondary text-white"
+                            href="{{ url_for('ocr.select_ocr', document_id=document.id) }}"
+                            data-toggle="tooltip"
+                            data-placement="right"
+                            title="Run ocr"
+                        >
+                        <ion-icon name="fastforward"></ion-icon>
+                        </a>
                          <a
                                 class="document-action-btn btn btn-secondary text-white"
                                 href="{{ url_for('document.get_document_pages', document_id=document.id) }}"

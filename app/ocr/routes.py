@@ -83,7 +83,7 @@ def show_results(document_id):
 @bp.route('/get_lines/<string:document_id>/<string:image_id>', methods=['GET'])
 @login_required
 def get_lines(document_id, image_id):
-    lines_dict = {'document_id':document_id, 'image_id':image_id, 'lines':[]}
+    lines_dict = {'document_id': document_id, 'image_id': image_id, 'lines': []}
     image = get_image_by_id(image_id)
     lines_dict['height'] = image.height
     lines_dict['width'] = image.width

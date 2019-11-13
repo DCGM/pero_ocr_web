@@ -115,9 +115,8 @@ def create_dirs(path):
         os.makedirs(path)
 
 
-def get_image_url(document_id, image_id):
-    document = get_document_by_id(document_id)
-    image = document.images.filter_by(id=image_id, deleted=False).first()
+def get_image_url(image_id):
+    image = get_image_by_id(image_id)
     return image.path
 
 
