@@ -1,19 +1,20 @@
 import os
 import shutil
 from app.ocr import bp
-from flask import render_template, url_for, redirect, flash, jsonify, request, current_app, send_file, abort
+from flask import render_template, request, current_app
 from flask import url_for, redirect, flash, jsonify
 from flask_login import login_required, current_user
-from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_text_region_by_id
+from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id
 from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
                             insert_lines_to_db, change_ocr_request_and_document_state_on_success, insert_annotations_to_db, \
-                            update_text_lines
+                            update_text_lines, get_page_annotated_lines
 from app.document.general import get_document_images
 from app.db import DocumentState, OCR
 from app import db_session
 
 import json
+
 
 @bp.route('/select_ocr/<string:document_id>', methods=['GET'])
 @login_required
@@ -21,6 +22,7 @@ def select_ocr(document_id):
     document = get_document_by_id(document_id)
     ocr_engines = db_session.query(OCR).filter(OCR.active).all()
     return render_template('ocr/ocr_select.html', document=document, ocr_engines=ocr_engines)
+
 
 @bp.route('/start_ocr/<string:document_id>', methods=['POST'])
 @login_required
@@ -70,6 +72,7 @@ def post_result(request_id):
 
     return 'OK'
 
+
 @bp.route('/show_results/<string:document_id>', methods=['GET'])
 @login_required
 def show_results(document_id):
@@ -93,36 +96,26 @@ def get_lines(document_id, image_id):
         if tr.order is None:
             skip_textregion_sorting = True
     if not skip_textregion_sorting:
-        textregions = sorted(list(image.textregions), key=lambda x: x.order)
+        text_regions = sorted(list(image.textregions), key=lambda x: x.order)
     else:
-        textregions = image.textregions
-    for textregion in textregions:
-        skip_textline_sorting = False
-        for tl in textregion.textlines:
-            if tl.order is None:
-                skip_textline_sorting = True
-        if not skip_textline_sorting:
-            textlines = sorted(list(textregion.textlines), key=lambda x: x.order)
-        else:
-            textlines = textregion.textlines
-        for line in textlines:
-            line_dict = {}
-            line_dict['id'] = line.id
-            line_dict['np_points'] = line.np_points.tolist()
-            line_dict['np_baseline'] = line.np_baseline.tolist()
-            line_dict['np_heights'] = line.np_heights.tolist()
-            line_dict['np_confidences'] = line.np_confidences.tolist()
-            line_dict['np_textregion_width'] = [min(textregion.np_points[:,1]), max(textregion.np_points[:,1])]
-            if line.text is None:
-                line_dict['text'] = ""
-            else:
-                line_dict['text'] = line.text
-            if len(line.annotations) > 0:
-                annotated = True
-            else:
-                annotated = False
-            line_dict['annotated'] = annotated
-            lines_dict['lines'].append(line_dict)
+        text_regions = image.textregions
+
+    annotated_lines = set(get_page_annotated_lines(image_id))
+
+    for text_region in text_regions:
+        text_lines = sorted(list(text_region.textlines), key=lambda x: x.order)
+
+        lines_dict['lines'] = lines_dict['lines'] + [{
+                    'id': line.id,
+                    'np_points':  line.np_points.tolist(),
+                    'np_baseline':  line.np_baseline.tolist(),
+                    'np_heights':  line.np_heights.tolist(),
+                    'np_confidences':  line.np_confidences.tolist(),
+                    'np_textregion_width':  [min(text_region.np_points[:,1]), max(text_region.np_points[:,1])],
+                    'annotated': line.id in annotated_lines,
+                    'text': line.text if line.text is not None else ""
+                } for line in text_lines]
+
     return jsonify(lines_dict)
 
 
