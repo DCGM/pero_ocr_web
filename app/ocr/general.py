@@ -58,36 +58,39 @@ def insert_lines_to_db(ocr_results_folder):
         root = ET.parse(xml_path).getroot()
         for region in root.iter('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15}TextRegion'):
             region_id = region.get('id')
-            textregion = get_text_region_by_id(region_id)
-            print(region_id)
-            for order, line in enumerate(region.iter('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15}TextLine')):
-                line_id = line.get('id')
-                text_line = get_text_line_by_id(line_id)
-                if text_line is not None:
-                    if len(text_line.annotations) > 0:
-                        print("SKIPPING", line_id)
-                    else:
+            text_region = get_text_region_by_id(region_id)
+            if len(text_region.lines) == 0:
+                for order, line in enumerate(
+                        region.iter('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15}TextLine')):
+                    coords = line[0].get('points')
+                    baseline = line[1].get('points')
+                    heights_split = line.get('custom').split()
+                    heights = "{} {}".format(heights_split[1][1:-1], heights_split[2][:-1])
+                    line_text = line[2][0].text
+                    confidences = line[3].text
+                    text_line = TextLine(
+                        order=order,
+                        points=coords,
+                        baseline=baseline,
+                        heights=heights,
+                        confidences=confidences,
+                        text=line_text,
+                        deleted=False)
+                    text_region.textlines.append(text_line)
+            else:
+                region_lines = dict([(str(x.id), x) for x in text_region.lines])
+
+                for order, line in enumerate(
+                        region.iter('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15}TextLine')):
+                    line_id = line.get('id')
+                    if line_id not in region_lines:
+                        print('ERROR: Skipping input xml line. Line id not in DB - ', line_id)
+                        continue
+
+                    text_line = region_lines[line_id]
+                    if len(text_line.annotations) == 0:
                         text_line.text = line[2][0].text
                         text_line.confidences = line[3].text
-                        print("Confidences:", text_line.confidences)
-                        print("Text:", text_line.text)
-                    print()
-                    continue
-                coords = line[0].get('points')
-                baseline = line[1].get('points')
-                heights_split = line.get('custom').split()
-                heights = "{} {}".format(heights_split[1][1:-1], heights_split[2][:-1])
-                line_text = line[2][0].text
-                confidences = line[3].text
-                print("Coords:", coords)
-                print("Baseline:", baseline)
-                print("Heights:", heights)
-                print("Confidences:", confidences)
-                print("Text:", line_text)
-                print()
-                text_line = TextLine(order=order, points=coords, baseline=baseline,
-                                     heights=heights, confidences=confidences, text=line_text, deleted=False)
-                textregion.textlines.append(text_line)
         db_session.commit()
 
 
