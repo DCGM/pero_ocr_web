@@ -2,7 +2,7 @@ import os
 import shutil
 import json
 from app.ocr import bp
-from flask import render_template, request, current_app
+from flask import render_template, request, current_app, send_file
 from flask import url_for, redirect, flash, jsonify
 from flask_login import login_required, current_user
 from app.ocr import bp
