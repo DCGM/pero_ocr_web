@@ -1,19 +1,19 @@
 import os
 import shutil
+import json
 from app.ocr import bp
 from flask import render_template, request, current_app
 from flask import url_for, redirect, flash, jsonify
 from flask_login import login_required, current_user
+from app.ocr import bp
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id
+from app.db import DocumentState, OCR
 from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
                             insert_lines_to_db, change_ocr_request_and_document_state_on_success, insert_annotations_to_db, \
                             update_text_lines, get_page_annotated_lines
 from app.document.general import get_document_images
-from app.db import DocumentState, OCR
 from app import db_session
-
-import json
 
 
 @bp.route('/select_ocr/<string:document_id>', methods=['GET'])
@@ -104,8 +104,7 @@ def get_lines(document_id, image_id):
 
     for text_region in text_regions:
         text_lines = sorted(list(text_region.textlines), key=lambda x: x.order)
-
-        lines_dict['lines'] = lines_dict['lines'] + [{
+        lines_dict['lines'] += [{
                     'id': line.id,
                     'np_points':  line.np_points.tolist(),
                     'np_baseline':  line.np_baseline.tolist(),
@@ -115,7 +114,6 @@ def get_lines(document_id, image_id):
                     'annotated': line.id in annotated_lines,
                     'text': line.text if line.text is not None else ""
                 } for line in text_lines]
-
     return jsonify(lines_dict)
 
 

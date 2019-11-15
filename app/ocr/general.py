@@ -7,8 +7,9 @@ import os
 
 
 def get_page_annotated_lines(image_id):
-    return db_session.query(TextLine.id).join(TextRegion).join(Annotation).filter(TextRegion.image_id == image_id)\
+    lines = db_session.query(TextLine.id).join(TextRegion).join(Annotation).filter(TextRegion.image_id == image_id)\
         .distinct().all()
+    return [x[0] for x in lines]
 
 
 def create_ocr_request(document, ocr_id):
