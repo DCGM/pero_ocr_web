@@ -7,8 +7,8 @@ import os
 from app.db.general import get_image_by_id
 
 
-def create_layout_analysis_request(document):
-    return Request(document=document,
+def create_layout_analysis_request(document, layout_id):
+    return Request(document=document, layout_id=layout_id,
                    request_type=RequestType.LAYOUT_ANALYSIS, state=RequestState.PENDING)
 
 
@@ -53,7 +53,7 @@ def change_document_state_on_complete_layout_analysis(document):
 
 
 def create_json_from_request(request):
-    value = {'id': request.id, 'document': {'id': request.document.id, 'images': []}}
+    value = {'id': request.id, 'layout_detector_name': request.layout_detector.name, 'document': {'id': request.document.id, 'images': []}}
     for image in request.document.images:
         if not image.deleted:
             value['document']['images'].append(image.id)

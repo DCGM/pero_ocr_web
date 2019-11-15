@@ -4,5 +4,5 @@ Base = declarative_base()
 
 from .user import User
 from .model import DocumentState, RequestState, RequestType
-from .model import Document, Image, Request, TextRegion, TextLine, Annotation, OCR
+from .model import Document, Image, Request, TextRegion, TextLine, Annotation, OCR, LayoutDetector
 

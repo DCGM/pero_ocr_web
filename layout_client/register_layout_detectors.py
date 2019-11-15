@@ -34,7 +34,7 @@ def main():
         db_session.commit()
 
     for layout_detector in layout_engines:
-        if db_session.query(LayoutDetector).filter(LayoutDetector.name == layout_detector['name']).filter(OCR.active == True).first() is None:
+        if db_session.query(LayoutDetector).filter(LayoutDetector.name == layout_detector['name']).filter(LayoutDetector.active == True).first() is None:
             db_ocr = LayoutDetector(**layout_detector)
             db_session.add(db_ocr)
             print('ADDED ', layout_detector)

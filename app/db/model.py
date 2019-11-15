@@ -166,6 +166,7 @@ class Annotation(Base):
     text_line = relationship('TextLine')
     user = relationship('User')
 
+
 class LayoutDetector(Base):
     __tablename__ = 'layout_detectors'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -174,6 +175,7 @@ class LayoutDetector(Base):
     active = Column(Boolean(), default=True, nullable=False)
 
     requests = relationship('Request')
+
 
 class OCR(Base):
     __tablename__ = 'ocr'

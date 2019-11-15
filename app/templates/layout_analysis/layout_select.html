@@ -1,7 +1,7 @@
 {% extends "base/base.html" %} {% block content %}
     <div>
         <h3 class="text-left">{{ document.name }} - Start Layout Analysis</h3>
-        <form action="{{ url_for('layout_analysis.start_layout_analysis_post', document_id=document.id) }}" method="POST">
+        <form action="{{ url_for('layout_analysis.start', document_id=document.id) }}" method="POST">
             <select class="js-example-basic-single" name="layout_detector_id" style="width:100%">
                 {% for layout_detector in layout_engines %}
                     <option value="{{ layout_detector. id }}">{{layout_detector.name}}</option>
