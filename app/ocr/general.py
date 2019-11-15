@@ -1,5 +1,4 @@
-import uuid
-from app.db.model import RequestState, RequestType, Request, DocumentState, TextLine, Annotation, OCR
+from app.db.model import RequestState, RequestType, Request, DocumentState, TextLine, Annotation, TextRegion
 from app.db.general import get_text_region_by_id, get_text_line_by_id
 from app import db_session
 from flask import jsonify
@@ -7,9 +6,15 @@ import xml.etree.ElementTree as ET
 import os
 
 
+def get_page_annotated_lines(image_id):
+    return db_session.query(TextLine.id).join(TextRegion).join(Annotation).filter(TextRegion.image_id == image_id)\
+        .distinct().all()
+
+
 def create_ocr_request(document, ocr_id):
     return Request(document=document,
                    request_type=RequestType.OCR, state=RequestState.PENDING, ocr_id=ocr_id)
+
 
 def can_start_ocr(document):
     if not Request.query.filter_by(document_id=document.id, request_type=RequestType.OCR,
@@ -17,15 +22,18 @@ def can_start_ocr(document):
         return True
     return False
 
+
 def add_ocr_request_and_change_document_state(request):
     request.document.state = DocumentState.WAITING_OCR
     db_session.add(request)
     db_session.commit()
     db_session.refresh(request)
 
+
 def get_first_ocr_request():
     return Request.query.filter_by(state=RequestState.PENDING, request_type=RequestType.OCR) \
         .order_by(Request.created_date).first()
+
 
 def create_json_from_request(request):
     processed = False
@@ -41,6 +49,7 @@ def create_json_from_request(request):
         if not image.deleted:
             val['document']['images'].append(image.id)
     return jsonify(val)
+
 
 def insert_lines_to_db(ocr_results_folder):
     for xml_file_name in os.listdir(ocr_results_folder):
@@ -80,6 +89,7 @@ def insert_lines_to_db(ocr_results_folder):
                 textregion.textlines.append(text_line)
         db_session.commit()
 
+
 def insert_annotations_to_db(user, annotations):
     for annotation in annotations:
         text_line = get_text_line_by_id(annotation['id'])
@@ -89,6 +99,7 @@ def insert_annotations_to_db(user, annotations):
         annotation_db = Annotation(text_original=annotation['text_original'], text_edited=text_edited, deleted=False, user_id=user.id)
         text_line.annotations.append(annotation_db)
     db_session.commit()
+
 
 def update_text_lines(annotations):
     for annotation in annotations:
@@ -100,10 +111,12 @@ def update_text_lines(annotations):
         text_line.confidences = ' '.join([str(1) for _ in annotation['text_edited']])
     db_session.commit()
 
+
 def change_ocr_request_and_document_state(request, request_state, document_state):
     request.state = request_state
     request.document.state = document_state
     db_session.commit()
+
 
 def change_ocr_request_and_document_state_on_success(request):
     change_ocr_request_and_document_state(request, RequestState.SUCCESS, DocumentState.COMPLETED_OCR)
