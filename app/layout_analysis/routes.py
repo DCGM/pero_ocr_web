@@ -7,29 +7,31 @@ from app.layout_analysis.general import create_layout_analysis_request, can_star
     create_json_from_request, change_layout_request_and_document_state_on_success, get_coords_and_make_preview, \
     make_image_result_preview, change_document_state_on_complete_layout_analysis
 import os
-from app.db.model import DocumentState, TextRegion
+from app.db.model import DocumentState, TextRegion, LayoutDetector
 from app.document.general import get_document_images, is_user_owner_or_collaborator
 from PIL import Image
 from app import db_session
 from flask import jsonify
 
 
-@bp.route('/start/<string:document_id>', methods=['GET'])
+@bp.route('/select_layout/<string:document_id>', methods=['GET'])
 @login_required
-def start_layout_analysis_get(document_id):
+def select_layout(document_id):
     document = get_document_by_id(document_id)
-    return render_template('layout_analysis/start_layout.html', document=document)
+    layout_engines = db_session.query(LayoutDetector).filter(LayoutDetector.active).all()
+    return render_template('layout_analysis/layout_select.html', document=document, layout_engines=layout_engines)
 
 
 @bp.route('/start/<string:document_id>', methods=['POST'])
 def start_layout_analysis_post(document_id):
     document = get_document_by_id(document_id)
-    type = request.form['layout_analysis_type']
-    if type == 'BASIC':
+    layout_detector_id = request.form['layout_detector_id']
+    layout_detector = get_layout_detector_by_id(layout_detector_id)
+    if layout_detector.name != "NONE":
         if len(document.images.all()) == 0:
             flash(u'Can\'t create request without uploading images.', 'danger')
             return redirect(request.referrer)
-        layout_request = create_layout_analysis_request(document)
+        layout_request = create_layout_analysis_request(document, layout_detector_id)
         if can_start_layout_analysis(document):
             add_layout_request_and_change_document_state(layout_request)
             flash(u'Request for layout analysis successfully created!', 'success')

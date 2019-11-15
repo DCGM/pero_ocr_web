@@ -46,6 +46,12 @@ def get_and_save_document_images(folder, base_url, route):
     return None, None
 
 
+def get_and_save_request_document_images(base_url, folder, request_json):
+    if 'document' in request_json.keys():
+        document = request_json['document']
+        get_and_save_images(folder, base_url, document['images'])
+
+
 def get_and_save_document_xmls(folder, base_url, route):
     r = requests. get('{}{}'.format(base_url, route))
     return_json = r.json()

@@ -70,6 +70,7 @@ class Request(Base):
     __tablename__ = 'requests'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     ocr_id = Column(GUID(), ForeignKey('ocr.id'))
+    layout_id = Column(GUID(), ForeignKey('layout_detectors.id'))
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
     request_type = Column(Enum(RequestType))
     state = Column(Enum(RequestState))
@@ -78,6 +79,7 @@ class Request(Base):
 
     document = relationship('Document', back_populates="requests")
     ocr = relationship('OCR')
+    layout_detector = relationship('LayoutDetector')
 
 
 class TextRegion(Base):
@@ -164,6 +166,14 @@ class Annotation(Base):
     text_line = relationship('TextLine')
     user = relationship('User')
 
+class LayoutDetector(Base):
+    __tablename__ = 'layout_detectors'
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    name = Column(String(), nullable=False)
+    description = Column(String())
+    active = Column(Boolean(), default=True, nullable=False)
+
+    requests = relationship('Request')
 
 class OCR(Base):
     __tablename__ = 'ocr'

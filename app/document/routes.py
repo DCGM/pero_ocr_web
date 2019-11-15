@@ -135,16 +135,6 @@ def get_image(image_id):
     return send_file(image_url)
 
 
-@bp.route('/get_models/<string:ocr_name>')
-def get_models(ocr_name):
-    models_folder = os.path.join(current_app.config['MODELS_FOLDER'], ocr_name)
-    zip_path = os.path.join(current_app.config['MODELS_FOLDER'], ocr_name)
-    if not os.path.exists("{}.zip".format(zip_path)):
-        print("Creating archive:", zip_path)
-        shutil.make_archive(zip_path, 'zip', models_folder)
-    return send_file("{}.zip".format(zip_path), attachment_filename='models.zip', as_attachment=True)
-
-
 @bp.route('/remove_image/<string:document_id>/<string:image_id>')
 @login_required
 def remove_image_get(document_id, image_id):
