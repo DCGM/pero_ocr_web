@@ -56,7 +56,7 @@ def check_and_process_request(config):
             config = configparser.ConfigParser()
             config.optionxform = str
             config.read(config_path)
-            config['INPUTS']['PAGE_LINES'] = "./xmls"
+            config['PAGE_PARSER']['RUN_LINE_PARSER'] = "no"
             with open(config_path, 'w') as f:
                 config.write(f)
 

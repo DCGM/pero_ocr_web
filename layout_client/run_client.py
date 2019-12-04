@@ -51,7 +51,7 @@ def check_and_process_request(config):
         detect_layout_process = subprocess.Popen(['python', detect_layout_path, '-c', config_path], cwd=working_dir)
         detect_layout_process.wait()
 
-        data = make_post_request_data(output_folder, document)
+        data = make_post_request_data(os.path.join(output_folder, "page"), document)
         requests.post('{}{}'.format(base_url, get_post_route(request_id)), files=data)
 
         return True
