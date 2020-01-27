@@ -6,18 +6,18 @@
                 <ion-icon name="arrow-dropleft"></ion-icon>
             </div>
             <div class="images-container">
-                {% for image in images %}
+                {% for i in range(0, images.count()) %}
                     <div class="image-item-container d-inline-flex flex-column" data-document="{{ document.id }}"
-                         data-image="{{ image.id }}">
+                         data-image="{{ images[i].id }}" data-index="{{ i }}">
                         <div class="image-container">
                             <img
-                                    src="/layout_analysis/get_result_preview/{{ document.id }}/{{ image.id }}"
-                                    alt="{{ image.filename }}"
+                                    src="/layout_analysis/get_result_preview/{{ document.id }}/{{ images[i].id }}"
+                                    alt="{{ images[i].filename }}"
                                     class="uploaded_image card-img-top"
                             />
                         </div>
                         <div class="text-center">
-                            <p>{{ image.filename }}</p>
+                            <p>{{ images[i].filename }}</p>
                         </div>
                         <div class="d-none image-item-active"></div>
                     </div>
@@ -30,6 +30,7 @@
         <form method="get" id="get_page_text_form"></form>
         <form method="get" id="get_page_xml_form"></form>
         <div class="mb-2 col-lg-12">
+            <button id="next-btn" type="button" class="btn btn-secondary">Next</button>
             <button id="save-btn" type="button" class="btn btn-secondary">Save</button>
             <button id="text-btn" type="submit" class="btn btn-secondary" form="get_page_text_form">Export Text</button>
             <button id="export-btn" type="submit" class="btn btn-secondary" form="get_page_xml_form">Export XML</button>

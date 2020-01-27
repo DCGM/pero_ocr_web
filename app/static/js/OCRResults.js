@@ -266,10 +266,21 @@ class ImageEditor{
 }
 
 var image_editor = new ImageEditor(document.getElementById('map-container'));
+var image_index = 0;
+
+var next_btn = document.getElementById('next-btn')
+next_btn.addEventListener('click', next_page);
+
+function next_page() {
+    image_index += 1;
+    console.log(image_index);
+    $('.image-item-container[data-index=' + image_index + ']').click();
+}
 
 $('.image-item-container').on('click', function (event) {
     let document_id = $(this).data('document');
     let image_id = $(this).data('image');
+    image_index = $(this).data('index');
     document.getElementById('get_page_text_form').setAttribute("action", Flask.url_for('document.get_page_text', {'image_id': image_id}))
     document.getElementById('get_page_xml_form').setAttribute("action", Flask.url_for('document.get_page_xml', {'image_id': image_id}))
     if (typeof image_editor.lines !== 'undefined')
