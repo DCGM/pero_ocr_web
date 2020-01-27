@@ -56,7 +56,7 @@ def check_and_process_request(config):
             config = configparser.ConfigParser()
             config.optionxform = str
             config.read(config_path)
-            config['INPUTS']['PAGE_LINES'] = "./xmls"
+            config['PAGE_PARSER']['RUN_LINE_PARSER'] = "no"
             with open(config_path, 'w') as f:
                 config.write(f)
 
@@ -64,7 +64,7 @@ def check_and_process_request(config):
 
         print(request_id)
         print(document)
-        parse_folder_process = subprocess.Popen(['python', parse_folder_path, '-c', config_path], cwd=working_dir)
+        parse_folder_process = subprocess.Popen(['python', parse_folder_path, '-c', './models/config.ini'], cwd=working_dir)
         parse_folder_process.wait()
 
         with open(os.path.join(models_folder, 'ocr', 'ocr_engine.json'), 'r',  encoding='utf8') as f:
