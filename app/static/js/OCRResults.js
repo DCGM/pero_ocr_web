@@ -265,17 +265,13 @@ class ImageEditor{
 
 }
 
-var image_editor = new ImageEditor(document.getElementById('map-container'));
-var image_index = 0;
-
-var next_btn = document.getElementById('next-btn')
-next_btn.addEventListener('click', next_page);
 
 function next_page() {
     image_index += 1;
     console.log(image_index);
     $('.image-item-container[data-index=' + image_index + ']').click();
 }
+
 
 $('.image-item-container').on('click', function (event) {
     let document_id = $(this).data('document');
@@ -302,6 +298,22 @@ $('.image-item-container').on('click', function (event) {
         }
     }
     image_editor.get_image(document_id, image_id)
+});
+
+
+var image_editor = new ImageEditor(document.getElementById('map-container'));
+var image_index = 0;
+
+$('.image-item-container[data-index=0]').click();
+
+var next_btn = document.getElementById('next-btn')
+next_btn.addEventListener('click', next_page);
+document.addEventListener('keydown', function(event) {
+    console.log(event.key);
+    if (event.key == 'n')
+    {
+        next_page();
+    }
 });
 
 
