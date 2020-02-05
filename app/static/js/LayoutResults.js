@@ -100,6 +100,15 @@ function toggle_delete_object() {
     }
 }
 
+function toggle_delete_all_objects() {
+    for (let obj of annotator_data.objects) {
+        if (obj) {
+            obj.deleted = !obj.deleted;
+            obj.update_style();
+        }
+    }
+}
+
 function toggle_ignore_object() {
     obj = annotator_data.get_selected();
     if (obj) {

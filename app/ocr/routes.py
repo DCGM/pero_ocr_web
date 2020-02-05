@@ -11,7 +11,7 @@ from app.db import DocumentState, OCR
 from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
                             insert_lines_to_db, change_ocr_request_and_document_state_on_success, insert_annotations_to_db, \
-                            update_text_lines, get_page_annotated_lines
+                            update_text_lines, get_page_annotated_lines, change_ocr_request_and_document_state_in_progress
 from app.document.general import get_document_images
 from app import db_session
 
@@ -42,6 +42,7 @@ def start_ocr(document_id):
 def get_ocr_request():
     ocr_request = get_first_ocr_request()
     if ocr_request:
+        change_ocr_request_and_document_state_in_progress(ocr_request)
         return create_json_from_request(ocr_request)
     else:
         return jsonify({})

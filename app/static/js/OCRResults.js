@@ -308,12 +308,5 @@ $('.image-item-container[data-index=0]').click();
 
 var next_btn = document.getElementById('next-btn')
 next_btn.addEventListener('click', next_page);
-document.addEventListener('keydown', function(event) {
-    console.log(event.key);
-    if (event.key == 'n')
-    {
-        next_page();
-    }
-});
 
 

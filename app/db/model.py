@@ -10,11 +10,12 @@ import numpy as np
 
 class DocumentState(enum.Enum):
     NEW = 'New'
-    WAITING_LAYOUT_ANALYSIS = 'Waiting on start of layout analysis'
-    RUNNING_LAYOUT_ANALYSIS = 'Running layout analysis'
-    COMPLETED_LAYOUT_ANALYSIS = 'Layout analysis completed'
-    WAITING_OCR = 'Waiting on start of OCR'
-    COMPLETED_OCR = 'OCR completed'
+    WAITING_LAYOUT_ANALYSIS = 'Waiting on start of layout analysis.'
+    RUNNING_LAYOUT_ANALYSIS = 'Running layout analysis.'
+    COMPLETED_LAYOUT_ANALYSIS = 'Layout analysis completed.'
+    WAITING_OCR = 'Waiting on start of OCR.'
+    RUNNING_OCR = 'Running OCR.'
+    COMPLETED_OCR = 'OCR completed.'
 
 
 class RequestState(enum.Enum):

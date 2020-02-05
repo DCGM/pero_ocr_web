@@ -122,3 +122,8 @@ def change_ocr_request_and_document_state(request, request_state, document_state
 def change_ocr_request_and_document_state_on_success(request):
     change_ocr_request_and_document_state(request, RequestState.SUCCESS, DocumentState.COMPLETED_OCR)
     return
+
+
+def change_ocr_request_and_document_state_in_progress(request):
+    change_ocr_request_and_document_state(request, RequestState.IN_PROGRESS, DocumentState.RUNNING_OCR)
+    return
