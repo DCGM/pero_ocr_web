@@ -27,6 +27,27 @@
         </div>
     </div>
 
+    <div class="modal fade" id="revert-OCR-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="revert-OCR-modal-label">Revert OCR</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to revert OCR for this document?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button id="revert-OCR-modal-remove-button" type="button" class="btn btn-danger">Remove</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <table class="table table-hover">
         <thead>
         <tr>
@@ -91,7 +112,7 @@
                             href="{{ url_for('ocr.select_ocr', document_id=document.id) }}"
                             data-toggle="tooltip"
                             data-placement="right"
-                            title="Run ocr"
+                            title="Run OCR"
                     >
                         <ion-icon name="fastforward"></ion-icon>
                     </a>
@@ -112,7 +133,7 @@
                             href="{{ url_for('ocr.select_ocr', document_id=document.id) }}"
                             data-toggle="tooltip"
                             data-placement="right"
-                            title="Run ocr"
+                            title="Run OCR"
                         >
                         <ion-icon name="fastforward"></ion-icon>
                         </a>
@@ -124,6 +145,15 @@
                                 title="Download pages"
                         >
                             <ion-icon name="document"></ion-icon>
+                        </a>
+                        <a
+                                class="document-action-btn btn btn-secondary text-white revert-OCR-button"
+                                data-toggle="tooltip"
+                                data-placement="right"
+                                title="Revert OCR"
+                                data-document="{{ document.id }}"
+                        >
+                            <ion-icon name="rewind"></ion-icon>
                         </a>
                     {% endif %}
 
@@ -157,17 +187,21 @@
 {% endblock %}
 {% block scripts %}
     <script>
-        let $modal = $('#exampleModal');
+        let $modal_delete = $('#exampleModal');
+        let $modal_revert_OCR = $('#revert-OCR-modal');
         let last_document_id = null;
         $('[data-toggle="tooltip"]').tooltip();
-        $modal.modal({
+        $modal_delete.modal({
+            show: false
+        });
+        $modal_revert_OCR.modal({
             show: false
         });
 
         $('.delete-document-button').on('click', function (event) {
             event.preventDefault();
             last_document_id = $(this).data('document');
-            $modal.modal('show');
+            $modal_delete.modal('show');
         });
 
         $('#modal-remove-button').on('click', function (event) {
@@ -175,8 +209,24 @@
             console.log(last_document_id);
             $.get("/document/delete_document/" + last_document_id).done(function (document_id) {
                 $('tr[data-document="' + document_id + '"').remove();
-                $modal.modal('hide')
-                location.reload()
+                $modal_delete.modal('hide');
+                location.reload();
+            });
+        });
+
+        $('.revert-OCR-button').on('click', function (event) {
+            event.preventDefault();
+            last_document_id = $(this).data('document');
+            $modal_revert_OCR.modal('show');
+        });
+
+        $('#revert-OCR-modal-remove-button').on('click', function (event) {
+            event.preventDefault();
+            console.log(last_document_id);
+            $.get("/ocr/reverte_ocr/" + last_document_id).done(function (document_id) {
+                $('tr[data-document="' + document_id + '"').remove();
+                $modal_revert_OCR.modal('hide');
+                location.reload();
             });
         });
 

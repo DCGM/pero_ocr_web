@@ -1,9 +1,10 @@
-from app.db import *
+from app import db_session
 from sqlalchemy import create_engine
 from config import *
 import sys
 from app.document.general import dhash, is_image_duplicate
 from PIL import Image as PILImage
+from uuid import uuid4
 
 engine = create_engine(database_url, convert_unicode=True, connect_args={'check_same_thread': False})
 
@@ -19,8 +20,11 @@ def main():
     images = Image.query.filter_by( deleted=False).all()
     for image in images:
         if not image.imagehash or image.imagehash == '':
-            img = PILImage.open(image.path)
-            img_hash = str(dhash(img))
+            try:
+                img = PILImage.open(image.path)
+                img_hash = str(dhash(img))
+            except:
+                img_hash = str(uuid4())
             image.imagehash = img_hash
             db_session.commit()
             print('Change')

@@ -38,6 +38,16 @@ def start_ocr(document_id):
     return redirect(url_for('document.documents'))
 
 
+@bp.route('/revert_ocr/<string:document_id>', methods=['GET'])
+@login_required
+def revert_ocr(document_id):
+    document = get_document_by_id(document_id)
+    for img in document.images:
+        for region in img.textregions:
+            for line in region.textlines:
+                print(line.text)
+
+
 @bp.route('/get_request')
 def get_ocr_request():
     ocr_request = get_first_ocr_request()
