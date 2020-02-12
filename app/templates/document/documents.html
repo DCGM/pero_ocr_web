@@ -1,13 +1,11 @@
 {% extends "base/base.html" %} {% block content %}
-    <a class="btn btn-primary add-document-button my-3" href="{{ url_for('document.new_document') }}"
-    >
+    <a class="btn btn-primary add-document-button my-3" href="{{ url_for('document.new_document') }}">
         <ion-icon name="add"></ion-icon>
-        Add New Document</a
-    >
+        Add New Document
+    </a>
 
     <!-- Modal -->
-    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-         aria-hidden="true">
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -27,8 +25,7 @@
         </div>
     </div>
 
-    <div class="modal fade" id="revert-OCR-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-         aria-hidden="true">
+    <div class="modal fade" id="revert-OCR-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -38,11 +35,11 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    Are you sure you want to revert OCR for this document?
+                    Are you sure you want to revert OCR for this document? All existing manual annotations will be lost.
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button id="revert-OCR-modal-remove-button" type="button" class="btn btn-danger">Remove</button>
+                    <button id="revert-OCR-modal-remove-button" type="button" class="btn btn-danger">Revert</button>
                 </div>
             </div>
         </div>
@@ -65,108 +62,87 @@
                 <td>{{ document.state.value }}</td>
                 <td>
                     {% if document.user.id == current_user.id %}
-                        <a
-                                class="document-action-btn btn btn-secondary"
-                                href="{{ url_for('document.collaborators_get', document_id=document.id) }}"
-                                data-toggle="tooltip"
-                                data-placement="right"
-                                title="Edit Collaborators"
-                        >
-                            <ion-icon name="contacts"></ion-icon
-                            >
+                        <a  class="document-action-btn btn btn-secondary"
+                            href="{{ url_for('document.collaborators_get', document_id=document.id) }}"
+                            data-toggle="tooltip"
+                            data-placement="right"
+                            title="Edit Collaborators">
+                            <ion-icon name="contacts"></ion-icon>
                         </a>
-                    {% endif %} {% if document.state.name == 'NEW' %}
-                    <a
-                            class="document-action-btn btn btn-secondary"
+                    {% endif %}
+
+                    {% if document.state.name == 'NEW' %}
+                        <a  class="document-action-btn btn btn-secondary"
                             href="{{ url_for('document.upload_document_get', document_id=document.id) }}"
                             data-toggle="tooltip"
                             data-placement="right"
-                            title="Upload Images"
-                    >
-                        <ion-icon name="cloud-upload"></ion-icon
-                        >
-                    </a>
-
-                    <a
-                            class="document-action-btn btn btn-secondary text-white"
+                            title="Upload Images">
+                            <ion-icon name="cloud-upload"></ion-icon>
+                        </a>
+                        <a  class="document-action-btn btn btn-secondary text-white"
                             href="{{ url_for('layout_analysis.select_layout', document_id=document.id) }}"
                             data-toggle="tooltip"
                             data-placement="right"
-                            title="Run layout analysis"
-                    >
-                        <ion-icon name="fastforward"></ion-icon>
-                    </a>
-                {% endif %}
+                            title="Run layout analysis">
+                            <ion-icon name="fastforward"></ion-icon>
+                        </a>
+                    {% endif %}
+
                     {% if document.state.name == 'COMPLETED_LAYOUT_ANALYSIS' %}
-                        <a
-                                class="document-action-btn btn btn-secondary text-white"
-                                href="{{ url_for('layout_analysis.show_results', document_id=document.id) }}"
-                                data-toggle="tooltip"
-                                data-placement="right"
-                                title="Show layout analysis results"
-                        >
+                        <a  class="document-action-btn btn btn-secondary text-white"
+                            href="{{ url_for('layout_analysis.show_results', document_id=document.id) }}"
+                            data-toggle="tooltip"
+                            data-placement="right"
+                            title="Show layout analysis results">
                             <ion-icon name="eye"></ion-icon>
                         </a>
-                        <a
-                            class="document-action-btn btn btn-secondary text-white"
+                        <a  class="document-action-btn btn btn-secondary text-white"
                             href="{{ url_for('ocr.select_ocr', document_id=document.id) }}"
                             data-toggle="tooltip"
                             data-placement="right"
-                            title="Run OCR"
-                    >
-                        <ion-icon name="fastforward"></ion-icon>
-                    </a>
+                            title="Run OCR">
+                            <ion-icon name="fastforward"></ion-icon>
+                        </a>
                     {% endif %}
 
                     {% if document.state.name == 'COMPLETED_OCR' %}
-                        <a
-                                class="document-action-btn btn btn-secondary text-white"
-                                href="{{ url_for('ocr.show_results', document_id=document.id) }}"
-                                data-toggle="tooltip"
-                                data-placement="right"
-                                title="Show ocr results"
-                        >
+                        <a  class="document-action-btn btn btn-secondary text-white"
+                            href="{{ url_for('ocr.show_results', document_id=document.id) }}"
+                            data-toggle="tooltip"
+                            data-placement="right"
+                            title="Show ocr results">
                             <ion-icon name="eye"></ion-icon>
                         </a>
-                        <a
-                            class="document-action-btn btn btn-secondary text-white"
+                        <a  class="document-action-btn btn btn-secondary text-white"
                             href="{{ url_for('ocr.select_ocr', document_id=document.id) }}"
                             data-toggle="tooltip"
                             data-placement="right"
-                            title="Run OCR"
-                        >
-                        <ion-icon name="fastforward"></ion-icon>
+                            title="Run OCR">
+                            <ion-icon name="fastforward"></ion-icon>
                         </a>
-                         <a
-                                class="document-action-btn btn btn-secondary text-white"
-                                href="{{ url_for('document.get_document_pages', document_id=document.id) }}"
-                                data-toggle="tooltip"
-                                data-placement="right"
-                                title="Download pages"
-                        >
+                        <a  class="document-action-btn btn btn-secondary text-white"
+                            href="{{ url_for('document.get_document_pages', document_id=document.id) }}"
+                            data-toggle="tooltip"
+                            data-placement="right"
+                            title="Download pages">
                             <ion-icon name="document"></ion-icon>
                         </a>
-                        <a
-                                class="document-action-btn btn btn-secondary text-white revert-OCR-button"
-                                data-toggle="tooltip"
-                                data-placement="right"
-                                title="Revert OCR"
-                                data-document="{{ document.id }}"
-                        >
+                        <a  class="document-action-btn btn btn-secondary text-white revert-OCR-button"
+                            data-toggle="tooltip"
+                            data-placement="right"
+                            title="Revert OCR"
+                            data-document="{{ document.id }}">
                             <ion-icon name="rewind"></ion-icon>
                         </a>
                     {% endif %}
 
                     {% if document.user.id == current_user.id %}
-                        <a
-                                class="document-action-btn btn btn-secondary text-white delete-document-button"
-                                data-toggle="tooltip"
-                                data-placement="right"
-                                title="Remove Document"
-                                data-document="{{ document.id }}"
-                        >
-                            <ion-icon name="trash"></ion-icon
-                            >
+                        <a class="document-action-btn btn btn-secondary text-white delete-document-button"
+                           data-toggle="tooltip"
+                           data-placement="right"
+                           title="Remove Document"
+                           data-document="{{ document.id }}">
+                            <ion-icon name="trash"></ion-icon>
                         </a>
                     {% endif %}
                 </td>
@@ -223,7 +199,7 @@
         $('#revert-OCR-modal-remove-button').on('click', function (event) {
             event.preventDefault();
             console.log(last_document_id);
-            $.get("/ocr/reverte_ocr/" + last_document_id).done(function (document_id) {
+            $.get("/ocr/revert_ocr/" + last_document_id).done(function (document_id) {
                 $('tr[data-document="' + document_id + '"').remove();
                 $modal_revert_OCR.modal('hide');
                 location.reload();

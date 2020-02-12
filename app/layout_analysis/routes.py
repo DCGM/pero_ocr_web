@@ -7,6 +7,8 @@ from app.layout_analysis.general import create_layout_analysis_request, can_star
     create_json_from_request, change_layout_request_and_document_state_on_success, get_coords_and_make_preview, \
     make_image_result_preview, change_document_state_on_complete_layout_analysis
 import os
+import sys
+import sqlalchemy
 from app.db.model import DocumentState, TextRegion, LayoutDetector
 from app.document.general import get_document_images, is_user_owner_or_collaborator
 from PIL import Image
@@ -172,7 +174,12 @@ def edit_layout(image_id):
             curr_points.append(curr_points[0])
             preview_coords.append(curr_points)
     make_image_result_preview(preview_coords, get_image_by_id(image_id).path, image_id)
-    db_session.commit()
+    try:
+        db_session.commit()
+    except sqlalchemy.exc.IntegrityError as err:
+        print('ERROR: Unable to save text regions.', err, file=sys.stderr)
+        db_session.rollback()
+        return 'Failed to save.', 420
 
     return 'OK'
 

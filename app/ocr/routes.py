@@ -45,7 +45,10 @@ def revert_ocr(document_id):
     for img in document.images:
         for region in img.textregions:
             for line in region.textlines:
-                print(line.text)
+                db_session.delete(line)
+    document.state = DocumentState.COMPLETED_LAYOUT_ANALYSIS
+    db_session.commit()
+    return document_id
 
 
 @bp.route('/get_request')
