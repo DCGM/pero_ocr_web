@@ -118,7 +118,7 @@ class TextLine(Base):
     text = Column(String())
 
     region = relationship('TextRegion')
-    annotations = relationship('Annotation', cascade="delete")
+    annotations = relationship('Annotation', cascade="all, delete-orphan")
 
 
     @property
