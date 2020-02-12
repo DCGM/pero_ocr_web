@@ -4,6 +4,7 @@ from app import db_session
 from flask import jsonify
 import xml.etree.ElementTree as ET
 import os
+import sqlalchemy
 
 
 def get_page_annotated_lines(image_id):
