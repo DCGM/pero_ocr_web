@@ -34,7 +34,6 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = check_user(form.email.data, form.password.data)
-
         if not user:
             flash(u'Please check your login details and try again.', 'danger')
             return redirect(url_for('main.index'))

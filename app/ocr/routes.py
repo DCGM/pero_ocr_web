@@ -7,7 +7,7 @@ from flask import url_for, redirect, flash, jsonify
 from flask_login import login_required, current_user
 from app.ocr import bp
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id
-from app.db import DocumentState, OCR
+from app.db import DocumentState, OCR, Document, Image, TextRegion, TextLine, Annotation, User
 from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
                             insert_lines_to_db, change_ocr_request_and_document_state_on_success, insert_annotations_to_db, \
@@ -42,10 +42,67 @@ def start_ocr(document_id):
 @login_required
 def revert_ocr(document_id):
     document = get_document_by_id(document_id)
+    print()
+    print("BACKUP OCR REVERT for document id: {}".format(str(document.id)))
+    print("########################################################################")
+    delete_user = db_session.query(User).filter(User.first_name == "#revert_OCR_backup#").first()
+    backup_document = Document(name="revert_backup_" + document.name, state=DocumentState.COMPLETED_OCR,
+                               user_id=delete_user.id)
+    any_annotations = False
+    current_imgs_previews = []
+    backup_imgs_previews = []
     for img in document.images:
+        img_added = False
+        backup_img = Image(filename=img.filename, path=img.path, width=img.width, height=img.height,
+                           deleted=img.deleted, imagehash=img.imagehash)
         for region in img.textregions:
+            region_added = False
+            backup_region = TextRegion(order=region.order, points=region.points, deleted=region.deleted)
             for line in region.textlines:
+                backup_line = TextLine(order=line.order, points=line.points, baseline=line.baseline, heights=line.heights,
+                                       confidences=line.confidences, deleted=line.deleted, text=line.text)
                 db_session.delete(line)
+                if line.annotations:
+                    any_annotations = True
+                    if not img_added:
+                        print()
+                        print()
+                        print()
+                        print("SAVING img id: {}".format(str(img.id)))
+                        img_added = True
+                        backup_document.images.append(backup_img)
+                        current_imgs_previews.append(img.id)
+                        backup_imgs_previews.append(backup_img)
+                    if not region_added:
+                        print()
+                        print()
+                        print("SAVING region id: {}".format(str(region.id)))
+                        region_added = True
+                        backup_img.textregions.append(backup_region)
+                    backup_region.textlines.append(backup_line)
+                    print()
+                    print("SAVING line id: {}".format(str(line.id)))
+                    for annotation in line.annotations:
+                        print("SAVING annotation id: {}".format(str(annotation.id)))
+                        backup_annotation = Annotation(text_original=annotation.text_original, text_edited=annotation.text_edited,
+                                                       created_date=annotation.created_date, deleted=annotation.deleted, user_id=delete_user.id)
+                        backup_line.annotations.append(backup_annotation)
+    if any_annotations:
+        db_session.add(backup_document)
+        db_session.commit()
+        db_session.refresh(backup_document)
+        for img in backup_imgs_previews:
+            db_session.refresh(img)
+        current_imgs_previews_folder = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document.id))
+        backup_imgs_previews_folder = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(backup_document.id))
+        os.makedirs(backup_imgs_previews_folder)
+        for current_img_id, backup_img in zip(current_imgs_previews, backup_imgs_previews):
+            shutil.copyfile(os.path.join(current_imgs_previews_folder, str(current_img_id) + ".jpg"),
+                            os.path.join(backup_imgs_previews_folder, str(backup_img.id) + ".jpg"))
+    print()
+    print("DONE")
+    print("########################################################################")
+
     document.state = DocumentState.COMPLETED_LAYOUT_ANALYSIS
     db_session.commit()
     return document_id
@@ -131,13 +188,18 @@ def get_lines(document_id, image_id):
     return jsonify(lines_dict)
 
 
-@bp.route('/save_annotations', methods=['POST'])
+@bp.route('/save_annotations/<string:document_id>', methods=['POST'])
 @login_required
-def save_annotations():
-    insert_annotations_to_db(current_user, json.loads(request.form['annotations']))
-    update_text_lines(json.loads(request.form['annotations']))
-    print(json.loads(request.form['annotations']))
-    return 'OK'
+def save_annotations(document_id):
+    document = get_document_by_id(document_id)
+    if document.state == DocumentState.COMPLETED_OCR:
+        insert_annotations_to_db(current_user, json.loads(request.form['annotations']))
+        update_text_lines(json.loads(request.form['annotations']))
+        print(json.loads(request.form['annotations']))
+        return 'OK'
+    else:
+        flash(u'Document is not processed by any OCR!', 'danger')
+        return redirect(url_for('document.documents'))
 
 
 @bp.route('/get_models/<string:ocr_name>')

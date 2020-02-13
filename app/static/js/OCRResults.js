@@ -43,11 +43,11 @@ function get_edited_text(text_line_element){
     return line_text;
 }
 
-function post_annotations(annotations)
+function post_annotations(annotations, document_id)
 {
     console.log(annotations);
     console.log(JSON.stringify(annotations));
-    var route = Flask.url_for('ocr.save_annotations', {});
+    var route = Flask.url_for('ocr.save_annotations', {'document_id': document_id});
     $.post(route, {annotations: JSON.stringify(annotations)}, function(data, status) {});
 }
 
@@ -70,6 +70,7 @@ class ImageEditor{
     }
 
     get_image(document_id, image_id) {
+        this.document_id = document_id;
         var route = Flask.url_for('ocr.get_lines', {'document_id': document_id, 'image_id': image_id});
         $.get(route, this.new_image_callback.bind(this));
         var text_container = document.getElementById('text-container');
@@ -200,7 +201,7 @@ class ImageEditor{
                 annotation_dict["text_original"] = line.text;
                 annotation_dict["text_edited"] = get_edited_text(line.text_line_element);
                 annotations.push(annotation_dict);
-                post_annotations(annotations);
+                post_annotations(annotations, this.document_id);
                 line.edited = false;
                 line.saved = true;
             }
@@ -233,7 +234,7 @@ class ImageEditor{
                 l.saved = true;
             }
         }
-        post_annotations(annotations);
+        post_annotations(annotations, this.document_id);
     }
 
 

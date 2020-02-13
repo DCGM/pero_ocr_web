@@ -88,7 +88,6 @@ class TextRegion(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     order = Column(Integer())
     points = Column(String())
-    order = Column(Integer())
     deleted = Column(Boolean(), default=False)
 
     image_id = Column(GUID(), ForeignKey('images.id'))
