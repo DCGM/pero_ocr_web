@@ -48,7 +48,21 @@ function post_annotations(annotations, document_id)
     console.log(annotations);
     console.log(JSON.stringify(annotations));
     var route = Flask.url_for('ocr.save_annotations', {'document_id': document_id});
-    $.post(route, {annotations: JSON.stringify(annotations)}, function(data, status) {});
+    $.ajax({
+        type: "POST",
+        url: route,
+        data: {annotations: JSON.stringify(annotations)},
+        dataType: "json",
+        success: function(data, textStatus) {
+            if (data.status == 'redirect') {
+                // data.redirect contains the string URL to redirect to
+                window.location.href = data.href;
+            }
+        },
+        error: function(xhr, ajaxOptions, ThrownError){
+            alert('Unable to save annotation. Check your remote connection. ');
+        }
+    });
 }
 
 function set_line_background_to_save(text_line_element)
