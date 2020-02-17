@@ -7,7 +7,7 @@ from flask import url_for, redirect, flash, jsonify
 from flask_login import login_required, current_user
 from app.ocr import bp
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id
-from app.db import DocumentState, OCR, Document, Image, TextRegion, TextLine, Annotation, User
+from app.db import DocumentState, OCR, Document, Image, TextRegion, Baseline, LanguageModel, User
 from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
                             insert_lines_to_db, change_ocr_request_and_document_state_on_success, insert_annotations_to_db, \
@@ -21,7 +21,10 @@ from app import db_session
 def select_ocr(document_id):
     document = get_document_by_id(document_id)
     ocr_engines = db_session.query(OCR).filter(OCR.active).all()
-    return render_template('ocr/ocr_select.html', document=document, ocr_engines=ocr_engines)
+    baseline_engines = db_session.query(Baseline).filter(Baseline.active).all()
+    language_model_engines = db_session.query(LanguageModel).filter(LanguageModel.active).all()
+    return render_template('ocr/ocr_select.html', document=document, ocr_engines=ocr_engines,
+                           baseline_engines=baseline_engines, language_model_engines=language_model_engines)
 
 
 @bp.route('/start_ocr/<string:document_id>', methods=['POST'])

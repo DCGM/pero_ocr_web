@@ -72,6 +72,8 @@ class Request(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     ocr_id = Column(GUID(), ForeignKey('ocr.id'))
     layout_id = Column(GUID(), ForeignKey('layout_detectors.id'))
+    baseline_id = Column(GUID(), ForeignKey('baseline.id'))
+    language_model_id = Column(GUID(), ForeignKey('language_model.id'))
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
     request_type = Column(Enum(RequestType))
     state = Column(Enum(RequestState))
@@ -81,6 +83,8 @@ class Request(Base):
     document = relationship('Document', back_populates="requests")
     ocr = relationship('OCR')
     layout_detector = relationship('LayoutDetector')
+    baseline = relationship('Baseline')
+    language_model = relationship('LanguageModel')
 
 
 class TextRegion(Base):
@@ -179,6 +183,26 @@ class LayoutDetector(Base):
 
 class OCR(Base):
     __tablename__ = 'ocr'
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    name = Column(String(), nullable=False)
+    description = Column(String())
+    active = Column(Boolean(), default=True, nullable=False)
+
+    requests = relationship('Request')
+
+
+class Baseline(Base):
+    __tablename__ = 'baseline'
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    name = Column(String(), nullable=False)
+    description = Column(String())
+    active = Column(Boolean(), default=True, nullable=False)
+
+    requests = relationship('Request')
+
+
+class LanguageModel(Base):
+    __tablename__ = 'language_model'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(), nullable=False)
     description = Column(String())

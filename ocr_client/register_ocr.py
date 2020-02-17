@@ -14,9 +14,15 @@ def parseargs():
 
 
 ocr_engines = [
-    {"name": "IMPACT", "description": "IMPACT"},
-    {"name": "DTA", "description": "DTA"},
-    {"name": "IMPACT_LN", "description": "Net for LIDOVE NOVINY"}
+    {"name": "Historical Printed", "description": "Detector of historic and present printed text. Type of scripts are \
+                                                   Latin, Serif, Gothic, French, Greek, Gaj, Bohoričica and Cyrillic. \
+                                                   The detector was trained on IMPACT dataset that contains 45000 pages \
+                                                   of historical documents that was provided by European libraries."},
+    {"name": "German Fraktur Printed", "description": "Detector of historic german printed text. Type of script is \
+                                                       mainly Fraktur. The detector was trained on pages and transcriptions \
+                                                       gathered from Deutschen Textarchiv."},
+    {"name": "Lidové Noviny", "description": "Detector of old Lidové Noviny. The detector was trained on IMPACT dataset and \
+                                              pages of old Lidové Noviny provided by Moravian Library."}
 ]
 
 
