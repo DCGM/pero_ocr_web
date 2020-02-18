@@ -94,7 +94,7 @@ def main():
             print('Request completed')
         else:
             print('No request')
-            time.sleep(10)  # No request so sleep for some time
+            time.sleep(2)  # No request so sleep for some time
 
 
 if __name__ == '__main__':

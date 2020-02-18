@@ -7,7 +7,7 @@ import numpy as np
 import sys
 sys.path.insert(1, '../../pero/src/')
 
-from force_alignment import force_align
+from pero_ocr.force_alignment import force_align
 from confidence_estimation import get_letter_confidence
 
 namespaces = {'t': 'http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15'}
