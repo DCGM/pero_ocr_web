@@ -154,7 +154,7 @@ def get_lines(document_id, image_id):
                     'np_baseline':  line.np_baseline.tolist(),
                     'np_heights':  line.np_heights.tolist(),
                     'np_confidences':  line.np_confidences.tolist(),
-                    'np_textregion_width':  [min(text_region.np_points[:,1]), max(text_region.np_points[:,1])],
+                    'np_textregion_width':  [text_region.np_points[:, 0].min(), text_region.np_points[:, 0].max()],
                     'annotated': line.id in annotated_lines,
                     'text': line.text if line.text is not None else ""
                 } for line in text_lines]

@@ -5,7 +5,6 @@ import xml.etree.ElementTree as ET
 import numpy as np
 import cv2
 import os
-from app.db.general import get_image_by_id
 
 
 def create_layout_analysis_request(document, layout_id):
@@ -62,15 +61,14 @@ def create_json_from_request(request):
 
 
 def make_image_result_preview(image_db):
-    regions = [region.np_points[:, ::-1] for region in image_db.textregions]
     image_path = image_db.path
     image_id = str(image_db.id)
     if image_db:
         image = cv2.imread(image_path, 1)
         scale = (100000.0 / (image.shape[0] * image.shape[1]))**0.5
         image = cv2.resize(image, (0,0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
-        if regions:
-            regions = [(region * scale).astype(np.int32) for region in regions]
+        if image_db.textregions:
+            regions = [(region.np_points * scale).astype(np.int32) for region in image_db.textregions]
             cv2.polylines(image, regions, isClosed=True, thickness=4, color=(0,255,0))
         print(image.shape, scale)
 
@@ -86,11 +84,5 @@ def get_region_coords_from_xml(xml_path):
     for region in root.iter('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15}TextRegion'):
         for coords in region.iter('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15}Coords'):
             coords_string = coords.get('points')
-            coords_string_splited = coords_string.split(' ')
-            region_points = []
-            for point_string in coords_string_splited:
-                point = point_string.split(',')
-                region_points.append((int(point[1]), int(point[0])))
-            region_points.append(region_points[0])
             region_coords.append(coords_string)
     return region_coords

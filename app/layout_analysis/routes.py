@@ -122,11 +122,8 @@ def get_image_result(document_id, image_id):
     for textregion in image.textregions:
         if textregion.deleted:
             continue
-        textregion_points_string = textregion.points.split(' ')
-        textregion_points = []
-        for textregion_point_string in textregion_points_string:
-            point = textregion_point_string.split(',')
-            textregion_points.append([int(point[1]), int(point[0])])
+
+        textregion_points = textregion.np_points.tolist()
         textregions.append({'uuid': textregion.id, 'deleted': textregion.deleted, 'points': textregion_points})
     return jsonify({"uuid": image_id, 'width': width, 'height': height, 'objects': textregions})
 
@@ -159,20 +156,15 @@ def edit_layout(image_id):
             continue
 
         points = region['points']
-        np_points = np.array(points)
-        points = ['{},{}'.format(int(point[1]), int(point[0])) for point in points]
-        points = ' '.join(points)
 
         if region['uuid'] not in existing_regions:
-            db_region = TextRegion(id=region['uuid'], deleted=region['deleted'], points=points, image_id=image_id)
+            db_region = TextRegion(id=region['uuid'], deleted=region['deleted'], image_id=image_id)
+            db_region.np_points = points
             image.textregions.append(db_region)
         else:
             db_region = existing_regions[region['uuid']]
-            db_region.points = points
+            db_region.np_points = points
             db_region.deleted = region['deleted']
-
-        if not region['deleted']:
-            preview_coords.append(np_points)
 
     try:
         db_session.commit()
