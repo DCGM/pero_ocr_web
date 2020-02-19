@@ -109,19 +109,19 @@ def main():
 
         for region_order, region in enumerate(layout.regions):
             region.polygon = (region.polygon * scale).astype(np.int32)
+            if np.any(region.polygon[:, 1] > db_image.height) or np.any(region.polygon[:, 0] > db_image.width):
+                region.polygon = region.polygon[:, ::-1]
+
             db_region = TextRegion(order=region_order, np_points=region.polygon)
             db_image.textregions.append(db_region)
 
             for line_order, line in enumerate(region.lines):
-                #line.transcription = line.transcription  + ' sssss uuuu  asdf[J] [j] [J]an uragan guragan test šaty sauna tugras'
-                print(line.transcription)
                 if not line.transcription:
                     line.transcription = ''
                     confidences = []
                 else:
                     pass
                     line.transcription, confidences = apply_rules(line.transcription, replace_rules, weird_characters)
-                print(line.transcription)
 
                 try:
                     line.polygon = np.asarray(line.polygon)[:, ::-1] * scale
@@ -139,8 +139,6 @@ def main():
                     print('Line Failed')
                     print('polygon', line.polygon)
                     print('polygon', line.baseline)
-
-
 
         db_session.commit()
     print('done')
