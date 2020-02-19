@@ -97,8 +97,7 @@ def show_results(document_id):
     document = get_document_by_id(document_id)
     if document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
         return  # Bad Request or something like that
-    images = get_document_images(document)
-    return render_template('layout_analysis/layout_results.html', document=document, images=list(images.all()))
+    return render_template('layout_analysis/layout_results.html', document=document, images=list(document.images))
 
 
 @bp.route('/get_xml/<string:document_id>/<string:image_id>')
