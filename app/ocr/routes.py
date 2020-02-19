@@ -125,8 +125,7 @@ def show_results(document_id):
     if document.state != DocumentState.COMPLETED_OCR:
         return  # Bad Request or something like that
     images = get_document_images(document)
-
-    return render_template('ocr/ocr_results.html', document=document, images=images)
+    return render_template('ocr/ocr_results.html', document=document, images=list(images))
 
 
 @bp.route('/get_lines/<string:document_id>/<string:image_id>', methods=['GET'])

@@ -6,21 +6,11 @@
                 <ion-icon name="arrow-dropleft"></ion-icon>
             </div>
             <div class="images-container">
-                {% for i in range(0, images.count()) %}
-                    <div class="image-item-container d-inline-flex flex-column" data-document="{{ document.id }}"
-                         data-image="{{ images[i].id }}" data-index="{{ i }}">
-                        <div class="image-container">
-                            <img
-                                    src="/layout_analysis/get_result_preview/{{ document.id }}/{{ images[i].id }}"
-                                    alt="{{ images[i].filename }}"
-                                    class="uploaded_image card-img-top"
-                            />
-                        </div>
-                        <div class="text-center">
-                            <p>{{ images[i].filename }}</p>
-                        </div>
-                        <div class="d-none image-item-active"></div>
-                    </div>
+                {% for i in range(0, images|length) %}
+<div class="image-item-container d-inline-flex flex-column" data-document="{{ document.id }}" data-image="{{ images[i].id }}" data-index="{{ i }}">
+<div class="image-container"><img src="/layout_analysis/get_result_preview/{{ document.id }}/{{ images[i].id }}" alt="{{ images[i].filename }}" class="uploaded_image card-img-top" /></div>
+<div class="text-center"> <p>{{ images[i].filename }}</p> </div> <div class="d-none image-item-active"></div>
+</div>
                 {% endfor %}
             </div>
             <div class="results-preview-btn next-btn">
