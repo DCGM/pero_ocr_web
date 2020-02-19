@@ -2,7 +2,8 @@ from app.db.model import RequestState, RequestType, Request, DocumentState
 from app import db_session
 from flask import jsonify, current_app
 import xml.etree.ElementTree as ET
-from PIL import Image, ImageDraw
+import numpy as np
+import cv2
 import os
 from app.db.general import get_image_by_id
 
@@ -60,24 +61,28 @@ def create_json_from_request(request):
     return jsonify(value)
 
 
-def make_image_result_preview(regions, image_path, image_id):
-    image_db = get_image_by_id(image_id)
+def make_image_result_preview(image_db):
+    regions = [region.np_points[:, ::-1] for region in image_db.textregions]
+    image_path = image_db.path
+    image_id = str(image_db.id)
     if image_db:
-        image = Image.open(image_path)
-        image = image.convert('RGB')
-        for region in regions:
-            ImageDraw.Draw(image).line(region, width=35, fill=(0, 255, 0))
-        new_path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(image_db.document_id), str(image_id) + '.jpg')
-        scale = (100000.0 / (image.width * image.height))**0.5
-        image = image.resize((int(image.width * scale + 0.5), int(image.height * scale + 0.5)), resample=Image.LANCZOS)
-        print(image.width, image.height, scale)
-        image.save(new_path)
+        image = cv2.imread(image_path, 1)
+        scale = (100000.0 / (image.shape[0] * image.shape[1]))**0.5
+        image = cv2.resize(image, (0,0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+        if regions:
+            regions = [(region * scale).astype(np.int32) for region in regions]
+            cv2.polylines(image, regions, isClosed=True, thickness=4, color=(0,255,0))
+        print(image.shape, scale)
+
+        new_dir = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(image_db.document_id))
+        if not os.path.exists(new_dir):
+            os.makedirs(new_dir)
+        cv2.imwrite(os.path.join(new_dir, str(image_id) + '.jpg'), image)
 
 
-def get_coords_and_make_preview(image_path, xml_path, image_id):
+def get_region_coords_from_xml(xml_path):
     root = ET.parse(xml_path).getroot()
     region_coords = []
-    preview_coords = []
     for region in root.iter('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15}TextRegion'):
         for coords in region.iter('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15}Coords'):
             coords_string = coords.get('points')
@@ -87,7 +92,5 @@ def get_coords_and_make_preview(image_path, xml_path, image_id):
                 point = point_string.split(',')
                 region_points.append((int(point[1]), int(point[0])))
             region_points.append(region_points[0])
-            preview_coords.append(region_points)
             region_coords.append(coords_string)
-    make_image_result_preview(preview_coords, image_path, image_id)
     return region_coords

@@ -1,10 +1,10 @@
 from app.layout_analysis import bp
 from flask import render_template, url_for, redirect, flash, jsonify, request, current_app, send_file, abort
 from flask_login import login_required, current_user
-from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_text_region_by_id, get_layout_detector_by_id
+from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_layout_detector_by_id
 from app.layout_analysis.general import create_layout_analysis_request, can_start_layout_analysis, \
     add_layout_request_and_change_document_state, get_first_layout_request, change_layout_request_and_document_state_in_progress, \
-    create_json_from_request, change_layout_request_and_document_state_on_success, get_coords_and_make_preview, \
+    create_json_from_request, change_layout_request_and_document_state_on_success, get_region_coords_from_xml,\
     make_image_result_preview, change_document_state_on_complete_layout_analysis
 import os
 import sys
@@ -15,6 +15,7 @@ from PIL import Image
 from app import db_session
 from flask import jsonify
 import shutil
+import numpy as np
 
 
 @bp.route('/select_layout/<string:document_id>', methods=['GET'])
@@ -43,8 +44,6 @@ def start(document_id):
     else:
         if not os.path.exists(os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document_id))):
             os.makedirs(os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document_id)))
-        for image in document.images:
-            make_image_result_preview([], image.path, image.id)
         change_document_state_on_complete_layout_analysis(document)
     return redirect(url_for('document.documents'))
 
@@ -82,11 +81,11 @@ def post_result(request_id):
         if not image.deleted:
             image_id = str(image.id)
             xml_path = os.path.join(folder_path, image_id + '.xml')
-            regions_coords = get_coords_and_make_preview(image.path, xml_path, image.id)
+            regions_coords = get_region_coords_from_xml(xml_path)
             for order, region_coords in enumerate(regions_coords):
                 text_region = TextRegion(order=order, image_id=image_id, points=region_coords)
                 image.textregions.append(text_region)
-                db_session.commit()
+            db_session.commit()
 
     change_layout_request_and_document_state_on_success(analysis_request)
     return 'OK'
@@ -99,7 +98,7 @@ def show_results(document_id):
     if document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
         return  # Bad Request or something like that
     images = get_document_images(document)
-    return render_template('layout_analysis/layout_results.html', document=document, images=images.all())
+    return render_template('layout_analysis/layout_results.html', document=document, images=list(images.all()))
 
 
 @bp.route('/get_xml/<string:document_id>/<string:image_id>')
@@ -117,7 +116,6 @@ def download_result_xml(document_id, image_id):
 def get_image_result(document_id, image_id):
     image = get_image_by_id(image_id)
     # TODO Test prav uzivatele
-    xml_path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], document_id, image_id + '.xml')
 
     img = Image.open(image.path)
     width, height = img.size
@@ -140,8 +138,13 @@ def get_result_preview(document_id, image_id):
     if not is_user_owner_or_collaborator(document_id, current_user):
         flash(u'You do not have sufficient rights to get this image!', 'danger')
         return redirect(url_for('main.index'))
-    image_url = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], document_id, image_id + '.jpg')
-    return send_file(image_url, cache_timeout=0)
+    image_path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], document_id, image_id + '.jpg')
+    if not os.path.isfile(image_path):
+        image_db = get_image_by_id(image_id)
+        make_image_result_preview(image_db)
+
+    return send_file(image_path, cache_timeout=0)
+
 
 
 @bp.route('/edit_layout/<string:image_id>', methods=['POST'])
@@ -149,33 +152,32 @@ def get_result_preview(document_id, image_id):
 def edit_layout(image_id):
     regions = request.get_json()
     image = get_image_by_id(image_id)
+    existing_regions = dict([(str(region.id), region) for region in image.textregions])
+
     preview_coords = []
     for region in regions:
-        if not region:
+        if not region or 'points' not in region or len(region['points']) <= 2:
             continue
-        region_db = get_text_region_by_id(region['uuid'])
-        points = ''
-        curr_points = []
-        if 'points' not in region:
-            continue
-        if len(region['points']) <= 2:
-            continue
-        for point in region['points']:
-            points += '{},{} '.format(int(point[1]), int(point[0]))
-            curr_points.append((int(point[0]), int(point[1])))
-        points = points.strip()
-        if region_db:
-            region_db.points = points
-            region_db.deleted = region['deleted']
+
+        points = region['points']
+        np_points = np.array(points)
+        points = ['{},{}'.format(int(point[1]), int(point[0])) for point in points]
+        points = ' '.join(points)
+
+        if region['uuid'] not in existing_regions:
+            db_region = TextRegion(id=region['uuid'], deleted=region['deleted'], points=points, image_id=image_id)
+            image.textregions.append(db_region)
         else:
-            image.textregions.append(TextRegion(id=region['uuid'], deleted=region['deleted'], points=points, image_id=image_id))
+            db_region = existing_regions[region['uuid']]
+            db_region.points = points
+            db_region.deleted = region['deleted']
 
         if not region['deleted']:
-            curr_points.append(curr_points[0])
-            preview_coords.append(curr_points)
-    make_image_result_preview(preview_coords, get_image_by_id(image_id).path, image_id)
+            preview_coords.append(np_points)
+
     try:
         db_session.commit()
+        make_image_result_preview(image)
     except sqlalchemy.exc.IntegrityError as err:
         print('ERROR: Unable to save text regions.', err, file=sys.stderr)
         db_session.rollback()
