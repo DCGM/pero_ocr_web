@@ -1,5 +1,5 @@
 from app import db_session
-from app.db import User, Document, Request, Image, TextRegion, TextLine, LayoutDetector
+from app.db import User, Document, Request, Image, TextRegion, TextLine, LayoutDetector, Baseline, OCR, LanguageModel
 
 
 def save_user(user):
@@ -60,14 +60,29 @@ def get_image_by_id(image_id):
 def get_text_region_by_id(id):
     return TextRegion.query.get(id)
 
+
 def get_layout_detector_by_id(id):
     return LayoutDetector.query.get(id)
+
 
 def get_text_line_by_id(id):
     try:
         return TextLine.query.get(id)
     except:
         return None
+
+
+def get_baseline_by_id(id):
+    return Baseline.query.get(id)
+
+
+def get_ocr_by_id(id):
+    return OCR.query.get(id)
+
+
+def get_language_model_by_id(id):
+    return LanguageModel.query.get(id)
+
 
 def is_image_duplicate(document_id, imagehash):
     image_db = Image.query.filter_by(imagehash=imagehash, deleted=False, document_id= document_id).first()

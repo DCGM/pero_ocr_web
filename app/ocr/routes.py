@@ -1,12 +1,13 @@
 import os
 import shutil
 import json
-from app.ocr import bp
+import configparser
 from flask import render_template, request, current_app, send_file
 from flask import url_for, redirect, flash, jsonify
 from flask_login import login_required, current_user
 from app.ocr import bp
-from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id
+from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_baseline_by_id, get_ocr_by_id, \
+                           get_language_model_by_id
 from app.db import DocumentState, OCR, Document, Image, TextRegion, Baseline, LanguageModel, User
 from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
@@ -31,8 +32,10 @@ def select_ocr(document_id):
 @login_required
 def start_ocr(document_id):
     document = get_document_by_id(document_id)
+    baseline_id = request.form['baseline_id']
     ocr_id = request.form['ocr_id']
-    ocr_request = create_ocr_request(document, ocr_id)
+    language_model_id = request.form['language_model_id']
+    ocr_request = create_ocr_request(document, baseline_id, ocr_id, language_model_id)
     if can_start_ocr(document):
         add_ocr_request_and_change_document_state(ocr_request)
         flash(u'Request for ocr successfully created!', 'success')
@@ -175,11 +178,71 @@ def save_annotations(document_id):
         return jsonify({'status': 'redirect', 'href': url_for('document.documents')})
 
 
-@bp.route('/get_models/<string:ocr_name>')
-def get_models(ocr_name):
-    models_folder = os.path.join(current_app.config['MODELS_FOLDER'], ocr_name)
-    zip_path = os.path.join(current_app.config['MODELS_FOLDER'], ocr_name)
-    if not os.path.exists("{}.zip".format(zip_path)):
-        print("Creating archive:", zip_path)
-        shutil.make_archive(zip_path, 'zip', models_folder)
-    return send_file("{}.zip".format(zip_path), attachment_filename='models.zip', as_attachment=True)
+# GET CONFIG AND MODELS FOR PARSE FOLDER
+########################################################################################################################
+
+@bp.route('/get_config/<string:baseline_id>/<string:ocr_id>/<string:language_model_id>')
+def get_config(baseline_id, ocr_id, language_model_id):
+    baseline = get_baseline_by_id(baseline_id)
+    ocr = get_ocr_by_id(ocr_id)
+    language_model = get_language_model_by_id(language_model_id)
+    language_model_name = language_model.name
+    config_name = "{}_{}_{}.ini".format(get_model_folder_name(baseline.name), get_model_folder_name(ocr.name),
+                                        get_model_folder_name(language_model_name))
+    config = os.path.join(current_app.config['MODELS_FOLDER'], "configs", config_name)
+    if not os.path.exists(config):
+        model_configs = [os.path.join(current_app.config['MODELS_FOLDER'], "config_base.ini")]
+        for model, model_type in zip([baseline, ocr, language_model], ["baseline", "ocr", "language_model"]):
+            model_configs.append(get_model_config(model, model_type))
+        concatenate_text_files(model_configs, config)
+        config_parser = configparser.RawConfigParser()
+        config_parser.optionxform = str
+        config_parser.read(config)
+        if get_model_folder_name(language_model_name) == "none":
+            config_parser['PAGE_PARSER']['RUN_DECODER'] = "no"
+        with open(config, 'w') as configfile:
+            config_parser.write(configfile)
+
+    return send_file(config, attachment_filename="config.ini", as_attachment=True)
+
+
+@bp.route('/get_baseline/<string:baseline_id>')
+def get_baseline(baseline_id):
+    baseline = get_baseline_by_id(baseline_id)
+    return get_model(baseline, "baseline")
+
+
+@bp.route('/get_ocr/<string:ocr_id>')
+def get_ocr(ocr_id):
+    ocr = get_ocr_by_id(ocr_id)
+    return get_model(ocr, "ocr")
+
+
+@bp.route('/get_language_model/<string:language_model_id>')
+def get_language_model(language_model_id):
+    language_model = get_language_model_by_id(language_model_id)
+    return get_model(language_model, "language_model")
+
+
+def get_model(model, model_type):
+    model_folder = os.path.join(current_app.config['MODELS_FOLDER'], model_type, get_model_folder_name(model.name),
+                                "model")
+    if not os.path.exists("{}.zip".format(model_folder)):
+        print("Creating archive:", model_folder)
+        shutil.make_archive(model_folder, 'zip', model_folder)
+    return send_file("{}.zip".format(model_folder), attachment_filename="{}.zip".format(model_type), as_attachment=True)
+
+
+def get_model_config(model, model_type):
+    return os.path.join(current_app.config['MODELS_FOLDER'], model_type, get_model_folder_name(model.name), "config", "config.ini")
+
+
+def get_model_folder_name(model_name):
+    return model_name.replace(" ", "_").lower()
+
+
+def concatenate_text_files(text_files, output_text_file):
+    with open(output_text_file, 'wb') as wfd:
+        for f in text_files:
+            with open(f, 'rb') as fd:
+                shutil.copyfileobj(fd, wfd)

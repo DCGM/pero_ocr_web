@@ -13,9 +13,10 @@ def get_page_annotated_lines(image_id):
     return [x[0] for x in lines]
 
 
-def create_ocr_request(document, ocr_id):
+def create_ocr_request(document, baseline_id, ocr_id, language_model_id):
     return Request(document=document,
-                   request_type=RequestType.OCR, state=RequestState.PENDING, ocr_id=ocr_id)
+                   request_type=RequestType.OCR, state=RequestState.PENDING, baseline_id=baseline_id, ocr_id=ocr_id,
+                   language_model_id=language_model_id)
 
 
 def can_start_ocr(document):
@@ -29,7 +30,6 @@ def add_ocr_request_and_change_document_state(request):
     request.document.state = DocumentState.WAITING_OCR
     db_session.add(request)
     db_session.commit()
-    db_session.refresh(request)
 
 
 def get_first_ocr_request():
@@ -45,8 +45,9 @@ def create_json_from_request(request):
                 if not textregion.deleted:
                     if len(textregion.textlines) > 0:
                         processed = True
-    val = {'id': request.id, 'ocr_name': request.ocr.name,
-           'document': {'id': request.document.id, 'processed': processed, 'images': []}}
+    val = {'id': request.id, 'baseline_id': request.baseline.id, 'ocr_id': request.ocr.id,
+           'language_model_id': request.language_model.id, 'document': {'id': request.document.id,
+                                                                        'processed': processed, 'images': []}}
     for image in request.document.images:
         if not image.deleted:
             val['document']['images'].append(image.id)
