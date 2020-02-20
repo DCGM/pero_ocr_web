@@ -70,9 +70,9 @@ class UserDocument(Base):
 class Request(Base):
     __tablename__ = 'requests'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    ocr_id = Column(GUID(), ForeignKey('ocr.id'))
     layout_id = Column(GUID(), ForeignKey('layout_detectors.id'))
     baseline_id = Column(GUID(), ForeignKey('baseline.id'))
+    ocr_id = Column(GUID(), ForeignKey('ocr.id'))
     language_model_id = Column(GUID(), ForeignKey('language_model.id'))
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
     request_type = Column(Enum(RequestType))
