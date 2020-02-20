@@ -3,7 +3,7 @@ sys.path.insert(1, '../')
 import shutil
 import json
 
-from client_helper import get_and_save_request_document_images_and_xmls, get_models
+from client_helper import get_and_save_request_document_images_and_xmls, get_config_and_models
 from client_helper import make_post_request_data
 from process_logits import save_xml_with_confidences
 
@@ -13,6 +13,7 @@ import requests
 import configparser
 import subprocess
 
+
 def get_post_route(request_id):
     return '/ocr/post_result/{}'.format(request_id)
 
@@ -20,14 +21,20 @@ def get_post_route(request_id):
 def check_and_process_request(config):
     base_url = config['SERVER']['base_url']
     request_route = config['SERVER']['ocr_get_request_route']
-    models_route = config['SERVER']['document_get_models_route']
+    ocr_get_config_route = config['SERVER']['ocr_get_config_route']
+    ocr_get_baseline_route = config['SERVER']['ocr_get_baseline_route']
+    ocr_get_ocr_route = config['SERVER']['ocr_get_ocr_route']
+    ocr_get_language_model_route = config['SERVER']['ocr_get_language_model_route']
+
 
     r = requests.get('{}{}'.format(base_url, request_route))
     request_json = r.json()
 
     if 'document' in request_json.keys():
         request_id = request_json['id']
-        ocr_name = request_json['ocr_name']
+        baseline_id = request_json['baseline_id']
+        ocr_id = request_json['ocr_id']
+        language_model_id = request_json['language_model_id']
         document = request_json['document']
 
         working_dir = os.path.join(config['SETTINGS']['working_directory'], request_id)
@@ -50,7 +57,8 @@ def check_and_process_request(config):
         os.makedirs(xmls_confidences_folder)
         os.makedirs(models_folder)
 
-        get_models(base_url, models_route, ocr_name, models_folder)
+        get_config_and_models(base_url, ocr_get_config_route, ocr_get_baseline_route, ocr_get_ocr_route,
+                              ocr_get_language_model_route, baseline_id, ocr_id, language_model_id, models_folder)
 
         if document['processed']:
             config = configparser.ConfigParser()
