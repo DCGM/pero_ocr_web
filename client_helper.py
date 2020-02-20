@@ -2,6 +2,7 @@ import requests
 import os
 from io import open as image_open
 import zipfile
+import re
 
 
 
@@ -88,11 +89,30 @@ def make_post_request_data(output_folder, document):
     print('Data:', data)
     return data
 
-def get_models(base_url, route, ocr_name, models_folder):
-    r = requests.get('{}{}{}'.format(base_url, route, ocr_name))
-    tmp_zip_path = os.path.join(models_folder, "tmp.zip")
+
+def get_config_and_models(base_url, ocr_get_config_route, ocr_get_baseline_route, ocr_get_ocr_route,
+                          ocr_get_language_model_route, baseline_id, ocr_id, language_model_id, models_folder):
+    config_response = requests.get('{}{}{}/{}/{}'.format(base_url, ocr_get_config_route, baseline_id, ocr_id,
+                                                         language_model_id))
+    config_path = os.path.join(models_folder, "config.ini")
+    with open(config_path, 'wb') as handle:
+        handle.write(config_response.content)
+    baseline_response = requests.get('{}{}{}'.format(base_url, ocr_get_baseline_route, baseline_id))
+    unzip_response(baseline_response, models_folder)
+    ocr_response = requests.get('{}{}{}'.format(base_url, ocr_get_ocr_route, ocr_id))
+    unzip_response(ocr_response, models_folder)
+    language_model_response = requests.get('{}{}{}'.format(base_url, ocr_get_language_model_route, language_model_id))
+    unzip_response(language_model_response, models_folder)
+
+
+
+def unzip_response(response, models_folder):
+    model_type_folder_name = re.findall("filename=(.+)", response.headers["Content-Disposition"])[0].split('.')[0]
+    model_type_folder_name = os.path.join(models_folder, model_type_folder_name)
+    os.makedirs(model_type_folder_name)
+    tmp_zip_path = os.path.join(model_type_folder_name, "tmp.zip")
     with open(tmp_zip_path, 'wb') as handle:
-        handle.write(r.content)
+        handle.write(response.content)
     with zipfile.ZipFile(tmp_zip_path, 'r') as zip_ref:
-        zip_ref.extractall(models_folder)
+        zip_ref.extractall(model_type_folder_name)
     os.remove(tmp_zip_path)
