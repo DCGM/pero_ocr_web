@@ -5,8 +5,6 @@ import zipfile
 import re
 
 
-
-
 def get_document_folder_path(folder, document_id):
     folder_path = os.path.join(folder, document_id)
     if not os.path.exists(folder_path):
@@ -81,11 +79,11 @@ def get_and_save_request_document_images_and_xmls(base_url, images_folder, xmls_
         get_and_save_xmls(xmls_folder, base_url, document['processed'], document['images'])
 
 
-def make_post_request_data(output_folder, document):
+def make_post_request_data(data_folder, document, data_type):
     data = dict()
     images = document['images']
     for image in images:
-        data[image] = open(os.path.join(output_folder, "{}.xml".format(image)), 'rb')
+        data[image] = open(os.path.join(data_folder, "{}.{}".format(image, data_type)), 'rb')
     print('Data:', data)
     return data
 

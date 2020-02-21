@@ -14,8 +14,12 @@ import configparser
 import subprocess
 
 
-def get_post_route(request_id):
-    return '/ocr/post_result/{}'.format(request_id)
+def get_post_xmls_route(request_id):
+    return '/ocr/post_xmls/{}'.format(request_id)
+
+
+def get_post_logits_route(request_id):
+    return '/ocr/post_logits/{}'.format(request_id)
 
 
 def check_and_process_request(config):
@@ -86,8 +90,11 @@ def check_and_process_request(config):
             logits_path = os.path.join(output_logits_folder, "{}.logits".format(file_name))
             save_xml_with_confidences(xml_path, logits_path, chars, xmls_confidences_folder)
 
-        data = make_post_request_data(xmls_confidences_folder, document)
-        requests.post('{}{}'.format(base_url, get_post_route(request_id)), files=data)
+        data_xmls = make_post_request_data(xmls_confidences_folder, document, "xml")
+        requests.post('{}{}'.format(base_url, get_post_xmls_route(request_id)), files=data_xmls)
+
+        data_logits = make_post_request_data(output_logits_folder, document, "logits")
+        requests.post('{}{}'.format(base_url, get_post_logits_route(request_id)), files=data_logits)
 
         return True
     return False
