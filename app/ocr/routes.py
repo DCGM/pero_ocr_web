@@ -17,16 +17,12 @@ from app.document.general import get_document_images
 from app import db_session
 
 
-@bp.route('/select_ocr/<string:document_id>', methods=['GET'])
-@login_required
-def select_ocr(document_id):
-    document = get_document_by_id(document_id)
-    ocr_engines = db_session.query(OCR).filter(OCR.active).all()
-    baseline_engines = db_session.query(Baseline).filter(Baseline.active).all()
-    language_model_engines = db_session.query(LanguageModel).filter(LanguageModel.active).all()
-    return render_template('ocr/ocr_select.html', document=document, ocr_engines=ocr_engines,
-                           baseline_engines=baseline_engines, language_model_engines=language_model_engines)
+########################################################################################################################
+# WEBSITE ROUTES
+########################################################################################################################
 
+# MENU PAGE
+########################################################################################################################
 
 @bp.route('/start_ocr/<string:document_id>', methods=['POST'])
 @login_required
@@ -43,27 +39,20 @@ def start_ocr(document_id):
         flash(u'Request for ocr is already pending or document is in unsupported state!', 'danger')
     return redirect(url_for('document.documents'))
 
-#from app.db import User, Document, Request, Image, TextRegion, TextLine, LayoutDetector
-from sqlalchemy.orm import joinedload
 
-import time
 @bp.route('/revert_ocr/<string:document_id>', methods=['GET'])
 @login_required
 def revert_ocr(document_id):
-    #document = Document.query.filter_by(id=document_id, deleted=False).options(
-    #    joinedload(Document.images).joinedload(Image.textregions).joinedload(TextRegion.textlines).joinedload(TextLine.annotations)).first()
-
-    t1 = time.time()
+    print()
+    print("REVERT OCR")
+    print("##################################################################")
     document = Document.query.filter_by(id=document_id, deleted=False).first()
-
-    print("BACKUP OCR REVERT for document id: {}".format(str(document.id)))
-    print("########################################################################")
     delete_user = db_session.query(User).filter(User.first_name == "#revert_OCR_backup#").first()
     backup_document = Document(name="revert_backup_" + document.name, state=DocumentState.COMPLETED_OCR,
                                user_id=delete_user.id)
-
     new_regions = []
     for img in document.images:
+        print(str(img.id))
         backup_img = Image(filename=img.filename, path=img.path, width=img.width, height=img.height,
                            deleted=img.deleted, imagehash=img.imagehash)
         backup_document.images.append(backup_img)
@@ -73,53 +62,29 @@ def revert_ocr(document_id):
             new_regions.append((region.id, backup_region))
             for line in region.textlines:
                 line.region_id = backup_region.id
-
     db_session.add(backup_document)
     document.state = DocumentState.COMPLETED_LAYOUT_ANALYSIS
     db_session.commit()
-
-    print()
-    print("DONE", time.time() - t1)
-    print("########################################################################")
-
+    print("##################################################################")
     return document_id
 
 
-@bp.route('/get_request')
-def get_ocr_request():
-    ocr_request = get_first_ocr_request()
-    if ocr_request:
-        change_ocr_request_and_document_state_in_progress(ocr_request)
-        return create_json_from_request(ocr_request)
-    else:
-        return jsonify({})
+# SELECT PAGE
+########################################################################################################################
+
+@bp.route('/select_ocr/<string:document_id>', methods=['GET'])
+@login_required
+def select_ocr(document_id):
+    document = get_document_by_id(document_id)
+    ocr_engines = db_session.query(OCR).filter(OCR.active).all()
+    baseline_engines = db_session.query(Baseline).filter(Baseline.active).all()
+    language_model_engines = db_session.query(LanguageModel).filter(LanguageModel.active).all()
+    return render_template('ocr/ocr_select.html', document=document, ocr_engines=ocr_engines,
+                           baseline_engines=baseline_engines, language_model_engines=language_model_engines)
 
 
-@bp.route('/post_result/<string:request_id>', methods=['POST'])
-def post_result(request_id):
-
-    print("POST OCR LINES")
-
-    ocr_request = get_request_by_id(request_id)
-    document = get_document_by_id(ocr_request.document_id)
-    ocr_result_folder = os.path.join(current_app.config['OCR_RESULTS_FOLDER'], str(document.id))
-    if not os.path.exists(ocr_result_folder):
-        os.makedirs(ocr_result_folder)
-
-    if not ocr_request:
-        return
-
-    files = request.files
-    for file_id in files:
-        file = files[file_id]
-        xml_path = os.path.join(ocr_result_folder, file.filename)
-        file.save(xml_path)
-
-    insert_lines_to_db(ocr_result_folder)
-    change_ocr_request_and_document_state_on_success(ocr_request)
-
-    return 'OK'
-
+# RESULTS PAGE
+########################################################################################################################
 
 @bp.route('/show_results/<string:document_id>', methods=['GET'])
 @login_required
@@ -178,8 +143,59 @@ def save_annotations(document_id):
         return jsonify({'status': 'redirect', 'href': url_for('document.documents')})
 
 
+########################################################################################################################
+# CLIENT ROUTES
+########################################################################################################################
+
+# POST RESPONSE FROM CLIENT, XMLS AND LOGITS
+########################################################################################################################
+
+@bp.route('/post_xmls/<string:ocr_request_id>', methods=['POST'])
+def post_xmls(ocr_request_id):
+    print()
+    print("INSERT LINES FROM XMLS TO DB")
+    print("##################################################################")
+    ocr_request = get_request_by_id(ocr_request_id)
+    document = get_document_by_id(ocr_request.document_id)
+    xmls_result_folder = post_files_to_folder(request, str(document.id))
+    insert_lines_to_db(xmls_result_folder)
+    print("##################################################################")
+    return 'OK'
+
+
+@bp.route('/post_logits/<string:ocr_request_id>', methods=['POST'])
+def post_logits(ocr_request_id):
+    ocr_request = get_request_by_id(ocr_request_id)
+    document = get_document_by_id(ocr_request.document_id)
+    post_files_to_folder(request, str(document.id))
+    change_ocr_request_and_document_state_on_success(ocr_request)
+    return 'OK'
+
+
+def post_files_to_folder(request, document_id):
+    result_folder = os.path.join(current_app.config['OCR_RESULTS_FOLDER'], document_id)
+    if not os.path.exists(result_folder):
+        os.makedirs(result_folder)
+    files = request.files
+    for file_id in files:
+        file = files[file_id]
+        xml_path = os.path.join(result_folder, file.filename)
+        file.save(xml_path)
+    return result_folder
+
+
 # GET CONFIG AND MODELS FOR PARSE FOLDER
 ########################################################################################################################
+
+@bp.route('/get_request')
+def get_ocr_request():
+    ocr_request = get_first_ocr_request()
+    if ocr_request:
+        change_ocr_request_and_document_state_in_progress(ocr_request)
+        return create_json_from_request(ocr_request)
+    else:
+        return jsonify({})
+
 
 @bp.route('/get_config/<string:baseline_id>/<string:ocr_id>/<string:language_model_id>')
 def get_config(baseline_id, ocr_id, language_model_id):
@@ -228,7 +244,6 @@ def get_model(model, model_type):
     model_folder = os.path.join(current_app.config['MODELS_FOLDER'], model_type, get_model_folder_name(model.name),
                                 "model")
     if not os.path.exists("{}.zip".format(model_folder)):
-        print("Creating archive:", model_folder)
         shutil.make_archive(model_folder, 'zip', model_folder)
     return send_file("{}.zip".format(model_folder), attachment_filename="{}.zip".format(model_type), as_attachment=True)
 
