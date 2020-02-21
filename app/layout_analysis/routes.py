@@ -1,5 +1,5 @@
 from app.layout_analysis import bp
-from flask import render_template, url_for, redirect, flash, jsonify, request, current_app, send_file, abort
+from flask import render_template, url_for, redirect, flash, request, current_app, send_file, abort
 from flask_login import login_required, current_user
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_layout_detector_by_id
 from app.layout_analysis.general import create_layout_analysis_request, can_start_layout_analysis, \
@@ -10,12 +10,11 @@ import os
 import sys
 import sqlalchemy
 from app.db.model import DocumentState, TextRegion, LayoutDetector
-from app.document.general import get_document_images, is_user_owner_or_collaborator
+from app.document.general import is_user_owner_or_collaborator
 from PIL import Image
 from app import db_session
 from flask import jsonify
 import shutil
-import numpy as np
 
 
 @bp.route('/select_layout/<string:document_id>', methods=['GET'])
@@ -177,11 +176,21 @@ def edit_layout(image_id):
     return 'OK'
 
 
-@bp.route('/get_models/<string:layout_detector_name>')
-def get_models(layout_detector_name):
-    models_folder = os.path.join(current_app.config['LAYOUT_DETECTORS_FOLDER'], layout_detector_name)
-    zip_path = os.path.join(current_app.config['LAYOUT_DETECTORS_FOLDER'], layout_detector_name)
-    if not os.path.exists("{}.zip".format(zip_path)):
-        print("Creating archive:", zip_path)
-        shutil.make_archive(zip_path, 'zip', models_folder)
-    return send_file("{}.zip".format(zip_path), attachment_filename='models.zip', as_attachment=True)
+########################################################################################################################
+# CLIENT ROUTES
+########################################################################################################################
+
+# GET LAYOUT DETECTOR FOR PARSE FOLDER
+########################################################################################################################
+
+@bp.route('/get_layout_detector/<string:layout_detector_id>')
+def get_layout_detector(layout_detector_id):
+    layout_detector = get_layout_detector_by_id(layout_detector_id)
+    layout_detector_folder = os.path.join(current_app.config['LAYOUT_DETECTORS_FOLDER'], get_layout_detector_folder_name(layout_detector.name))
+    if not os.path.exists("{}.zip".format(layout_detector_folder)):
+        shutil.make_archive(layout_detector_folder, 'zip', layout_detector_folder)
+    return send_file("{}.zip".format(layout_detector_folder), attachment_filename='layout_detector.zip', as_attachment=True)
+
+
+def get_layout_detector_folder_name(layout_detector_name):
+    return layout_detector_name.replace(" ", "_").lower()

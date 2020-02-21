@@ -53,7 +53,7 @@ def change_document_state_on_complete_layout_analysis(document):
 
 
 def create_json_from_request(request):
-    value = {'id': request.id, 'layout_detector_name': request.layout_detector.name, 'document': {'id': request.document.id, 'images': []}}
+    value = {'id': request.id, 'layout_detector_id': request.layout_detector.id, 'document': {'id': request.document.id, 'images': []}}
     for image in request.document.images:
         if not image.deleted:
             value['document']['images'].append(image.id)

@@ -14,9 +14,8 @@ def parseargs():
 
 
 layout_engines = [
-    {"name": "NONE", "description": "Skip layout analysis."},
-    {"name": "layout_coloraug_degrade_bnorm", "description": "Basic layout detector."},
-    {"name": "simple_threshold_region", "description": "Works on single column pages."}
+    {"name": "NONE", "description": "Don't use any layout detector."},
+    {"name": "Simple Threshold Region", "description": "Simple layout detector based on segmentation that works on single column pages."}
 ]
 
 
