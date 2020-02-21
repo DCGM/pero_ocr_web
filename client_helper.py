@@ -88,6 +88,16 @@ def make_post_request_data(data_folder, document, data_type):
     return data
 
 
+def get_layout_detector(base_url, route, layout_detector_id, models_folder):
+    r = requests.get('{}{}{}'.format(base_url, route, layout_detector_id))
+    tmp_zip_path = os.path.join(models_folder, "tmp.zip")
+    with open(tmp_zip_path, 'wb') as handle:
+        handle.write(r.content)
+    with zipfile.ZipFile(tmp_zip_path, 'r') as zip_ref:
+        zip_ref.extractall(models_folder)
+    os.remove(tmp_zip_path)
+
+
 def get_config_and_models(base_url, ocr_get_config_route, ocr_get_baseline_route, ocr_get_ocr_route,
                           ocr_get_language_model_route, baseline_id, ocr_id, language_model_id, models_folder):
     config_response = requests.get('{}{}{}/{}/{}'.format(base_url, ocr_get_config_route, baseline_id, ocr_id,
@@ -101,7 +111,6 @@ def get_config_and_models(base_url, ocr_get_config_route, ocr_get_baseline_route
     unzip_response(ocr_response, models_folder)
     language_model_response = requests.get('{}{}{}'.format(base_url, ocr_get_language_model_route, language_model_id))
     unzip_response(language_model_response, models_folder)
-
 
 
 def unzip_response(response, models_folder):
