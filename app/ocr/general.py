@@ -4,6 +4,7 @@ from app import db_session
 from flask import jsonify
 import xml.etree.ElementTree as ET
 import os
+import json
 
 
 def insert_lines_to_db(ocr_results_folder):
@@ -25,8 +26,9 @@ def insert_lines_to_db(ocr_results_folder):
                         continue
                     coords = line[0].get('points')
                     baseline = line[1].get('points')
-                    heights_split = line.get('custom').split()
-                    heights = "{} {}".format(heights_split[1][1:-1], heights_split[2][:-1])
+                    for word in line.get('custom').split():
+                        if 'heights_v2' in word:
+                            heights = json.loads(word.split(":")[1])
                     line_text = line[2][0].text
                     confidences = line[3].text
                     text_line = TextLine(order=order, points=coords, baseline=baseline,
