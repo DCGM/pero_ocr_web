@@ -229,7 +229,7 @@ def get_page_xml_root(image_id, only_annotated=False):
                     text_line_element = ET.SubElement(text_region_element, "TextLine")
                     text_line_element.set("id", str(text_line.id))
                     heights = text_line.np_heights
-                    text_line_element.set("custom", "heights {" + str(int(heights[0])) + ", " + str(int(heights[1])) + "}")
+                    text_line_element.set("custom", f"heights_v2:[{heights[0]:.1f},{heights[1]:.1f}]")
 
                     coords_element = ET.SubElement(text_line_element, "Coords")
                     points = text_line.np_points

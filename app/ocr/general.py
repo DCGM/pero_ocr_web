@@ -32,7 +32,7 @@ def insert_lines_to_db(ocr_results_folder):
                     line_text = line[2][0].text
                     confidences = line[3].text
                     text_line = TextLine(order=order, points=coords, baseline=baseline,
-                                         heights=heights, confidences=confidences, text=line_text, deleted=False)
+                                         np_heights=heights, confidences=confidences, text=line_text, deleted=False)
                     textregion.textlines.append(text_line)
         db_session.commit()
 
