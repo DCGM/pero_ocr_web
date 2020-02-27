@@ -24,20 +24,14 @@ from app import db_session
 # MENU PAGE
 ########################################################################################################################
 
-@bp.route('/start_ocr/<string:document_id>', methods=['POST'])
+@bp.route('/show_results/<string:document_id>', methods=['GET'])
 @login_required
-def start_ocr(document_id):
+def show_results(document_id):
     document = get_document_by_id(document_id)
-    baseline_id = request.form['baseline_id']
-    ocr_id = request.form['ocr_id']
-    language_model_id = request.form['language_model_id']
-    ocr_request = create_ocr_request(document, baseline_id, ocr_id, language_model_id)
-    if can_start_ocr(document):
-        add_ocr_request_and_change_document_state(ocr_request)
-        flash(u'Request for ocr successfully created!', 'success')
-    else:
-        flash(u'Request for ocr is already pending or document is in unsupported state!', 'danger')
-    return redirect(url_for('document.documents'))
+    if document.state != DocumentState.COMPLETED_OCR:
+        return  # Bad Request or something like that
+    images = get_document_images(document)
+    return render_template('ocr/ocr_results.html', document=document, images=list(images))
 
 
 @bp.route('/revert_ocr/<string:document_id>', methods=['GET'])
@@ -83,18 +77,24 @@ def select_ocr(document_id):
                            baseline_engines=baseline_engines, language_model_engines=language_model_engines)
 
 
+@bp.route('/start_ocr/<string:document_id>', methods=['POST'])
+@login_required
+def start_ocr(document_id):
+    document = get_document_by_id(document_id)
+    baseline_id = request.form['baseline_id']
+    ocr_id = request.form['ocr_id']
+    language_model_id = request.form['language_model_id']
+    ocr_request = create_ocr_request(document, baseline_id, ocr_id, language_model_id)
+    if can_start_ocr(document):
+        add_ocr_request_and_change_document_state(ocr_request)
+        flash(u'Request for ocr successfully created!', 'success')
+    else:
+        flash(u'Request for ocr is already pending or document is in unsupported state!', 'danger')
+    return redirect(url_for('document.documents'))
+
+
 # RESULTS PAGE
 ########################################################################################################################
-
-@bp.route('/show_results/<string:document_id>', methods=['GET'])
-@login_required
-def show_results(document_id):
-    document = get_document_by_id(document_id)
-    if document.state != DocumentState.COMPLETED_OCR:
-        return  # Bad Request or something like that
-    images = get_document_images(document)
-    return render_template('ocr/ocr_results.html', document=document, images=list(images))
-
 
 @bp.route('/get_lines/<string:document_id>/<string:image_id>', methods=['GET'])
 @login_required

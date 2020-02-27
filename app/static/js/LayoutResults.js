@@ -299,7 +299,7 @@ function get_image(image_uuid) {
         console.log(e);
     }
 
-    var url = `/layout_analysis/get_image_result/${document_id}/${image_uuid}`;
+    var url = `/layout_analysis/get_image_result/${image_uuid}`;
 
     $.get(url, report_status('FAILED: Did not get next image.'),
         new_image_callback);

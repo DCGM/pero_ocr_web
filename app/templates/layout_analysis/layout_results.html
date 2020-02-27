@@ -11,7 +11,7 @@
                          data-image="{{ image.id }}">
                         <div class="image-container">
                             <img
-                                    src="/layout_analysis/get_result_preview/{{ document.id }}/{{ image.id }}"
+                                    src="/layout_analysis/get_result_preview/{{ image.id }}"
                                     alt="{{ image.filename }}"
                                     class="uploaded_image card-img-top"
                             />
@@ -32,9 +32,6 @@
             </div>
         </div>
         <div class="current-result-container" data-document="{{ document.id }}" data-image="{{ images[0].id }}">
-{#            <a href="/document/get_xml/{{ document.id }}/{{ images[0].id }}" id="download-xml-btn"#}
-{#               class="btn btn-lg btn-primary my-3">Download XML</a>#}
-{#            <br>#}
             <div class="my-2">
                 <button class="btn btn-secondary" onclick="get_image(annotator_data.uuid)">Reset (r)</button>
                 <button class="btn btn-secondary" onclick="next_image();">Next (n)</button>

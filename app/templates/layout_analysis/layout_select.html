@@ -5,7 +5,7 @@
                 <h3 class="text-left">{{ document.name }} - Start Layout Analysis</h3>
             </div>
         </div>
-        <form action="{{ url_for('layout_analysis.start', document_id=document.id) }}" method="POST">
+        <form action="{{ url_for('layout_analysis.start_layout', document_id=document.id) }}" method="POST">
 
             <div class="row mt-4">
                 <div class="col">

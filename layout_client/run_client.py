@@ -10,8 +10,8 @@ from client_helper import get_and_save_request_document_images, get_layout_detec
 from client_helper import make_post_request_data
 
 
-def get_post_route(document_id):
-    return '/layout_analysis/post_result/{}'.format(document_id)
+def get_post_xmls_route(document_id):
+    return '/layout_analysis/post_xmls/{}'.format(document_id)
 
 
 def check_and_process_request(config):
@@ -53,7 +53,7 @@ def check_and_process_request(config):
         detect_layout_process.wait()
 
         data = make_post_request_data(os.path.join(output_folder, "page"), document, "xml")
-        requests.post('{}{}'.format(base_url, get_post_route(request_id)), files=data)
+        requests.post('{}{}'.format(base_url, get_post_xmls_route(request_id)), files=data)
 
         return True
     return False
