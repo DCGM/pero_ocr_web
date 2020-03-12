@@ -15,6 +15,7 @@ def parseargs():
 
 baseline_engines = [
     {"name": "Universal", "description": "Universal baseline detector that should work on majority of documents."},
+    {"name": "Handwritten", "description": "Handwritten baseline detector."}
 ]
 
 
