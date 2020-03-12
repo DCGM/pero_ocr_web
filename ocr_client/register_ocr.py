@@ -21,6 +21,8 @@ ocr_engines = [
     {"name": "German Fraktur Printed", "description": "Detector of historic german printed text. Type of script is \
                                                        mainly Fraktur. The detector was trained on pages and transcriptions \
                                                        gathered from Deutschen Textarchiv."},
+    {"name": "Czech Fraktur Printed", "description": "Detector of historic czech printed text. Type of script is \
+                                                       mainly Fraktur."},
     {"name": "Lidove Noviny", "description": "Detector of old Lidové Noviny. The detector was trained on IMPACT dataset and \
                                               pages of old Lidové Noviny provided by Moravian Library."}
 ]
