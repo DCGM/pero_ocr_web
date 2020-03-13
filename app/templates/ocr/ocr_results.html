@@ -7,10 +7,15 @@
             </div>
             <div class="images-container">
                 {% for i in range(0, images|length) %}
-<div class="image-item-container d-inline-flex flex-column" data-document="{{ document.id }}" data-image="{{ images[i].id }}" data-index="{{ i }}">
-<div class="image-container"><img src="/layout_analysis/get_result_preview/{{ images[i].id }}" alt="{{ images[i].filename }}" class="uploaded_image card-img-top" /></div>
-<div class="text-center"> <p>{{ images[i].filename }}</p> </div> <div class="d-none image-item-active"></div>
-</div>
+                <div class="image-item-container d-inline-flex flex-column" data-document="{{ document.id }}" data-image="{{ images[i].id }}" data-index="{{ i }}">
+                    <div class="image-container">
+                        <img src="/layout_analysis/get_result_preview/{{ images[i].id }}" alt="{{ images[i].filename }}" class="uploaded_image card-img-top" />
+                    </div>
+                <div class="text-center">
+                    <p>{{ images[i].filename }}</p>
+                </div>
+                <div class="d-none image-item-active"></div>
+                </div>
                 {% endfor %}
             </div>
             <div class="results-preview-btn next-btn">
@@ -20,6 +25,7 @@
         <form method="get" id="get_page_text_form"></form>
         <form method="get" id="get_page_xml_form"></form>
         <div class="mb-2 col-lg-12">
+            <button id="back-btn" type="button" class="btn btn-secondary">Back</button>
             <button id="next-btn" type="button" class="btn btn-secondary">Next</button>
             <button id="save-btn" type="button" class="btn btn-secondary">Save</button>
             <button id="text-btn" type="submit" class="btn btn-secondary" form="get_page_text_form">Export Text</button>

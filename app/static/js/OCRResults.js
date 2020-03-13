@@ -27,20 +27,7 @@ function replaceNbsps(str) {
 }
 
 function get_edited_text(text_line_element){
-    var line_text = "";
-    for (let child of text_line_element.childNodes)
-    {
-        if (child.childNodes.length > 1)
-        {
-            line_text += child.childNodes[0].textContent;
-            line_text += child.childNodes[1].textContent;
-        }
-        else
-        {
-            line_text += child.textContent;
-        }
-    }
-    return line_text;
+    return text_line_element.textContent;
 }
 
 function post_annotations(annotations, document_id)
@@ -281,10 +268,21 @@ class ImageEditor{
 }
 
 
+function previous_page() {
+    if (image_index > 0)
+    {
+        image_index -= 1;
+        $('.image-item-container[data-index=' + image_index + ']').click();
+    }
+}
+
+
 function next_page() {
-    image_index += 1;
-    console.log(image_index);
-    $('.image-item-container[data-index=' + image_index + ']').click();
+    if ((image_index + 1) < number_of_images)
+    {
+        image_index += 1;
+        $('.image-item-container[data-index=' + image_index + ']').click();
+    }
 }
 
 
@@ -292,6 +290,8 @@ $('.image-item-container').on('click', function (event) {
     let document_id = $(this).data('document');
     let image_id = $(this).data('image');
     image_index = $(this).data('index');
+    $('.image-item-active').addClass('d-none');
+     $(this).find('.image-item-active').removeClass('d-none');
     document.getElementById('get_page_text_form').setAttribute("action", Flask.url_for('document.get_page_text', {'image_id': image_id}))
     document.getElementById('get_page_xml_form').setAttribute("action", Flask.url_for('document.get_page_xml', {'image_id': image_id}))
     if (typeof image_editor.lines !== 'undefined')
@@ -317,11 +317,18 @@ $('.image-item-container').on('click', function (event) {
 
 
 var image_editor = new ImageEditor(document.getElementById('map-container'));
-var image_index = 0;
 
-$('.image-item-container[data-index=0]').click();
-
+var back_btn = document.getElementById('back-btn')
+back_btn.addEventListener('click', previous_page);
 var next_btn = document.getElementById('next-btn')
 next_btn.addEventListener('click', next_page);
 
 
+let $image_containers = $('.image-item-container');
+var number_of_images = $image_containers.length
+if (number_of_images) {
+    var image_index = 0;
+    let $image_container = $($image_containers[0]);
+    $image_container.click()
+    $image_container.find('.image-item-active').removeClass('d-none');
+}
