@@ -84,7 +84,8 @@ def make_post_request_data(data_folders, document, data_types):
     images = document['images']
     for image in images:
         for data_folder, data_type in zip(data_folders, data_types):
-            data[image] = open(os.path.join(data_folder, "{}.{}".format(image, data_type)), 'rb')
+            print(os.path.join(data_folder, "{}.{}".format(image, data_type)))
+            data["{}.{}".format(image, data_type)] = open(os.path.join(data_folder, "{}.{}".format(image, data_type)), 'rb')
     print('Data:', data)
     return data
 
