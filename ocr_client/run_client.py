@@ -1,25 +1,14 @@
 import sys
-sys.path.insert(1, '../')
 import shutil
-import json
-
-from client_helper import get_and_save_request_document_images_and_xmls, get_config_and_models
-from client_helper import make_post_request_data
-from process_logits import save_xml_with_confidences
-
 import os
 import time
 import requests
 import configparser
 import subprocess
 
-
-def get_post_xmls_route(request_id):
-    return '/ocr/post_xmls/{}'.format(request_id)
-
-
-def get_post_logits_route(request_id):
-    return '/ocr/post_logits/{}'.format(request_id)
+from client_helper import join_url
+from client_helper import get_and_save_request_document_images_and_xmls, get_config_and_models
+from client_helper import make_post_request_data
 
 
 def check_and_process_request(config):
@@ -29,9 +18,9 @@ def check_and_process_request(config):
     ocr_get_baseline_route = config['SERVER']['ocr_get_baseline_route']
     ocr_get_ocr_route = config['SERVER']['ocr_get_ocr_route']
     ocr_get_language_model_route = config['SERVER']['ocr_get_language_model_route']
+    ocr_post_result_route = config['SERVER']['ocr_post_result_route']
 
-
-    r = requests.get('{}{}'.format(base_url, request_route))
+    r = requests.get(join_url(base_url, request_route))
     request_json = r.json()
 
     if 'document' in request_json.keys():
@@ -44,12 +33,11 @@ def check_and_process_request(config):
         working_dir = os.path.join(config['SETTINGS']['working_directory'], request_id)
         parse_folder_path = config['SETTINGS']['parse_folder_path']
 
-        images_folder = os.path.join(working_dir, 'images')
-        xmls_folder = os.path.join(working_dir, 'xmls')
-        output_folder = os.path.join(working_dir, 'output')
-        xmls_confidences_folder = os.path.join(working_dir, 'xmls_confidences_folder')
-        models_folder = os.path.join(working_dir, 'models')
-        config_path = os.path.join(models_folder, 'config.ini')
+        images_folder = os.path.join(working_dir, "images")
+        xmls_folder = os.path.join(working_dir, "xmls")
+        output_folder = os.path.join(working_dir, "output")
+        models_folder = os.path.join(working_dir, "models")
+        config_path = os.path.join(models_folder, "config.ini")
 
         if os.path.exists(working_dir):
             shutil.rmtree(working_dir)
@@ -57,8 +45,7 @@ def check_and_process_request(config):
         os.makedirs(images_folder)
         os.makedirs(xmls_folder)
         os.makedirs(output_folder)
-        os.makedirs(os.path.join(output_folder, 'page'))
-        os.makedirs(xmls_confidences_folder)
+        os.makedirs(os.path.join(output_folder, "page"))
         os.makedirs(models_folder)
 
         get_config_and_models(base_url, ocr_get_config_route, ocr_get_baseline_route, ocr_get_ocr_route,
@@ -79,22 +66,10 @@ def check_and_process_request(config):
         parse_folder_process = subprocess.Popen(['python', parse_folder_path, '-c', './models/config.ini'], cwd=working_dir)
         parse_folder_process.wait()
 
-        with open(os.path.join(models_folder, 'ocr', 'ocr_engine.json'), 'r',  encoding='utf8') as f:
-            ocr_config = json.load(f)
-        chars = ocr_config['characters']
-        output_xmls_folder = os.path.join(output_folder, 'page')
-        output_logits_folder = os.path.join(output_folder, 'logits')
-        for xml in os.listdir(output_xmls_folder):
-            file_name, _ = os.path.splitext(xml)
-            xml_path = os.path.join(output_xmls_folder, xml)
-            logits_path = os.path.join(output_logits_folder, "{}.logits".format(file_name))
-            save_xml_with_confidences(xml_path, logits_path, chars, xmls_confidences_folder)
-
-        data_xmls = make_post_request_data(xmls_confidences_folder, document, "xml")
-        requests.post('{}{}'.format(base_url, get_post_xmls_route(request_id)), files=data_xmls)
-
-        data_logits = make_post_request_data(output_logits_folder, document, "logits")
-        requests.post('{}{}'.format(base_url, get_post_logits_route(request_id)), files=data_logits)
+        output_xmls_folder = os.path.join(output_folder, "page")
+        output_logits_folder = os.path.join(output_folder, "logits")
+        data = make_post_request_data([output_xmls_folder, output_logits_folder], document, ["xml", "logits"])
+        requests.post(join_url(base_url, ocr_post_result_route, request_id), files=data)
 
         return True
     return False

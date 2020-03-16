@@ -1,40 +1,66 @@
+import os
+import numpy as np
+import pickle
+
 from app.db.model import RequestState, RequestType, Request, DocumentState, TextLine, Annotation, TextRegion
 from app.db.general import get_text_region_by_id, get_text_line_by_id
 from app import db_session
 from flask import jsonify
-import xml.etree.ElementTree as ET
-import os
-import json
+
+from pero_ocr.document_ocr import PageLayout
+from pero_ocr.force_alignment import force_align
+from src.confidence_estimation import get_letter_confidence
 
 
 def insert_lines_to_db(ocr_results_folder):
-    for xml_file_name in os.listdir(ocr_results_folder):
-        if xml_file_name.endswith('.xml'):
-            print(xml_file_name)
-            xml_path = os.path.join(ocr_results_folder, xml_file_name)
-            root = ET.parse(xml_path).getroot()
-            for region in root.iter('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15}TextRegion'):
-                region_id = region.get('id')
-                textregion = get_text_region_by_id(region_id)
-                for order, line in enumerate(region.iter('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15}TextLine')):
-                    line_id = line.get('id')
-                    text_line = get_text_line_by_id(line_id)
-                    if text_line is not None:
-                        if len(text_line.annotations) == 0:
-                            text_line.text = line[2][0].text
-                            text_line.confidences = line[3].text
-                        continue
-                    coords = line[0].get('points')
-                    baseline = line[1].get('points')
-                    for word in line.get('custom').split():
-                        if 'heights_v2' in word:
-                            heights = json.loads(word.split(":")[1])
-                    line_text = line[2][0].text
-                    confidences = line[3].text
-                    text_line = TextLine(order=order, points=coords, baseline=baseline,
-                                         np_heights=heights, confidences=confidences, text=line_text, deleted=False)
-                    textregion.textlines.append(text_line)
+
+    base_file_names = [os.path.splitext(file_name)[0] for file_name in os.listdir(ocr_results_folder)]
+    base_file_names = list(set(base_file_names))
+
+    for base_file_name in base_file_names:
+        print(base_file_name)
+        xml_path = os.path.join(ocr_results_folder, "{}.{}".format(base_file_name, "xml"))
+        logits_path = os.path.join(ocr_results_folder, "{}.{}".format(base_file_name, "logits"))
+        page_layout = PageLayout()
+        page_layout.from_pagexml(xml_path)
+        page_layout.load_logits(logits_path)
+        lines_characters = pickle.load(open(logits_path, 'rb'))['line_characters']
+        for region in page_layout.regions:
+            db_region = get_text_region_by_id(region.id)
+            for order, line in enumerate(region.lines):
+                db_line = get_text_line_by_id(line.id)
+                line_characters = lines_characters[line.id]
+                if db_line is not None:
+                    if len(db_line.annotations) == 0:
+                        db_line.text = line.transcription
+                        db_line.confidences = get_confidences(line, line_characters)
+                    continue
+                text_line = TextLine(order=order,
+                                     np_points=line.polygon,
+                                     np_baseline=line.baseline,
+                                     np_heights=line.heights,
+                                     np_confidences=get_confidences(line, line_characters),
+                                     text=line.transcription,
+                                     deleted=False)
+                db_region.textlines.append(text_line)
         db_session.commit()
+
+
+def get_confidences(line, chars):
+    if line.transcription is not None and line.transcription != "":
+        c_idx = []
+        for c in line.transcription:
+            c_idx.append(chars.index(c))
+
+        line_logits = np.array(line.logits.todense())
+        line_logits[line_logits == 0] = -80
+
+        blank_char_index = line_logits.shape[1] - 1
+
+        al_res = force_align(-line_logits, c_idx, blank_char_index)
+        con_res = get_letter_confidence(line_logits, al_res, blank_char_index)
+        return np.exp(con_res)
+    return np.asarray([])
 
 
 def insert_annotations_to_db(user, annotations):

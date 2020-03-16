@@ -79,11 +79,12 @@ def get_and_save_request_document_images_and_xmls(base_url, images_folder, xmls_
         get_and_save_xmls(xmls_folder, base_url, document['processed'], document['images'])
 
 
-def make_post_request_data(data_folder, document, data_type):
+def make_post_request_data(data_folders, document, data_types):
     data = dict()
     images = document['images']
     for image in images:
-        data[image] = open(os.path.join(data_folder, "{}.{}".format(image, data_type)), 'rb')
+        for data_folder, data_type in zip(data_folders, data_types):
+            data[image] = open(os.path.join(data_folder, "{}.{}".format(image, data_type)), 'rb')
     print('Data:', data)
     return data
 
@@ -123,3 +124,19 @@ def unzip_response(response, models_folder):
     with zipfile.ZipFile(tmp_zip_path, 'r') as zip_ref:
         zip_ref.extractall(model_type_folder_name)
     os.remove(tmp_zip_path)
+
+
+def join_url(*paths):
+    final_paths = []
+    first_path = paths[0].strip()
+    if first_path[-1] == '/':
+        first_path = first_path[:-1]
+    final_paths.append(first_path)
+    for path in paths[1:]:
+        final_paths.append(path.strip().strip('/'))
+    return '/'.join(final_paths)
+
+
+
+
+

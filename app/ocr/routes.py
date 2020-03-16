@@ -150,25 +150,17 @@ def save_annotations(document_id):
 # POST RESPONSE FROM CLIENT, XMLS AND LOGITS
 ########################################################################################################################
 
-@bp.route('/post_xmls/<string:ocr_request_id>', methods=['POST'])
-def post_xmls(ocr_request_id):
+@bp.route('/post_result/<string:ocr_request_id>', methods=['POST'])
+def post_result(ocr_request_id):
     print()
     print("INSERT LINES FROM XMLS TO DB")
     print("##################################################################")
     ocr_request = get_request_by_id(ocr_request_id)
     document = get_document_by_id(ocr_request.document_id)
-    xmls_result_folder = post_files_to_folder(request, str(document.id))
-    insert_lines_to_db(xmls_result_folder)
-    print("##################################################################")
-    return 'OK'
-
-
-@bp.route('/post_logits/<string:ocr_request_id>', methods=['POST'])
-def post_logits(ocr_request_id):
-    ocr_request = get_request_by_id(ocr_request_id)
-    document = get_document_by_id(ocr_request.document_id)
-    post_files_to_folder(request, str(document.id))
+    result_folder = post_files_to_folder(request, str(document.id))
+    insert_lines_to_db(result_folder)
     change_ocr_request_and_document_state_on_success(ocr_request)
+    print("##################################################################")
     return 'OK'
 
 
@@ -179,8 +171,8 @@ def post_files_to_folder(request, document_id):
     files = request.files
     for file_id in files:
         file = files[file_id]
-        xml_path = os.path.join(result_folder, file.filename)
-        file.save(xml_path)
+        path = os.path.join(result_folder, file.filename)
+        file.save(path)
     return result_folder
 
 

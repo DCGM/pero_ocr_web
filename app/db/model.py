@@ -214,16 +214,26 @@ class LanguageModel(Base):
 def str_points2D_to_np(str_points):
     return np.asarray([[float(x) for x in point.split(',')] for point in str_points.split()])
 
+
 def points2D_to_str(points):
     return ' '.join(['{:.1f},{:.1f}'.format(point[0], point[1]) for point in points])
+
 
 def str_points_to_np(str_heights):
     if str_heights is None:
         return np.asarray([])
     return np.asarray([float(x) for x in str_heights.split()])
 
+
 def points_to_str(heights):
     return ' '.join(['{:.1f}'.format(x) for x in heights])
 
+
 def confidences_to_str(cs):
-    return ' '.join(['{:.3f}'.format(x) for x in heights])
+    con_str = ""
+    for x in cs:
+        if x == 1:
+            con_str += " 1"
+        else:
+            con_str += " {:.3}".format(x)
+    return con_str[1:]
