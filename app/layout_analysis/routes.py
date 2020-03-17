@@ -119,8 +119,8 @@ def edit_layout(image_id):
 # POST RESPONSE FROM CLIENT, XMLS
 ########################################################################################################################
 
-@bp.route('/post_xmls/<string:request_id>', methods=['POST'])
-def post_xmls(request_id):
+@bp.route('/post_reusult/<string:request_id>', methods=['POST'])
+def post_result(request_id):
     analysis_request = get_request_by_id(request_id)
     document = get_document_by_id(analysis_request.document_id)
     folder_path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document.id))

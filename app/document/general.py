@@ -9,6 +9,8 @@ import uuid
 from lxml import etree as ET
 from app.db import Document, Image, TextLine, Annotation
 
+import pero_ocr.document_ocr.layout as layout
+
 
 def dhash(image, hash_size=8):
     # Grayscale and shrink the image in one step.
@@ -176,80 +178,48 @@ def get_document_images(document):
     return document.images.filter_by(deleted=False)
 
 
-def get_region_xml_root(image_id):
+def get_page_layout(image_id, only_regions=False, only_annotated=False):
     image = get_image_by_id(image_id)
-    root = ET.Element('PcGts')
-    root.set('xmlns', 'http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15')
+    page_layout = layout.PageLayout()
+    page_layout.id = os.path.splitext(image.filename)[0]
+    page_layout.page_size = (image.height, image.width)
 
-    page_element = ET.SubElement(root, 'Page',
-                                 {"imageFilename": os.path.splitext(image.filename)[0], "imageWidth": str(image.width),
-                                  "imageHeight": str(image.height)})
+    text_regions = sort_text_regions(list(image.textregions))
 
-    for text_region in image.textregions:
+    for text_region in text_regions:
         if not text_region.deleted:
-            text_region_element = ET.SubElement(page_element, 'TextRegion', {"id": str(text_region.id)})
-            ET.SubElement(text_region_element, 'Coords', {"points": text_region.points})
-    return root
+            region_layout = layout.RegionLayout(id=str(text_region.id), polygon=text_region.np_points)
+            page_layout.regions.append(region_layout)
+
+            if not only_regions:
+                text_lines = TextLine.query.filter_by(region_id=text_region.id).distinct()
+                if only_annotated:
+                    text_lines = text_lines.join(Annotation)
+                text_lines = text_lines.order_by(TextLine.order)
+                text_lines = text_lines.all()
+
+                for text_line in text_lines:
+                    if not text_line.deleted:
+                        region_layout.lines.append(layout.TextLine(id=str(text_line.id),
+                                                                   baseline=text_line.np_baseline,
+                                                                   polygon=text_line.np_points,
+                                                                   heights=text_line.np_heights,
+                                                                   transcription=text_line.text))
+    return page_layout
 
 
-def get_page_xml_root(image_id, only_annotated=False):
-    print(image_id)
+def get_page_layout_text(page_layout):
     text = ""
-    image = get_image_by_id(image_id)
-    root = ET.Element("PcGts")
-    root.set("xmlns", "http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15")
+    for line in page_layout.lines_iterator():
+        text += "{}\n".format(line.transcription)
+    return text
 
-    page_element = ET.SubElement(root, "Page")
-    page_element.set("imageFilename", os.path.splitext(image.filename)[0])
-    page_element.set("imageWidth", str(image.width))
-    page_element.set("imageHeight", str(image.height))
 
-    skip_textregion_sorting = False
-    for tr in image.textregions:
+def sort_text_regions(text_regions):
+    skip_text_region_sorting = False
+    for tr in text_regions:
         if tr.order is None:
-            skip_textregion_sorting = True
-    if not skip_textregion_sorting:
-        textregions = sorted(list(image.textregions), key=lambda x: x.order)
-    else:
-        textregions = image.textregions
-    for text_region in textregions:
-        if not text_region.deleted:
-            text_region_element = ET.SubElement(page_element, "TextRegion")
-            text_region_element.set("id", str(text_region.id))
-            coords = ET.SubElement(text_region_element, "Coords")
-            coords.set("points", text_region.points)
-
-            textlines = TextLine.query.filter_by(region_id=text_region.id).distinct()
-            if only_annotated:
-                textlines = textlines.join(Annotation)
-            textlines = textlines.order_by(TextLine.order)
-            textlines = textlines.all()
-            for text_line in textlines:
-                if not text_line.deleted:
-                    text_line_element = ET.SubElement(text_region_element, "TextLine")
-                    text_line_element.set("id", str(text_line.id))
-                    heights = text_line.np_heights
-                    text_line_element.set("custom", f"heights_v2:[{heights[0]:.1f},{heights[1]:.1f}]")
-
-                    coords_element = ET.SubElement(text_line_element, "Coords")
-                    points = text_line.np_points
-                    points = ["{},{}".format(int(x[0]), int(x[1])) for x in points]
-                    points = " ".join(points)
-                    coords_element.set("points", points)
-
-                    baseline_element = ET.SubElement(text_line_element, "Baseline")
-                    points = text_line.np_baseline
-                    points = ["{},{}".format(int(x[0]), int(x[1])) for x in points]
-                    points = " ".join(points)
-                    baseline_element.set("points", points)
-
-                    text_element = ET.SubElement(text_line_element, "TextEquiv")
-                    text_element = ET.SubElement(text_element, "Unicode")
-                    text_tmp = ""
-                    if text_line.text is not None:
-                        text_tmp = text_line.text
-                    text_element.text = text_tmp
-                    text += text_tmp + '\n'
-
-    return root, text
-
+            skip_text_region_sorting = True
+    if not skip_text_region_sorting:
+        text_regions = sorted(text_regions, key=lambda x: x.order)
+    return text_regions

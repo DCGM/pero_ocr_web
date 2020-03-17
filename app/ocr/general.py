@@ -30,7 +30,7 @@ def insert_lines_to_db(ocr_results_folder):
                 if db_line is not None:
                     if len(db_line.annotations) == 0:
                         db_line.text = line.transcription
-                        db_line.confidences = get_confidences(line)
+                        db_line.np_confidences = get_confidences(line)
                     continue
                 text_line = TextLine(order=order,
                                      np_points=line.polygon,

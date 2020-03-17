@@ -290,7 +290,7 @@ $('.image-item-container').on('click', function (event) {
     $('.image-item-active').addClass('d-none');
      $(this).find('.image-item-active').removeClass('d-none');
     document.getElementById('get_page_text_form').setAttribute("action", Flask.url_for('document.get_page_text', {'image_id': image_id}))
-    document.getElementById('get_page_xml_form').setAttribute("action", Flask.url_for('document.get_page_xml', {'image_id': image_id}))
+    document.getElementById('get_page_xml_form').setAttribute("action", Flask.url_for('document.get_page_xml_lines', {'image_id': image_id}))
     if (typeof image_editor.lines !== 'undefined')
     {
         unsaved_lines = false;

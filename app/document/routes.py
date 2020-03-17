@@ -3,15 +3,14 @@ from flask_login import login_required, current_user
 from flask import render_template, redirect, url_for, request, send_file, flash, Response, jsonify, current_app
 from app.document.general import create_document, check_and_remove_document, save_images, get_image_url, \
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
-    remove_image, get_document_images, get_region_xml_root, get_page_xml_root
+    remove_image, get_document_images, get_page_layout, get_page_layout_text
 from app.db.general import get_user_documents, get_document_by_id, get_image_by_id
 from app.document.forms import CreateDocumentForm
 from lxml import etree as ET
 from io import BytesIO
 import zipfile
 import time
-import os
-import shutil
+
 
 @bp.route('/documents')
 @login_required
@@ -70,24 +69,22 @@ def upload_document_post(document_id):
         return status, 409
 
 
-@bp.route('/get_region_xml/<string:image_id>')
-def get_region_xml(image_id):
-    root = get_region_xml_root(image_id)
-    xml_string = ET.tostring(root, pretty_print=True, encoding="utf-8")
-    return Response(xml_string, mimetype='text/xml')
+@bp.route('/get_page_xml_regions/<string:image_id>')
+def get_page_xml_regions(image_id):
+    page_layout = get_page_layout(image_id, only_regions=True)
+    return Response(page_layout.to_pagexml_string(), mimetype='text/xml')
+
+
+@bp.route('/get_page_xml_lines/<string:image_id>')
+def get_page_xml_lines(image_id):
+    page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False)
+    return Response(page_layout.to_pagexml_string(), mimetype='text/xml')
 
 
 @bp.route('/get_page_text/<string:image_id>')
 def get_page_text(image_id):
-    _, text = get_page_xml_root(image_id)
-    return Response(text, mimetype='text')
-
-
-@bp.route('/get_page_xml/<string:image_id>')
-def get_page_xml(image_id):
-    root, _ = get_page_xml_root(image_id)
-    xml_string = ET.tostring(root, pretty_print=True, encoding="utf-8")
-    return Response(xml_string, mimetype='text/xml')
+    page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False)
+    return Response(page_layout.to_pagexml_string(), mimetype='text')
 
 
 @bp.route('/get_document_pages/<string:document_id>')
@@ -96,16 +93,17 @@ def get_document_pages(document_id):
     with zipfile.ZipFile(memory_file, 'w') as zf:
         document = get_document_by_id(document_id)
         for image in document.images:
-            d_XML = zipfile.ZipInfo(str(image.id) + ".xml")
-            d_XML.date_time = time.localtime(time.time())[:6]
-            d_XML.compress_type = zipfile.ZIP_DEFLATED
-            root, text = get_page_xml_root(str(image.id))
-            zf.writestr(d_XML, ET.tostring(root, pretty_print=True, encoding="utf-8"))
-            d_text = zipfile.ZipInfo(str(image.id) + ".txt")
+            page_layout = get_page_layout(str(image.id), only_regions=False, only_annotated=False)
+            xml_string = page_layout.to_pagexml_string()
+            text_string = get_page_layout_text(page_layout)
+            d_xml = zipfile.ZipInfo("{}.xml".format(image.id))
+            d_xml.date_time = time.localtime(time.time())[:6]
+            d_xml.compress_type = zipfile.ZIP_DEFLATED
+            zf.writestr(d_xml, xml_string)
+            d_text = zipfile.ZipInfo("{}.txt".format(image.id))
             d_text.date_time = time.localtime(time.time())[:6]
             d_text.compress_type = zipfile.ZIP_DEFLATED
-            zf.writestr(d_text, text)
-
+            zf.writestr(d_text, text_string)
     memory_file.seek(0)
     return send_file(memory_file, attachment_filename='pages.zip', as_attachment=True)
 
@@ -116,11 +114,12 @@ def get_document_annotated_pages(document_id):
     with zipfile.ZipFile(memory_file, 'w') as zf:
         document = get_document_by_id(document_id)
         for image in document.images:
-            d_XML = zipfile.ZipInfo(str(image.id) + ".xml")
+            page_layout = get_page_layout(str(image.id), only_regions=False, only_annotated=True)
+            xml_string = page_layout.to_pagexml_string()
+            d_XML = zipfile.ZipInfo("{}.xml".format(image.id))
             d_XML.date_time = time.localtime(time.time())[:6]
             d_XML.compress_type = zipfile.ZIP_DEFLATED
-            zf.writestr(d_XML, ET.tostring(get_page_xml_root(str(image.id), only_annotated=True)[0], pretty_print=True, encoding="utf-8"))
-
+            zf.writestr(d_XML, xml_string)
     memory_file.seek(0)
     return send_file(memory_file, attachment_filename='pages.zip', as_attachment=True)
 

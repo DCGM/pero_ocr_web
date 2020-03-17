@@ -15,7 +15,9 @@ def parseargs():
 
 layout_engines = [
     {"name": "NONE", "description": "Don't use any layout detector."},
-    {"name": "Simple Threshold Region", "description": "Simple layout detector based on segmentation that works on single column pages."}
+    {"name": "Whole Page Region", "description": "Set layout as whole page region."},
+    {"name": "Simple Threshold Region", "description": "Simple layout detector based on segmentation that works on single column pages."},
+    {"name": "Spectral Line Clustering", "description": "Based on line detection and clustering."}
 ]
 
 
