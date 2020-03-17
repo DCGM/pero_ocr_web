@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import pickle
 
 from app.db.model import RequestState, RequestType, Request, DocumentState, TextLine, Annotation, TextRegion
 from app.db.general import get_text_region_by_id, get_text_line_by_id
@@ -9,7 +8,7 @@ from flask import jsonify
 
 from pero_ocr.document_ocr import PageLayout
 from pero_ocr.force_alignment import force_align
-from src.confidence_estimation import get_letter_confidence
+from pero_ocr.confidence_estimation import get_letter_confidence
 
 
 def insert_lines_to_db(ocr_results_folder):
@@ -24,33 +23,31 @@ def insert_lines_to_db(ocr_results_folder):
         page_layout = PageLayout()
         page_layout.from_pagexml(xml_path)
         page_layout.load_logits(logits_path)
-        lines_characters = pickle.load(open(logits_path, 'rb'))['line_characters']
         for region in page_layout.regions:
             db_region = get_text_region_by_id(region.id)
             for order, line in enumerate(region.lines):
                 db_line = get_text_line_by_id(line.id)
-                line_characters = lines_characters[line.id]
                 if db_line is not None:
                     if len(db_line.annotations) == 0:
                         db_line.text = line.transcription
-                        db_line.confidences = get_confidences(line, line_characters)
+                        db_line.confidences = get_confidences(line)
                     continue
                 text_line = TextLine(order=order,
                                      np_points=line.polygon,
                                      np_baseline=line.baseline,
                                      np_heights=line.heights,
-                                     np_confidences=get_confidences(line, line_characters),
+                                     np_confidences=get_confidences(line),
                                      text=line.transcription,
                                      deleted=False)
                 db_region.textlines.append(text_line)
         db_session.commit()
 
 
-def get_confidences(line, chars):
+def get_confidences(line):
     if line.transcription is not None and line.transcription != "":
         c_idx = []
         for c in line.transcription:
-            c_idx.append(chars.index(c))
+            c_idx.append(line.characters.index(c))
 
         line_logits = np.array(line.logits.todense())
         line_logits[line_logits == 0] = -80
