@@ -1,10 +1,64 @@
-from app.db.model import RequestState, RequestType, Request, DocumentState
+from app.db.model import RequestState, RequestType, Request, DocumentState, TextRegion
 from app import db_session
 from flask import jsonify, current_app
-import xml.etree.ElementTree as ET
 import numpy as np
 import cv2
 import os
+import shutil
+
+from app.document.general import get_image_by_id
+from pero_ocr.document_ocr.layout import PageLayout
+
+
+def insert_regions_to_db(results_folder):
+    for xml_file in os.listdir(results_folder):
+        print(xml_file)
+        image_id = os.path.splitext(xml_file)[0]
+        image = get_image_by_id(image_id)
+        xml_path = os.path.join(results_folder, xml_file)
+        page_layout = PageLayout()
+        page_layout.from_pagexml(xml_path)
+        for order, region in enumerate(page_layout.regions):
+            text_region = TextRegion(order=order, image_id=image_id, np_points=region.polygon)
+            image.textregions.append(text_region)
+    db_session.commit()
+
+
+def make_image_result_preview(image_db):
+    image_path = image_db.path
+    image_id = str(image_db.id)
+    if image_db:
+        image = cv2.imread(image_path, 1)
+        scale = (100000.0 / (image.shape[0] * image.shape[1]))**0.5
+        image = cv2.resize(image, (0,0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+        if image_db.textregions:
+            regions = [(region.np_points * scale).astype(np.int32) for region in image_db.textregions]
+            cv2.polylines(image, regions, isClosed=True, thickness=4, color=(0,255,0))
+        print(image.shape, scale)
+
+        new_dir = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(image_db.document_id))
+        if not os.path.exists(new_dir):
+            os.makedirs(new_dir)
+        cv2.imwrite(os.path.join(new_dir, str(image_id) + '.jpg'), image)
+
+
+def post_files_to_folder(request, folder):
+    if os.path.exists(folder):
+        shutil.rmtree(folder)
+    os.makedirs(folder)
+    files = request.files
+    for file_id in files:
+        file = files[file_id]
+        path = os.path.join(folder, file.filename)
+        file.save(path)
+
+
+def create_json_from_request(request):
+    value = {'id': request.id, 'layout_detector_id': request.layout_detector.id, 'document': {'id': request.document.id, 'images': []}}
+    for image in request.document.images:
+        if not image.deleted:
+            value['document']['images'].append(image.id)
+    return jsonify(value)
 
 
 def create_layout_analysis_request(document, layout_id):
@@ -50,39 +104,3 @@ def change_layout_request_and_document_state_on_success(request):
 def change_document_state_on_complete_layout_analysis(document):
     document.state = DocumentState.COMPLETED_LAYOUT_ANALYSIS
     db_session.commit()
-
-
-def create_json_from_request(request):
-    value = {'id': request.id, 'layout_detector_id': request.layout_detector.id, 'document': {'id': request.document.id, 'images': []}}
-    for image in request.document.images:
-        if not image.deleted:
-            value['document']['images'].append(image.id)
-    return jsonify(value)
-
-
-def make_image_result_preview(image_db):
-    image_path = image_db.path
-    image_id = str(image_db.id)
-    if image_db:
-        image = cv2.imread(image_path, 1)
-        scale = (100000.0 / (image.shape[0] * image.shape[1]))**0.5
-        image = cv2.resize(image, (0,0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
-        if image_db.textregions:
-            regions = [(region.np_points * scale).astype(np.int32) for region in image_db.textregions]
-            cv2.polylines(image, regions, isClosed=True, thickness=4, color=(0,255,0))
-        print(image.shape, scale)
-
-        new_dir = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(image_db.document_id))
-        if not os.path.exists(new_dir):
-            os.makedirs(new_dir)
-        cv2.imwrite(os.path.join(new_dir, str(image_id) + '.jpg'), image)
-
-
-def get_region_coords_from_xml(xml_path):
-    root = ET.parse(xml_path).getroot()
-    region_coords = []
-    for region in root.iter('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15}TextRegion'):
-        for coords in region.iter('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15}Coords'):
-            coords_string = coords.get('points')
-            region_coords.append(coords_string)
-    return region_coords

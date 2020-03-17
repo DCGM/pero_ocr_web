@@ -12,7 +12,8 @@ from app.db import DocumentState, OCR, Document, Image, TextRegion, Baseline, La
 from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
                             insert_lines_to_db, change_ocr_request_and_document_state_on_success, insert_annotations_to_db, \
-                            update_text_lines, get_page_annotated_lines, change_ocr_request_and_document_state_in_progress
+                            update_text_lines, get_page_annotated_lines, change_ocr_request_and_document_state_in_progress, \
+                            post_files_to_folder
 from app.document.general import get_document_images
 from app import db_session
 
@@ -153,27 +154,16 @@ def save_annotations(document_id):
 @bp.route('/post_result/<string:ocr_request_id>', methods=['POST'])
 def post_result(ocr_request_id):
     print()
-    print("INSERT LINES FROM XMLS TO DB")
+    print("INSERT LINES FROM XMLS AND LOGITS TO DB")
     print("##################################################################")
     ocr_request = get_request_by_id(ocr_request_id)
     document = get_document_by_id(ocr_request.document_id)
-    result_folder = post_files_to_folder(request, str(document.id))
+    result_folder = os.path.join(current_app.config['OCR_RESULTS_FOLDER'], str(document.id))
+    post_files_to_folder(request, result_folder)
     insert_lines_to_db(result_folder)
     change_ocr_request_and_document_state_on_success(ocr_request)
     print("##################################################################")
     return 'OK'
-
-
-def post_files_to_folder(request, document_id):
-    result_folder = os.path.join(current_app.config['OCR_RESULTS_FOLDER'], document_id)
-    if not os.path.exists(result_folder):
-        os.makedirs(result_folder)
-    files = request.files
-    for file_id in files:
-        file = files[file_id]
-        path = os.path.join(result_folder, file.filename)
-        file.save(path)
-    return result_folder
 
 
 # GET CONFIG AND MODELS FOR PARSE FOLDER

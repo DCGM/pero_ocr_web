@@ -4,8 +4,8 @@ from flask_login import login_required, current_user
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_layout_detector_by_id
 from app.layout_analysis.general import create_layout_analysis_request, can_start_layout_analysis, \
     add_layout_request_and_change_document_state, get_first_layout_request, change_layout_request_and_document_state_in_progress, \
-    create_json_from_request, change_layout_request_and_document_state_on_success, get_region_coords_from_xml,\
-    make_image_result_preview, change_document_state_on_complete_layout_analysis
+    create_json_from_request, change_layout_request_and_document_state_on_success, \
+    make_image_result_preview, change_document_state_on_complete_layout_analysis, post_files_to_folder, insert_regions_to_db
 import os
 import sys
 import sqlalchemy
@@ -15,6 +15,8 @@ from PIL import Image
 from app import db_session
 from flask import jsonify
 import shutil
+
+from pero_ocr.document_ocr.layout import PageLayout
 
 
 ########################################################################################################################
@@ -119,31 +121,18 @@ def edit_layout(image_id):
 # POST RESPONSE FROM CLIENT, XMLS
 ########################################################################################################################
 
-@bp.route('/post_reusult/<string:request_id>', methods=['POST'])
-def post_result(request_id):
-    analysis_request = get_request_by_id(request_id)
-    document = get_document_by_id(analysis_request.document_id)
-    folder_path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document.id))
-    if not analysis_request:
-        return
-    path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(analysis_request.document_id))
-    if not os.path.exists(path):
-        os.makedirs(path)
-    files = request.files
-    for file_id in files:
-        file = files[file_id]
-        xml_path = os.path.join(path, file.filename)
-        file.save(xml_path)
-    for image in document.images.all():
-        if not image.deleted:
-            image_id = str(image.id)
-            xml_path = os.path.join(folder_path, image_id + '.xml')
-            regions_coords = get_region_coords_from_xml(xml_path)
-            for order, region_coords in enumerate(regions_coords):
-                text_region = TextRegion(order=order, image_id=image_id, points=region_coords)
-                image.textregions.append(text_region)
-            db_session.commit()
-    change_layout_request_and_document_state_on_success(analysis_request)
+@bp.route('/post_result/<string:layout_analysis_request_id>', methods=['POST'])
+def post_result(layout_analysis_request_id):
+    print()
+    print("INSERT REGIONS FROM XMLS TO DB")
+    print("##################################################################")
+    layout_analysis_request = get_request_by_id(layout_analysis_request_id)
+    document = get_document_by_id(layout_analysis_request.document_id)
+    result_folder = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document.id))
+    post_files_to_folder(request, result_folder)
+    insert_regions_to_db(result_folder)
+    change_layout_request_and_document_state_on_success(layout_analysis_request)
+    print("##################################################################")
     return 'OK'
 
 

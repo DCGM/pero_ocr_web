@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import shutil
 
 from app.db.model import RequestState, RequestType, Request, DocumentState, TextLine, Annotation, TextRegion
 from app.db.general import get_text_region_by_id, get_text_line_by_id
@@ -97,6 +98,17 @@ def create_json_from_request(request):
         if not image.deleted:
             val['document']['images'].append(image.id)
     return jsonify(val)
+
+
+def post_files_to_folder(request, folder):
+    if os.path.exists(folder):
+        shutil.rmtree(folder)
+    os.makedirs(folder)
+    files = request.files
+    for file_id in files:
+        file = files[file_id]
+        path = os.path.join(folder, file.filename)
+        file.save(path)
 
 
 def change_ocr_request_and_document_state(request, request_state, document_state):
