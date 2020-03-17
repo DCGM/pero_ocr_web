@@ -193,19 +193,16 @@ class ImageEditor{
 
         if (e.keyCode == 13)
         {
-            if (!line.saved)
-            {
-                set_line_background_to_save(line.text_line_element);
-                var annotations = [];
-                var annotation_dict = {};
-                annotation_dict["id"] = line.id;
-                annotation_dict["text_original"] = line.text;
-                annotation_dict["text_edited"] = get_edited_text(line.text_line_element);
-                annotations.push(annotation_dict);
-                post_annotations(annotations, this.document_id);
-                line.edited = false;
-                line.saved = true;
-            }
+            set_line_background_to_save(line.text_line_element);
+            var annotations = [];
+            var annotation_dict = {};
+            annotation_dict["id"] = line.id;
+            annotation_dict["text_original"] = line.text;
+            annotation_dict["text_edited"] = get_edited_text(line.text_line_element);
+            annotations.push(annotation_dict);
+            post_annotations(annotations, this.document_id);
+            line.edited = false;
+            line.saved = true;
             e.preventDefault();
             var line_number = parseInt(e.target.getAttribute("id"), 10);
             document.getElementById((line_number + 1).toString()).focus();
