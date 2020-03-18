@@ -10,6 +10,14 @@ from app.document.general import get_image_by_id
 from pero_ocr.document_ocr.layout import PageLayout
 
 
+def set_whole_page_region_layout_to_document(document):
+    for image in document.images:
+        coords = np.asarray([[0, 0], [0, image.height], [image.width, image.height], [image.width, 0]])
+        text_region = TextRegion(order=0, image_id=image.id, np_points=coords)
+        image.textregions.append(text_region)
+    db_session.commit()
+
+
 def insert_regions_to_db(results_folder):
     for xml_file in os.listdir(results_folder):
         print(xml_file)

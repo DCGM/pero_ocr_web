@@ -5,7 +5,8 @@ from app.db.general import get_document_by_id, get_request_by_id, get_image_by_i
 from app.layout_analysis.general import create_layout_analysis_request, can_start_layout_analysis, \
     add_layout_request_and_change_document_state, get_first_layout_request, change_layout_request_and_document_state_in_progress, \
     create_json_from_request, change_layout_request_and_document_state_on_success, \
-    make_image_result_preview, change_document_state_on_complete_layout_analysis, post_files_to_folder, insert_regions_to_db
+    make_image_result_preview, change_document_state_on_complete_layout_analysis, post_files_to_folder, insert_regions_to_db, \
+    set_whole_page_region_layout_to_document
 import os
 import sys
 import sqlalchemy
@@ -59,22 +60,24 @@ def start_layout(document_id):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
     document = get_document_by_id(document_id)
+    if len(document.images.all()) == 0:
+        flash(u'Can\'t create request without uploading images.', 'danger')
+        return redirect(request.referrer)
     layout_detector_id = request.form['layout_detector_id']
     layout_detector = get_layout_detector_by_id(layout_detector_id)
-    if layout_detector.name != "NONE":
-        if len(document.images.all()) == 0:
-            flash(u'Can\'t create request without uploading images.', 'danger')
-            return redirect(request.referrer)
+    layout_detector_name = get_layout_detector_folder_name(layout_detector.name)
+    if layout_detector_name == "none":
+        change_document_state_on_complete_layout_analysis(document)
+    elif layout_detector_name == "whole_page_region":
+        set_whole_page_region_layout_to_document(document)
+        change_document_state_on_complete_layout_analysis(document)
+    else:
         layout_request = create_layout_analysis_request(document, layout_detector_id)
         if can_start_layout_analysis(document):
             add_layout_request_and_change_document_state(layout_request)
             flash(u'Request for layout analysis successfully created!', 'success')
         else:
             flash(u'Request for layout analysis is already pending or document is in unsupported state!', 'danger')
-    else:
-        if not os.path.exists(os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document_id))):
-            os.makedirs(os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document_id)))
-        change_document_state_on_complete_layout_analysis(document)
     return redirect(url_for('document.documents'))
 
 
