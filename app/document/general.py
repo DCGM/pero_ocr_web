@@ -178,7 +178,7 @@ def get_document_images(document):
     return document.images.filter_by(deleted=False)
 
 
-def get_page_layout(image_id, only_regions=False, only_annotated=False):
+def get_page_layout(image_id, only_regions=False, only_annotated=False, alto=False):
     image = get_image_by_id(image_id)
     page_layout = layout.PageLayout()
     page_layout.id = os.path.splitext(image.filename)[0]
@@ -205,6 +205,10 @@ def get_page_layout(image_id, only_regions=False, only_annotated=False):
                                                                    polygon=text_line.np_points,
                                                                    heights=text_line.np_heights,
                                                                    transcription=text_line.text))
+    if alto:
+        logits_path = os.path.join(app.config['OCR_RESULTS_FOLDER'], str(image.document.id), "{}.logits".format(image.id))
+        page_layout.load_logits(logits_path)
+
     return page_layout
 
 

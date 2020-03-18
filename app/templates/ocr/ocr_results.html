@@ -22,14 +22,16 @@
                 <ion-icon name="arrow-dropright"></ion-icon>
             </div>
         </div>
-        <form method="get" id="get_page_text_form"></form>
-        <form method="get" id="get_page_xml_form"></form>
+        <form method="get" id="export_page_xml_form"></form>
+        <form method="get" id="export_alto_xml_form"></form>
+        <form method="get" id="export_text_form"></form>
         <div class="mb-2 col-lg-12">
             <button id="back-btn" type="button" class="btn btn-secondary">Back</button>
             <button id="next-btn" type="button" class="btn btn-secondary">Next</button>
             <button id="save-btn" type="button" class="btn btn-secondary">Save</button>
-            <button id="text-btn" type="submit" class="btn btn-secondary" form="get_page_text_form">Export Text</button>
-            <button id="export-btn" type="submit" class="btn btn-secondary" form="get_page_xml_form">Export XML</button>
+            <button id="export-page-xml-btn" type="submit" class="btn btn-secondary" form="export_page_xml_form">Export XML</button>
+            <button id="export-alto-xml-btn" type="submit" class="btn btn-secondary" form="export_alto_xml_form">Export ALTO</button>
+            <button id="export-text-btn" type="submit" class="btn btn-secondary" form="export_text_form">Export Text</button>
         </div>
             <div id="map-container"></div>
             <p id="status"></p>
@@ -49,5 +51,5 @@
         var document_id = '{{ document.id }}';
         var first_image = '{{ images[0].id }}';
     </script>
-    <script src="/static/js/OCRResults.js?version=1.2"></script>
+    <script src="/static/js/OCRResults.js?version=1.2.1"></script>
 {% endblock %}

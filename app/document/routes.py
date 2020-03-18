@@ -81,6 +81,12 @@ def get_page_xml_lines(image_id):
     return Response(page_layout.to_pagexml_string(), mimetype='text/xml')
 
 
+@bp.route('/get_alto_xml/<string:image_id>')
+def get_alto_xml(image_id):
+    page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False, alto=True)
+    return Response(page_layout.to_altoxml_string(), mimetype='text/xml')
+
+
 @bp.route('/get_page_text/<string:image_id>')
 def get_page_text(image_id):
     page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False)
@@ -93,13 +99,18 @@ def get_document_pages(document_id):
     with zipfile.ZipFile(memory_file, 'w') as zf:
         document = get_document_by_id(document_id)
         for image in document.images:
-            page_layout = get_page_layout(str(image.id), only_regions=False, only_annotated=False)
-            xml_string = page_layout.to_pagexml_string()
+            page_layout = get_page_layout(str(image.id), only_regions=False, only_annotated=False, alto=True)
+            page_string = page_layout.to_pagexml_string()
+            alto_string = page_layout.to_altoxml_string()
             text_string = get_page_layout_text(page_layout)
-            d_xml = zipfile.ZipInfo("{}.xml".format(image.id))
-            d_xml.date_time = time.localtime(time.time())[:6]
-            d_xml.compress_type = zipfile.ZIP_DEFLATED
-            zf.writestr(d_xml, xml_string)
+            d_page = zipfile.ZipInfo("{}_page.xml".format(image.id))
+            d_page.date_time = time.localtime(time.time())[:6]
+            d_page.compress_type = zipfile.ZIP_DEFLATED
+            zf.writestr(d_page, page_string)
+            d_alto = zipfile.ZipInfo("{}_alto.xml".format(image.id))
+            d_alto.date_time = time.localtime(time.time())[:6]
+            d_alto.compress_type = zipfile.ZIP_DEFLATED
+            zf.writestr(d_alto, alto_string)
             d_text = zipfile.ZipInfo("{}.txt".format(image.id))
             d_text.date_time = time.localtime(time.time())[:6]
             d_text.compress_type = zipfile.ZIP_DEFLATED
