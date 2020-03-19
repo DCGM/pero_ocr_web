@@ -13,7 +13,7 @@ from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
                             insert_lines_to_db, change_ocr_request_and_document_state_on_success, insert_annotations_to_db, \
                             update_text_lines, get_page_annotated_lines, change_ocr_request_and_document_state_in_progress, \
-                            post_files_to_folder
+                            post_files_to_folder, check_document_processed
 from app.document.general import get_document_images
 from app import db_session
 
@@ -166,7 +166,7 @@ def post_result(ocr_request_id):
     document = get_document_by_id(ocr_request.document_id)
     result_folder = os.path.join(current_app.config['OCR_RESULTS_FOLDER'], str(document.id))
     post_files_to_folder(request, result_folder)
-    insert_lines_to_db(result_folder, document.state)
+    insert_lines_to_db(result_folder, check_document_processed(document))
     change_ocr_request_and_document_state_on_success(ocr_request)
     print("##################################################################")
     return 'OK'

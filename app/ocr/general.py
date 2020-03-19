@@ -13,7 +13,7 @@ from pero_ocr.force_alignment import force_align
 from pero_ocr.confidence_estimation import get_letter_confidence
 
 
-def insert_lines_to_db(ocr_results_folder, document_state):
+def insert_lines_to_db(ocr_results_folder, document_processed):
 
     base_file_names = [os.path.splitext(file_name)[0] for file_name in os.listdir(ocr_results_folder)]
     base_file_names = list(set(base_file_names))
@@ -29,7 +29,7 @@ def insert_lines_to_db(ocr_results_folder, document_state):
             db_region = get_text_region_by_id(region.id)
             if db_region is not None:
                 for order, line in enumerate(region.lines):
-                    if document_state == DocumentState.COMPLETED_OCR:
+                    if document_processed:
                         db_line = get_text_line_by_id(line.id)
                         if db_line is not None:
                             if len(db_line.annotations) == 0:
@@ -89,6 +89,14 @@ def update_text_lines(annotations):
         text_line.text = text_edited
         text_line.confidences = ' '.join([str(1) for _ in annotation['text_edited']])
     db_session.commit()
+
+
+def check_document_processed(document):
+    for image in document.images:
+        for textregion in image.textregions:
+            if (len(list(textregion.textlines))):
+                return True
+    return False
 
 
 def create_json_from_request(request):
