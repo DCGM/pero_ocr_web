@@ -291,7 +291,7 @@ $('.image-item-container').on('click', function (event) {
     $(this).find('.image-item-active').removeClass('d-none');
     document.getElementById('btn-export-page-xml').setAttribute("href", Flask.url_for('document.get_page_xml_lines', {'image_id': image_id}))
     document.getElementById('btn-export-alto-xml').setAttribute("href", Flask.url_for('document.get_alto_xml', {'image_id': image_id}))
-    document.getElementById('btn-export-text').setAttribute("href", Flask.url_for('document.get_page_text', {'image_id': image_id}))
+    document.getElementById('btn-export-text').setAttribute("href", Flask.url_for('document.get_text', {'image_id': image_id}))
     if (typeof image_editor.lines !== 'undefined')
     {
         unsaved_lines = false;
