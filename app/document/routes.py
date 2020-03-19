@@ -102,7 +102,7 @@ def get_document_pages(document_id):
             page_layout = get_page_layout(str(image.id), only_regions=False, only_annotated=False)
             page_string = page_layout.to_pagexml_string()
             text_string = get_page_layout_text(page_layout)
-            d_page = zipfile.ZipInfo("{}_page.xml".format(image.id))
+            d_page = zipfile.ZipInfo("{}.xml".format(image.id))
             d_page.date_time = time.localtime(time.time())[:6]
             d_page.compress_type = zipfile.ZIP_DEFLATED
             zf.writestr(d_page, page_string)
