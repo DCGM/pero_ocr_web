@@ -25,7 +25,9 @@ def unzip_response_to_dir(response, dir):
 
 
 def get_images(base_url, document_get_image_route, image_ids, image_folder):
-    for image_id in image_ids:
+    number_of_images = len(image_ids)
+    for i, image_id in enumerate(image_ids):
+        print("{}/{} GETTING IMAGE:".format(i + 1, number_of_images), image_id)
         image_response = requests.get(join_url(base_url, document_get_image_route, image_id))
         file_type = image_response.headers['content-type'].split('/')[-1]
         path = os.path.join(image_folder, "{}.{}".format(image_id, file_type))

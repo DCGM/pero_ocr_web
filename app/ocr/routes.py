@@ -82,9 +82,15 @@ def select_ocr(document_id):
 @login_required
 def start_ocr(document_id):
     document = get_document_by_id(document_id)
-    baseline_id = request.form['baseline_id']
+    if 'baseline_id' in request.form:
+        baseline_id = request.form['baseline_id']
+    else:
+        baseline_id = None
     ocr_id = request.form['ocr_id']
     language_model_id = request.form['language_model_id']
+    language_model = get_language_model_by_id(language_model_id)
+    if language_model.name == "NONE":
+        language_model_id = None
     ocr_request = create_ocr_request(document, baseline_id, ocr_id, language_model_id)
     if can_start_ocr(document):
         add_ocr_request_and_change_document_state(ocr_request)
@@ -160,7 +166,7 @@ def post_result(ocr_request_id):
     document = get_document_by_id(ocr_request.document_id)
     result_folder = os.path.join(current_app.config['OCR_RESULTS_FOLDER'], str(document.id))
     post_files_to_folder(request, result_folder)
-    insert_lines_to_db(result_folder)
+    insert_lines_to_db(result_folder, document.state)
     change_ocr_request_and_document_state_on_success(ocr_request)
     print("##################################################################")
     return 'OK'
@@ -181,27 +187,41 @@ def get_ocr_request():
 
 @bp.route('/get_config/<string:baseline_id>/<string:ocr_id>/<string:language_model_id>')
 def get_config(baseline_id, ocr_id, language_model_id):
-    baseline = get_baseline_by_id(baseline_id)
-    ocr = get_ocr_by_id(ocr_id)
-    language_model = get_language_model_by_id(language_model_id)
-    language_model_name = language_model.name
-    config_name = "{}_{}_{}.ini".format(get_model_folder_name(baseline.name), get_model_folder_name(ocr.name),
-                                        get_model_folder_name(language_model_name))
-    config = os.path.join(current_app.config['MODELS_FOLDER'], "configs", config_name)
-    if not os.path.exists(config):
-        model_configs = [os.path.join(current_app.config['MODELS_FOLDER'], "config_base.ini")]
-        for model, model_type in zip([baseline, ocr, language_model], ["baseline", "ocr", "language_model"]):
-            model_configs.append(get_model_config(model, model_type))
-        concatenate_text_files(model_configs, config)
-        config_parser = configparser.RawConfigParser()
-        config_parser.optionxform = str
-        config_parser.read(config)
-        if get_model_folder_name(language_model_name) == "none":
-            config_parser['PAGE_PARSER']['RUN_DECODER'] = "no"
-        with open(config, 'w') as configfile:
-            config_parser.write(configfile)
+    if baseline_id == "none":
+        baseline_id = None
+    if language_model_id == "none":
+        language_model_id = None
+    baseline_name = "none"
+    if baseline_id is not None:
+        baseline_name = get_model_folder_name(get_baseline_by_id(baseline_id).name)
+    ocr_name = get_model_folder_name(get_ocr_by_id(ocr_id).name)
+    language_model_name = "none"
+    if language_model_id is not None:
+        language_model_name = get_model_folder_name(get_language_model_by_id(language_model_id).name)
+    config_name = "{}_{}_{}.ini".format(baseline_name, ocr_name, language_model_name)
+    config_path = os.path.join(current_app.config['MODELS_FOLDER'], "configs", config_name)
+    if not os.path.exists(config_path):
+        base_config = "config_base_ocr.ini"
+        model_types = ["ocr"]
+        model_names = [ocr_name]
+        if baseline_id is not None and language_model_id is None:
+            base_config = "config_base_baseline_ocr.ini"
+            model_types.append("baseline")
+            model_names.append(baseline_name)
+        elif baseline_id is None and language_model_id is not None:
+            base_config = "config_base_ocr_language_model.ini"
+            model_types.append("language_model")
+            model_names.append(language_model_name)
+        elif baseline_id is not None and language_model_id is not None:
+            base_config = "config_base_baseline_ocr_language_model.ini"
+            model_types += ["baseline", "language_model"]
+            model_names += [baseline_name, language_model_name]
+        model_configs = [os.path.join(current_app.config['MODELS_FOLDER'], base_config)]
+        for model_type, model_name in zip(model_types, model_names):
+            model_configs.append(get_model_config(model_type, model_name))
+        concatenate_text_files_and_save(model_configs, config_path)
 
-    return send_file(config, attachment_filename="config.ini", as_attachment=True)
+    return send_file(config_path, attachment_filename="config.ini", as_attachment=True)
 
 
 @bp.route('/get_baseline/<string:baseline_id>')
@@ -230,15 +250,15 @@ def get_model(model, model_type):
     return send_file("{}.zip".format(model_folder), attachment_filename="{}.zip".format(model_type), as_attachment=True)
 
 
-def get_model_config(model, model_type):
-    return os.path.join(current_app.config['MODELS_FOLDER'], model_type, get_model_folder_name(model.name), "config", "config.ini")
+def get_model_config(model_type, model_name):
+    return os.path.join(current_app.config['MODELS_FOLDER'], model_type, model_name, "config", "config.ini")
 
 
 def get_model_folder_name(model_name):
     return model_name.replace(" ", "_").lower()
 
 
-def concatenate_text_files(text_files, output_text_file):
+def concatenate_text_files_and_save(text_files, output_text_file):
     with open(output_text_file, 'wb') as wfd:
         for f in text_files:
             with open(f, 'rb') as fd:

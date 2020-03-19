@@ -126,16 +126,17 @@ def edit_layout(image_id):
 
 @bp.route('/post_result/<string:layout_analysis_request_id>', methods=['POST'])
 def post_result(layout_analysis_request_id):
-    print()
-    print("INSERT REGIONS FROM XMLS TO DB")
-    print("##################################################################")
     layout_analysis_request = get_request_by_id(layout_analysis_request_id)
     document = get_document_by_id(layout_analysis_request.document_id)
-    result_folder = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document.id))
-    post_files_to_folder(request, result_folder)
-    insert_regions_to_db(result_folder)
-    change_layout_request_and_document_state_on_success(layout_analysis_request)
-    print("##################################################################")
+    if document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
+        print()
+        print("INSERT REGIONS FROM XMLS TO DB")
+        print("##################################################################")
+        result_folder = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document.id))
+        post_files_to_folder(request, result_folder)
+        insert_regions_to_db(result_folder)
+        change_layout_request_and_document_state_on_success(layout_analysis_request)
+        print("##################################################################")
     return 'OK'
 
 

@@ -13,7 +13,7 @@ from pero_ocr.force_alignment import force_align
 from pero_ocr.confidence_estimation import get_letter_confidence
 
 
-def insert_lines_to_db(ocr_results_folder):
+def insert_lines_to_db(ocr_results_folder, document_state):
 
     base_file_names = [os.path.splitext(file_name)[0] for file_name in os.listdir(ocr_results_folder)]
     base_file_names = list(set(base_file_names))
@@ -27,24 +27,26 @@ def insert_lines_to_db(ocr_results_folder):
         page_layout.load_logits(logits_path)
         for region in page_layout.regions:
             db_region = get_text_region_by_id(region.id)
-            for order, line in enumerate(region.lines):
-                db_line = get_text_line_by_id(line.id)
-                if db_line is not None:
-                    if len(db_line.annotations) == 0:
-                        db_line.text = line.transcription
-                        db_line.np_confidences = get_confidences(line)
-                else:
-                    line_id = uuid.uuid4()
-                    line.id = str(line_id)
-                    text_line = TextLine(id=line_id,
-                                         order=order,
-                                         np_points=line.polygon,
-                                         np_baseline=line.baseline,
-                                         np_heights=line.heights,
-                                         np_confidences=get_confidences(line),
-                                         text=line.transcription,
-                                         deleted=False)
-                    db_region.textlines.append(text_line)
+            if db_region is not None:
+                for order, line in enumerate(region.lines):
+                    if document_state == DocumentState.COMPLETED_OCR:
+                        db_line = get_text_line_by_id(line.id)
+                        if db_line is not None:
+                            if len(db_line.annotations) == 0:
+                                db_line.text = line.transcription
+                                db_line.np_confidences = get_confidences(line)
+                    else:
+                        line_id = uuid.uuid4()
+                        line.id = str(line_id)
+                        text_line = TextLine(id=line_id,
+                                             order=order,
+                                             np_points=line.polygon,
+                                             np_baseline=line.baseline,
+                                             np_heights=line.heights,
+                                             np_confidences=get_confidences(line),
+                                             text=line.transcription,
+                                             deleted=False)
+                        db_region.textlines.append(text_line)
         db_session.commit()
         page_layout.to_pagexml(xml_path)
         page_layout.save_logits(logits_path)
@@ -90,16 +92,8 @@ def update_text_lines(annotations):
 
 
 def create_json_from_request(request):
-    processed = False
-    for image in request.document.images:
-        if not image.deleted:
-            for textregion in image.textregions:
-                if not textregion.deleted:
-                    if len(textregion.textlines) > 0:
-                        processed = True
-    val = {'id': request.id, 'baseline_id': request.baseline.id, 'ocr_id': request.ocr.id,
-           'language_model_id': request.language_model.id, 'document': {'id': request.document.id,
-                                                                        'processed': processed, 'images': []}}
+    val = {'id': request.id, 'baseline_id': request.baseline_id, 'ocr_id': request.ocr_id,
+           'language_model_id': request.language_model_id, 'document': {'id': request.document.id, 'images': []}}
     for image in request.document.images:
         if not image.deleted:
             val['document']['images'].append(image.id)
