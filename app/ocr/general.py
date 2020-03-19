@@ -6,6 +6,7 @@ from app.db.model import RequestState, RequestType, Request, DocumentState, Text
 from app.db.general import get_text_region_by_id, get_text_line_by_id
 from app import db_session
 from flask import jsonify
+import uuid
 
 from pero_ocr.document_ocr import PageLayout
 from pero_ocr.force_alignment import force_align
@@ -32,16 +33,21 @@ def insert_lines_to_db(ocr_results_folder):
                     if len(db_line.annotations) == 0:
                         db_line.text = line.transcription
                         db_line.np_confidences = get_confidences(line)
-                    continue
-                text_line = TextLine(order=order,
-                                     np_points=line.polygon,
-                                     np_baseline=line.baseline,
-                                     np_heights=line.heights,
-                                     np_confidences=get_confidences(line),
-                                     text=line.transcription,
-                                     deleted=False)
-                db_region.textlines.append(text_line)
+                else:
+                    line_id = uuid.uuid4()
+                    line.id = str(line_id)
+                    text_line = TextLine(id=line_id,
+                                         order=order,
+                                         np_points=line.polygon,
+                                         np_baseline=line.baseline,
+                                         np_heights=line.heights,
+                                         np_confidences=get_confidences(line),
+                                         text=line.transcription,
+                                         deleted=False)
+                    db_region.textlines.append(text_line)
         db_session.commit()
+        page_layout.to_pagexml(xml_path)
+        page_layout.save_logits(logits_path)
 
 
 def get_confidences(line):
