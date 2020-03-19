@@ -74,7 +74,7 @@ def select_ocr(document_id):
     ocr_engines = db_session.query(OCR).filter(OCR.active).all()
     baseline_engines = db_session.query(Baseline).filter(Baseline.active).all()
     language_model_engines = db_session.query(LanguageModel).filter(LanguageModel.active).all()
-    return render_template('ocr/ocr_select.html', document=document, ocr_engines=ocr_engines,
+    return render_template('ocr/ocr_select.html', document=document, document_state=DocumentState, ocr_engines=ocr_engines,
                            baseline_engines=baseline_engines, language_model_engines=language_model_engines)
 
 
