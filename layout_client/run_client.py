@@ -16,7 +16,11 @@ def check_and_process_layout_request(config):
     base_url = config['SERVER']['base_url']
     layout_analysis_get_request_route = config['SERVER']['layout_analysis_get_request_route']
 
-    r = requests.get(join_url(base_url, layout_analysis_get_request_route))
+    try:
+        r = requests.get(join_url(base_url, layout_analysis_get_request_route))
+    except:
+        return False
+
     request_json = r.json()
 
     if 'document' in request_json.keys():
