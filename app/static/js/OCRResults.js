@@ -322,8 +322,15 @@ function insert_new_char_to_current_position(char)
         char = "&nbsp;"
     }
     new_span.innerHTML = char;
-    caret_span.parentNode.insertBefore(new_span, caret_span.nextSibling);
     let range = selection.getRangeAt(0);
+    if (range.startOffset == 0)
+    {
+        caret_span.parentNode.insertBefore(new_span, caret_span);
+    }
+    else
+    {
+        caret_span.parentNode.insertBefore(new_span, caret_span.nextSibling);
+    }
     range.collapse(false);
     range.selectNodeContents(new_span.childNodes[0]);
     range.collapse(false);
