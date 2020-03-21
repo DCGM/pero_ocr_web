@@ -148,7 +148,7 @@ class ImageEditor{
             let annotation_dict = {};
             annotation_dict["id"] = line.id;
             annotation_dict["text_original"] = line.text;
-            annotation_dict["text_edited"] = line.text_line_element.textContent;
+            annotation_dict["text_edited"] = get_text_content(line.text_line_element);
             annotations.push(annotation_dict);
             post_annotations(annotations, this.document_id);
             line.edited = false;
@@ -158,7 +158,17 @@ class ImageEditor{
             document.getElementById((line_number + 1).toString()).focus();
         }
 
-        if (e.keyCode != 13 && e.keyCode != 9)
+        // Skip
+        // TAB (9)
+        // ENTER (13)
+        // CTRL+S (19)
+        // CTRL+Y (25)
+        // CTRL+Z (26)
+        if (e.keyCode != 9 &&
+            e.keyCode != 13 &&
+            e.keyCode != 19 &&
+            e.keyCode != 25 &&
+            e.keyCode != 26)
         {
             insert_new_char_to_current_position(String.fromCharCode(e.keyCode));
         }
@@ -185,7 +195,7 @@ class ImageEditor{
                 let annotation_dict = {};
                 annotation_dict["id"] = l.id;
                 annotation_dict["text_original"] = l.text;
-                annotation_dict["text_edited"] = l.text_line_element.textContent;
+                annotation_dict["text_edited"] = get_text_content(l.text_line_element);
                 annotations.push(annotation_dict);
                 l.edited = false;
                 l.saved = true;
@@ -313,29 +323,66 @@ function set_line_confidences_to_text_line_element(line, text_line_element)
 
 function insert_new_char_to_current_position(char)
 {
-    let selection = document.getSelection();
-    let caret_span = selection.anchorNode.parentNode;
-    let new_span = document.createElement('span');
-    new_span.setAttribute("style", "font-size: 150%; background: #ffffff; color: #028700");
+    let start_span;
+    let end_span;
+
+    // Insert nonbreaking space instead of normal space (more robust)
     if (char == " ")
     {
-        char = "&nbsp;"
+      char = "&nbsp;";
     }
-    new_span.innerHTML = char;
+
+    let selection = document.getSelection();
     let range = selection.getRangeAt(0);
+
+    // Get span on current caret position
+    let caret_span = selection.anchorNode.parentNode;
+
+    // If text is selected remove it
+    // Removal of selection keeps two empty spans, store them for deletion
+    let text_selected = range.startOffset != range.endOffset;
+    if (text_selected)
+    {
+      start_span = range.startContainer.parentNode;
+      end_span = range.endContainer.parentNode;
+      range.deleteContents();
+    }
+
+    // Create new span for new char
+    // Set it's content to &#8203; special empty char so caret can be set inside
+    let new_span = document.createElement('span');
+    new_span.setAttribute("style", "font-size: 150%; background: #ffffff; color: #028700");
+    new_span.innerHTML = "&#8203;";
+
+    // If selection begins on the first position in line insert new span before
     if (range.startOffset == 0)
     {
         caret_span.parentNode.insertBefore(new_span, caret_span);
     }
+    // Otherwise insert new span after
     else
     {
         caret_span.parentNode.insertBefore(new_span, caret_span.nextSibling);
     }
-    range.collapse(false);
+
+    // Set range (selection) on content of new span &#8203
     range.selectNodeContents(new_span.childNodes[0]);
-    range.collapse(false);
     selection.removeAllRanges();
     selection.addRange(range);
+
+    // Replace current range (selection) with char
+    document.execCommand("insertHTML", false, char);
+
+    // Usage of &#8203 and execCommand ensures that CTRL+Z and CTRL+Y works
+    // properly. After pressing CTRL+Z the char is replaced by &#8203 and after
+    // pressing CTRL+Y the &#8203 is replaced with the char.
+
+    // Remove empty spans
+    if (text_selected)
+    {
+      start_span.remove();
+      end_span.remove();
+    }
 }
 
 function set_line_background_to_save(text_line_element)
@@ -346,6 +393,25 @@ function set_line_background_to_save(text_line_element)
     {
         child.style.backgroundColor = "#d0ffcf";
     }
+}
+
+function get_text_content(text_line_element)
+{
+  let text = text_line_element.textContent;
+  let filtered_text = "";
+  for (let i = 0; i < text.length; i++)
+  {
+      let charCode = text.charCodeAt(i);
+      if (charCode == 160)
+      {
+        filtered_text += " ";
+      }
+      if (charCode != 160 && charCode != 8203)
+      {
+        filtered_text += text.charAt(i);
+      }
+  }
+  return filtered_text;
 }
 
 function componentToHex(c) {

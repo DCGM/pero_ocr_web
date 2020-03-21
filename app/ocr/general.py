@@ -72,10 +72,7 @@ def get_confidences(line):
 def insert_annotations_to_db(user, annotations):
     for annotation in annotations:
         text_line = get_text_line_by_id(annotation['id'])
-        text_edited = annotation['text_edited']
-        if u"\u00A0" in text_edited:
-            text_edited = text_edited.replace(u"\u00A0", ' ')
-        annotation_db = Annotation(text_original=annotation['text_original'], text_edited=text_edited, deleted=False, user_id=user.id)
+        annotation_db = Annotation(text_original=annotation['text_original'], text_edited=annotation['text_edited'], deleted=False, user_id=user.id)
         text_line.annotations.append(annotation_db)
     db_session.commit()
 
@@ -83,10 +80,7 @@ def insert_annotations_to_db(user, annotations):
 def update_text_lines(annotations):
     for annotation in annotations:
         text_line = get_text_line_by_id(annotation['id'])
-        text_edited = annotation['text_edited']
-        if u"\u00A0" in text_edited:
-            text_edited = text_edited.replace(u"\u00A0", ' ')
-        text_line.text = text_edited
+        text_line.text = annotation['text_edited']
         text_line.confidences = ' '.join([str(1) for _ in annotation['text_edited']])
     db_session.commit()
 
@@ -163,4 +157,3 @@ def add_ocr_request_and_change_document_state(request):
 def get_first_ocr_request():
     return Request.query.filter_by(state=RequestState.PENDING, request_type=RequestType.OCR) \
         .order_by(Request.created_date).first()
-
