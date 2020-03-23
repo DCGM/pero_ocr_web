@@ -170,7 +170,7 @@ class ImageEditor{
             e.keyCode != 25 &&
             e.keyCode != 26)
         {
-            insert_new_char_to_current_position(String.fromCharCode(e.keyCode));
+            insert_new_char_to_current_position(String.fromCharCode(e.keyCode), line.text_line_element);
         }
     }
 
@@ -180,7 +180,7 @@ class ImageEditor{
         let text = (e.originalEvent || e).clipboardData.getData('text/plain');
         for (let i = 0; i < text.length; i++)
         {
-            insert_new_char_to_current_position(text.charAt(i));
+            insert_new_char_to_current_position(text.charAt(i), line.text_line_element);
         }
     }
 
@@ -321,8 +321,14 @@ function set_line_confidences_to_text_line_element(line, text_line_element)
     }
 }
 
-function insert_new_char_to_current_position(char)
+function insert_new_char_to_current_position(char, text_line_element)
 {
+    let empty_text_line_element = !($(text_line_element).has('span').length);
+    if (empty_text_line_element)
+    {
+        $(text_line_element).html('');
+    }
+
     let start_span;
     let end_span;
 
@@ -336,7 +342,11 @@ function insert_new_char_to_current_position(char)
     let range = selection.getRangeAt(0);
 
     // Get span on current caret position
-    let caret_span = selection.anchorNode.parentNode;
+    let caret_element = selection.anchorNode.parentNode;
+    if (empty_text_line_element)
+    {
+        caret_element = text_line_element;
+    }
 
     // If text is selected remove it
     // Removal of selection keeps two empty spans, store them for deletion
@@ -354,15 +364,22 @@ function insert_new_char_to_current_position(char)
     new_span.setAttribute("style", "font-size: 150%; background: #ffffff; color: #028700");
     new_span.innerHTML = "&#8203;";
 
-    // If selection begins on the first position in line insert new span before
+    // If selection begins on the first position in line insert new span before (if line is empty just append span)
     if (range.startOffset == 0)
     {
-        caret_span.parentNode.insertBefore(new_span, caret_span);
+        if (empty_text_line_element)
+        {
+            caret_element.appendChild(new_span);
+        }
+        else
+        {
+            caret_element.parentNode.insertBefore(new_span, caret_element);
+        }
     }
     // Otherwise insert new span after
     else
     {
-        caret_span.parentNode.insertBefore(new_span, caret_span.nextSibling);
+        caret_element.parentNode.insertBefore(new_span, caret_element.nextSibling);
     }
 
     // Set range (selection) on content of new span &#8203
