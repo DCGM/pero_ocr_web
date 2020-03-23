@@ -1,7 +1,10 @@
-{% extends "base/base.html" %} {% block content %}
-    <div class="container-fluid">
+{% extends "base/base.html" %}
+
+{% block content %}
+    <div class="container-fluid px-4">
+
         <div class="row mt-4">
-            <div class="col">
+            <div class="offset-xl-2 col-xl-10 offset-lg-1 col-lg-11">
                 <h3 class="text-left">{{ document.name }} - Start OCR</h3>
             </div>
         </div>
@@ -9,75 +12,77 @@
         
             {% if document.state == document_state.COMPLETED_LAYOUT_ANALYSIS %}
             <div class="row mt-4">
-                <div class="col">
+                <div class="offset-xl-2 col-xl-10 offset-lg-1 col-lg-11">
                     <h5 class="text-left">Select baseline detector</h5>
                 </div>
             </div>
             <div class="row">
-                <div class="col-5">
-                <select class="form-control" name="baseline_id" style="width:100%">
-                    {% for baseline in baseline_engines %}
-                    <option value="{{ baseline.id }}" model-type-description="baseline-description" data-description="{{ baseline.description }}">{{baseline.name}}</option>
-                    {% endfor %}
-                </select>
+                <div class="offset-xl-2 col-xl-5 offset-lg-1 col-lg-6">
+                    <select class="form-control" name="baseline_id" style="width:100%">
+                        {% for baseline in baseline_engines %}
+                        <option value="{{ baseline.id }}" model-type-description="baseline-description" data-description="{{ baseline.description }}">{{baseline.name}}</option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
             <div class="row mt-2">
-                <div class="col-8 text-justify" id="baseline-description">
+                <div class="offset-xl-2 col-xl-5 offset-lg-1 col-lg-6 text-justify" id="baseline-description">
                 </div>
             </div>
             {% endif %}
 
             <div class="row mt-4">
-                <div class="col">
+                <div class="offset-xl-2 col-xl-10 offset-lg-1 col-lg-11">
                     <h5 class="text-left">Select OCR</h5>
                 </div>
             </div>
             <div class="row">
-                <div class="col-5">
-                <select class="form-control" name="ocr_id" style="width:100%">
-                    {% for ocr in ocr_engines %}
-                    <option value="{{ ocr.id }}" model-type-description="ocr-description" data-description="{{ ocr.description }}">{{ocr.name}}</option>
-                    {% endfor %}
-                </select>
+                <div class="offset-xl-2 col-xl-5 offset-lg-1 col-lg-6">
+                    <select class="form-control" name="ocr_id" style="width:100%">
+                        {% for ocr in ocr_engines %}
+                        <option value="{{ ocr.id }}" model-type-description="ocr-description" data-description="{{ ocr.description }}">{{ocr.name}}</option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
             <div class="row mt-2">
-                <div class="col-8 text-justify" id="ocr-description">
+                <div class="offset-xl-2 col-xl-5 offset-lg-1 col-lg-6 text-justify" id="ocr-description">
                 </div>
             </div>
 
             <div class="row mt-4">
-                <div class="col">
+                <div class="offset-xl-2 col-xl-10 offset-lg-1 col-lg-11">
                     <h5 class="text-left">Select language model</h5>
                 </div>
             </div>
             <div class="row">
-                <div class="col-5">
-                <select class="form-control" name="language_model_id" style="width:100%">
-                {% for language_model in language_model_engines %}
-                    <option value="{{ language_model.id }}" model-type-description="language-model-description" data-description="{{ language_model.description }}">{{language_model.name}}</option>
-                {% endfor %}
-                </select>
+                <div class="offset-xl-2 col-xl-5 offset-lg-1 col-lg-6">
+                    <select class="form-control" name="language_model_id" style="width:100%">
+                    {% for language_model in language_model_engines %}
+                        <option value="{{ language_model.id }}" model-type-description="language-model-description" data-description="{{ language_model.description }}">{{language_model.name}}</option>
+                    {% endfor %}
+                    </select>
                 </div>
             </div>
             <div class="row mt-2">
-                <div class="col-8 text-justify" id="language-model-description">
+                <div class="offset-xl-2 col-xl-5 offset-lg-1 col-lg-6 text-justify" id="language-model-description">
                 </div>
             </div>
 
-            <input class="btn btn-primary my-3" type="submit" value="Submit">
+            <div class="row">
+                <div class="offset-xl-2 col-xl-10 offset-lg-1 col-lg-11">
+                    <input class="btn btn-primary my-3" type="submit" value="Submit">
+                </div>
+            </div>
         </form>
-
     </div>
-{% endblock %} {% block styles %}
+{% endblock %}
+
+{% block styles %}
 <link href="/static/select2/select2.min.css" rel="stylesheet" />
 {% endblock %}
 
 {% block scripts %}
     <script src="/static/select2/select2.min.js"></script>
     <script src="/static/js/select.js?version=1.1"></script>
-    <script>
-
-    </script>
 {% endblock %}

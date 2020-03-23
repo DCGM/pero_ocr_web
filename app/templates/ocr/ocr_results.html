@@ -1,52 +1,110 @@
-{% extends "base/base.html" %} {% block content %}
-    <div>
-        <h3 class="text-left">{{ document.name }} - OCR Results</h3>
-        <div class="results-preview-container my-3">
-            <div class="results-preview-btn prev-btn disabled">
-                <ion-icon name="arrow-dropleft"></ion-icon>
+{% extends "base/base.html" %}
+
+{% block content %}
+    <div class="container-fluid px-4">
+
+        <div class="row my-4">
+            <div class="col-sm-12">
+                <h3 class="text-left">{{ document.name }} - OCR Results</h3>
             </div>
-            <div class="images-container">
-                {% for i in range(0, images|length) %}
-                <div class="image-item-container d-inline-flex flex-column" data-document="{{ document.id }}" data-image="{{ images[i].id }}" data-index="{{ i }}">
-                    <div class="image-container">
-                        <img src="/layout_analysis/get_result_preview/{{ images[i].id }}" alt="{{ images[i].filename }}" class="uploaded_image card-img-top" />
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-sm-12">
+                <div class="scrolling-wrapper" style="overflow-x: scroll; overflow-y: hidden;">
+                    <div class="d-flex flex-row">
+                        {% for i in range(0, images|length) %}
+                            <img class="img-thumbnail pointer-event"
+                                 src="/layout_analysis/get_result_preview/{{ images[i].id }}"
+                                 alt="{{ images[i].filename }}"
+                                 data-document="{{ document.id }}"
+                                 data-image="{{ images[i].id }}"
+                                 data-index="{{ i }}"
+                                 style="height: 250px; cursor: pointer">
+                        {% endfor %}
                     </div>
-                <div class="text-center">
-                    <p>{{ images[i].filename }}</p>
                 </div>
-                <div class="d-none image-item-active"></div>
-                </div>
-                {% endfor %}
-            </div>
-            <div class="results-preview-btn next-btn">
-                <ion-icon name="arrow-dropright"></ion-icon>
             </div>
         </div>
-        <div class="mb-2 col-lg-12">
-            <button id="back-btn" type="button" class="btn btn-secondary">Back</button>
-            <button id="next-btn" type="button" class="btn btn-secondary">Next</button>
-            <button id="save-btn" type="button" class="btn btn-secondary">Save</button>
-            <a id="btn-export-page-xml" class="btn btn-secondary" role="button" download>Export PAGE</a>
-            <a id="btn-export-alto-xml" class="btn btn-secondary" role="button" download>Export ALTO</a>
-            <a id="btn-export-text" class="btn btn-secondary" role="button" download>Export TEXT</a>
+
+        <!--
+        <div class="row mb-4">
+            <div class="col-sm-12 text-center image-description" style="font-size: 150%">
+            </div>
         </div>
-            <div id="map-container"></div>
-            <p id="status"></p>
-        <div id="text-container"></div>
+        -->
+
+        <div class="row">
+            <div class="col-lg-6 col-md-5 mb-2">
+                <button id="back-btn" type="button" class="btn btn-secondary"><i class="fas fa-arrow-left"></i>&nbsp;&nbsp;Back</button>
+                <button id="next-btn" type="button" class="btn btn-secondary">Next&nbsp;&nbsp;<i class="fas fa-arrow-right"></i></button>
+            </div>
+            <div class="col-lg-6 col-md-7 text-md-right mb-2">
+                <a id="btn-export-page-xml" class="btn btn-info" role="button" download><i class="far fa-file-code fa-lg"></i>&nbsp;&nbsp;Export PAGE</a>
+                <a id="btn-export-alto-xml" class="btn btn-info" role="button" download><i class="far fa-file-code fa-lg"></i>&nbsp;&nbsp;Export ALTO</a>
+                <a id="btn-export-text" class="btn btn-info" role="button" download><i class="far fa-file-alt fa-lg"></i>&nbsp;&nbsp;Export TEXT</a>
+            </div>
         </div>
+
+        <div class="row">
+            <div class="col-sm-12">
+                <div id="map-container">
+                    <div class="editor-map" style="height: 500px">
+                    </div>
+                    <div class="status">
+                    </div>
+                </div>
+                <p id="status"></p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-12 text-center">
+                <div id="text-container" style="height: 200px; overflow-y: auto;"></div>
+            </div>
+        </div>
+
+        <div class="row mt-2">
+            <div class="col-sm-12 d-xl-none text-center">
+                <button id="save-btn" type="button" class="btn btn-success"><i class="far fa-save fa-lg"></i>&nbsp;&nbsp;Save</button>
+            </div>
+        </div>
+
+        <div class="row my-2">
+            <div class="col-xl-4">
+                <div class="d-flex flex-row">
+                    <div class="input-group pr-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="inputGroup-sizing-default">Height</span>
+                        </div>
+                        <input type="number" min="50" value="80" id="show-line-height" class="form-control" aria-label="Default" aria-describedby="inputGroup-sizing-default">
+                    </div>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="inputGroup-sizing-default">Pad</span>
+                        </div>
+                        <input type="number" min="0" value="40" id="show-bottom-pad" class="form-control" aria-label="Default" aria-describedby="inputGroup-sizing-default">
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4 d-none d-xl-block text-center">
+                <button id="save-btn" type="button" class="btn btn-success"><i class="far fa-save fa-lg"></i>&nbsp;&nbsp;Save</button>
+            </div>
+        </div>
+
+
+
     </div>
-{% endblock %} {% block styles %}
+{% endblock %}
+
+{% block styles %}
     <link rel="stylesheet" href="/static/leaflet/leaflet.css">
-    <link rel="stylesheet" href="/static/css/LayoutResults.css">
+    <link rel="stylesheet" href="/static/css/ocr_results.css">
 {% endblock %}
 
 {% block scripts %}
     <script src="/static/leaflet/leaflet.js"></script>
     <script src="/static/leaflet/Leaflet.Editable.js"></script>
     <script src="/static/leaflet/Path.Drag.js"></script>
-    <script>
-        var document_id = '{{ document.id }}';
-        var first_image = '{{ images[0].id }}';
-    </script>
     <script src="/static/js/OCRResults.js?version=1.3.3"></script>
 {% endblock %}

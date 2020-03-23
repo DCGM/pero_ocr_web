@@ -15,8 +15,7 @@ class ImageEditor{
     constructor(container)
     {
         this.container = container;
-        this.container.innerHTML = "<div class='editor-map'></div><div class='status'></div>";
-        let save_btn = document.getElementById('save-btn')
+        let save_btn = document.getElementById('save-btn');
         save_btn.addEventListener('click', this.save_annotations.bind(this));
     }
 
@@ -55,9 +54,9 @@ class ImageEditor{
             center: [0, 0],
             zoom: 0,
             editable: true,
-            fadeAnimation: false,
-            zoomAnimation: false,
-            zoomSnap: 0.2
+            fadeAnimation: true,
+            zoomAnimation: true,
+            zoomSnap: 0
         });
 
         let bounds = [xy(0, -this.height), xy(this.width, 0)];
@@ -120,13 +119,41 @@ class ImageEditor{
         {
             l.polygon.setStyle({ color: "#0059ff", opacity: 0.5, fillColor: "#0059ff", fillOpacity: 0.05, weight: 1});
         }
-        let start_x = line.np_textregion_width[0];
-        let start_y = line.np_baseline[0][1];
-        let end_x = line.np_textregion_width[1];
-        let end_y = line.np_baseline[line.np_baseline.length - 1][1];
-        let line_length = end_x - start_x;
-        let y_pad = line_length / 5;
-        this.map.fitBounds([xy(start_x, -start_y + y_pad), xy(end_x, -end_y + y_pad)]);
+
+        let show_line_height = $('#show-line-height').val();
+        let show_bottom_pad = $('#show-bottom-pad').val();
+
+        let width_boundary = get_line_width_boundary(line);
+        let height_boundary = get_line_height_boundary(line);
+        let start_x = width_boundary[0];
+        let end_x = width_boundary[1];
+        let start_y = height_boundary[0];
+        let end_y = height_boundary[1];
+        let line_height = end_y - start_y;
+        let y = start_y + line_height;
+        let line_width = end_x - start_x;
+        let container = $('.editor-map');
+        let container_width = container.width();
+        let container_height = container.height();
+
+        let expected_show_line_height = line_height * (container_width / line_width);
+
+        let new_line_width = (line_height * container_width) / show_line_height;
+        if (expected_show_line_height > show_line_height)
+        {
+            start_x -= (new_line_width - line_width) / 2;
+            end_x += (new_line_width - line_width) / 2;
+        }
+        if (expected_show_line_height < show_line_height)
+        {
+            end_x -= line_width - new_line_width;
+        }
+
+        let show_height_offset = (container_height / 2) - show_bottom_pad;
+        let height_offset = (show_height_offset / (container_width / new_line_width));
+
+        this.map.flyToBounds([xy(start_x, -y + height_offset), xy(end_x, -y + height_offset)],
+                             {animate: true, duration: 0.5});
         line.polygon.setStyle({ color: "#028700", opacity: 1, fillColor: "#028700", fillOpacity: 0.1, weight: 2});
     }
 
@@ -212,12 +239,18 @@ let image_editor = new ImageEditor(document.getElementById('map-container'));
 
 // PAGE CHANGE EVENT
 // #############################################################################
-$('.image-item-container').on('click', function (event) {
+$('.scrolling-wrapper .img-thumbnail').on('click', function (event) {
     let document_id = $(this).data('document');
     let image_id = $(this).data('image');
     image_index = $(this).data('index');
-    $('.image-item-active').addClass('d-none');
-    $(this).find('.image-item-active').removeClass('d-none');
+
+    let previous_active_thumbnail = $('.scrolling-wrapper .img-thumbnail.active');
+    previous_active_thumbnail.removeClass('active');
+    previous_active_thumbnail.css('background-color', 'white');
+    $(this).addClass('active');
+    $(this).css('background-color', '#ff00f2');
+    $('.image-description').html("Image ID: " + image_id);
+
     document.getElementById('btn-export-page-xml').setAttribute("href", Flask.url_for('document.get_page_xml_lines', {'image_id': image_id}))
     document.getElementById('btn-export-alto-xml').setAttribute("href", Flask.url_for('document.get_alto_xml', {'image_id': image_id}))
     document.getElementById('btn-export-text').setAttribute("href", Flask.url_for('document.get_text', {'image_id': image_id}))
@@ -247,13 +280,12 @@ $('.image-item-container').on('click', function (event) {
 // PAGE NAVIGATION
 // #############################################################################
 let image_index = 0;
-let image_containers = $('.image-item-container');
-let number_of_images = image_containers.length;
+let images = $('.scrolling-wrapper .img-thumbnail');
+let number_of_images = images.length;
 if (number_of_images)
 {
-    let first_image_container = image_containers[image_index];
-    $(first_image_container).click();
-    $(first_image_container).find('.image-item-active').removeClass('d-none');
+    let first_image = images[image_index];
+    $(first_image).click();
 }
 let back_btn = document.getElementById('back-btn')
 back_btn.addEventListener('click', previous_page);
@@ -264,7 +296,7 @@ function previous_page()
     if (image_index > 0)
     {
         image_index -= 1;
-        $('.image-item-container[data-index=' + image_index + ']').click();
+        $('.scrolling-wrapper .img-thumbnail[data-index=' + image_index + ']').click();
     }
 }
 function next_page()
@@ -272,7 +304,7 @@ function next_page()
     if ((image_index + 1) < number_of_images)
     {
         image_index += 1;
-        $('.image-item-container[data-index=' + image_index + ']').click();
+        $('.scrolling-wrapper .img-thumbnail[data-index=' + image_index + ']').click();
     }
 }
 // #############################################################################
@@ -410,6 +442,42 @@ function set_line_background_to_save(text_line_element)
     {
         child.style.backgroundColor = "#d0ffcf";
     }
+}
+
+function get_line_height_boundary(line)
+{
+    let height_min = 100000000000000000000000;
+    let height_max = 0;
+    for (let coord of line.np_points)
+    {
+        if (coord[1] < height_min)
+        {
+            height_min = coord[1];
+        }
+        if (coord[1] > height_max)
+        {
+            height_max = coord[1];
+        }
+    }
+    return [height_min, height_max];
+}
+
+function get_line_width_boundary(line)
+{
+    let width_min = 100000000000000000000000;
+    let width_max = 0;
+    for (let coord of line.np_points)
+    {
+        if (coord[0] < width_min)
+        {
+            width_min = coord[0];
+        }
+        if (coord[0] > width_max)
+        {
+            width_max = coord[0];
+        }
+    }
+    return [width_min, width_max];
 }
 
 function get_text_content(text_line_element)
