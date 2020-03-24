@@ -16,7 +16,11 @@ class ImageEditor{
     {
         this.container = container;
         let save_btn = document.getElementById('save-btn');
+        let show_line_height = document.getElementById('show-line-height');
+        let show_bottom_pad = document.getElementById('show-bottom-pad');
         save_btn.addEventListener('click', this.save_annotations.bind(this));
+        show_line_height.addEventListener('input', this.show_line_change.bind(this));
+        show_bottom_pad.addEventListener('input', this.show_line_change.bind(this));
     }
 
     get_image(document_id, image_id)
@@ -38,6 +42,7 @@ class ImageEditor{
         this.width = data['width'];
         this.height = data['height'];
         this.lines = data['lines'];
+        this.active_line = false;
 
         for (let l of this.lines)
         {
@@ -91,6 +96,7 @@ class ImageEditor{
         line.polygon.on('click', this.polygon_click.bind(this, line));
 
         let text_line_element = document.createElement('div');
+        text_line_element.setAttribute("class", "text-line");
         text_line_element.setAttribute("contentEditable", "true");
         text_line_element.setAttribute("id", i);
         document.getElementById('text-container').appendChild(text_line_element);
@@ -109,52 +115,34 @@ class ImageEditor{
         }
     }
 
-    polygon_click(line){
+    polygon_click(line)
+    {
         line.text_line_element.focus();
     }
 
     line_click(line)
     {
-        for (let l of this.lines)
+        if (this.active_line)
         {
-            l.polygon.setStyle({ color: "#0059ff", opacity: 0.5, fillColor: "#0059ff", fillOpacity: 0.05, weight: 1});
+            this.active_line.polygon.setStyle({ color: "#0059ff", opacity: 0.5, fillColor: "#0059ff", fillOpacity: 0.05, weight: 1});
         }
 
-        let show_line_height = $('#show-line-height').val();
-        let show_bottom_pad = $('#show-bottom-pad').val();
+        let focus_line_points = get_focus_line_points(line);
 
-        let width_boundary = get_line_width_boundary(line);
-        let height_boundary = get_line_height_boundary(line);
-        let start_x = width_boundary[0];
-        let end_x = width_boundary[1];
-        let start_y = height_boundary[0];
-        let end_y = height_boundary[1];
-        let line_height = end_y - start_y;
-        let y = start_y + line_height;
-        let line_width = end_x - start_x;
-        let container = $('.editor-map');
-        let container_width = container.width();
-        let container_height = container.height();
-
-        let expected_show_line_height = line_height * (container_width / line_width);
-
-        let new_line_width = (line_height * container_width) / show_line_height;
-        if (expected_show_line_height > show_line_height)
-        {
-            start_x -= (new_line_width - line_width) / 2;
-            end_x += (new_line_width - line_width) / 2;
-        }
-        if (expected_show_line_height < show_line_height)
-        {
-            end_x -= line_width - new_line_width;
-        }
-
-        let show_height_offset = (container_height / 2) - show_bottom_pad;
-        let height_offset = (show_height_offset / (container_width / new_line_width));
-
-        this.map.flyToBounds([xy(start_x, -y + height_offset), xy(end_x, -y + height_offset)],
+        this.map.flyToBounds([xy(focus_line_points[0], -focus_line_points[2]), xy(focus_line_points[1], -focus_line_points[2])],
                              {animate: true, duration: 0.5});
+        this.active_line = line;
         line.polygon.setStyle({ color: "#028700", opacity: 1, fillColor: "#028700", fillOpacity: 0.1, weight: 2});
+    }
+
+    show_line_change()
+    {
+        if (this.active_line)
+        {
+            let focus_line_points = get_focus_line_points(this.active_line);
+            this.map.flyToBounds([xy(focus_line_points[0], -focus_line_points[2]), xy(focus_line_points[1], -focus_line_points[2])],
+                                 {animate: false, duration: 0});
+        }
     }
 
     line_mutated(line, e)
@@ -239,17 +227,19 @@ let image_editor = new ImageEditor(document.getElementById('map-container'));
 
 // PAGE CHANGE EVENT
 // #############################################################################
-$('.scrolling-wrapper .img-thumbnail').on('click', function (event) {
+$('.scrolling-wrapper .figure').on('click', function (event) {
     let document_id = $(this).data('document');
     let image_id = $(this).data('image');
     image_index = $(this).data('index');
 
-    let previous_active_thumbnail = $('.scrolling-wrapper .img-thumbnail.active');
-    previous_active_thumbnail.removeClass('active');
-    previous_active_thumbnail.css('background-color', 'white');
+    let previous_active_figure = $('.scrolling-wrapper .figure.active');
+    if (previous_active_figure.length)
+    {
+        previous_active_figure.removeClass('active');
+        $(previous_active_figure.children()[0]).css('background-color', 'white');
+    }
     $(this).addClass('active');
-    $(this).css('background-color', '#ff00f2');
-    $('.image-description').html("Image ID: " + image_id);
+    $($(this).children()[0]).css('background-color', '#ff00f2');
 
     document.getElementById('btn-export-page-xml').setAttribute("href", Flask.url_for('document.get_page_xml_lines', {'image_id': image_id}))
     document.getElementById('btn-export-alto-xml').setAttribute("href", Flask.url_for('document.get_alto_xml', {'image_id': image_id}))
@@ -280,7 +270,7 @@ $('.scrolling-wrapper .img-thumbnail').on('click', function (event) {
 // PAGE NAVIGATION
 // #############################################################################
 let image_index = 0;
-let images = $('.scrolling-wrapper .img-thumbnail');
+let images = $('.scrolling-wrapper .figure');
 let number_of_images = images.length;
 if (number_of_images)
 {
@@ -296,7 +286,7 @@ function previous_page()
     if (image_index > 0)
     {
         image_index -= 1;
-        $('.scrolling-wrapper .img-thumbnail[data-index=' + image_index + ']').click();
+        $('.scrolling-wrapper .figure[data-index=' + image_index + ']').click();
     }
 }
 function next_page()
@@ -304,7 +294,7 @@ function next_page()
     if ((image_index + 1) < number_of_images)
     {
         image_index += 1;
-        $('.scrolling-wrapper .img-thumbnail[data-index=' + image_index + ']').click();
+        $('.scrolling-wrapper .figure[data-index=' + image_index + ']').click();
     }
 }
 // #############################################################################
@@ -432,6 +422,38 @@ function insert_new_char_to_current_position(char, text_line_element)
       start_span.remove();
       end_span.remove();
     }
+}
+
+function get_focus_line_points(line)
+{
+    let show_line_height = $('#show-line-height').val();
+    let show_bottom_pad = $('#show-bottom-pad').val();
+    let width_boundary = get_line_width_boundary(line);
+    let height_boundary = get_line_height_boundary(line);
+    let start_x = width_boundary[0];
+    let end_x = width_boundary[1];
+    let start_y = height_boundary[0];
+    let end_y = height_boundary[1];
+    let line_height = end_y - start_y;
+    let y = start_y + line_height;
+    let line_width = end_x - start_x;
+    let container = $('.editor-map');
+    let container_width = container.width();
+    let container_height = container.height();
+    let expected_show_line_height = line_height * (container_width / line_width);
+    let new_line_width = (line_height * container_width) / show_line_height;
+    if (expected_show_line_height > show_line_height)
+    {
+        start_x -= (new_line_width - line_width) / 2;
+        end_x += (new_line_width - line_width) / 2;
+    }
+    if (expected_show_line_height < show_line_height)
+    {
+        end_x -= line_width - new_line_width;
+    }
+    let show_height_offset = (container_height / 2) - show_bottom_pad;
+    let height_offset = (show_height_offset / (container_width / new_line_width));
+    return [start_x, end_x, y - height_offset];
 }
 
 function set_line_background_to_save(text_line_element)

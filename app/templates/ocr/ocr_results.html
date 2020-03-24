@@ -11,28 +11,9 @@
 
         <div class="row mb-4">
             <div class="col-sm-12">
-                <div class="scrolling-wrapper" style="overflow-x: scroll; overflow-y: hidden;">
-                    <div class="d-flex flex-row">
-                        {% for i in range(0, images|length) %}
-                            <img class="img-thumbnail pointer-event"
-                                 src="/layout_analysis/get_result_preview/{{ images[i].id }}"
-                                 alt="{{ images[i].filename }}"
-                                 data-document="{{ document.id }}"
-                                 data-image="{{ images[i].id }}"
-                                 data-index="{{ i }}"
-                                 style="height: 250px; cursor: pointer">
-                        {% endfor %}
-                    </div>
-                </div>
+                {% include 'base/scrolling_wrapper.html' %}
             </div>
         </div>
-
-        <!--
-        <div class="row mb-4">
-            <div class="col-sm-12 text-center image-description" style="font-size: 150%">
-            </div>
-        </div>
-        -->
 
         <div class="row">
             <div class="col-lg-6 col-md-5 mb-2">
@@ -106,5 +87,5 @@
     <script src="/static/leaflet/leaflet.js"></script>
     <script src="/static/leaflet/Leaflet.Editable.js"></script>
     <script src="/static/leaflet/Path.Drag.js"></script>
-    <script src="/static/js/OCRResults.js?version=1.3.3"></script>
+    <script src="/static/js/OCRResults.js?version=1.3.4"></script>
 {% endblock %}

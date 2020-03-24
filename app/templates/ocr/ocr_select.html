@@ -18,7 +18,7 @@
             </div>
             <div class="row">
                 <div class="offset-xl-2 col-xl-5 offset-lg-1 col-lg-6">
-                    <select class="form-control" name="baseline_id" style="width:100%">
+                    <select class="form-control" name="baseline_id"">
                         {% for baseline in baseline_engines %}
                         <option value="{{ baseline.id }}" model-type-description="baseline-description" data-description="{{ baseline.description }}">{{baseline.name}}</option>
                         {% endfor %}
@@ -38,7 +38,7 @@
             </div>
             <div class="row">
                 <div class="offset-xl-2 col-xl-5 offset-lg-1 col-lg-6">
-                    <select class="form-control" name="ocr_id" style="width:100%">
+                    <select class="form-control" name="ocr_id">
                         {% for ocr in ocr_engines %}
                         <option value="{{ ocr.id }}" model-type-description="ocr-description" data-description="{{ ocr.description }}">{{ocr.name}}</option>
                         {% endfor %}
@@ -57,7 +57,7 @@
             </div>
             <div class="row">
                 <div class="offset-xl-2 col-xl-5 offset-lg-1 col-lg-6">
-                    <select class="form-control" name="language_model_id" style="width:100%">
+                    <select class="form-control" name="language_model_id">
                     {% for language_model in language_model_engines %}
                         <option value="{{ language_model.id }}" model-type-description="language-model-description" data-description="{{ language_model.description }}">{{language_model.name}}</option>
                     {% endfor %}
@@ -78,11 +78,6 @@
     </div>
 {% endblock %}
 
-{% block styles %}
-<link href="/static/select2/select2.min.css" rel="stylesheet" />
-{% endblock %}
-
 {% block scripts %}
-    <script src="/static/select2/select2.min.js"></script>
     <script src="/static/js/select.js?version=1.1"></script>
 {% endblock %}

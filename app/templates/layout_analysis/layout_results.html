@@ -1,53 +1,51 @@
-{% extends "base/base.html" %} {% block content %}
-    <div onkeypress="editor_keypress(event)">
-        <h3 class="text-left">{{ document.name }} - Layout Analysis Results</h3>
-        <div class="results-preview-container my-3">
-            <div class="results-preview-btn prev-btn disabled">
-                <ion-icon name="arrow-dropleft"></ion-icon>
+{% extends "base/base.html" %}
+{% block content %}
+    <div class="container-fluid px-4" onkeypress="editor_keypress(event)">
+
+        <div class="row my-4">
+            <div class="col-sm-12">
+                <h3 class="text-left">{{ document.name }} - Layout Analysis Results</h3>
             </div>
-            <div class="images-container">
-                {% for image in images %}
-                    <div class="image-item-container d-inline-flex flex-column" data-document="{{ document.id }}"
-                         data-image="{{ image.id }}">
-                        <div class="image-container">
-                            <img
-                                    src="/layout_analysis/get_result_preview/{{ image.id }}"
-                                    alt="{{ image.filename }}"
-                                    class="uploaded_image card-img-top"
-                            />
-                        </div>
-                        <div class="text-center">
-                            <p class="image-item-name"
-                               data-toggle="tooltip"
-                               data-placement="right"
-                               title="{{ image.filename }}">
-                                {{ image.filename }}</p>
-                        </div>
-                        <div class="d-none image-item-active"></div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-sm-12">
+                {% include 'base/scrolling_wrapper.html' %}
+            </div>
+        </div>
+
+        <div class="row mb-2">
+            <div class="col-xl-3 mb-2">
+                <button class="btn btn-secondary" onclick="previous_page();"><i class="fas fa-arrow-left"></i>&nbsp;&nbsp;Back&nbsp;(b)</button>
+                <button class="btn btn-secondary" onclick="next_page();">Next&nbsp;(n)&nbsp;&nbsp;<i class="fas fa-arrow-right"></i></button>
+            </div>
+            <div class="col-xl-6 mb-2 text-xl-center">
+                <button class="btn btn-secondary" onclick="create_new_object();"><i class="fas fa-plus fa-lg"></i>&nbsp;&nbsp;New&nbsp;object&nbsp;(c)</button>
+                <button class="btn btn-secondary" onclick="toggle_delete_object();"><i class="fas fa-times fa-lg"></i>&nbsp;&nbsp;Toggle&nbsp;delete&nbsp;(g)</button>
+                <button class="btn btn-secondary" onclick="toggle_delete_all_objects();"><i class="fas fa-times fa-lg"></i>&nbsp;&nbsp;Toggle&nbsp;delete&nbsp;all&nbsp;(a)</button>
+                <button class="btn btn-secondary" onclick="get_image(annotator_data.uuid)"><i class="fas fa-redo-alt fa-lg"></i>&nbsp;&nbsp;Reset&nbsp;(r)</button>
+            </div>
+            <div class="col-xl-3 text-xl-right">
+                <button class="btn btn-success" onclick="save_image()"><i class="far fa-save fa-lg"></i>&nbsp;&nbsp;Save&nbsp;(s)</button>
+                <a id="btn-export-page-xml" class="btn btn-info" role="button" download><i class="far fa-file-code fa-lg"></i>&nbsp;&nbsp;Export PAGE</a>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <div class="current-result-container" data-document="{{ document.id }}" data-image="{{ images[0].id }}">
+                    <div id="map-container">
+                        <div id="mapid"></div>
                     </div>
-                {% endfor %}
-            </div>
-            <div class="results-preview-btn next-btn">
-                <ion-icon name="arrow-dropright"></ion-icon>
+                    <p id="status"></p>
+                </div>
             </div>
         </div>
-        <div class="current-result-container" data-document="{{ document.id }}" data-image="{{ images[0].id }}">
-            <div class="my-2">
-                <button class="btn btn-secondary" onclick="get_image(annotator_data.uuid)">Reset (r)</button>
-                <button class="btn btn-secondary" onclick="next_image();">Next (n)</button>
-                <button class="btn btn-secondary" onclick="previous_image();">Back (b)</button>
-                <button class="btn btn-secondary" onclick="create_new_object();">New object (c)</button>
-                <button class="btn btn-secondary" onclick="toggle_delete_object();">Toggle delete (g)</button>
-                <button class="btn btn-secondary" onclick="toggle_delete_all_objects();">Toggle delete all (a)</button>
-                <button class="btn btn-secondary" onclick="save_image()">save (s)</button>
-            </div>
-            <div id="map-container">
-                <div id="mapid"></div>
-            </div>
-            <p id="status"></p>
-        </div>
+
     </div>
-{% endblock %} {% block styles %}
+{% endblock %}
+
+{% block styles %}
     <link rel="stylesheet" href="/static/leaflet/leaflet.css">
     <link rel="stylesheet" href="/static/css/LayoutResults.css">
 {% endblock %}
@@ -64,5 +62,5 @@
             imagesId.push('{{ image.id }}');
         {% endfor %}
     </script>
-    <script src="/static/js/LayoutResults.js?version=1.1"></script>
+    <script src="/static/js/LayoutResults.js?version=1.2"></script>
 {% endblock %}

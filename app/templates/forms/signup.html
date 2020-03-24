@@ -1,9 +1,21 @@
 <!-- templates/index.html -->
+{% import  "bootstrap/wtf.html" as wtf %}
+{% extends "base/base.html" %}
+{% block content %}
+    <div class="container-fluid px-4">
 
-{% extends "base/base.html" %} {% block content %}
-    <h3>Register</h3>
-    {% import  "bootstrap/wtf.html" as wtf %}
-    {{ wtf.quick_form(form, extra_classes="register-form") }}
+    <div class="row mt-4">
+        <div class="offset-xl-2 col-xl-10">
+            <h3>Register</h3>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="offset-xl-2 col-xl-8">
+            {{ wtf.quick_form(form, extra_classes="register-form") }}
+        </div>
+    </div>
+
 {% endblock %}
 
 {% block scripts %}
