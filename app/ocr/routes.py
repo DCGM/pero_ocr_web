@@ -1,6 +1,7 @@
 import os
 import shutil
 import json
+from natsort import natsorted
 import configparser
 from flask import render_template, request, current_app, send_file
 from flask import url_for, redirect, flash, jsonify
@@ -32,7 +33,7 @@ def show_results(document_id):
     if document.state != DocumentState.COMPLETED_OCR:
         return  # Bad Request or something like that
     images = get_document_images(document)
-    return render_template('ocr/ocr_results.html', document=document, images=list(images))
+    return render_template('ocr/ocr_results.html', document=document, images=natsorted(list(images), key=lambda x: x.filename))
 
 
 @bp.route('/revert_ocr/<string:document_id>', methods=['GET'])
