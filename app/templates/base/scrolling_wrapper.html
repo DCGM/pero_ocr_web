@@ -10,7 +10,7 @@
                     <img class="figure-img img-thumbnail mx-auto d-block"
                          src="/layout_analysis/get_result_preview/{{ images[i].id }}"
                          alt="{{ images[i].filename }}"
-                         style="height: 200px;">
+                         style="height: 200px; min-width: {{ images[i].width * (200 / images[i].height) }}px;">
                     <figcaption class="figure-caption text-center"><strong>{{ images[i].filename }}</strong></figcaption>
                 </figure>
             </div>
