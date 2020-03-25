@@ -18,8 +18,6 @@ from app import db_session
 from flask import jsonify
 import shutil
 
-from pero_ocr.document_ocr.layout import PageLayout
-
 
 ########################################################################################################################
 # WEBSITE ROUTES

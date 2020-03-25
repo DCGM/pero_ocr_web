@@ -99,9 +99,11 @@ class ImageEditor{
         text_line_element.setAttribute("class", "text-line");
         text_line_element.setAttribute("contentEditable", "true");
         text_line_element.setAttribute("id", i);
+        text_line_element.style.lineHeight = "220%";
         document.getElementById('text-container').appendChild(text_line_element);
         text_line_element.addEventListener('focus', this.line_click.bind(this, line));
         text_line_element.addEventListener('keypress', this.line_press.bind(this, line));
+        text_line_element.addEventListener('keydown', this.line_keydown.bind(this, line));
         text_line_element.addEventListener('paste', this.line_paste.bind(this, line));
         set_line_confidences_to_text_line_element(line, text_line_element);
         line.observer = new MutationObserver(this.line_mutated.bind(this, line));
@@ -186,6 +188,46 @@ class ImageEditor{
             e.keyCode != 26)
         {
             insert_new_char_to_current_position(String.fromCharCode(e.keyCode), line.text_line_element);
+        }
+    }
+
+    line_keydown(line, e)
+    {
+        let empty_text_line_element = !($(line.text_line_element).has('span').length);
+
+        // LEFT ARROW
+        if (e.keyCode == 37 && !empty_text_line_element)
+        {
+            e.preventDefault();
+            skip_all_empty_spans_to_the_left()
+        }
+
+        // RIGHT ARROW
+        if (e.keyCode == 39 && !empty_text_line_element)
+        {
+            e.preventDefault();
+            skip_all_empty_spans_to_the_right();
+        }
+
+        // BACKSPACE
+        if (e.keyCode == 8 && !empty_text_line_element)
+        {
+            let selection = document.getSelection();
+            let range = selection.getRangeAt(0);
+            let text_selected = range.cloneContents().children.length;
+            if (text_selected)
+            {
+                insert_new_char_to_current_position("&#8203;")
+
+                e.preventDefault();
+            }
+            else
+            {
+                if (!set_caret_before_actual_char())
+                {
+                    e.preventDefault();
+                }
+            }
         }
     }
 
@@ -351,9 +393,6 @@ function insert_new_char_to_current_position(char, text_line_element)
         $(text_line_element).html('');
     }
 
-    let start_span;
-    let end_span;
-
     // Insert nonbreaking space instead of normal space (more robust)
     if (char == " ")
     {
@@ -362,22 +401,31 @@ function insert_new_char_to_current_position(char, text_line_element)
 
     let selection = document.getSelection();
     let range = selection.getRangeAt(0);
+    let text_selected = range.cloneContents().children.length;
 
-    // Get span on current caret position
-    let caret_element = selection.anchorNode.parentNode;
+    let start_span;
+    let end_span;
+
+    let caret_element;
+    let caret_before_first_span = false;
+
     if (empty_text_line_element)
     {
         caret_element = text_line_element;
     }
-
-    // If text is selected remove it
-    // Removal of selection keeps two empty spans, store them for deletion
-    let text_selected = range.startOffset != range.endOffset;
-    if (text_selected)
+    else
     {
-      start_span = range.startContainer.parentNode;
-      end_span = range.endContainer.parentNode;
-      range.deleteContents();
+        caret_element = get_caret_span();
+        caret_before_first_span = check_caret_before_first_span(caret_element);
+
+        // If text is selected remove it
+        // Removal of selection keeps two empty spans, store them for deletion
+        if (text_selected)
+        {
+            start_span = range.startContainer.parentNode;
+            end_span = range.endContainer.parentNode;
+            range.deleteContents();
+        }
     }
 
     // Create new span for new char
@@ -386,31 +434,43 @@ function insert_new_char_to_current_position(char, text_line_element)
     new_span.setAttribute("style", "font-size: 150%; background: #ffffff; color: #028700");
     new_span.innerHTML = "&#8203;";
 
-    // If selection begins on the first position in line insert new span before (if line is empty just append span)
-    if (range.startOffset == 0)
+    if (empty_text_line_element)
     {
-        if (empty_text_line_element)
-        {
-            caret_element.appendChild(new_span);
-        }
-        else
+        caret_element.appendChild(new_span);
+    }
+    else
+    {
+        if (caret_before_first_span)
         {
             caret_element.parentNode.insertBefore(new_span, caret_element);
         }
+        else
+        {
+            caret_element.parentNode.insertBefore(new_span, caret_element.nextSibling);
+        }
     }
-    // Otherwise insert new span after
-    else
-    {
-        caret_element.parentNode.insertBefore(new_span, caret_element.nextSibling);
-    }
+
 
     // Set range (selection) on content of new span &#8203
     range.selectNodeContents(new_span.childNodes[0]);
     selection.removeAllRanges();
     selection.addRange(range);
 
-    // Replace current range (selection) with char
-    document.execCommand("insertHTML", false, char);
+    let isFirefox = typeof InstallTrigger !== 'undefined';
+    if (isFirefox)
+    {
+        new_span = document.createElement('span');
+        new_span.setAttribute("style", "font-size: 150%; background: #ffffff; color: #028700");
+        new_span.innerHTML = char;
+
+        // Replace current span with new span
+        document.execCommand("insertHTML", false, new_span.outerHTML);
+    }
+    else
+    {
+        // Replace the content (&#8203) of current new span
+        document.execCommand("insertHTML", false, char);
+    }
 
     // Usage of &#8203 and execCommand ensures that CTRL+Z and CTRL+Y works
     // properly. After pressing CTRL+Z the char is replaced by &#8203 and after
@@ -419,9 +479,183 @@ function insert_new_char_to_current_position(char, text_line_element)
     // Remove empty spans
     if (text_selected)
     {
-      start_span.remove();
-      end_span.remove();
+        start_span.remove();
+        end_span.remove();
     }
+
+}
+
+function skip_all_empty_spans_to_the_left()
+{
+    let caret_span = get_caret_span();
+    let previous_span = caret_span;
+    while (previous_span)
+    {
+        let skip_span = ((previous_span.innerHTML.charCodeAt(0) == 8203) || (previous_span.innerHTML == ""));
+
+        if (skip_span)
+        {
+            if (previous_span.previousSibling)
+            {
+                previous_span = previous_span.previousSibling;
+            }
+            else
+            {
+                break;
+            }
+        }
+        else
+        {
+            break;
+        }
+    }
+    let selection = document.getSelection();
+    let range = selection.getRangeAt(0);
+    if (previous_span.previousSibling)
+    {
+        if (previous_span.previousSibling.childNodes.length)
+        {
+            range.selectNodeContents(previous_span.previousSibling.childNodes[0]);
+            range.collapse(false);
+        }
+        else
+        {
+            range.selectNodeContents(previous_span.previousSibling);
+            range.collapse(false);
+        }
+    }
+    else
+    {
+        if (previous_span.childNodes.length)
+        {
+            range.selectNodeContents(previous_span.childNodes[0]);
+        }
+        else
+        {
+            range.selectNodeContents(previous_span);
+        }
+        range.collapse(true);
+    }
+    selection.removeAllRanges();
+    selection.addRange(range);
+}
+
+function skip_all_empty_spans_to_the_right()
+{
+    let caret_span = get_caret_span();
+    let caret_before_first_span = check_caret_before_first_span(caret_span);
+    let valid_current_span = false;
+    if (caret_before_first_span)
+    {
+        valid_current_span = ((caret_span.innerHTML.charCodeAt(0) != 8203) && (caret_span.innerHTML != ""));
+    }
+    let next_span = caret_span;
+    if (caret_span.nextSibling && !valid_current_span)
+    {
+        next_span = caret_span.nextSibling;
+        while (next_span)
+        {
+            let skip_span = ((next_span.innerHTML.charCodeAt(0) == 8203) || (next_span.innerHTML == ""));
+            if (skip_span)
+            {
+                next_span = next_span.nextSibling;
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+    let selection = document.getSelection();
+    let range = selection.getRangeAt(0);
+    if (next_span.childNodes.length)
+    {
+        range.selectNodeContents(next_span.childNodes[0]);
+    }
+    else
+    {
+        range.selectNodeContents(next_span);
+    }
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+}
+
+function set_caret_before_actual_char()
+{
+    let caret_span = get_caret_span();
+    let caret_before_first_span = check_caret_before_first_span(caret_span);
+    let previous_span = caret_span;
+    let valid_span_char = false;
+    while (previous_span)
+    {
+        let skip_span = ((previous_span.innerHTML.charCodeAt(0) == 8203) || (previous_span.innerHTML == ""));
+
+        if (skip_span)
+        {
+            if (previous_span.previousSibling)
+            {
+                previous_span = previous_span.previousSibling;
+            }
+            else
+            {
+                break;
+            }
+        }
+        else
+        {
+            valid_span_char = true;
+            break;
+        }
+    }
+    let selection = document.getSelection();
+    let range = selection.getRangeAt(0);
+    if (valid_span_char && !caret_before_first_span)
+    {
+        range.selectNodeContents(previous_span.childNodes[0]);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+function get_caret_span()
+{
+    let selection = document.getSelection();
+    let caret_span = selection.anchorNode;
+    //Firefox bug, doesn't delete span after pressing backspace
+    if (caret_span.tagName != "SPAN")
+    {
+        caret_span = caret_span.parentNode;
+    }
+    // Anchor offset should be always 1 apart from caret on first position
+    if (selection.anchorOffset == 0)
+    {
+        // Firefox bug, anchor offset is 0 but caret element is not the first element
+        if (caret_span.previousSibling)
+        {
+            caret_span = caret_span.previousSibling;
+        }
+    }
+    return caret_span;
+}
+
+function check_caret_before_first_span(caret_span)
+{
+    let selection = document.getSelection();
+    if (selection.anchorOffset == 0)
+    {
+        if (!caret_span.previousSibling)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 function get_focus_line_points(line)
