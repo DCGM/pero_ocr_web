@@ -65,6 +65,7 @@ class UserDocument(Base):
     id = Column(Integer(), primary_key=True)
     user_id = Column(Integer(), ForeignKey('users.id'), nullable=False)
     document_id = Column(GUID(), ForeignKey('documents.id'), nullable=False)
+    trusted = Column(Integer(), nullable=False)
 
 
 class Request(Base):

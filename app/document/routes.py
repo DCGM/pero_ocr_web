@@ -6,7 +6,6 @@ from app.document.general import create_document, check_and_remove_document, sav
     remove_image, get_document_images, get_page_layout, get_page_layout_text
 from app.db.general import get_user_documents, get_document_by_id, get_image_by_id
 from app.document.forms import CreateDocumentForm
-from lxml import etree as ET
 from io import BytesIO
 import zipfile
 import time
@@ -95,6 +94,9 @@ def get_text(image_id):
 
 @bp.route('/download_document_pages/<string:document_id>')
 def get_document_pages(document_id):
+    if not is_user_owner_or_collaborator(document_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
     memory_file = BytesIO()
     with zipfile.ZipFile(memory_file, 'w') as zf:
         document = get_document_by_id(document_id)
@@ -117,6 +119,9 @@ def get_document_pages(document_id):
 @bp.route('/get_document_annotated_pages/<string:document_id>')
 @bp.route('/download_document_annotated_pages/<string:document_id>')
 def get_document_annotated_pages(document_id):
+    if not is_user_owner_or_collaborator(document_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
     memory_file = BytesIO()
     with zipfile.ZipFile(memory_file, 'w') as zf:
         document = get_document_by_id(document_id)
@@ -176,4 +181,17 @@ def collaborators_post(document_id):
         flash(u'Collaborators saved successfully.', 'success')
         return redirect(url_for('document.collaborators_get', document_id=document_id))
 
+@bp.route('/update_document_annotated_pages/<string:document_id>', methods=['POST'])
+@login_required
+def update_annotated_confidences(document_id):
+    pass
 
+@bp.route('/update_document_unannotated_pages/<string:document_id>', methods=['POST'])
+@login_required
+def update_unannotated_confidences(document_id):
+    pass
+
+@bp.route('/update_document_all_pages/<string:document_id>', methods=['POST'])
+@login_required
+def update_all_confidences(document_id):
+    pass
