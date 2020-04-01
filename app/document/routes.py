@@ -1,3 +1,5 @@
+import json
+
 from app.document import bp
 from flask_login import login_required, current_user
 from flask import render_template, redirect, url_for, request, send_file, flash, Response, jsonify, current_app
@@ -192,6 +194,12 @@ def update_unannotated_confidences(document_id):
     pass
 
 @bp.route('/update_document_all_pages/<string:document_id>', methods=['POST'])
-@login_required
 def update_all_confidences(document_id):
-    pass
+    # check if the post request has the file part
+    file = request.files['data']
+    content = file.read()
+    update = json.loads(content)
+    print(update)
+
+    return redirect(url_for('document.documents'))
+

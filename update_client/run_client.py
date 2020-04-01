@@ -53,8 +53,8 @@ if __name__ == '__main__':
             'csrf_token': csrf
         }
 
-        # authentification
-        p = s.post('http://127.0.0.1:2000/auth/login', data=payload)
+        #authentification
+        p = s.post(join_url(args.server, 'auth/login'), data=payload)
 
         #download all pages
         r = s.get(join_url(args.server, 'document/download_document_pages', args.doc_uuid), stream=True)
@@ -133,3 +133,6 @@ if __name__ == '__main__':
         file.write(dataset_file)
         file.close()
         """
+
+        p = s.post(join_url(args.server, 'document/update_document_all_pages', 'id'),
+                   files={'data': ('readme.txt', '{ \"name\":\"John\", \"age\":30, \"car\":null }', 'text/plain')})
