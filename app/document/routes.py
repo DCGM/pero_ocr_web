@@ -10,6 +10,8 @@ from lxml import etree as ET
 from io import BytesIO
 import zipfile
 import time
+import os
+import json
 
 
 @bp.route('/documents')
@@ -175,5 +177,20 @@ def collaborators_post(document_id):
         save_collaborators(document_id, collaborators_ids)
         flash(u'Collaborators saved successfully.', 'success')
         return redirect(url_for('document.collaborators_get', document_id=document_id))
+
+
+@bp.route('/get_keyboard', methods=['GET'])
+@login_required
+def get_keyboard():
+    keyboard_dict = {}
+
+    for keyboard_layout in os.listdir(current_app.config['KEYBOARD_FOLDER']):
+        keyboard_layout_name = os.path.splitext(keyboard_layout)[0]
+        keyboard_layout_path = os.path.join(current_app.config['KEYBOARD_FOLDER'], keyboard_layout)
+        with open(keyboard_layout_path) as f:
+            keyboard_dict[keyboard_layout_name] = json.load(f)
+
+    return jsonify(keyboard_dict)
+
 
 

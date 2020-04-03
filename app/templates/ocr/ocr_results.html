@@ -46,8 +46,11 @@
         </div>
 
         <div class="row mt-2">
-            <div class="col-sm-12 d-xl-none text-center">
-                <button id="save-btn" type="button" class="btn btn-success"><i class="far fa-save fa-lg"></i>&nbsp;&nbsp;Save</button>
+            <div class="col-sm-11 d-xl-none text-center">
+                <button type="button" class="save-btn btn btn-success"><i class="far fa-save fa-lg"></i>&nbsp;&nbsp;Save</button>
+            </div>
+            <div class="col-sm-1 d-xl-none text-right">
+                <button type="button" class="keyboard-btn btn btn-secondary"><i class="far fa-keyboard fa-lg"></i></i></button>
             </div>
         </div>
 
@@ -69,7 +72,30 @@
                 </div>
             </div>
             <div class="col-xl-4 d-none d-xl-block text-center">
-                <button id="save-btn" type="button" class="btn btn-success"><i class="far fa-save fa-lg"></i>&nbsp;&nbsp;Save</button>
+                <button type="button" class="save-btn btn btn-success"><i class="far fa-save fa-lg"></i>&nbsp;&nbsp;Save</button>
+            </div>
+            <div class="col-xl-4 d-none d-xl-block text-right">
+                <button type="button" class="keyboard-btn btn btn-secondary"><i class="far fa-keyboard fa-lg"></i></i></button>
+            </div>
+        </div>
+
+        <div id="keyboard" class="d-none">
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <label class="input-group-text" for="layout-select">Layout</label>
+                </div>
+                <select class="custom-select" id="layout-select">
+                </select>
+            </div>
+            <div id="layouts"></div>
+            <div class="d-flex flex-row pt-4">
+                <div class="input-group pr-3">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="new-letter">New letter</span>
+                    </div>
+                    <input type="text" maxlength="1"  id="new-letter-input" class="form-control" aria-label="Default" aria-describedby="new-letter">
+                </div>
+                <div id="add-new-letter-btn" class="btn btn-success">Add</div>
             </div>
         </div>
 
@@ -87,5 +113,5 @@
     <script src="/static/leaflet/leaflet.js"></script>
     <script src="/static/leaflet/Leaflet.Editable.js"></script>
     <script src="/static/leaflet/Path.Drag.js"></script>
-    <script src="/static/js/OCRResults.js?version=1.3.5"></script>
+    <script src="/static/js/OCRResults.js?version=1.4.0"></script>
 {% endblock %}
