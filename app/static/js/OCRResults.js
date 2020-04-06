@@ -16,6 +16,7 @@ class ImageEditor{
     {
         this.container = container;
         this.active_line = false;
+        this.focused_line = false;
         let save_btn = document.getElementsByClassName('save-btn');
         let show_line_height = document.getElementById('show-line-height');
         let show_bottom_pad = document.getElementById('show-bottom-pad');
@@ -105,7 +106,8 @@ class ImageEditor{
         text_line_element.setAttribute("id", i);
         text_line_element.style.lineHeight = "220%";
         document.getElementById('text-container').appendChild(text_line_element);
-        text_line_element.addEventListener('focus', this.line_click.bind(this, line));
+        text_line_element.addEventListener('focus', this.line_focus.bind(this, line));
+        text_line_element.addEventListener('focusout', this.line_focus_out.bind(this));
         text_line_element.addEventListener('keypress', this.line_press.bind(this, line));
         text_line_element.addEventListener('keydown', this.line_keydown.bind(this, line));
         text_line_element.addEventListener('paste', this.line_paste.bind(this, line));
@@ -126,8 +128,9 @@ class ImageEditor{
         line.text_line_element.focus();
     }
 
-    line_click(line)
+    line_focus(line)
     {
+        this.focused_line = true;
         if (this.active_line)
         {
             this.active_line.polygon.setStyle({ color: "#0059ff", opacity: 0.5, fillColor: "#0059ff", fillOpacity: 0.05, weight: 1});
@@ -139,6 +142,11 @@ class ImageEditor{
                              {animate: true, duration: 0.5});
         this.active_line = line;
         line.polygon.setStyle({ color: "#028700", opacity: 1, fillColor: "#028700", fillOpacity: 0.1, weight: 2});
+    }
+
+    line_focus_out()
+    {
+        this.focused_line = false;
     }
 
     show_line_change()
@@ -289,6 +297,8 @@ class Keyboard{
         this.new_letter_input = document.getElementById('new-letter-input');
         this.add_new_letter_btn = document.getElementById('add-new-letter-btn');
         this.add_new_letter_btn.addEventListener('click', this.add_new_letter.bind(this));
+        this.remove_custom_letters_btn = document.getElementById('remove-custom-letters-btn');
+        this.remove_custom_letters_btn.addEventListener('click', this.remove_custom_letters.bind(this));
         this.custom_letters = {};
         let keyboard_custom_letters_cookie = getCookie("keyboard_custom_letters");
         console.log(keyboard_custom_letters_cookie);
@@ -323,7 +333,12 @@ class Keyboard{
                 option_element.setAttribute("selected", "selected");
             }
             option_element.setAttribute("value", key);
-            option_element.innerHTML = key;
+            let split_layout_name = key.split("_");
+            for (let i in split_layout_name)
+            {
+                split_layout_name[i] = capitalize_first_letter(split_layout_name[i]);
+            }
+            option_element.innerHTML = split_layout_name.join(" ");
             this.layout_select.appendChild(option_element);
         }
     }
@@ -390,10 +405,17 @@ class Keyboard{
         }
     }
 
+    remove_custom_letters(e)
+    {
+        delete this.custom_letters[this.selected_layout];
+        document.cookie = "keyboard_custom_letters=" + JSON.stringify(this.custom_letters) +"; path=/ ";
+        this.init_layouts();
+    }
+
     letter_mousedown(char, e)
     {
         e.preventDefault();
-        if (this.image_editor.active_line)
+        if (this.image_editor.focused_line)
         {
             insert_new_char_to_current_position(char, this.image_editor.active_line.text_line_element);
         }
@@ -925,6 +947,10 @@ function getCookie(cname) {
     }
   }
   return "";
+}
+
+function capitalize_first_letter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 // #############################################################################
