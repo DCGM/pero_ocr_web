@@ -1,7 +1,7 @@
 from app.document import bp
 from flask_login import login_required, current_user
 from flask import render_template, redirect, url_for, request, send_file, flash, Response, jsonify, current_app
-from app.document.general import create_document, check_and_remove_document, save_images, get_image_url, \
+from app.document.general import create_document, check_and_remove_document, save_images, \
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
     remove_image, get_document_images, get_page_layout, get_page_layout_text
 from app.db.general import get_user_documents, get_document_by_id, get_image_by_id
@@ -74,25 +74,36 @@ def upload_document_post(document_id):
 @bp.route('/get_page_xml_regions/<string:image_id>')
 def get_page_xml_regions(image_id):
     page_layout = get_page_layout(image_id, only_regions=True)
-    return Response(page_layout.to_pagexml_string(), mimetype='text/xml')
+    return Response(page_layout.to_pagexml_string(), mimetype='text/xml',
+                    headers={"Content-disposition": "attachment; filename={}.xml".format(page_layout.id)})
 
 
 @bp.route('/get_page_xml_lines/<string:image_id>')
 def get_page_xml_lines(image_id):
     page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False)
-    return Response(page_layout.to_pagexml_string(), mimetype='text/xml')
+    return Response(page_layout.to_pagexml_string(), mimetype='text/xml',
+                    headers={"Content-disposition": "attachment; filename={}.xml".format(page_layout.id)})
 
 
 @bp.route('/get_alto_xml/<string:image_id>')
 def get_alto_xml(image_id):
     page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False, alto=True)
-    return Response(page_layout.to_altoxml_string(), mimetype='text/xml')
+    return Response(page_layout.to_altoxml_string(), mimetype='text/xml',
+                    headers={"Content-disposition": "attachment; filename={}.xml".format(page_layout.id)})
 
 
 @bp.route('/get_text/<string:image_id>')
 def get_text(image_id):
     page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False)
-    return Response(get_page_layout_text(page_layout), mimetype='text/plain')
+    return Response(get_page_layout_text(page_layout),
+                    mimetype='text/plain',
+                    headers={"Content-disposition": "attachment; filename={}.txt".format(page_layout.id)})
+
+
+@bp.route('/get_image/<string:image_id>')
+def get_image(image_id):
+    image = get_image_by_id(image_id)
+    return send_file(image.path, as_attachment=True, attachment_filename=image.filename)
 
 
 @bp.route('/download_document_pages/<string:document_id>')
@@ -131,16 +142,6 @@ def get_document_annotated_pages(document_id):
             zf.writestr(d_XML, xml_string)
     memory_file.seek(0)
     return send_file(memory_file, attachment_filename='pages.zip', as_attachment=True)
-
-
-@bp.route('/get_image/<string:image_id>')
-# @login_required
-def get_image(image_id):
-    # if not is_user_owner_or_collaborator(document_id, current_user):
-    #     flash(u'You do not have sufficient rights to get this image!', 'danger')
-    #     return redirect(url_for('main.index'))
-    image_url = get_image_url(image_id)
-    return send_file(image_url)
 
 
 @bp.route('/remove_image/<string:document_id>/<string:image_id>')

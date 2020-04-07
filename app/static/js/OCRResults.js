@@ -452,9 +452,10 @@ $('.scrolling-wrapper .figure').on('click', function (event) {
     $(this).addClass('active');
     $($(this).children()[0]).css('background-color', '#ff00f2');
 
-    document.getElementById('btn-export-page-xml').setAttribute("href", Flask.url_for('document.get_page_xml_lines', {'image_id': image_id}))
-    document.getElementById('btn-export-alto-xml').setAttribute("href", Flask.url_for('document.get_alto_xml', {'image_id': image_id}))
-    document.getElementById('btn-export-text').setAttribute("href", Flask.url_for('document.get_text', {'image_id': image_id}))
+    document.getElementById('btn-export-page-xml').setAttribute("href", Flask.url_for('document.get_page_xml_lines', {'image_id': image_id}));
+    document.getElementById('btn-export-alto-xml').setAttribute("href", Flask.url_for('document.get_alto_xml', {'image_id': image_id}));
+    document.getElementById('btn-export-text').setAttribute("href", Flask.url_for('document.get_text', {'image_id': image_id}));
+    document.getElementById('btn-export-img').setAttribute("href", Flask.url_for('document.get_image', {'image_id': image_id}));
     if (typeof image_editor.lines !== 'undefined')
     {
         let unsaved_lines = false;
@@ -859,13 +860,18 @@ function get_focus_line_points(line)
     return [start_x, end_x, y - height_offset];
 }
 
-function set_line_background_to_save(text_line_element)
+function set_line_background_to_annotated(text_line_element)
 {
     text_line_element.style.backgroundColor = "#d0ffcf";
+}
+
+function set_line_background_to_save(text_line_element)
+{
+    set_line_background_to_annotated(text_line_element)
     let descendents = text_line_element.getElementsByTagName('*');
     for (let child of descendents)
     {
-        child.style.backgroundColor = "#d0ffcf";
+        child.style.backgroundColor = "#ffffff";
     }
 }
 
