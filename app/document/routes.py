@@ -81,23 +81,26 @@ def get_page_xml_regions(image_id):
 @bp.route('/get_page_xml_lines/<string:image_id>')
 def get_page_xml_lines(image_id):
     page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False)
+    file_name = "{}.xml".format(os.path.splitext(page_layout.id)[0])
     return Response(page_layout.to_pagexml_string(), mimetype='text/xml',
-                    headers={"Content-disposition": "attachment; filename={}.xml".format(page_layout.id)})
+                    headers={"Content-disposition": "attachment; filename={}".format(file_name)})
 
 
 @bp.route('/get_alto_xml/<string:image_id>')
 def get_alto_xml(image_id):
     page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False, alto=True)
+    file_name = "{}.xml".format(os.path.splitext(page_layout.id)[0])
     return Response(page_layout.to_altoxml_string(), mimetype='text/xml',
-                    headers={"Content-disposition": "attachment; filename={}.xml".format(page_layout.id)})
+                    headers={"Content-disposition": "attachment; filename={}".format(file_name)})
 
 
 @bp.route('/get_text/<string:image_id>')
 def get_text(image_id):
     page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False)
+    file_name = "{}.txt".format(os.path.splitext(page_layout.id)[0])
     return Response(get_page_layout_text(page_layout),
                     mimetype='text/plain',
-                    headers={"Content-disposition": "attachment; filename={}.txt".format(page_layout.id)})
+                    headers={"Content-disposition": "attachment; filename={}".format(file_name)})
 
 
 @bp.route('/get_image/<string:image_id>')

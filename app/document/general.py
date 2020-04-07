@@ -176,7 +176,7 @@ def get_document_images(document):
 def get_page_layout(image_id, only_regions=False, only_annotated=False, alto=False):
     image = get_image_by_id(image_id)
     page_layout = layout.PageLayout()
-    page_layout.id = os.path.splitext(image.filename)[0]
+    page_layout.id = image.filename
     page_layout.page_size = (image.height, image.width)
 
     text_regions = sort_text_regions(list(image.textregions))
