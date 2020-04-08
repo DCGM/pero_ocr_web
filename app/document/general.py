@@ -237,7 +237,8 @@ def update_confidences(changes):
 
         line = TextLine.query.filter_by(id=uuid.replace("-", "")).first()
 
-        line.confidences = confidences
+        conf_string = ' '.join(str(round(x, 3)) for x in confidences)
+        line.confidences = conf_string.replace('1.0', '1')
         line.text = transcription
 
     db_session.commit()

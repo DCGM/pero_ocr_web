@@ -210,7 +210,7 @@ def collaborators_post(document_id):
 
 @bp.route('/update_confidences', methods=['POST'])
 def update_all_confidences():
-    if not is_user_trusted(current_user.id):
+    if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights to edit collaborators!', 'danger')
         return redirect(url_for('main.index'))
 

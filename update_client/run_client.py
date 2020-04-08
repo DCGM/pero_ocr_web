@@ -1,4 +1,5 @@
 import os
+import time
 import shutil
 import zipfile
 import requests
@@ -10,106 +11,193 @@ from lxml import etree
 
 from client_helper import join_url
 
-if __name__ == '__main__':
-    config = configparser.ConfigParser()
-    config.read("config.ini")
+def remove_files(config, folder_name):
+    list_of_files = os.listdir(os.path.join(config['SETTINGS']['working_directory'], folder_name))
+    for _, file in enumerate(list_of_files):
+        os.remove(os.path.join(config['SETTINGS']['working_directory'], folder_name, file))
 
-    #creating work folders
+
+def make_empty_folder(config, folder_name):
+    if not os.path.isdir(os.path.join(config['SETTINGS']['working_directory'], folder_name)):
+        os.mkdir(os.path.join(config['SETTINGS']['working_directory'], folder_name))
+    else:
+        remove_files(config, folder_name)
+
+
+def create_work_folders(config):
     if not os.path.isdir(config['SETTINGS']['working_directory']):
         os.mkdir(config['SETTINGS']['working_directory'])
-    if not os.path.isdir(os.path.join(config['SETTINGS']['working_directory'], "xml_all")):
-        os.mkdir(os.path.join(config['SETTINGS']['working_directory'], "xml_all"))
-    if not os.path.isdir(os.path.join(config['SETTINGS']['working_directory'], "xml_annotated")):
-        os.mkdir(os.path.join(config['SETTINGS']['working_directory'], "xml_annotated"))
-    if not os.path.isdir(os.path.join(config['SETTINGS']['working_directory'], "img_pages")):
-        os.mkdir(os.path.join(config['SETTINGS']['working_directory'], "img_pages"))
+
     if not os.path.isdir(os.path.join(config['SETTINGS']['working_directory'], "other")):
         os.mkdir(os.path.join(config['SETTINGS']['working_directory'], "other"))
 
-    with requests.Session() as s:
-        r = s.get(join_url(config['SERVER']['base_url'], config['SERVER']['index']))
+    make_empty_folder(config, "xml")
+    make_empty_folder(config, "img")
 
-        #get csfd token
-        tree = etree.HTML(r.content)
-        csrf = tree.xpath('//input[@name="csrf_token"]/@value')[0]
+    print("SUCCESFUL")
 
-        payload = {
-            'email': config['SETTINGS']['login'],
-            'password': config['SETTINGS']['password'],
-            'submit': 'Login',
-            'csrf_token': csrf
-        }
 
-        #authentification
-        p = s.post(join_url(config['SERVER']['base_url'], config['SERVER']['authentification']), data=payload)
+def check_request(r):
+    if r.status_code == 200:
+        print("SUCCESFUL")
+        return True
+    else:
+        print("FAILED")
+        return False
 
-        #download all pages
-        r = s.get(join_url(config['SERVER']['base_url'], config['SERVER']['download_all_xmls'], config['SETTINGS']['document_id']), stream=True)
+
+def log_in(config, session):
+    r = session.get(join_url(config['SERVER']['base_url'], config['SERVER']['index']))
+
+    if not check_request(r):
+        return False
+
+    tree = etree.HTML(r.content)
+    csrf = tree.xpath('//input[@name="csrf_token"]/@value')[0]
+
+    payload = {
+        'email': config['SETTINGS']['login'],
+        'password': config['SETTINGS']['password'],
+        'submit': 'Login',
+        'csrf_token': csrf
+    }
+
+    r = session.post(join_url(config['SERVER']['base_url'], config['SERVER']['authentification']), data=payload)
+
+    if not check_request(r):
+        return False
+    else:
+        return True
+
+
+def download_xmls(session, config):
+    r = session.get(join_url(config['SERVER']['base_url'], config['SERVER'][config['SETTINGS']['type']], config['SETTINGS']['document_id']), stream=True)
+    if r.status_code == 200:
+        with open(os.path.join(config['SETTINGS']['working_directory'], '{}_xml.zip' .format(config['SETTINGS']['document_id'])), 'wb') as f:
+            r.raw.decode_content = True
+            shutil.copyfileobj(r.raw, f)
+    else:
+        print("FAILED")
+        return False
+
+    with zipfile.ZipFile(os.path.join(config['SETTINGS']['working_directory'], '{}_xml.zip' .format(config['SETTINGS']['document_id'])), 'r') as zip_ref:
+        zip_ref.extractall(os.path.join(config['SETTINGS']['working_directory'], "xml"))
+
+    print("SUCCESFUL")
+    return True
+
+
+def download_images(session, config, page_uuids):
+    for _, uuid in enumerate(page_uuids):
+        r = session.get(join_url(config['SERVER']['base_url'], config['SERVER']['download_images'], uuid), stream=True)
         if r.status_code == 200:
-            with open(os.path.join(config['SETTINGS']['working_directory'], '{}_all_pages_xml.zip' .format(config['SETTINGS']['document_id'])), 'wb') as f:
+            with open(os.path.join(config['SETTINGS']['working_directory'], "img/{}.jpg".format(uuid)),
+                      'wb') as f:
                 r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
         else:
-            print("Error {} occured during all pages download." .format(r.status_code))
-            exit()
+            print("ERROR {} OCCURED DURING IMAGE {} DOWNLOAD.".format(r.status_code, uuid))
+            return False
 
-        with zipfile.ZipFile(os.path.join(config['SETTINGS']['working_directory'], '{}_all_pages_xml.zip' .format(config['SETTINGS']['document_id'])), 'r') as zip_ref:
-            zip_ref.extractall(os.path.join(config['SETTINGS']['working_directory'], "xml_all"))
+    print("SUCCESFUL")
+    return True
 
-        #download annotations
-        r = s.get(join_url(config['SERVER']['base_url'], config['SERVER']['download_annotated_xmls'], config['SETTINGS']['document_id']), stream=True)
-        if r.status_code == 200:
-            with open(os.path.join(config['SETTINGS']['working_directory'], '{}_annotated_pages_xml.zip' .format(config['SETTINGS']['document_id'])), 'wb') as f:
-                r.raw.decode_content = True
-                shutil.copyfileobj(r.raw, f)
-        else:
-            print("Error {} occured during annotations download." .format(r.status_code))
-            exit()
 
-        with zipfile.ZipFile(os.path.join(config['SETTINGS']['working_directory'], '{}_annotated_pages_xml.zip' .format(config['SETTINGS']['document_id'])), 'r') as zip_ref:
-            zip_ref.extractall(os.path.join(config['SETTINGS']['working_directory'], "xml_annotated"))
+def send_data(session, config):
+    with open(os.path.join(config['SETTINGS']['working_directory'], "changes.json"), "rb") as f:
+        data = f.read()
+
+    r = session.post(join_url(config['SERVER']['base_url'], config['SERVER']['update_all_confidences']),
+                     files={'data': ('data.json', data, 'text/plain')})
+
+    if not check_request(r):
+        return False
+    else:
+        return True
+
+
+def check_and_process_update_request(config):
+    with requests.Session() as session:
+        print()
+        print("LOGGING IN")
+        print("##############################################################")
+        if not log_in(config, session):
+            return False
+        print("##############################################################")
+
+        print()
+        print("CREATING WORK FOLDERS")
+        print("##############################################################")
+        create_work_folders(config)
+        print("##############################################################")
+
+        print()
+        print("DOWNLOADING XMLS")
+        print("##############################################################")
+        if not download_xmls(session, config):
+            return False
+        print("##############################################################")
 
         #get page ids
-        page_uuid = [f[:-4] for f in listdir(os.path.join(config['SETTINGS']['working_directory'], "xml_all")) if 'xml' in f]
+        page_uuids = [f[:-4] for f in listdir(os.path.join(config['SETTINGS']['working_directory'], "xml")) if 'xml' in f]
 
-        #removing useless .txt files
-        for filename in page_uuid:
-            try:
-                os.remove(os.path.join(config['SETTINGS']['working_directory'], "xml_all", "{}.txt" .format(filename)))
-            except:
-                pass
-
-        #download images
-        for _, uuid in enumerate(page_uuid):
-            r = s.get(join_url(config['SERVER']['base_url'], config['SERVER']['download_images'], uuid), stream=True)
-            if r.status_code == 200:
-                with open(os.path.join(config['SETTINGS']['working_directory'], "img_pages/{}.jpg" .format(uuid)), 'wb') as f:
-                    r.raw.decode_content = True
-                    shutil.copyfileobj(r.raw, f)
-            else:
-                print("Error {} occured during image {} download.".format(r.status_code, uuid))
-
+        print()
+        print("DOWNLOADING IMAGES")
+        print("##############################################################")
+        if not download_images(session, config, page_uuids):
+            return False
+        print("##############################################################")
+        
+        print()
+        print("PARSE FOLDER PROCESS")
+        print("##############################################################")
         parse_folder_process = subprocess.Popen(['python', config['SETTINGS']['parse_folder_path'],
                                                  '-c', config['SETTINGS']['parse_folder_config_path']],
                                                  cwd=config['SETTINGS']['working_directory'])
+
         parse_folder_process.wait()
+        print("SUCCESFUL")
+        print("##############################################################")
 
-        processed_logits_folder = os.path.join(config['SETTINGS']['working_directory'], "output_logits")
-
+        print()
+        print("DATASET REPLACE PROCESS")
+        print("##############################################################")
         replace_process = subprocess.Popen(['python', config['SETTINGS']['replace_script_path'],
                                             '--substig', config['SETTINGS']['substitution_file_path'],
-                                            '--xml', os.path.join(config['SETTINGS']['working_directory'], "xml_all"),
-                                            '--logits', processed_logits_folder,
-                                            '--images', os.path.join(config['SETTINGS']['working_directory'], "img_pages"),
+                                            '--xml', os.path.join(config['SETTINGS']['working_directory'], "xml"),
+                                            '--logits', os.path.join(config['SETTINGS']['working_directory'], "output_logits"),
+                                            '--images', os.path.join(config['SETTINGS']['working_directory'], "img"),
                                             '--output-img', os.path.join(config['SETTINGS']['working_directory'], "other"),
                                             '--output-xml', os.path.join(config['SETTINGS']['working_directory'], "other"),
                                             '--output-file', os.path.join(config['SETTINGS']['working_directory'], "changes.json")],
                                             cwd=config['SETTINGS']['working_directory'])
 
         replace_process.wait()
+        print("SUCCESFUL")
+        print("##############################################################")
 
-        with open(os.path.join(config['SETTINGS']['working_directory'], "changes.json"), "rb") as f:
-            data = f.read()
+        print()
+        print("SENDING DATA TO SERVER")
+        print("##############################################################")
+        if not send_data(session, config):
+            return False
+        print("##############################################################")
 
-        p = s.post(join_url(config['SERVER']['base_url'], config['SERVER']['update_all_confidences']),
-                   files={'data': ('data.json', data, 'text/plain')})
+        return True
+
+
+def main():
+    config = configparser.ConfigParser()
+    config.read("config.ini")
+    while True:
+        print("CHECK REQUEST")
+        if check_and_process_update_request(config):
+            print("REQUEST COMPLETED")
+            break
+        else:
+            print("NO REQUEST")
+            time.sleep(2)
+
+
+if __name__ == '__main__':
+    main()
