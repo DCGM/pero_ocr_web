@@ -111,5 +111,5 @@ if __name__ == '__main__':
         with open(os.path.join(config['SETTINGS']['working_directory'], "changes.json"), "rb") as f:
             data = f.read()
 
-        p = s.post(join_url(config['SERVER']['base_url'], config['SETTINGS']['type'], 'id'),
-                   files={'data': ('readme.txt', data, 'text/plain')})
+        p = s.post(join_url(config['SERVER']['base_url'], config['SERVER']['update_all_confidences']),
+                   files={'data': ('data.json', data, 'text/plain')})
