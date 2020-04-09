@@ -7,9 +7,8 @@ import subprocess
 import configparser
 
 from os import listdir
-from lxml import etree
 
-from client_helper import join_url
+from client_helper import join_url, log_in, check_request
 
 def remove_files(config, folder_name):
     list_of_files = os.listdir(os.path.join(config['SETTINGS']['working_directory'], folder_name))
@@ -35,39 +34,6 @@ def create_work_folders(config):
     make_empty_folder(config, "img")
 
     print("SUCCESFUL")
-
-
-def check_request(r):
-    if r.status_code == 200:
-        print("SUCCESFUL")
-        return True
-    else:
-        print("FAILED")
-        return False
-
-
-def log_in(config, session):
-    r = session.get(join_url(config['SERVER']['base_url'], config['SERVER']['index']))
-
-    if not check_request(r):
-        return False
-
-    tree = etree.HTML(r.content)
-    csrf = tree.xpath('//input[@name="csrf_token"]/@value')[0]
-
-    payload = {
-        'email': config['SETTINGS']['login'],
-        'password': config['SETTINGS']['password'],
-        'submit': 'Login',
-        'csrf_token': csrf
-    }
-
-    r = session.post(join_url(config['SERVER']['base_url'], config['SERVER']['authentification']), data=payload)
-
-    if not check_request(r):
-        return False
-    else:
-        return True
 
 
 def download_xmls(session, config):
@@ -124,7 +90,7 @@ def check_and_process_update_request(config):
         if not log_in(config, session):
             return False
         print("##############################################################")
-        """
+
         print()
         print("CREATING WORK FOLDERS")
         print("##############################################################")
@@ -158,7 +124,7 @@ def check_and_process_update_request(config):
         parse_folder_process.wait()
         print("SUCCESFUL")
         print("##############################################################")
-        """
+
         print()
         print("DATASET REPLACE PROCESS")
         print("##############################################################")
@@ -190,14 +156,11 @@ def check_and_process_update_request(config):
 def main():
     config = configparser.ConfigParser()
     config.read("config.ini")
-    while True:
-        print("CHECK REQUEST")
-        if check_and_process_update_request(config):
-            print("REQUEST COMPLETED")
-            break
-        else:
-            print("NO REQUEST")
-            time.sleep(2)
+
+    if check_and_process_update_request(config):
+        print("REQUEST COMPLETED")
+    else:
+        print("REQUEST FAILED")
 
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@ import json
 from app.document import bp
 from flask_login import login_required, current_user
 from flask import render_template, redirect, url_for, request, send_file, flash, Response, jsonify, current_app
-from app.document.general import create_document, check_and_remove_document, save_images,\
+from app.document.general import create_document, check_and_remove_document, save_images, get_image_by_id,\
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
     remove_image, get_document_images, get_page_layout, get_page_layout_text, update_confidences, is_user_trusted,\
     is_granted_acces_for_page, is_granted_acces_for_document
@@ -126,6 +126,7 @@ def get_text(image_id):
 
 
 @bp.route('/get_image/<string:image_id>')
+@login_required
 def get_image(image_id):
     if not is_granted_acces_for_page(image_id, current_user):
         flash(u'You do not have sufficient rights to download image!', 'danger')
@@ -136,6 +137,7 @@ def get_image(image_id):
 
 
 @bp.route('/download_document_pages/<string:document_id>')
+@login_required
 def get_document_pages(document_id):
     if not is_granted_acces_for_document(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
@@ -162,6 +164,7 @@ def get_document_pages(document_id):
 
 @bp.route('/get_document_annotated_pages/<string:document_id>')
 @bp.route('/download_document_annotated_pages/<string:document_id>')
+@login_required
 def get_document_annotated_pages(document_id):
     if not is_granted_acces_for_document(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
@@ -232,6 +235,7 @@ def get_keyboard():
 
 
 @bp.route('/update_confidences', methods=['POST'])
+@login_required
 def update_all_confidences():
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights to edit collaborators!', 'danger')
