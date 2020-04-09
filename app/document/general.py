@@ -7,7 +7,7 @@ from app import db_session
 from PIL import Image as PILImage
 import uuid
 from lxml import etree as ET
-from app.db import Document, Image, TextLine, Annotation
+from app.db import Document, Image, TextLine, Annotation, UserDocument, User
 
 import pero_ocr.document_ocr.layout as layout
 
@@ -222,3 +222,52 @@ def sort_text_regions(text_regions):
     if not skip_text_region_sorting:
         text_regions = sorted(text_regions, key=lambda x: x.order)
     return text_regions
+
+
+def update_confidences(changes):
+    for _, uuid in enumerate(changes.keys()):
+        changed_line = changes[uuid]
+        transcription = changed_line[0]
+        confidences = changed_line[1]
+
+        line = TextLine.query.filter_by(id=uuid.replace("-", "")).first()
+
+        conf_string = ' '.join(str(round(x, 3)) for x in confidences)
+        line.confidences = conf_string.replace('1.0', '1')
+        line.text = transcription
+
+    db_session.commit()
+
+
+def is_user_trusted(user):
+    user = User.query.filter_by(id=user.id).first()
+    if user.trusted == 0:
+        return False
+    else:
+        return True
+
+
+def is_page_from_doc(image_id, user):
+    document_id = Image.query.filter_by(id=image_id).first().document_id
+    if is_user_owner_or_collaborator(document_id, user):
+        return True
+    else:
+        return False
+
+
+def is_granted_acces_for_page(image_id, user):
+    if is_user_trusted(user):
+        return True
+    elif is_page_from_doc(image_id, user):
+        return True
+    else:
+        return False
+
+
+def is_granted_acces_for_document(document_id, user):
+    if is_user_trusted(user):
+        return True
+    elif is_user_owner_or_collaborator(document_id, user):
+        return True
+    else:
+        return False
