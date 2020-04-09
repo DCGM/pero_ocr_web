@@ -124,7 +124,7 @@ def check_and_process_update_request(config):
         if not log_in(config, session):
             return False
         print("##############################################################")
-
+        """
         print()
         print("CREATING WORK FOLDERS")
         print("##############################################################")
@@ -140,7 +140,7 @@ def check_and_process_update_request(config):
 
         #get page ids
         page_uuids = [f[:-4] for f in listdir(os.path.join(config['SETTINGS']['working_directory'], "xml")) if 'xml' in f]
-
+        
         print()
         print("DOWNLOADING IMAGES")
         print("##############################################################")
@@ -158,7 +158,7 @@ def check_and_process_update_request(config):
         parse_folder_process.wait()
         print("SUCCESFUL")
         print("##############################################################")
-
+        """
         print()
         print("DATASET REPLACE PROCESS")
         print("##############################################################")
@@ -169,7 +169,8 @@ def check_and_process_update_request(config):
                                             '--images', os.path.join(config['SETTINGS']['working_directory'], "img"),
                                             '--output-img', os.path.join(config['SETTINGS']['working_directory'], "other"),
                                             '--output-xml', os.path.join(config['SETTINGS']['working_directory'], "other"),
-                                            '--output-file', os.path.join(config['SETTINGS']['working_directory'], "changes.json")],
+                                            '--output-file', os.path.join(config['SETTINGS']['working_directory'], "changes.json"),
+                                            '--threshold', os.path.join(config['SETTINGS']['threshold'])],
                                             cwd=config['SETTINGS']['working_directory'])
 
         replace_process.wait()
