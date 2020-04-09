@@ -2,6 +2,7 @@ import requests
 import os
 from io import open as image_open
 import zipfile
+from lxml import etree
 
 
 def join_url(*paths):
@@ -44,10 +45,36 @@ def post_result(base_url, post_result_route, request_id, image_ids, data_folders
     requests.post(join_url(base_url, post_result_route, request_id), files=data)
 
 
+def check_request(r, verbose=False):
+    if r.status_code == 200:
+        if verbose:
+            print("SUCCESFUL")
+        return True
+    else:
+        if verbose:
+            print("FAILED")
+        return False
 
 
+def log_in(config, session, verbose=True):
+    r = session.get(join_url(config['SERVER']['base_url']))
 
+    if not check_request(r, verbose=False):
+        return False
 
+    tree = etree.HTML(r.content)
+    csrf = tree.xpath('//input[@name="csrf_token"]/@value')[0]
 
+    payload = {
+        'email': config['SETTINGS']['login'],
+        'password': config['SETTINGS']['password'],
+        'submit': 'Login',
+        'csrf_token': csrf
+    }
 
+    r = session.post(join_url(config['SERVER']['base_url'], config['SERVER']['authentification']), data=payload)
 
+    if not check_request(r, verbose=False):
+        return False
+    else:
+        return True
