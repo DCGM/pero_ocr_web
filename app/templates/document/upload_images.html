@@ -1,5 +1,5 @@
-{% extends "base/base.html" %} {% block content %}
-
+{% extends "base/base.html" %}
+{% block content %}
     <!-- Modal -->
     <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
          aria-hidden="true">
@@ -21,15 +21,8 @@
             </div>
         </div>
     </div>
-    <h3>{{ document.name }} - Upload Images</h3>
-    <a
-            class="btn btn-primary text-white"
-            href="{{ url_for('layout_analysis.select_layout', document_id=document.id) }}"
-    >
-        Run layout analysis
-    </a>
     <div class="row">
-        <div class="col-xl-12 col-sm-6 mb-12">
+        <div class="col">
             <div id="import_complete_alert" class="alert alert-warning alert-dismissible collapse" role="alert">
                 <p id="import_complete"></p>
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -39,43 +32,56 @@
         </div>
     </div>
 
-{{ dropzone.create(action= url_for('document.upload_document_post', document_id=document.id) ) }}
-{{ dropzone.load_js() }}
-{{ dropzone.config(custom_init='this.on("error", function (file, response) {import_error(file.name, response)});
-this.on("queuecomplete",function (file, response){import_complete()});
-this.on("success",function (file, response){import_success(file.name, response)});', upload_multiple=false, max_file_size=8) }}
+    <div class="container-fluid px-4">
 
-<div class="row">
-    <div class="col-xl-12 col-sm-6 mb-12">
-        <div id="import_complete_log">
+        <div class="row mt-4">
+            <div class="offset-xl-2 col-xl-10">
+                <h3>{{ document.name }} - Upload Images</h3>
+            </div>
+        </div>
+
+        <div class="row my-3">
+            <div class="offset-xl-2 col-xl-10">
+                <a class="btn btn-primary text-white" href="{{ url_for('layout_analysis.select_layout', document_id=document.id) }}">
+                    Run layout analysis
+                </a>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="offset-xl-2 col-xl-8">
+                {{ dropzone.create(action= url_for('document.upload_document_post', document_id=document.id) ) }}
+                {{ dropzone.load_js() }}
+                {{ dropzone.config(custom_init='this.on("error", function (file, response) {import_error(file.name, response)});
+                this.on("queuecomplete",function (file, response){import_complete()});
+                this.on("success",function (file, response){import_success(file.name, response)});', upload_multiple=false, max_file_size=8) }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="offset-xl-2 col-xl-8">
+                {% for image in images %}
+                    <div class="card d-inline-block m-3">
+                        <div class="card-image-container pt-3">
+                            <img
+                                src="{{url_for('document.get_image' ,document_id=document.id, image_id=image.id)}}"
+                                alt="{{ image.filename }}"
+                                class="uploaded_image card-img-top"
+                            />
+                        </div>
+                        <div class="card-body text-center px-3 pb-3 pt-2">
+                            <p class="image-filename mb-2"
+                               data-toggle="tooltip"
+                               data-placement="right"
+                               title="{{ image.filename }}">{{ image.filename }}</p>
+                            <a data-document="{{ document.id }}" data-image="{{ image.id }}"
+                               class="btn btn-danger delete-image-button text-white">Remove</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
-</div>
-
-<div>
-        {% for image in images %}
-            <div class="card d-inline-block m-3">
-                <div class="card-image-container">
-                    <img
-                            src="{{url_for('document.get_image' ,document_id=document.id, image_id=image.id)}}"
-                            alt="{{ image.filename }}"
-                            class="uploaded_image card-img-top"
-                    />
-                </div>
-                <div class="card-body text-center">
-                    <p class="image-filename"
-                        data-toggle="tooltip"
-                        data-placement="right"
-                        title="{{ image.filename }}">
-                        {{ image.filename }}
-                    </p>
-                    <a data-document="{{ document.id }}" data-image="{{ image.id }}"
-                       class="btn btn-danger delete-image-button text-white">Remove</a>
-                </div>
-            </div>
-        {% endfor %}
-    </div>
-
 {% endblock %}
 
 {% block styles %}
@@ -90,7 +96,6 @@ this.on("success",function (file, response){import_success(file.name, response)}
         .image-filename{
             text-overflow: ellipsis;
             overflow: hidden;
-            padding: 5px;
             white-space: nowrap;
         }
 

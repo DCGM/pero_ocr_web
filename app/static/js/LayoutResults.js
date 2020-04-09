@@ -139,9 +139,9 @@ function editor_keypress(e) {
     } else if (k == 's') {
         save_image();
     } else if(k == 'n') {
-        next_image();
+        next_page();
     } else if(k == 'b'){
-        previous_image();
+        previous_page();
     }
 }
 
@@ -232,23 +232,6 @@ class LP_object {
     }
 }
 
-function next_image() {
-    if (annotator_data.uuid) {
-        var index = imagesId.indexOf(annotator_data.uuid);
-        if(index < imagesId.length - 1){
-            $(`.image-item-container[data-image="${imagesId[index + 1]}"]`).trigger('click');
-        }
-    }
-}
-
-function previous_image() {
-    if (annotator_data.uuid) {
-        var index = imagesId.indexOf(annotator_data.uuid);
-        if(index > 0){
-            $(`.image-item-container[data-image="${imagesId[index - 1]}"]`).trigger('click');
-        }
-    }
-}
 
 function new_image_callback(data, status) {
     var map_region = document.getElementById('map-container');
@@ -347,27 +330,53 @@ function fix_ar() {
     }
 }
 
-get_image(first_image)
 
-$('.image-item-container').on('click', function (event) {
-    let old_image_id = $('.current-result-container').data('image');
-    let document_id = $(this).data('document');
+// PAGE CHANGE EVENT
+// #############################################################################
+$('.scrolling-wrapper .figure').on('click', function (event) {
     let image_id = $(this).data('image');
+    image_index = $(this).data('index');
 
-    if (old_image_id !== image_id) {
-        $('.current-result-container').data('document', document_id);
-        $('.current-result-container').data('image', image_id);
-        save_image();
-        get_image(image_id);
-        $('.image-item-active').addClass('d-none');
-        $(`[data-image="${image_id}"] .image-item-active`).removeClass('d-none')
+    let previous_active_figure = $('.scrolling-wrapper .figure.active');
+    if (previous_active_figure.length)
+    {
+        previous_active_figure.removeClass('active');
+        $(previous_active_figure.children()[0]).css('background-color', 'white');
     }
-});
+    $(this).addClass('active');
+    $($(this).children()[0]).css('background-color', '#ff00f2');
 
-let $image_containers = $('.image-item-container');
-if ($image_containers.length) {
-    let $image_container = $($image_containers[0]);
-    $image_container.find('.image-item-active').removeClass('d-none');
+    document.getElementById('btn-export-page-xml').setAttribute("href", Flask.url_for('document.get_page_xml_regions', {'image_id': image_id}))
+    get_image(image_id);
+});
+// #############################################################################
+
+
+// PAGE NAVIGATION
+// #############################################################################
+let image_index = 0;
+let images = $('.scrolling-wrapper .figure');
+let number_of_images = images.length;
+if (number_of_images)
+{
+    let first_image = images[image_index];
+    $(first_image).click();
 }
 
-$('[data-toggle="tooltip"]').tooltip();
+function previous_page()
+{
+    if (image_index > 0)
+    {
+        image_index -= 1;
+        $('.scrolling-wrapper .figure[data-index=' + image_index + ']').click();
+    }
+}
+function next_page()
+{
+    if ((image_index + 1) < number_of_images)
+    {
+        image_index += 1;
+        $('.scrolling-wrapper .figure[data-index=' + image_index + ']').click();
+    }
+}
+// #############################################################################

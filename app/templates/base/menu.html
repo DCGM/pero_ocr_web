@@ -1,51 +1,44 @@
+{% import  "bootstrap/wtf.html" as wtf %}
 
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <div class="container">
-        <a class="navbar-brand" href="{{ url_for('main.index') }}">Project PERO OCR</a>
-        <button
-            class="navbar-toggler"
-            type="button"
-            data-toggle="collapse"
-            data-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent"
-            aria-expanded="false"
-            aria-label="Toggle navigation"
-        >
-            <span class="navbar-toggler-icon"></span>
-        </button>
+{% block styles %}
+    <link rel="stylesheet" href="/static/css/custom_navbar.css"/>
+{% endblock %}
 
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav ml-auto">
-                {% if current_user.is_authenticated %}
-                    <li class="nav-item{%- if request.path == "/document/documents" %} active{% endif %}" >
-                        <a class="nav-link my-2" href="{{ url_for('document.documents') }}">Browser</a>
-                    </li>
-                    <li class="nav-item{%- if request.path == "/profile" %} active{% endif %}">
-                        <a class="nav-link my-2" href="{{ url_for('profile.profile') }}">Profile</a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link my-2" href="{{ url_for('auth.logout') }}">Logout</a>
-                    </li>
-
-                    {% elif request.path == '/' or request.path == '/index' %}
-                    {% import  "bootstrap/wtf.html" as wtf %}
-                    {{ wtf.quick_form(form_login, action= url_for('auth.login'), extra_classes="form-inline my-2 my-lg-0 login-form") }}
-                    <a href="{{ url_for('auth.signup') }}" class="btn btn-primary ml-3">Sign Up</a>
-                {% endif %}
-            </ul>
-        </div>
+<nav class="navbar navbar-light navbar-expand-md">
+    <a id="top" class="nav-link navbar-brand name-long px-0 py-0" href="{{ url_for('main.index') }}">
+	    <span><img style="max-height:80px;" src="/static/img/favicon.ico" class="d-inline-block align-middle pb-2"></span>
+	    <span class="navbar-text py-3 px-2">Project PERO OCR</span>
+    </a>
+    <a id="top" class="nav-link navbar-brand name-short px-0 py-0">
+	    <span><img style="max-height:80px;" src="/static/img/favicon.ico" class="d-inline-block align-middle pb-2"></span>
+	    <span class="navbar-text py-3 px-2">PERO</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto">
+	      {% if current_user.is_authenticated %}
+              <li class="nav-item{%- if request.path == "/document/documents" %} active{% endif %}" >
+                  <a class="nav-link my-2" href="{{ url_for('document.documents') }}"><strong>Browser</strong></a>
+              </li>
+              <li class="nav-item{%- if request.path == "/profile" %} active{% endif %}">
+                  <a class="nav-link my-2" href="{{ url_for('profile.profile') }}"><strong>Profile</strong></a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link my-2" href="{{ url_for('auth.logout') }}"><strong>Logout</strong></a>
+              </li>
+          {% elif request.path == '/' or request.path == '/index' %}
+              <li class="nav-item">
+              {{ wtf.quick_form(form_login, action= url_for('auth.login'), extra_classes="form-inline my-2 my-lg-0 login-form") }}
+              </li>
+              <li class="nav-item">
+                <a href="{{ url_for('auth.signup') }}" class="btn btn-primary ml-3">Sign Up</a>
+              </li>
+          {% endif %}
+      </ul>
     </div>
 </nav>
 
-{% block styles %}
-    <style>
-        .login-form .form-group{
-            margin-right: 15px;
-        }
 
-        .login-form .form-group label{
-            margin-right: 10px;
-        }
-    </style>
-{% endblock %}
+

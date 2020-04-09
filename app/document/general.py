@@ -117,11 +117,6 @@ def create_dirs(path):
         os.makedirs(path)
 
 
-def get_image_url(image_id):
-    image = get_image_by_id(image_id)
-    return image.path
-
-
 def remove_image(document_id, image_id):
     document = get_document_by_id(document_id)
     image = document.images.filter_by(id=image_id, deleted=False).first()
@@ -181,7 +176,7 @@ def get_document_images(document):
 def get_page_layout(image_id, only_regions=False, only_annotated=False, alto=False):
     image = get_image_by_id(image_id)
     page_layout = layout.PageLayout()
-    page_layout.id = os.path.splitext(image.filename)[0]
+    page_layout.id = image.filename
     page_layout.page_size = (image.height, image.width)
 
     text_regions = sort_text_regions(list(image.textregions))
