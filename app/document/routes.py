@@ -2,8 +2,8 @@ import json
 
 from app.document import bp
 from flask_login import login_required, current_user
-from flask import render_template, redirect, url_for, request, send_file, flash, Response
-from app.document.general import create_document, check_and_remove_document, save_images, get_image_url, \
+from flask import render_template, redirect, url_for, request, send_file, flash, Response, jsonify, current_app
+from app.document.general import create_document, check_and_remove_document, save_images,\
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
     remove_image, get_document_images, get_page_layout, get_page_layout_text, update_confidences, is_user_trusted,\
     is_granted_acces_for_page, is_granted_acces_for_document
@@ -12,6 +12,8 @@ from app.document.forms import CreateDocumentForm
 from io import BytesIO
 import zipfile
 import time
+import os
+import json
 
 
 @bp.route('/documents')
@@ -79,7 +81,8 @@ def get_page_xml_regions(image_id):
         return redirect(url_for('main.index'))
 
     page_layout = get_page_layout(image_id, only_regions=True)
-    return Response(page_layout.to_pagexml_string(), mimetype='text/xml')
+    return Response(page_layout.to_pagexml_string(), mimetype='text/xml',
+                    headers={"Content-disposition": "attachment; filename={}.xml".format(page_layout.id)})
 
 
 @bp.route('/get_page_xml_lines/<string:image_id>')
@@ -90,7 +93,9 @@ def get_page_xml_lines(image_id):
         return redirect(url_for('main.index'))
 
     page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False)
-    return Response(page_layout.to_pagexml_string(), mimetype='text/xml')
+    file_name = "{}.xml".format(os.path.splitext(page_layout.id)[0])
+    return Response(page_layout.to_pagexml_string(), mimetype='text/xml',
+                    headers={"Content-disposition": "attachment; filename={}".format(file_name)})
 
 
 @bp.route('/get_alto_xml/<string:image_id>')
@@ -101,7 +106,9 @@ def get_alto_xml(image_id):
         return redirect(url_for('main.index'))
 
     page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False, alto=True)
-    return Response(page_layout.to_altoxml_string(), mimetype='text/xml')
+    file_name = "{}.xml".format(os.path.splitext(page_layout.id)[0])
+    return Response(page_layout.to_altoxml_string(), mimetype='text/xml',
+                    headers={"Content-disposition": "attachment; filename={}".format(file_name)})
 
 
 @bp.route('/get_text/<string:image_id>')
@@ -112,7 +119,20 @@ def get_text(image_id):
         return redirect(url_for('main.index'))
 
     page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False)
-    return Response(get_page_layout_text(page_layout), mimetype='text/plain')
+    file_name = "{}.txt".format(os.path.splitext(page_layout.id)[0])
+    return Response(get_page_layout_text(page_layout),
+                    mimetype='text/plain',
+                    headers={"Content-disposition": "attachment; filename={}".format(file_name)})
+
+
+@bp.route('/get_image/<string:image_id>')
+def get_image(image_id):
+    if not is_granted_acces_for_page(image_id, current_user):
+        flash(u'You do not have sufficient rights to download image!', 'danger')
+        return redirect(url_for('main.index'))
+
+    image = get_image_by_id(image_id)
+    return send_file(image.path, as_attachment=True, attachment_filename=image.filename)
 
 
 @bp.route('/download_document_pages/<string:document_id>')
@@ -161,17 +181,6 @@ def get_document_annotated_pages(document_id):
     return send_file(memory_file, attachment_filename='pages.zip', as_attachment=True)
 
 
-@bp.route('/get_image/<string:image_id>')
-@login_required
-def get_image(image_id):
-    if not is_granted_acces_for_page(image_id, current_user):
-        flash(u'You do not have sufficient rights to download image!', 'danger')
-        return redirect(url_for('main.index'))
-
-    image_url = get_image_url(image_id)
-    return send_file(image_url)
-
-
 @bp.route('/remove_image/<string:document_id>/<string:image_id>')
 @login_required
 def remove_image_get(document_id, image_id):
@@ -206,6 +215,20 @@ def collaborators_post(document_id):
         save_collaborators(document_id, collaborators_ids)
         flash(u'Collaborators saved successfully.', 'success')
         return redirect(url_for('document.collaborators_get', document_id=document_id))
+
+
+@bp.route('/get_keyboard', methods=['GET'])
+@login_required
+def get_keyboard():
+    keyboard_dict = {}
+
+    for keyboard_layout in os.listdir(current_app.config['KEYBOARD_FOLDER']):
+        keyboard_layout_name = os.path.splitext(keyboard_layout)[0]
+        keyboard_layout_path = os.path.join(current_app.config['KEYBOARD_FOLDER'], keyboard_layout)
+        with open(keyboard_layout_path) as f:
+            keyboard_dict[keyboard_layout_name] = json.load(f)
+
+    return jsonify(keyboard_dict)
 
 
 @bp.route('/update_confidences', methods=['POST'])

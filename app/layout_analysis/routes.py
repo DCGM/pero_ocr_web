@@ -1,4 +1,5 @@
 from app.layout_analysis import bp
+from natsort import natsorted
 from flask import render_template, url_for, redirect, flash, request, current_app, send_file, abort
 from flask_login import login_required, current_user
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_layout_detector_by_id
@@ -17,8 +18,6 @@ from app import db_session
 from flask import jsonify
 import shutil
 
-from pero_ocr.document_ocr.layout import PageLayout
-
 
 ########################################################################################################################
 # WEBSITE ROUTES
@@ -36,7 +35,7 @@ def show_results(document_id):
     document = get_document_by_id(document_id)
     if document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
         return 'Layout analysis is not completed yet!', 400
-    return render_template('layout_analysis/layout_results.html', document=document, images=list(document.images))
+    return render_template('layout_analysis/layout_results.html', document=document, images=natsorted(list(document.images), key=lambda x: x.filename))
 
 
 # SELECT PAGE

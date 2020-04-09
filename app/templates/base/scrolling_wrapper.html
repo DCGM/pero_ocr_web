@@ -1,0 +1,19 @@
+
+<div class="scrolling-wrapper" style="overflow-x: scroll; overflow-y: hidden;">
+    <div class="d-flex flex-row">
+        {% for image in images %}
+            <div class="image-container border border-secondary m-1 rounded" style="cursor: pointer;">
+                <figure class="figure m-1"
+                        data-document="{{ document.id }}"
+                        data-image="{{ image.id }}"
+                        data-index="{{ loop.index }}">
+                    <img class="figure-img img-thumbnail mx-auto d-block"
+                         src="/layout_analysis/get_result_preview/{{ image.id }}"
+                         alt="{{ image.filename }}"
+                         style="height: 200px; min-width: {{ image.width * (200 / image.height) }}px;">
+                    <figcaption class="figure-caption text-center"><strong>{{ image.filename }}</strong></figcaption>
+                </figure>
+            </div>
+        {% endfor %}
+    </div>
+</div>

@@ -1,19 +1,21 @@
 {% extends "base/base.html" %} {% block content %}
-    <div class="container-fluid">
+    <div class="container-fluid px-4">
+
         <div class="row mt-4">
-            <div class="col">
+            <div class="offset-xl-2 col-xl-10 offset-lg-1 col-lg-11">
                 <h3 class="text-left">{{ document.name }} - Start Layout Analysis</h3>
             </div>
         </div>
+
         <form action="{{ url_for('layout_analysis.start_layout', document_id=document.id) }}" method="POST">
 
             <div class="row mt-4">
-                <div class="col">
+                <div class="offset-xl-2 col-xl-10 offset-lg-1 col-lg-11">
                     <h5 class="text-left">Select baseline detector</h5>
                 </div>
             </div>
             <div class="row">
-                <div class="col-5">
+                <div class="offset-xl-2 col-xl-5 offset-lg-1 col-lg-6">
                 <select class="form-control" name="layout_detector_id" style="width:100%">
                     {% for layout_detector in layout_engines %}
                     <option value="{{ layout_detector.id }}" model-type-description="layout-detector-description"
@@ -23,22 +25,21 @@
                 </div>
             </div>
             <div class="row mt-2">
-                <div class="col-8 text-justify" id="layout-detector-description">
+                <div class="offset-xl-2 col-xl-5 offset-lg-1 col-lg-6 text-justify" id="layout-detector-description">
                 </div>
             </div>
 
-            <input class="btn btn-primary my-3" type="submit" value="Submit">
+            <div class="row">
+                <div class="offset-xl-2 col-xl-10 offset-lg-1 col-lg-11">
+                    <input class="btn btn-primary my-3" type="submit" value="Submit">
+                </div>
+            </div>
+
         </form>
 
     </div>
-{% endblock %} {% block styles %}
-<link href="/static/select2/select2.min.css" rel="stylesheet" />
 {% endblock %}
 
 {% block scripts %}
-    <script src="/static/select2/select2.min.js"></script>
     <script src="/static/js/select.js?version=1.1"></script>
-    <script>
-
-    </script>
 {% endblock %}
