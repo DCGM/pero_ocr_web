@@ -78,6 +78,13 @@ def get_page_xml_regions(image_id):
                     headers={"Content-disposition": "attachment; filename={}.xml".format(page_layout.id)})
 
 
+@bp.route('/get_page_xml_regions/<string:image_id>')
+def get_page_xml_regions(image_id):
+    page_layout = get_page_layout(image_id, only_regions=True)
+    return Response(page_layout.to_pagexml_string(), mimetype='text/xml',
+                    headers={"Content-disposition": "attachment; filename={}.xml".format(page_layout.id)})
+
+
 @bp.route('/get_page_xml_lines/<string:image_id>')
 def get_page_xml_lines(image_id):
     page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False)
