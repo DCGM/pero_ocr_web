@@ -13,6 +13,7 @@ class User(UserMixin, Base):
     first_name = Column(String(100))
     last_name = Column(String(100))
     institution = Column(String(300))
+    trusted = Column(Integer())
 
     documents = relationship('Document', back_populates="user", lazy='dynamic')
     collaborator_documents = relationship('Document', secondary='userdocuments', lazy='dynamic')

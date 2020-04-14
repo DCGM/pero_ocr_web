@@ -116,3 +116,5 @@ config.py
 
 *.xml
 .vscode/settings.json
+.pero_ocr/
+.update_client/pero_ocr/
