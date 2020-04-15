@@ -1,14 +1,29 @@
 import os
 import time
 import shutil
-import zipfile
 import requests
+import argparse
 import subprocess
 import configparser
 
-from os import listdir
-
 from client_helper import join_url, log_in, check_request
+
+
+def get_args():
+    """
+    method for parsing of arguments
+    """
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-c", "--config", action="store", dest="config", help="config path")
+    parser.add_argument("-d", "--document-id", action="store", dest="document_id", help="document id")
+    parser.add_argument("-l", "--login", action="store", dest="login", help="username")
+    parser.add_argument("-p", "--password", action="store", dest="password", help="password")
+
+    args = parser.parse_args()
+
+    return args
+
 
 def remove_files(config, folder_name):
     list_of_files = os.listdir(os.path.join(config['SETTINGS']['working_directory'], folder_name))
@@ -154,8 +169,20 @@ def check_and_process_update_request(config):
 
 
 def main():
+    args = get_args()
+
     config = configparser.ConfigParser()
-    config.read("config.ini")
+    if args.config is not None:
+        config.read(args.config)
+    else:
+        config.read('config.ini')
+
+    if args.document_id is not None:
+        config["SETTINGS"]['document_id'] = args.document_id
+    if args.login is not None:
+        config["SETTINGS"]['login'] = args.login
+    if args.password is not None:
+        config["SETTINGS"]['password'] = args.password
 
     if check_and_process_update_request(config):
         print("REQUEST COMPLETED")
