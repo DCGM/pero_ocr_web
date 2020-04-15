@@ -73,6 +73,17 @@ def upload_document_post(document_id):
         return status, 409
 
 
+@bp.route('/get_document_image_ids/<string:document_id>')
+@login_required
+def get_document_image_ids(document_id):
+    if not is_granted_acces_for_document(document_id, current_user):
+        flash(u'You do not have sufficient rights to document!', 'danger')
+        return redirect(url_for('main.index'))
+
+    document = get_document_by_id(document_id)
+    return jsonify([str(x.id) for x in document.images])
+
+
 @bp.route('/get_page_xml_regions/<string:image_id>')
 @login_required
 def get_page_xml_regions(image_id):
@@ -93,6 +104,19 @@ def get_page_xml_lines(image_id):
         return redirect(url_for('main.index'))
 
     page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False)
+    file_name = "{}.xml".format(os.path.splitext(page_layout.id)[0])
+    return Response(page_layout.to_pagexml_string(), mimetype='text/xml',
+                    headers={"Content-disposition": "attachment; filename={}".format(file_name)})
+
+
+@bp.route('/get_annotated_page_xml_lines/<string:image_id>')
+@login_required
+def get_annotated_page_xml_lines(image_id):
+    if not is_granted_acces_for_page(image_id, current_user):
+        flash(u'You do not have sufficient rights to download xml!', 'danger')
+        return redirect(url_for('main.index'))
+
+    page_layout = get_page_layout(image_id, only_regions=False, only_annotated=True)
     file_name = "{}.xml".format(os.path.splitext(page_layout.id)[0])
     return Response(page_layout.to_pagexml_string(), mimetype='text/xml',
                     headers={"Content-disposition": "attachment; filename={}".format(file_name)})

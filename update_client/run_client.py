@@ -1,5 +1,5 @@
 import os
-import time
+import json
 import shutil
 import requests
 import argparse
@@ -51,18 +51,17 @@ def create_work_folders(config):
     print("SUCCESFUL")
 
 
-def download_xmls(session, config):
-    r = session.get(join_url(config['SERVER']['base_url'], config['SERVER'][config['SETTINGS']['type']], config['SETTINGS']['document_id']), stream=True)
-    if r.status_code == 200:
-        with open(os.path.join(config['SETTINGS']['working_directory'], '{}_xml.zip' .format(config['SETTINGS']['document_id'])), 'wb') as f:
-            r.raw.decode_content = True
-            shutil.copyfileobj(r.raw, f)
-    else:
-        print("FAILED")
-        return False
-
-    with zipfile.ZipFile(os.path.join(config['SETTINGS']['working_directory'], '{}_xml.zip' .format(config['SETTINGS']['document_id'])), 'r') as zip_ref:
-        zip_ref.extractall(os.path.join(config['SETTINGS']['working_directory'], "xml"))
+def download_xmls(session, config, page_uuids):
+    for _, uuid in enumerate(page_uuids):
+        r = session.get(join_url(config['SERVER']['base_url'], config['SERVER'][config['SETTINGS']['type']], uuid), stream=True)
+        if r.status_code == 200:
+            with open(os.path.join(config['SETTINGS']['working_directory'], "xml/{}.xml".format(uuid)),
+                      'wb') as f:
+                r.raw.decode_content = True
+                shutil.copyfileobj(r.raw, f)
+        else:
+            print("ERROR {} OCCURED DURING XML {} DOWNLOAD.".format(r.status_code, uuid))
+            return False
 
     print("SUCCESFUL")
     return True
@@ -97,13 +96,26 @@ def send_data(session, config):
         return True
 
 
+def get_document_ids(session, config):
+    r = session.get(join_url(config['SERVER']['base_url'], config['SERVER']['document_ids'], config['SETTINGS']['document_id']), stream=True)
+    if r.status_code == 200:
+        print("SUCCESFUL")
+        return True, json.loads(r.text)
+    else:
+        print("FAILED")
+        return False, None
+
+
 def check_and_process_update_request(config):
     with requests.Session() as session:
         print()
         print("LOGGING IN")
         print("##############################################################")
         if not log_in(config, session):
+            print('FAILED')
             return False
+        else:
+            print('SUCCESFUL')
         print("##############################################################")
 
         print()
@@ -113,15 +125,20 @@ def check_and_process_update_request(config):
         print("##############################################################")
 
         print()
-        print("DOWNLOADING XMLS")
+        print("GETTING PAGES IDS")
         print("##############################################################")
-        if not download_xmls(session, config):
+        done, page_uuids = get_document_ids(session, config)
+        if not done:
             return False
         print("##############################################################")
 
-        #get page ids
-        page_uuids = [f[:-4] for f in listdir(os.path.join(config['SETTINGS']['working_directory'], "xml")) if 'xml' in f]
-        
+        print()
+        print("DOWNLOADING XMLS")
+        print("##############################################################")
+        if not download_xmls(session, config, page_uuids):
+            return False
+        print("##############################################################")
+
         print()
         print("DOWNLOADING IMAGES")
         print("##############################################################")
