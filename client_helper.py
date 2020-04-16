@@ -56,10 +56,10 @@ def check_request(r, verbose=False):
         return False
 
 
-def log_in(config, session, verbose=True):
+def log_in(config, session, verbose=False):
     r = session.get(join_url(config['SERVER']['base_url']))
 
-    if not check_request(r, verbose=False):
+    if not check_request(r, verbose):
         return False
 
     tree = etree.HTML(r.content)
@@ -74,7 +74,7 @@ def log_in(config, session, verbose=True):
 
     r = session.post(join_url(config['SERVER']['base_url'], config['SERVER']['authentification']), data=payload)
 
-    if not check_request(r, verbose):
+    if not check_request(r, verbose) or config['SERVER']['login_page'] not in r.url:
         return False
     else:
         return True
