@@ -74,7 +74,7 @@ def log_in(config, session, verbose=True):
 
     r = session.post(join_url(config['SERVER']['base_url'], config['SERVER']['authentification']), data=payload)
 
-    if not check_request(r, verbose=False):
+    if not check_request(r, verbose=False) or config['SERVER']['login_page'] not in r.url:
         return False
     else:
         return True
