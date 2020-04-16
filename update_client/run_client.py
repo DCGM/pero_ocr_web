@@ -168,7 +168,8 @@ def check_and_process_update_request(config):
                                             '--output-img', os.path.join(config['SETTINGS']['working_directory'], "other"),
                                             '--output-xml', os.path.join(config['SETTINGS']['working_directory'], "other"),
                                             '--output-file', os.path.join(config['SETTINGS']['working_directory'], "changes.json"),
-                                            '--threshold', os.path.join(config['SETTINGS']['threshold'])],
+                                            '--threshold', config['SETTINGS']['threshold'],
+                                            '--max-confidence', config['SETTINGS']['max_confidence']],
                                             cwd=config['SETTINGS']['working_directory'])
 
         replace_process.wait()
