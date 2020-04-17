@@ -18,12 +18,14 @@ class ImageEditor{
         this.active_line = false;
         this.focused_line = false;
         let save_btn = document.getElementsByClassName('save-btn');
+        let next_suspect_btn = document.getElementById('nextsucpectline');
         let show_line_height = document.getElementById('show-line-height');
         let show_bottom_pad = document.getElementById('show-bottom-pad');
         for (let btn of save_btn)
         {
             btn.addEventListener('click', this.save_annotations.bind(this));
         }
+        next_suspect_btn.addEventListener('click', this.show_next_line.bind(this));
         show_line_height.addEventListener('input', this.show_line_change.bind(this));
         show_bottom_pad.addEventListener('input', this.show_line_change.bind(this));
     }
@@ -164,6 +166,48 @@ class ImageEditor{
         line.edited = true;
         line.saved = false;
         line.text_line_element.style.backgroundColor = "#ffcc54";
+    }
+
+    show_next_line()
+    {
+        var focused = false;
+        if (this.active_line.id == undefined){
+            for (let line of this.lines){
+                for (let letter of line.text_line_element.childNodes) {
+                    if (letter.style.background != "rgb(255, 255, 255)"){
+                        this.line_focus(line);
+                        this.polygon_click(line);
+                        focused = true;
+                        break;
+                    }
+                }
+                if (focused){
+                    break;
+                }
+            }
+        }
+        else {
+            let index = this.lines.findIndex(x => x.id === this.active_line.id);
+            let rest_of_lines = this.lines.slice(index+1);
+            if (rest_of_lines.length != 0){
+                for (let line of rest_of_lines) {
+                    for (let letter of line.text_line_element.childNodes) {
+                        if (letter.style.background != "rgb(255, 255, 255)") {
+                            this.line_focus(line);
+                            this.polygon_click(line);
+                            focused = true;
+                            break;
+                        }
+                    }
+                    if (focused) {
+                        break;
+                    }
+                }
+            }
+            else{
+                next_page();
+            }
+        }
     }
 
     line_press(line, e)
