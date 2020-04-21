@@ -15,6 +15,7 @@ annotator_data = {
         }
         return null;
     },
+    edited: false,
     history: [],
     future: [],
     selected_id: 0
@@ -206,6 +207,7 @@ class LP_object {
     }
 
     obj_click() {
+        annotator_data.edited = true;
         if (this.deleted || this.ignore) {
             this.deleted = 0;
             this.ignore = 0;
@@ -337,6 +339,12 @@ function fix_ar() {
 // PAGE CHANGE EVENT
 // #############################################################################
 $('.scrolling-wrapper .figure').on('click', function (event) {
+    if (annotator_data.edited){
+        if (confirm("Save changes?"))
+            {
+                save_image();
+            }
+    }
     let image_id = $(this).data('image');
     image_index = $(this).data('index');
 
@@ -372,6 +380,7 @@ function previous_page()
     {
         image_index -= 1;
         $('.scrolling-wrapper .figure[data-index=' + image_index + ']').click();
+        annotator_data.edited = false;
     }
 }
 function next_page()
@@ -380,6 +389,7 @@ function next_page()
     {
         image_index += 1;
         $('.scrolling-wrapper .figure[data-index=' + image_index + ']').click();
+        annotator_data.edited = false;
     }
 }
 // #############################################################################
