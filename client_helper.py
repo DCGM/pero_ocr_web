@@ -57,7 +57,7 @@ def check_request(r, verbose=False):
 
 
 def log_in(config, session, verbose=False):
-    r = session.get(join_url(config['SERVER']['base_url']))
+    r = session.get(config['SERVER']['base_url'])
 
     if not check_request(r):
         return False

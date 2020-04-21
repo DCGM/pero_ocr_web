@@ -7,7 +7,7 @@ from app.db.guid import GUID
 import glob
 import os
 import uuid
-from pero_ocr.document_ocr import PageLayout
+from pero_ocr.document_ocr.layout import PageLayout
 from app.document.general import dhash, get_and_create_document_image_directory
 from shutil import copyfile
 from PIL import Image as PILImage
