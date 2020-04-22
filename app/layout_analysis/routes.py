@@ -12,7 +12,7 @@ import os
 import sys
 import sqlalchemy
 from app.db.model import DocumentState, TextRegion, LayoutDetector
-from app.document.general import is_user_owner_or_collaborator, is_user_trusted
+from app.document.general import is_user_owner_or_collaborator, is_granted_acces_for_document, is_user_trusted
 from PIL import Image
 from app import db_session
 from flask import jsonify
@@ -29,7 +29,7 @@ import shutil
 @bp.route('/show_results/<string:document_id>', methods=['GET'])
 @login_required
 def show_results(document_id):
-    if not is_user_owner_or_collaborator(document_id, current_user):
+    if not is_granted_acces_for_document(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
     document = get_document_by_id(document_id)
@@ -44,7 +44,7 @@ def show_results(document_id):
 @bp.route('/select_layout/<string:document_id>', methods=['GET'])
 @login_required
 def select_layout(document_id):
-    if not is_user_owner_or_collaborator(document_id, current_user):
+    if not is_granted_acces_for_document(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
     document = get_document_by_id(document_id)
@@ -55,7 +55,7 @@ def select_layout(document_id):
 @bp.route('/start_layout/<string:document_id>', methods=['POST'])
 @login_required
 def start_layout(document_id):
-    if not is_user_owner_or_collaborator(document_id, current_user):
+    if not is_granted_acces_for_document(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
     document = get_document_by_id(document_id)
@@ -90,7 +90,7 @@ def edit_layout(image_id):
     document_id = image.document_id
     if image is None:
         return 'Image does not exist!', 404
-    if not is_user_owner_or_collaborator(document_id, current_user):
+    if not is_granted_acces_for_document(document_id, current_user):
         return 'You do not have sufficient rights to this document!', 403
     regions = request.get_json()
     existing_regions = dict([(str(region.id), region) for region in image.textregions])
@@ -151,7 +151,7 @@ def post_result(layout_analysis_request_id):
 def get_image_result(image_id):
     image = get_image_by_id(image_id)
     document_id = image.document_id
-    if not is_user_owner_or_collaborator(document_id, current_user):
+    if not is_granted_acces_for_document(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
     img = Image.open(image.path)
@@ -169,7 +169,7 @@ def get_image_result(image_id):
 @login_required
 def get_result_preview(image_id):
     document_id = get_image_by_id(image_id).document_id
-    if not is_user_owner_or_collaborator(document_id, current_user):
+    if not is_granted_acces_for_document(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
     image_path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document_id), str(image_id) + '.jpg')

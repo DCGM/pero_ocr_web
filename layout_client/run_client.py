@@ -23,7 +23,7 @@ def check_and_process_layout_request(config):
         layout_analysis_get_request_route = config['SERVER']['layout_analysis_get_request_route']
 
         try:
-            r = requests.get(join_url(base_url, layout_analysis_get_request_route))
+            r = session.get(join_url(base_url, layout_analysis_get_request_route))
         except:
             return False
 
@@ -64,13 +64,13 @@ def check_and_process_layout_request(config):
 
             print()
             print("GETTING LAYOUT DETECTOR:", layout_detector_id)
-            get_layout_detector(base_url, layout_analysis_get_layout_detector_route, layout_detector_id,
+            get_layout_detector(session, base_url, layout_analysis_get_layout_detector_route, layout_detector_id,
                                 layout_detector_folder)
 
             print()
             print("GETTING IMAGES")
             print("##############################################################")
-            get_images(base_url, document_get_image_route, image_ids, images_folder)
+            get_images(session, base_url, document_get_image_route, image_ids, images_folder)
             print("##############################################################")
 
             print()
@@ -89,7 +89,7 @@ def check_and_process_layout_request(config):
             print("##############################################################")
             print("XMLS")
             print("\n".join(os.listdir(output_xmls_folder)))
-            post_result(base_url, layout_analysis_post_result_route, request_id, image_ids, data_folders, data_types)
+            post_result(session, base_url, layout_analysis_post_result_route, request_id, image_ids, data_folders, data_types)
             print("##############################################################")
             print()
             return True
@@ -97,8 +97,8 @@ def check_and_process_layout_request(config):
         return False
 
 
-def get_layout_detector(base_url, layout_analysis_get_layout_detector_route, layout_detector_id, layout_detector_folder):
-    layout_detector_response = requests.get(join_url(base_url, layout_analysis_get_layout_detector_route,
+def get_layout_detector(session, base_url, layout_analysis_get_layout_detector_route, layout_detector_id, layout_detector_folder):
+    layout_detector_response = session.get(join_url(base_url, layout_analysis_get_layout_detector_route,
                                                      layout_detector_id))
     unzip_response_to_dir(layout_detector_response, layout_detector_folder)
 
