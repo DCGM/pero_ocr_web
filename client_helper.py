@@ -45,36 +45,35 @@ def post_result(base_url, post_result_route, request_id, image_ids, data_folders
     requests.post(join_url(base_url, post_result_route, request_id), files=data)
 
 
-def check_request(r, verbose=False):
+def check_request(r):
     if r.status_code == 200:
-        if verbose:
-            print("SUCCESFUL")
         return True
     else:
-        if verbose:
-            print("FAILED")
         return False
 
 
-def log_in(config, session, verbose=True):
-    r = session.get(join_url(config['SERVER']['base_url']))
+def log_in(session, login, password, base_usr, authentification, login_page):
+    r = session.get(base_usr)
 
-    if not check_request(r, verbose=False):
+    if not check_request(r):
+        print("FAILED")
         return False
 
     tree = etree.HTML(r.content)
     csrf = tree.xpath('//input[@name="csrf_token"]/@value')[0]
 
     payload = {
-        'email': config['SETTINGS']['login'],
-        'password': config['SETTINGS']['password'],
+        'email': login,
+        'password': password,
         'submit': 'Login',
         'csrf_token': csrf
     }
 
-    r = session.post(join_url(config['SERVER']['base_url'], config['SERVER']['authentification']), data=payload)
+    r = session.post(join_url(base_usr, authentification), data=payload)
 
-    if not check_request(r, verbose=False) or config['SERVER']['login_page'] not in r.url:
+    if not check_request(r) or login_page not in r.url:
+        print("FAILED")
         return False
     else:
+        print("SUCCESFUL")
         return True
