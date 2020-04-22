@@ -2,7 +2,6 @@ import os
 import shutil
 import json
 from natsort import natsorted
-import configparser
 from flask import render_template, request, current_app, send_file
 from flask import url_for, redirect, flash, jsonify
 from flask_login import login_required, current_user
@@ -17,6 +16,7 @@ from app.ocr.general import create_json_from_request, create_ocr_request, \
                             post_files_to_folder, check_document_processed
 from app.document.general import get_document_images
 from app import db_session
+from app.document.general import is_user_owner_or_collaborator, is_user_trusted, is_granted_acces_for_page, is_granted_acces_for_document
 
 
 ########################################################################################################################
@@ -29,6 +29,9 @@ from app import db_session
 @bp.route('/show_results/<string:document_id>', methods=['GET'])
 @login_required
 def show_results(document_id):
+    if not is_user_owner_or_collaborator(document_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
     document = get_document_by_id(document_id)
     if document.state != DocumentState.COMPLETED_OCR:
         return  # Bad Request or something like that
@@ -39,6 +42,9 @@ def show_results(document_id):
 @bp.route('/revert_ocr/<string:document_id>', methods=['GET'])
 @login_required
 def revert_ocr(document_id):
+    if not is_user_owner_or_collaborator(document_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
     print()
     print("REVERT OCR")
     print("##################################################################")
@@ -71,6 +77,9 @@ def revert_ocr(document_id):
 @bp.route('/select_ocr/<string:document_id>', methods=['GET'])
 @login_required
 def select_ocr(document_id):
+    if not is_granted_acces_for_document(document_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
     document = get_document_by_id(document_id)
     ocr_engines = db_session.query(OCR).filter(OCR.active).all()
     baseline_engines = db_session.query(Baseline).filter(Baseline.active).all()
@@ -82,6 +91,9 @@ def select_ocr(document_id):
 @bp.route('/start_ocr/<string:document_id>', methods=['POST'])
 @login_required
 def start_ocr(document_id):
+    if not is_granted_acces_for_document(document_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
     document = get_document_by_id(document_id)
     if 'baseline_id' in request.form:
         baseline_id = request.form['baseline_id']
@@ -107,6 +119,9 @@ def start_ocr(document_id):
 @bp.route('/get_lines/<string:document_id>/<string:image_id>', methods=['GET'])
 @login_required
 def get_lines(document_id, image_id):
+    if not is_granted_acces_for_page(image_id, current_user):
+        flash(u'You do not have sufficient rights to get lines!', 'danger')
+        return redirect(url_for('main.index'))
     lines_dict = {'document_id': document_id, 'image_id': image_id, 'lines': []}
     image = get_image_by_id(image_id)
     lines_dict['height'] = image.height
@@ -140,6 +155,9 @@ def get_lines(document_id, image_id):
 @bp.route('/save_annotations/<string:document_id>', methods=['POST'])
 @login_required
 def save_annotations(document_id):
+    if not is_user_owner_or_collaborator(document_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
     document = get_document_by_id(document_id)
     if document.state == DocumentState.COMPLETED_OCR:
         insert_annotations_to_db(current_user, json.loads(request.form['annotations']))
@@ -159,7 +177,11 @@ def save_annotations(document_id):
 ########################################################################################################################
 
 @bp.route('/post_result/<string:ocr_request_id>', methods=['POST'])
+@login_required
 def post_result(ocr_request_id):
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights!', 'danger')
+        return redirect(url_for('main.index'))
     print()
     print("INSERT LINES FROM XMLS AND LOGITS TO DB")
     print("##################################################################")
@@ -177,7 +199,11 @@ def post_result(ocr_request_id):
 ########################################################################################################################
 
 @bp.route('/get_request')
+@login_required
 def get_ocr_request():
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights!', 'danger')
+        return redirect(url_for('main.index'))
     ocr_request = get_first_ocr_request()
     if ocr_request:
         change_ocr_request_and_document_state_in_progress(ocr_request)
@@ -187,7 +213,11 @@ def get_ocr_request():
 
 
 @bp.route('/get_config/<string:baseline_id>/<string:ocr_id>/<string:language_model_id>')
+@login_required
 def get_config(baseline_id, ocr_id, language_model_id):
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights!', 'danger')
+        return redirect(url_for('main.index'))
     if baseline_id == "none":
         baseline_id = None
     if language_model_id == "none":
@@ -226,19 +256,31 @@ def get_config(baseline_id, ocr_id, language_model_id):
 
 
 @bp.route('/get_baseline/<string:baseline_id>')
+@login_required
 def get_baseline(baseline_id):
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights!', 'danger')
+        return redirect(url_for('main.index'))
     baseline = get_baseline_by_id(baseline_id)
     return get_model(baseline, "baseline")
 
 
 @bp.route('/get_ocr/<string:ocr_id>')
+@login_required
 def get_ocr(ocr_id):
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights!', 'danger')
+        return redirect(url_for('main.index'))
     ocr = get_ocr_by_id(ocr_id)
     return get_model(ocr, "ocr")
 
 
 @bp.route('/get_language_model/<string:language_model_id>')
+@login_required
 def get_language_model(language_model_id):
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights!', 'danger')
+        return redirect(url_for('main.index'))
     language_model = get_language_model_by_id(language_model_id)
     return get_model(language_model, "language_model")
 

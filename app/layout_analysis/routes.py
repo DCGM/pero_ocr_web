@@ -12,7 +12,7 @@ import os
 import sys
 import sqlalchemy
 from app.db.model import DocumentState, TextRegion, LayoutDetector
-from app.document.general import is_user_owner_or_collaborator
+from app.document.general import is_user_owner_or_collaborator, is_user_trusted
 from PIL import Image
 from app import db_session
 from flask import jsonify
@@ -124,7 +124,11 @@ def edit_layout(image_id):
 ########################################################################################################################
 
 @bp.route('/post_result/<string:layout_analysis_request_id>', methods=['POST'])
+@login_required
 def post_result(layout_analysis_request_id):
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights to edit collaborators!', 'danger')
+        return redirect(url_for('main.index'))
     layout_analysis_request = get_request_by_id(layout_analysis_request_id)
     document = get_document_by_id(layout_analysis_request.document_id)
     if document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
@@ -179,7 +183,11 @@ def get_result_preview(image_id):
 ########################################################################################################################
 
 @bp.route('/get_request')
+@login_required
 def get_request():
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights to edit collaborators!', 'danger')
+        return redirect(url_for('main.index'))
     analysis_request = get_first_layout_request()
     if analysis_request:
         change_layout_request_and_document_state_in_progress(analysis_request)
@@ -189,7 +197,11 @@ def get_request():
 
 
 @bp.route('/get_layout_detector/<string:layout_detector_id>')
+@login_required
 def get_layout_detector(layout_detector_id):
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights to edit collaborators!', 'danger')
+        return redirect(url_for('main.index'))
     layout_detector = get_layout_detector_by_id(layout_detector_id)
     layout_detector_folder = os.path.join(current_app.config['LAYOUT_DETECTORS_FOLDER'], get_layout_detector_folder_name(layout_detector.name))
     if not os.path.exists("{}.zip".format(layout_detector_folder)):
