@@ -8,7 +8,7 @@ from app import db_session
 from flask import jsonify
 import uuid
 
-from pero_ocr.document_ocr import PageLayout
+from pero_ocr.document_ocr.layout import PageLayout
 from pero_ocr.force_alignment import force_align
 from pero_ocr.confidence_estimation import get_letter_confidence
 
