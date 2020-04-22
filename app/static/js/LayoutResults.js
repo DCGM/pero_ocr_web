@@ -15,6 +15,7 @@ annotator_data = {
         }
         return null;
     },
+    edited: false,
     history: [],
     future: [],
     selected_id: 0
@@ -117,33 +118,36 @@ function toggle_ignore_object() {
     }
 }
 
-function editor_keypress(e) {
-    // g - not deleted
-    // h - not ignored
-    // o - reset original object annotation
+setTimeout(function(){
+    document.onkeyup = function(e) {
+        // g - not deleted
+        // h - not ignored
+        // o - reset original object annotation
 
-    // n - save and next forward
-    // x - discard and next forward
-    // b - backward
-    // s - save
+        // n - save and next forward
+        // x - discard and next forward
+        // b - backward
+        // s - save
 
-    // r - previous annotated??
-    // t - next annotated
-    var k = e.key = e.key.toLowerCase()
-    if (k == "r") {
-        get_image(annotator_data.uuid)
-    } else if (k == "c") {
-        create_new_object();
-    } else if (k == 'g') {
-        toggle_delete_object();
-    } else if (k == 's') {
-        save_image();
-    } else if(k == 'n') {
-        next_page();
-    } else if(k == 'b'){
-        previous_page();
+        // r - previous annotated??
+        // t - next annotated
+        var k = e.key = e.key.toLowerCase()
+        if (k == "r") {
+            get_image(annotator_data.uuid)
+        } else if (k == "c") {
+            create_new_object();
+        } else if (k == 'g') {
+            toggle_delete_object();
+        } else if (k == 's') {
+            save_image();
+        } else if(k == 'n') {
+            next_page();
+        } else if(k == 'b'){
+            previous_page();
+        }
     }
-}
+}, 50);
+
 
 function save_image() {
     if (annotator_data.uuid) {
@@ -203,6 +207,7 @@ class LP_object {
     }
 
     obj_click() {
+        annotator_data.edited = true;
         if (this.deleted || this.ignore) {
             this.deleted = 0;
             this.ignore = 0;
@@ -334,6 +339,12 @@ function fix_ar() {
 // PAGE CHANGE EVENT
 // #############################################################################
 $('.scrolling-wrapper .figure').on('click', function (event) {
+    if (annotator_data.edited){
+        if (confirm("Save changes?"))
+            {
+                save_image();
+            }
+    }
     let image_id = $(this).data('image');
     image_index = $(this).data('index');
 
@@ -369,6 +380,7 @@ function previous_page()
     {
         image_index -= 1;
         $('.scrolling-wrapper .figure[data-index=' + image_index + ']').click();
+        annotator_data.edited = false;
     }
 }
 function next_page()
@@ -377,6 +389,7 @@ function next_page()
     {
         image_index += 1;
         $('.scrolling-wrapper .figure[data-index=' + image_index + ']').click();
+        annotator_data.edited = false;
     }
 }
 // #############################################################################
