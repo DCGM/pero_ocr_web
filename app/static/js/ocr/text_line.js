@@ -85,43 +85,17 @@ class TextLine
         let empty_text_line_element = !($(this.container).has('span').length);
 
         // LEFT ARROW
-        if (e.keyCode == 37 && !empty_text_line_element)
+        if (e.keyCode == 37 && !e.ctrlKey && !e.shiftKey && !empty_text_line_element)
         {
             e.preventDefault();
             this.skip_all_empty_spans_to_the_left()
         }
 
-        // LEFT ARROW + CTRL
-        if (e.keyCode == 37 && e.ctrlKey && !empty_text_line_element)
-        {
-            e.preventDefault();
-            this.skip_word_to_the_left();
-        }
-
-        // LEFT ARROW + SHIFT
-        if (e.keyCode == 37 && e.shiftKey && !empty_text_line_element)
-        {
-
-        }
-
         // RIGHT ARROW
-        if (e.keyCode == 39 && !empty_text_line_element)
+        if (e.keyCode == 39 && !e.ctrlKey && !e.shiftKey && !empty_text_line_element)
         {
             e.preventDefault();
             this.skip_all_empty_spans_to_the_right();
-        }
-
-        // RIGHT ARROW + CTRL
-        if (e.keyCode == 39 && e.ctrlKey && !empty_text_line_element)
-        {
-            e.preventDefault();
-            this.skip_word_to_the_right();
-        }
-
-        // RIGHT ARROW + SHIFT
-        if (e.keyCode == 39 && e.shiftKey && !empty_text_line_element)
-        {
-
         }
 
         // BACKSPACE
@@ -315,14 +289,14 @@ class TextLine
         selection.addRange(range);
     }
 
-    skip_word_to_the_left()
+    select_span_to_the_left()
     {
         let caret_span = this.get_caret_span();
         let previous_span = caret_span;
         while (previous_span)
         {
-            let skip_span = ((previous_span.innerHTML.charCodeAt(0) == 8203) || (previous_span.innerHTML == "") ||
-                             ((previous_span.innerHTML != " ") && (previous_span.innerHTML != "&nbsp;")));
+            let skip_span = ((previous_span.innerHTML.charCodeAt(0) == 8203) || (previous_span.innerHTML == ""));
+
             if (skip_span)
             {
                 if (previous_span.previousSibling)
@@ -341,22 +315,28 @@ class TextLine
         }
         let selection = document.getSelection();
         let range = selection.getRangeAt(0);
-
-        if (previous_span.childNodes.length)
-        {
-            range.selectNodeContents(previous_span.childNodes[0]);
-        }
-        else
-        {
-            range.selectNodeContents(previous_span);
-        }
+        console.log(selection);
         if (previous_span.previousSibling)
         {
-            range.collapse(false);
+            if (previous_span.previousSibling.childNodes.length)
+            {
+                range.setStartAfter(previous_span.previousSibling.childNodes[0]);
+            }
+            else
+            {
+                range.setStartAfter(previous_span.previousSibling);
+            }
         }
         else
         {
-            range.collapse(true);
+            if (previous_span.childNodes.length)
+            {
+                range.setStartAfter(previous_span.childNodes[0]);
+            }
+            else
+            {
+                range.setStartAfter(previous_span);
+            }
         }
         selection.removeAllRanges();
         selection.addRange(range);
@@ -378,49 +358,6 @@ class TextLine
             while (next_span)
             {
                 let skip_span = ((next_span.innerHTML.charCodeAt(0) == 8203) || (next_span.innerHTML == ""));
-                if (skip_span)
-                {
-                    if (next_span.nextSibling)
-                    {
-                        next_span = next_span.nextSibling;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-                else
-                {
-                    break;
-                }
-            }
-        }
-        let selection = document.getSelection();
-        let range = selection.getRangeAt(0);
-        if (next_span.childNodes.length)
-        {
-            range.selectNodeContents(next_span.childNodes[0]);
-        }
-        else
-        {
-            range.selectNodeContents(next_span);
-        }
-        range.collapse(false);
-        selection.removeAllRanges();
-        selection.addRange(range);
-    }
-
-    skip_word_to_the_right()
-    {
-        let caret_span = this.get_caret_span();
-        let next_span = caret_span;
-        if (caret_span.nextSibling)
-        {
-            next_span = caret_span.nextSibling;
-            while (next_span)
-            {
-                let skip_span = (((next_span.innerHTML.charCodeAt(0) == 8203) || (next_span.innerHTML == "")) ||
-                                 ((next_span.innerHTML != " ") && (next_span.innerHTML != "&nbsp;")));
                 if (skip_span)
                 {
                     if (next_span.nextSibling)
