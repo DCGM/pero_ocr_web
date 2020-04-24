@@ -28,10 +28,32 @@ class TextLinesEditor
         show_bottom_pad.addEventListener('input', this.show_line_change.bind(this));
     }
 
-    get_image(document_id, image_id)
+    change_image(image_id)
     {
-        this.document_id = document_id;
-        let route = Flask.url_for('ocr.get_lines', {'document_id': document_id, 'image_id': image_id});
+        if (typeof this.lines !== 'undefined')
+        {
+            let unsaved_lines = false;
+            for (let l of this.lines)
+            {
+                if (l.edited)
+                {
+                    unsaved_lines = true;
+                }
+            }
+            if (unsaved_lines)
+            {
+                if (confirm("Save changes?"))
+                {
+                    this.save_annotations();
+                }
+            }
+        }
+        this.get_image(image_id)
+    }
+
+    get_image(image_id)
+    {
+        let route = Flask.url_for('ocr.get_lines', {'image_id': image_id});
         $.get(route, this.new_image_callback.bind(this));
         let text_container = document.getElementById('text-container');
         text_container.addEventListener('keypress', this.press_text_container.bind(this));
@@ -44,7 +66,6 @@ class TextLinesEditor
     new_image_callback(data, status)
     {
         this.container.innerHTML = "<div class='editor-map'></div><div class='status'></div>";
-        this.document_id = data['document_id'];
         this.image_id = data['image_id'];
         this.width = data['width'];
         this.height = data['height'];
@@ -73,13 +94,13 @@ class TextLinesEditor
 
         let bounds = [xy(0, -this.height), xy(this.width, 0)];
         this.map.setView(xy(this.width / 2, -this.height / 2), -2);
-        L.imageOverlay(Flask.url_for('document.get_image', {'document_id': this.document_id, 'image_id': this.image_id}), bounds).addTo(this.map);
+        L.imageOverlay(Flask.url_for('document.get_image', {'image_id': this.image_id}), bounds).addTo(this.map);
         this.map.fitBounds(bounds);
 
         let i = 0;
         for (let l of data['lines'])
         {
-            let line = new TextLine(l.id, this.document_id, l.text, l.np_confidences)
+            let line = new TextLine(l.id, l.text, l.np_confidences)
             line.np_points = l.np_points;
             line.annotated = l.annotated;
             this.add_line_to_map(i, line);

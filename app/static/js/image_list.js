@@ -1,9 +1,10 @@
 
-class ImageChange
+class ImageList
 {
-    constructor(text_lines_editor)
+    constructor(objects_to_change)
     {
-        this.text_lines_editor = text_lines_editor;
+        this.objects_to_change = objects_to_change;
+
         this.image_index = 0;
         this.images = $('.scrolling-wrapper .figure');
         for (let i of this.images)
@@ -25,7 +26,6 @@ class ImageChange
 
     change(image)
     {
-        let document_id = $(image).data('document');
         let image_id = $(image).data('image');
         this.image_index = $(image).data('index');
 
@@ -38,29 +38,10 @@ class ImageChange
         $(image).addClass('active');
         $($(image).children()[0]).css('background-color', '#ff00f2');
 
-        document.getElementById('btn-export-page-xml').setAttribute("href", Flask.url_for('document.get_page_xml_lines', {'image_id': image_id}));
-        document.getElementById('btn-export-alto-xml').setAttribute("href", Flask.url_for('document.get_alto_xml', {'image_id': image_id}));
-        document.getElementById('btn-export-text').setAttribute("href", Flask.url_for('document.get_text', {'image_id': image_id}));
-        document.getElementById('btn-export-img').setAttribute("href", Flask.url_for('document.get_image', {'image_id': image_id}));
-        if (typeof this.text_lines_editor.lines !== 'undefined')
+        for (let o of this.objects_to_change)
         {
-            let unsaved_lines = false;
-            for (let l of this.text_lines_editor.lines)
-            {
-                if (l.edited)
-                {
-                    unsaved_lines = true;
-                }
-            }
-            if (unsaved_lines)
-            {
-                if (confirm("Save changes?"))
-                {
-                    this.text_lines_editor.save_annotations();
-                }
-            }
+            o.change_image(image_id)
         }
-        this.text_lines_editor.get_image(document_id, image_id)
     }
 
     previous_image()

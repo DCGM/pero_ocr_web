@@ -2,10 +2,9 @@
 
 class TextLine
 {
-    constructor(id, document_id, text, confidences)
+    constructor(id, text, confidences)
     {
         this.id = id;
-        this.document_id = document_id;
         this.text = text;
         this.confidences = confidences;
         this.edited = false;
@@ -477,7 +476,7 @@ class TextLine
         annotations.push(annotation_dict);
         console.log(annotations);
         console.log(JSON.stringify(annotations));
-        let route = Flask.url_for('ocr.save_annotations', {'document_id': this.document_id});
+        let route = Flask.url_for('ocr.save_annotations');
         $.ajax({
             type: "POST",
             url: route,
