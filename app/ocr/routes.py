@@ -7,7 +7,7 @@ from flask import url_for, redirect, flash, jsonify
 from flask_login import login_required, current_user
 from app.ocr import bp
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_baseline_by_id, get_ocr_by_id, \
-                           get_language_model_by_id
+                           get_language_model_by_id, get_text_line_by_id
 from app.db import DocumentState, OCR, Document, Image, TextRegion, Baseline, LanguageModel, User
 from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
@@ -116,13 +116,13 @@ def start_ocr(document_id):
 # RESULTS PAGE
 ########################################################################################################################
 
-@bp.route('/get_lines/<string:document_id>/<string:image_id>', methods=['GET'])
+@bp.route('/get_lines/<string:image_id>', methods=['GET'])
 @login_required
-def get_lines(document_id, image_id):
+def get_lines(image_id):
     if not is_granted_acces_for_page(image_id, current_user):
         flash(u'You do not have sufficient rights to get lines!', 'danger')
         return redirect(url_for('main.index'))
-    lines_dict = {'document_id': document_id, 'image_id': image_id, 'lines': []}
+    lines_dict = {'image_id': image_id, 'lines': []}
     image = get_image_by_id(image_id)
     lines_dict['height'] = image.height
     lines_dict['width'] = image.width
@@ -152,20 +152,28 @@ def get_lines(document_id, image_id):
     return jsonify(lines_dict)
 
 
-@bp.route('/save_annotations/<string:document_id>', methods=['POST'])
+@bp.route('/save_annotations', methods=['POST'])
 @login_required
-def save_annotations(document_id):
-    if not is_user_owner_or_collaborator(document_id, current_user):
-        flash(u'You do not have sufficient rights to this document!', 'danger')
-        return redirect(url_for('main.index'))
-    document = get_document_by_id(document_id)
-    if document.state == DocumentState.COMPLETED_OCR:
+def save_annotations():
+    annotations = json.loads(request.form['annotations'])
+    if not annotations:
+        return
+    document_completed_ocr = True
+    for annotation in annotations:
+        text_line = get_text_line_by_id(annotation['id'])
+        document = text_line.region.image.document
+        if not is_user_owner_or_collaborator(document.id, current_user):
+            flash(u'You do not have sufficient rights to add some annotations!', 'danger')
+            return redirect(url_for('main.index'))
+        if document.state != DocumentState.COMPLETED_OCR:
+            document_completed_ocr = False
+    if document_completed_ocr:
         insert_annotations_to_db(current_user, json.loads(request.form['annotations']))
         update_text_lines(json.loads(request.form['annotations']))
         print(json.loads(request.form['annotations']))
         return jsonify({'status': 'success'})
     else:
-        flash(u'Document is not processed by any OCR!', 'danger')
+        flash(u'You cannot add annotations to unprocessed document!', 'danger')
         return jsonify({'status': 'redirect', 'href': url_for('document.documents')})
 
 
