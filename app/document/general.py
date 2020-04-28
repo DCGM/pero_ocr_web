@@ -1,3 +1,6 @@
+import cv2
+import numpy as np
+
 from app.db.model import Document, DocumentState, Image
 from app.db.general import get_document_by_id, remove_document_by_id, save_document, save_image_to_document,\
     get_all_users, get_user_by_id, get_image_by_id, is_image_duplicate
@@ -7,7 +10,7 @@ from app import db_session
 from PIL import Image as PILImage
 import uuid
 from lxml import etree as ET
-from app.db import Document, Image, TextLine, Annotation, UserDocument, User
+from app.db import Document, Image, TextLine, Annotation, UserDocument, User, TextRegion
 
 import pero_ocr.document_ocr.layout as layout
 
@@ -271,3 +274,44 @@ def is_granted_acces_for_document(document_id, user):
         return True
     else:
         return False
+
+
+def get_line_image_by_id(line_id):
+    line = TextLine.query.filter_by(id=line_id).first()
+    region = TextRegion.query.filter_by(id=line.region_id).first()
+    image = cv2.imread(region.image.path)
+
+    # coords
+    min_x = int(np.min(line.np_points[:,0]))
+    min_y = int(np.min(line.np_points[:,1]))
+    max_x = int(np.max(line.np_points[:,0]))
+    max_y = int(np.max(line.np_points[:,1]))
+
+    # crop
+    crop_img = image[min_y:max_y, min_x:max_x]
+    image = cv2.imencode(".jpg", crop_img, [cv2.IMWRITE_JPEG_QUALITY, 98])[1].tobytes()
+
+    return image
+
+
+def get_sucpect_lines_ids(document_id, threshold=0.8):
+    lines = TextLine.query.join(TextRegion).join(Image).filter_by(document_id=document_id)
+    lines_ids = dict()
+    for line in lines:
+        try:
+            min_conf = np.min(line.np_confidences)
+            if min_conf < threshold:
+                lines_ids[line.id] = [min_conf, line]
+        except:
+                pass
+
+    text_lines = [v[1] for k, v in sorted(lines_ids.items(), key=lambda item: item[1][0])]
+
+    lines_dict = {'document_id': document_id, 'lines': []}
+    lines_dict['lines'] += [{
+        'id': line.id,
+        'np_confidences': line.np_confidences.tolist(),
+        'text': line.text if line.text is not None else ""
+    } for line in text_lines]
+
+    return lines_dict
