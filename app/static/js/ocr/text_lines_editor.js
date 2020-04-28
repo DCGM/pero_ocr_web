@@ -208,7 +208,7 @@ class TextLinesEditor
             let rest_of_lines = this.lines.slice(index+1);
             if (rest_of_lines.length != 0){
                 for (let line of rest_of_lines) {
-                    if (Math.min.apply(Math, line.confidences) < 0.8 && line.text_line_element.style.backgroundColor != 'rgb(208, 255, 207)') {
+                    if (Math.min.apply(Math, line.confidences) < 0.8 && line.container.style.backgroundColor != 'rgb(208, 255, 207)') {
                         this.line_focus(line);
                         this.polygon_click(line);
                         focused = true;
