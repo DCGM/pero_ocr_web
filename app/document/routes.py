@@ -10,6 +10,7 @@ from app.document.general import create_document, check_and_remove_document, sav
 from app.db.general import get_user_documents, get_document_by_id
 from app.document.forms import CreateDocumentForm
 from io import BytesIO
+import dateutil.parser
 import zipfile
 import time
 import os
@@ -110,13 +111,20 @@ def get_page_xml_lines(image_id):
 
 
 @bp.route('/get_annotated_page_xml_lines/<string:image_id>')
+@bp.route('/get_annotated_page_xml_lines/<string:image_id>/<string:from_time>/')
 @login_required
-def get_annotated_page_xml_lines(image_id):
+def get_annotated_page_xml_lines(image_id, from_time=None):
     if not is_granted_acces_for_page(image_id, current_user):
         flash(u'You do not have sufficient rights to download xml!', 'danger')
         return redirect(url_for('main.index'))
 
-    page_layout = get_page_layout(image_id, only_regions=False, only_annotated=True)
+    if from_time:
+        try:
+            from_time = dateutil.parser.parse(from_time)
+        except:
+            return 'ERROR: Could not parse from_time argument.', 400
+
+    page_layout = get_page_layout(image_id, only_regions=False, only_annotated=True, from_time=from_time)
     file_name = "{}.xml".format(os.path.splitext(page_layout.id)[0])
     return Response(page_layout.to_pagexml_string(), mimetype='text/xml',
                     headers={"Content-disposition": "attachment; filename={}".format(file_name)})
