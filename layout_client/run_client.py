@@ -20,6 +20,7 @@ def check_and_process_layout_request(config):
 
         base_url = config['SERVER']['base_url']
         layout_analysis_get_request_route = config['SERVER']['layout_analysis_get_request_route']
+        layout_analysis_change_layout_request_and_document_state_on_success_route = config['SERVER']['layout_analysis_change_layout_request_and_document_state_on_success_route']
 
         try:
             r = session.get(join_url(base_url, layout_analysis_get_request_route))
@@ -88,7 +89,9 @@ def check_and_process_layout_request(config):
             print("##############################################################")
             print("XMLS")
             print("\n".join(os.listdir(output_xmls_folder)))
-            post_result(session, base_url, layout_analysis_post_result_route, request_id, image_ids, data_folders, data_types)
+            post_result(session, base_url, layout_analysis_post_result_route,
+                        layout_analysis_change_layout_request_and_document_state_on_success_route, request_id,
+                        image_ids, data_folders, data_types)
             print("##############################################################")
             print()
             return True

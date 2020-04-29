@@ -38,6 +38,7 @@ def check_and_process_ocr_request(config):
             document_get_xml_regions_route = config['SERVER']['document_get_xml_regions_route']
             document_get_xml_lines_route = config['SERVER']['document_get_xml_lines_route']
             ocr_post_result_route = config['SERVER']['ocr_post_result_route']
+            ocr_change_ocr_request_and_document_state_on_success_route = config['SERVER']['ocr_change_ocr_request_and_document_state_on_success_route']
 
             request_id = request_json['id']
             baseline_id = request_json['baseline_id']
@@ -118,7 +119,9 @@ def check_and_process_ocr_request(config):
             print()
             print("LOGITS")
             print("\n".join(os.listdir(output_logits_folder)))
-            post_result(session, base_url, ocr_post_result_route, request_id, image_ids, data_folders, data_types)
+            post_result(session, base_url, ocr_post_result_route,
+                        ocr_change_ocr_request_and_document_state_on_success_route, request_id, image_ids, data_folders,
+                        data_types)
             print("##############################################################")
             print()
             return True

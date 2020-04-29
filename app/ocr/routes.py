@@ -184,22 +184,29 @@ def save_annotations():
 # POST RESPONSE FROM CLIENT, XMLS AND LOGITS
 ########################################################################################################################
 
-@bp.route('/post_result/<string:ocr_request_id>', methods=['POST'])
+@bp.route('/post_result/<string:image_id>', methods=['POST'])
 @login_required
-def post_result(ocr_request_id):
+def post_result(image_id):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights!', 'danger')
         return redirect(url_for('main.index'))
-    print()
-    print("INSERT LINES FROM XMLS AND LOGITS TO DB")
-    print("##################################################################")
-    ocr_request = get_request_by_id(ocr_request_id)
-    document = get_document_by_id(ocr_request.document_id)
-    result_folder = os.path.join(current_app.config['OCR_RESULTS_FOLDER'], str(document.id))
-    post_files_to_folder(request, result_folder)
-    insert_lines_to_db(result_folder, check_document_processed(document))
+    image = get_image_by_id(image_id)
+    if image.document.state != DocumentState.COMPLETED_OCR:
+        print()
+        print("INSERT LINES FROM XMLS AND LOGITS TO DB")
+        print("##################################################################")
+        result_folder = os.path.join(current_app.config['OCR_RESULTS_FOLDER'], str(image.document_id))
+        file_names = post_files_to_folder(request, result_folder)
+        insert_lines_to_db(result_folder, file_names)
+        print("##################################################################")
+    return 'OK'
+
+
+@bp.route('/change_ocr_request_and_document_state_on_success/<string:request_id>', methods=['POST'])
+@login_required
+def success_request(request_id):
+    ocr_request = get_request_by_id(request_id)
     change_ocr_request_and_document_state_on_success(ocr_request)
-    print("##################################################################")
     return 'OK'
 
 
