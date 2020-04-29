@@ -27,10 +27,11 @@ def insert_lines_to_db(ocr_results_folder, document_processed):
         page_layout.load_logits(logits_path)
         for region in page_layout.regions:
             db_region = get_text_region_by_id(region.id)
+            db_line_map = dict([(line.id, line) for line in db_region.textlines])
             if db_region is not None:
                 for order, line in enumerate(region.lines):
-                    if document_processed:
-                        db_line = get_text_line_by_id(line.id)
+                    if line.id in db_line_map:
+                        db_line = db_line_map[line.id]
                         if db_line is not None:
                             if len(db_line.annotations) == 0:
                                 db_line.text = line.transcription
@@ -54,12 +55,10 @@ def insert_lines_to_db(ocr_results_folder, document_processed):
 
 def get_confidences(line):
     if line.transcription is not None and line.transcription != "":
-        c_idx = []
-        for c in line.transcription:
-            c_idx.append(line.characters.index(c))
+        char_map = dict([(c, i) for i, c in enumerate(line.characters)])
+        c_idx = [char_map[c] for c in line.transcription]
 
-        line_logits = np.array(line.logits.todense())
-        line_logits[line_logits == 0] = -80
+        line_logits = line.get_dense_logits()
 
         blank_char_index = line_logits.shape[1] - 1
 
