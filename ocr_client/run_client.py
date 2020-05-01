@@ -12,6 +12,7 @@ from client_helper import unzip_response_to_dir
 from client_helper import get_images
 from client_helper import post_result
 from client_helper import log_in
+from client_helper import add_log_to_request
 
 
 def check_and_process_ocr_request(config):
@@ -37,8 +38,11 @@ def check_and_process_ocr_request(config):
             document_get_image_route = config['SERVER']['document_get_image_route']
             document_get_xml_regions_route = config['SERVER']['document_get_xml_regions_route']
             document_get_xml_lines_route = config['SERVER']['document_get_xml_lines_route']
+            main_add_log_to_request_route = config['SERVER']['main_add_log_to_request_route']
             ocr_post_result_route = config['SERVER']['ocr_post_result_route']
             ocr_change_ocr_request_and_document_state_on_success_route = config['SERVER']['ocr_change_ocr_request_and_document_state_on_success_route']
+            ocr_change_ocr_request_to_fail_and_document_state_to_success_route = config['SERVER']['ocr_change_ocr_request_to_fail_and_document_state_to_success_route']
+            ocr_change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis_route = config['SERVER']['ocr_change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis_route']
 
             request_id = request_json['id']
             baseline_id = request_json['baseline_id']
@@ -86,6 +90,7 @@ def check_and_process_ocr_request(config):
             print("GETTING IMAGES")
             print("##############################################################")
             get_images(session, base_url, document_get_image_route, image_ids, images_folder)
+            number_of_images = len(os.listdir(images_folder))
             print("##############################################################")
 
             print()
@@ -103,27 +108,47 @@ def check_and_process_ocr_request(config):
             print("STARTING PARSE FOLDER:", parse_folder_path)
             print("##############################################################")
             parse_folder_process = subprocess.Popen(['python', parse_folder_path, '-c', "./models/config.ini"],
-                                                    cwd=working_dir)
+                                                    cwd=working_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            log = []
+            while True:
+                line = parse_folder_process.stdout.readline()
+                if not line:
+                    break
+                line = line.decode("utf-8")
+                log.append(line)
+                print(line, end='')
             parse_folder_process.wait()
             print("##############################################################")
 
             output_xmls_folder = os.path.join(output_folder, "page")
             output_logits_folder = os.path.join(output_folder, "logits")
-            data_folders = [output_xmls_folder, output_logits_folder]
-            data_types = ["xml", "logits"]
-            print()
-            print("POSTING RESULT TO SERVER")
-            print("##############################################################")
-            print("XMLS")
-            print("\n".join(os.listdir(output_xmls_folder)))
-            print()
-            print("LOGITS")
-            print("\n".join(os.listdir(output_logits_folder)))
-            post_result(session, base_url, ocr_post_result_route,
-                        ocr_change_ocr_request_and_document_state_on_success_route, request_id, image_ids, data_folders,
-                        data_types)
-            print("##############################################################")
-            print()
+            number_of_xmls = len(os.listdir(output_xmls_folder))
+            number_of_logits = len(os.listdir(output_logits_folder))
+
+            add_log_to_request(session, base_url, main_add_log_to_request_route, request_id, log)
+
+            if parse_folder_process.returncode == 0 and number_of_images == number_of_xmls and number_of_images == number_of_logits:
+                data_folders = [output_xmls_folder, output_logits_folder]
+                data_types = ["xml", "logits"]
+                print()
+                print("POSTING RESULT TO SERVER")
+                print("##############################################################")
+                print("XMLS")
+                print("\n".join(os.listdir(output_xmls_folder)))
+                print()
+                print("LOGITS")
+                print("\n".join(os.listdir(output_logits_folder)))
+                post_result(session, base_url, ocr_post_result_route,
+                            ocr_change_ocr_request_and_document_state_on_success_route, request_id, image_ids, data_folders,
+                            data_types)
+                print("##############################################################")
+                print()
+            else:
+                print("PARSE FOLDER FAILED, SETTING REQUEST TO FAILED")
+                if baseline_id is None:
+                    session.post(join_url(base_url, ocr_change_ocr_request_to_fail_and_document_state_to_success_route))
+                else:
+                    session.post(join_url(base_url, ocr_change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis_route))
             return True
 
         return False

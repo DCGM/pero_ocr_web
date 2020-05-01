@@ -131,6 +131,16 @@ def change_ocr_request_and_document_state_in_progress(request):
     return
 
 
+def change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis(request):
+    change_ocr_request_and_document_state(request, RequestState.FAILURE, DocumentState.COMPLETED_LAYOUT_ANALYSIS)
+    return
+
+
+def change_ocr_request_to_fail_and_document_state_to_success(request):
+    change_ocr_request_and_document_state(request, RequestState.FAILURE, DocumentState.COMPLETED_OCR)
+    return
+
+
 def get_page_annotated_lines(image_id):
     lines = db_session.query(TextLine.id).join(TextRegion).join(Annotation).filter(TextRegion.image_id == image_id)\
         .distinct().all()

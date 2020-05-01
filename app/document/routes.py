@@ -279,3 +279,4 @@ def update_all_confidences():
     update_confidences(changes)
 
     return redirect(url_for('document.documents'))
+

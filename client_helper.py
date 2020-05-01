@@ -37,6 +37,10 @@ def get_images(session, base_url, document_get_image_route, image_ids, image_fol
                 f.write(image_response.content)
 
 
+def add_log_to_request(session, base_url, add_request_to_log_route, request_id, log):
+    session.post(join_url(base_url, add_request_to_log_route, request_id), json={"log": "".join(log)})
+
+
 def post_result(session, base_url, post_result_route, success_route, request_id, image_ids, data_folders, data_types):
     for image_id in image_ids:
         data = dict()
