@@ -119,6 +119,7 @@ class TextLine(Base):
     confidences = Column(String())
     deleted = Column(Boolean())
     text = Column(String())
+    Field10 = Column(Integer())
 
     region = relationship('TextRegion')
     annotations = relationship('Annotation', cascade="all, delete-orphan")

@@ -6,7 +6,8 @@ from flask import render_template, redirect, url_for, request, send_file, flash,
 from app.document.general import create_document, check_and_remove_document, save_images, get_image_by_id,\
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
     remove_image, get_document_images, get_page_layout, get_page_layout_text, update_confidences, is_user_trusted,\
-    is_granted_acces_for_page, is_granted_acces_for_document, get_line_image_by_id, get_sucpect_lines_ids
+    is_granted_acces_for_page, is_granted_acces_for_document, get_line_image_by_id, get_sucpect_lines_ids, \
+    compute_confidences_of_doc, skip_textline
 from app.db.general import get_user_documents, get_document_by_id
 from app.document.forms import CreateDocumentForm
 from io import BytesIO
@@ -278,9 +279,8 @@ def update_all_confidences():
 def lines_check(document_id):
     document = get_document_by_id(document_id)
     lines = get_sucpect_lines_ids(document_id)
-    #print(lines)
+
     return render_template('document/lines_check.html', document=document, lines=lines)
-    #return render_template('document/lines_check.html', document=document)
 
 
 @bp.route('/get_lines/<string:document_id>', methods=['GET'])
@@ -297,3 +297,18 @@ def get_cropped_image(line_id):
     image = get_line_image_by_id(line_id)
 
     return send_file(BytesIO(image), attachment_filename='{}.jpeg' .format(line_id), mimetype='image/jpeg', as_attachment=True)
+
+
+@bp.route('/compute_confidences/<string:document_id>')
+@login_required
+def compute_confidences(document_id):
+    compute_confidences_of_doc(document_id)
+
+    return redirect(url_for('document.documents'))
+
+@bp.route('/skip_line/<string:line_id>')
+@login_required
+def skip_line(line_id):
+    skip_textline(line_id)
+
+    return jsonify({'status': 'success'})
