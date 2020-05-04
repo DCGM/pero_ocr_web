@@ -263,7 +263,7 @@ def get_keyboard():
 @login_required
 def update_all_confidences():
     if not is_user_trusted(current_user):
-        flash(u'You do not have sufficient rights to edit collaborators!', 'danger')
+        flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
 
     file = request.files['data']
@@ -277,6 +277,10 @@ def update_all_confidences():
 @bp.route('/lines_check/<string:document_id>', methods=['GET'])
 @login_required
 def lines_check(document_id):
+    if not is_granted_acces_for_document(document_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
+
     document = get_document_by_id(document_id)
     lines = get_sucpect_lines_ids(document_id)
 
@@ -286,6 +290,10 @@ def lines_check(document_id):
 @bp.route('/get_lines/<string:document_id>', methods=['GET'])
 @login_required
 def get_lines(document_id):
+    if not is_granted_acces_for_document(document_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
+
     lines = get_sucpect_lines_ids(document_id)
 
     return jsonify(lines)
@@ -294,6 +302,10 @@ def get_lines(document_id):
 @bp.route('/get_cropped_image/<string:line_id>')
 @login_required
 def get_cropped_image(line_id):
+    if not is_granted_acces_for_document(line_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
+
     image = get_line_image_by_id(line_id)
 
     return send_file(BytesIO(image), attachment_filename='{}.jpeg' .format(line_id), mimetype='image/jpeg', as_attachment=True)
@@ -302,13 +314,20 @@ def get_cropped_image(line_id):
 @bp.route('/compute_confidences/<string:document_id>')
 @login_required
 def compute_confidences(document_id):
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
     compute_confidences_of_doc(document_id)
 
     return redirect(url_for('document.documents'))
 
+
 @bp.route('/skip_line/<string:line_id>')
 @login_required
 def skip_line(line_id):
+    if not is_granted_acces_for_document(line_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
     skip_textline(line_id)
 
     return jsonify({'status': 'success'})

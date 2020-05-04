@@ -259,10 +259,27 @@ def is_page_from_doc(image_id, user):
         return False
 
 
+def is_line_from_doc(line_id, user):
+    document_id = Image.query.join(TextRegion).join(TextLine).filter(TextLine.id==line_id).first().document_id
+    if is_user_owner_or_collaborator(document_id, user):
+        return True
+    else:
+        return False
+
+
 def is_granted_acces_for_page(image_id, user):
     if is_user_trusted(user):
         return True
     elif is_page_from_doc(image_id, user):
+        return True
+    else:
+        return False
+
+
+def is_granted_acces_for_line(line_id, user):
+    if is_user_trusted(user):
+        return True
+    elif is_line_from_doc(line_id, user):
         return True
     else:
         return False
