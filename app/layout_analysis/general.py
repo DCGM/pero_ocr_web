@@ -113,6 +113,11 @@ def change_layout_request_and_document_state_on_success(request):
     return
 
 
+def change_layout_request_to_fail_and_document_state_to_new(request):
+    change_layout_request_and_document_state(request, RequestState.FAILURE, DocumentState.NEW)
+
+
 def change_document_state_on_complete_layout_analysis(document):
     document.state = DocumentState.COMPLETED_LAYOUT_ANALYSIS
     db_session.commit()
+

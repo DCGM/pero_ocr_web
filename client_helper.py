@@ -1,4 +1,3 @@
-import requests
 import os
 from io import open as image_open
 import zipfile

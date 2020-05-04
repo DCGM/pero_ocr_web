@@ -7,7 +7,7 @@ from app.layout_analysis.general import create_layout_analysis_request, can_star
     add_layout_request_and_change_document_state, get_first_layout_request, change_layout_request_and_document_state_in_progress, \
     create_json_from_request, change_layout_request_and_document_state_on_success, \
     make_image_result_preview, change_document_state_on_complete_layout_analysis, post_files_to_folder, insert_regions_to_db, \
-    set_whole_page_region_layout_to_document
+    set_whole_page_region_layout_to_document, change_layout_request_to_fail_and_document_state_to_new
 import os
 import sys
 import sqlalchemy
@@ -146,6 +146,17 @@ def post_result(image_id):
 def success_request(request_id):
     layout_analysis_request = get_request_by_id(request_id)
     change_layout_request_and_document_state_on_success(layout_analysis_request)
+    return 'OK'
+
+
+@bp.route('/change_layout_request_to_fail_and_document_state_to_new/<string:request_id>', methods=['POST'])
+@login_required
+def fail_request(request_id):
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights!', 'danger')
+        return redirect(url_for('main.index'))
+    layout_request = get_request_by_id(request_id)
+    change_layout_request_to_fail_and_document_state_to_new(layout_request)
     return 'OK'
 
 
