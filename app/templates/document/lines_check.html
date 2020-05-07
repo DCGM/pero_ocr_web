@@ -12,7 +12,7 @@
 
         <div class="row">
             <div class="col-sm-12">
-                <img id="line-img" style="margin-left: auto; margin-right: auto; display: block; margin-bottom: 12px;" src="">
+                <img id="line-img" style="margin-left: auto; margin-right: auto; display: block; margin-bottom: 12px;height: 50px;" src="">
             </div>
         </div>
 
@@ -33,7 +33,19 @@
 
         <div class="row my-2">
             <div class="col-xl-4">
-                <div class="d-flex flex-row">
+                <div class="card" style="width: fit-content;">
+                    <div class="card-body" style="padding-top: 6px; padding-bottom: 6px;">
+                        <div id="line_options" class="d-flex flex-row">
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" type="radio" name="line_type" id="inlineRadio1" value="all" checked>
+                              <label class="form-check-label" for="inlineRadio1">All Lines</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" type="radio" name="line_type" id="inlineRadio2" value="not_annotated">
+                              <label class="form-check-label" for="inlineRadio2">Not Annotated Lines</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="col-xl-4 d-none d-xl-block text-center">
@@ -55,7 +67,7 @@
     <script src="/static/leaflet/leaflet.js"></script>
     <script src="/static/leaflet/Leaflet.Editable.js"></script>
     <script src="/static/leaflet/Path.Drag.js"></script>
-    <script src="/static/js/LinesCheck.js?version=1.4.2"></script>
+    <script src="/static/js/line_editor.js?version=1.4.2"></script>
     <script src="/static/js/ocr/text_line.js?version=1.4.2"></script>
     <script>
         let document_id = document.getElementById('document-id').textContent;

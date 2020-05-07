@@ -7,7 +7,7 @@ from app.document.general import create_document, check_and_remove_document, sav
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
     remove_image, get_document_images, get_page_layout, get_page_layout_text, update_confidences, is_user_trusted,\
     is_granted_acces_for_page, is_granted_acces_for_document, get_line_image_by_id, get_sucpect_lines_ids, \
-    compute_confidences_of_doc, skip_textline
+    compute_confidences_of_doc, skip_textline, get_line
 from app.db.general import get_user_documents, get_document_by_id
 from app.document.forms import CreateDocumentForm
 from io import BytesIO
@@ -282,9 +282,8 @@ def lines_check(document_id):
         return redirect(url_for('main.index'))
 
     document = get_document_by_id(document_id)
-    lines = get_sucpect_lines_ids(document_id)
 
-    return render_template('document/lines_check.html', document=document, lines=lines)
+    return render_template('document/lines_check.html', document=document)
 
 
 @bp.route('/get_lines/<string:document_id>', methods=['GET'])
@@ -331,3 +330,15 @@ def skip_line(line_id):
     skip_textline(line_id)
 
     return jsonify({'status': 'success'})
+
+
+@bp.route('/get_line_info/<string:line_id>')
+@login_required
+def get_line_info(line_id):
+    if not is_granted_acces_for_document(line_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
+
+    lines = get_line(line_id)
+
+    return jsonify(lines)

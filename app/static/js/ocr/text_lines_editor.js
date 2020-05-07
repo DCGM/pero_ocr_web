@@ -78,7 +78,7 @@ class TextLinesEditor
             l.saved = false;
         }
 
-        this.map_element = this.container.getElementsByClassName("editor-map")[0]
+        this.map_element = this.container.getElementsByClassName("editor-map")[0];
 
         this.map = L.map(this.map_element, {
             crs: L.CRS.Simple,

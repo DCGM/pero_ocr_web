@@ -237,7 +237,7 @@ def update_confidences(changes):
 
         conf_string = ' '.join(str(round(x, 3)) for x in confidences)
         line.confidences = conf_string.replace('1.0', '1')
-        line.Field10 = np.average(line.np_confidences)
+        line.score = np.average(line.np_confidences)
         line.text = transcription
 
     db_session.commit()
@@ -313,31 +313,37 @@ def get_line_image_by_id(line_id):
 
 
 def get_sucpect_lines_ids(document_id, threshold=0.95):
-    text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id==document_id, TextLine.Field10<threshold).order_by(TextLine.Field10.asc())
+    text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id == document_id, TextLine.score < threshold).order_by(TextLine.score.asc())
 
     lines_dict = {'document_id': document_id, 'lines': []}
     lines_dict['lines'] += [{
         'id': line.id,
-        'np_confidences': line.np_confidences.tolist(),
-        'text': line.text if line.text is not None else ""
+        'annotated': True if len(line.annotations) > 0 else False
     } for line in text_lines]
 
     return lines_dict
 
 
+def get_line(line_id):
+    text_line = TextLine.query.filter_by(id=line_id).first()
+
+    line_dict = dict()
+    line_dict['id'] = text_line.id
+    line_dict['np_confidences'] = text_line.np_confidences.tolist()
+    line_dict['text'] = text_line.text if text_line.text is not None else ""
+
+    return line_dict
+
 def compute_confidences_of_doc(document_id):
     lines = TextLine.query.join(TextRegion).join(Image).filter_by(document_id=document_id)
     for line in lines:
-        if len(line.annotations) > 0:
-            line.Field10 = np.average(line.np_confidences)
-        else:
-            line.Field10 = 10
+        line.score = np.average(line.np_confidences)
 
     db_session.commit()
 
 
 def skip_textline(line_id):
     line = TextLine.query.filter_by(id=line_id).first()
-    line.Field10 = 10
+    line.score = 10
 
     db_session.commit()
