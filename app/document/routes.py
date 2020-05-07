@@ -7,7 +7,7 @@ from app.document.general import create_document, check_and_remove_document, sav
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
     remove_image, get_document_images, get_page_layout, get_page_layout_text, update_confidences, is_user_trusted,\
     is_granted_acces_for_page, is_granted_acces_for_document, get_line_image_by_id, get_sucpect_lines_ids, \
-    compute_confidences_of_doc, skip_textline, get_line
+    compute_scores_of_doc, skip_textline, get_line
 from app.db.general import get_user_documents, get_document_by_id
 from app.document.forms import CreateDocumentForm
 from io import BytesIO
@@ -318,13 +318,13 @@ def get_cropped_image(line_id):
     return send_file(BytesIO(image), attachment_filename='{}.jpeg' .format(line_id), mimetype='image/jpeg', as_attachment=True)
 
 
-@bp.route('/compute_confidences/<string:document_id>')
+@bp.route('/compute_scores/<string:document_id>')
 @login_required
-def compute_confidences(document_id):
+def compute_scores(document_id):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
-    compute_confidences_of_doc(document_id)
+    compute_scores_of_doc(document_id)
 
     return redirect(url_for('document.documents'))
 

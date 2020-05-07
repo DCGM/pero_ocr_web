@@ -1,5 +1,5 @@
 from app.db import Base
-from sqlalchemy import Column, Enum, ForeignKey, Integer, String, Boolean, DateTime
+from sqlalchemy import Column, Enum, ForeignKey, Integer, Float, String, Boolean, DateTime
 from app.db.guid import GUID
 import enum
 from sqlalchemy.orm import relationship
@@ -119,7 +119,7 @@ class TextLine(Base):
     confidences = Column(String())
     deleted = Column(Boolean())
     text = Column(String())
-    score = Column(Integer())
+    score = Column(Float())
 
     region = relationship('TextRegion')
     annotations = relationship('Annotation', cascade="all, delete-orphan")
