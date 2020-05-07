@@ -497,6 +497,12 @@ class TextLine
         this.set_background_to_save();
     }
 
+    skip()
+    {
+        let route = Flask.url_for('document.skip_line', {'line_id': this.id});
+        $.get(route);
+    }
+
     get_text_content()
     {
       let text = this.container.textContent;

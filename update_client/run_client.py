@@ -51,11 +51,11 @@ def create_work_folders(config):
     print("SUCCESFUL")
 
 
-def download_xmls(session, config, page_uuids):
+def download_xmls(session, base_url, type, working_directory, page_uuids):
     for _, uuid in enumerate(page_uuids):
-        r = session.get(join_url(config['SERVER']['base_url'], config['SERVER'][config['SETTINGS']['type']], uuid), stream=True)
+        r = session.get(join_url(base_url, type, uuid), stream=True)
         if r.status_code == 200:
-            with open(os.path.join(config['SETTINGS']['working_directory'], "xml/{}.xml".format(uuid)),
+            with open(os.path.join(working_directory, "xml/{}.xml".format(uuid)),
                       'wb') as f:
                 r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
@@ -67,11 +67,11 @@ def download_xmls(session, config, page_uuids):
     return True
 
 
-def download_images(session, config, page_uuids):
+def download_images(session, base_url, download_images, working_directory, page_uuids):
     for _, uuid in enumerate(page_uuids):
-        r = session.get(join_url(config['SERVER']['base_url'], config['SERVER']['download_images'], uuid), stream=True)
+        r = session.get(join_url(base_url, download_images, uuid), stream=True)
         if r.status_code == 200:
-            with open(os.path.join(config['SETTINGS']['working_directory'], "img/{}.jpg".format(uuid)),
+            with open(os.path.join(working_directory, "img/{}.jpg".format(uuid)),
                       'wb') as f:
                 r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
@@ -83,21 +83,23 @@ def download_images(session, config, page_uuids):
     return True
 
 
-def send_data(session, config):
-    with open(os.path.join(config['SETTINGS']['working_directory'], "changes.json"), "rb") as f:
+def send_data(session, working_directory, base_url, update_all_confidences):
+    with open(os.path.join(working_directory, "changes.json"), "rb") as f:
         data = f.read()
 
-    r = session.post(join_url(config['SERVER']['base_url'], config['SERVER']['update_all_confidences']),
+    r = session.post(join_url(base_url, update_all_confidences),
                      files={'data': ('data.json', data, 'text/plain')})
 
     if not check_request(r):
+        print("FAILED")
         return False
     else:
+        print("SUCCESFUL")
         return True
 
 
-def get_document_ids(session, config):
-    r = session.get(join_url(config['SERVER']['base_url'], config['SERVER']['document_ids'], config['SETTINGS']['document_id']), stream=True)
+def get_document_ids(session, base_url, document_ids, document_id):
+    r = session.get(join_url(base_url, document_ids, document_id), stream=True)
     if r.status_code == 200:
         print("SUCCESFUL")
         return True, json.loads(r.text)
@@ -111,11 +113,9 @@ def check_and_process_update_request(config):
         print()
         print("LOGGING IN")
         print("##############################################################")
-        if not log_in(config, session):
-            print('FAILED')
+        if not log_in(session, config['SETTINGS']['login'], config['SETTINGS']['password'], config['SERVER']['base_url'],
+                      config['SERVER']['authentification'], config['SERVER']['login_page']):
             return False
-        else:
-            print('SUCCESFUL')
         print("##############################################################")
 
         print()
@@ -127,7 +127,7 @@ def check_and_process_update_request(config):
         print()
         print("GETTING PAGES IDS")
         print("##############################################################")
-        done, page_uuids = get_document_ids(session, config)
+        done, page_uuids = get_document_ids(session, config['SERVER']['base_url'], config['SERVER']['document_ids'], config['SETTINGS']['document_id'])
         if not done:
             return False
         print("##############################################################")
@@ -135,17 +135,17 @@ def check_and_process_update_request(config):
         print()
         print("DOWNLOADING XMLS")
         print("##############################################################")
-        if not download_xmls(session, config, page_uuids):
+        if not download_xmls(session, config['SERVER']['base_url'], config['SERVER'][config['SETTINGS']['type']], config['SETTINGS']['working_directory'], page_uuids):
             return False
         print("##############################################################")
 
         print()
         print("DOWNLOADING IMAGES")
         print("##############################################################")
-        if not download_images(session, config, page_uuids):
+        if not download_images(session, config['SERVER']['base_url'], config['SERVER']['download_images'], config['SETTINGS']['working_directory'], page_uuids):
             return False
         print("##############################################################")
-        
+
         print()
         print("PARSE FOLDER PROCESS")
         print("##############################################################")
@@ -180,7 +180,7 @@ def check_and_process_update_request(config):
         print()
         print("SENDING DATA TO SERVER")
         print("##############################################################")
-        if not send_data(session, config):
+        if not send_data(session, config['SETTINGS']['working_directory'], config['SERVER']['base_url'], config['SERVER']['update_all_confidences']):
             return False
         print("##############################################################")
 

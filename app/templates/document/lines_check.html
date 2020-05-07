@@ -1,0 +1,94 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+    <div class="container-fluid px-4">
+
+        <div class="row my-4">
+            <div class="col-sm-12">
+                <h3 class="text-left">{{ document.name }} - OCR Results</h3>
+                <div id="document-id" style="display: none">{{ document.id }}</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-12">
+                <img id="line-img" style="margin-left: auto; margin-right: auto; display: block; margin-bottom: 12px;height: 50px;" src="">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-12 text-center">
+                <div id="text-container" style="height: 40px; overflow-y: auto;"></div>
+            </div>
+        </div>
+
+        <div class="row mt-2">
+            <div class="col-sm-11 d-xl-none text-center">
+                <button type="button" class="save-btn btn btn-success"><i class="far fa-save fa-lg"></i>&nbsp;&nbsp;Save</button>
+            </div>
+            <div class="col-sm-1 d-xl-none text-right">
+                <button type="button" class="keyboard-btn btn btn-secondary"><i class="far fa-keyboard fa-lg"></i></button>
+            </div>
+        </div>
+
+        <div class="row my-2">
+            <div class="col-xl-4">
+                <div class="card" style="width: fit-content;">
+                    <div class="card-body" style="padding-top: 6px; padding-bottom: 6px;">
+                        <div id="line_options" class="d-flex flex-row">
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" type="radio" name="line_type" id="inlineRadio1" value="all" checked>
+                              <label class="form-check-label" for="inlineRadio1">All Lines</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" type="radio" name="line_type" id="inlineRadio2" value="not_annotated">
+                              <label class="form-check-label" for="inlineRadio2">Not Annotated Lines</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4 d-none d-xl-block text-center">
+                <button id="back-btn" type="button" class="btn btn-secondary mb-2"><i class="fas fa-arrow-left"></i>&nbsp;&nbsp;Back</button>
+                <button id="next-btn" type="button" class="btn btn-secondary mb-2">Next&nbsp;&nbsp;<i class="fas fa-arrow-right"></i></button>
+                <button id="skip-btn" type="button" class="btn btn-secondary mb-2">Skip (Ctrl+Q)</button>
+                <button id="save-next-btn" type="button" class="btn btn-success mb-2">Save and next (Ctrl+S)&nbsp;&nbsp;<i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block styles %}
+    <link rel="stylesheet" href="/static/leaflet/leaflet.css">
+    <link rel="stylesheet" href="/static/css/ocr_results.css">
+{% endblock %}
+
+{% block scripts %}
+    <script src="/static/leaflet/leaflet.js"></script>
+    <script src="/static/leaflet/Leaflet.Editable.js"></script>
+    <script src="/static/leaflet/Path.Drag.js"></script>
+    <script src="/static/js/line_editor.js?version=1.4.2"></script>
+    <script src="/static/js/ocr/text_line.js?version=1.4.2"></script>
+    <script>
+        let document_id = document.getElementById('document-id').textContent;
+        let line_editor = new LineEditor(document_id);
+
+        document.onkeydown = function (e) {
+            e = e || window.event;
+            if (!e.ctrlKey) return;
+            var code = e.which || e.keyCode;
+            switch (code) {
+                case 83:
+                case 87:
+                    e.preventDefault();
+                    e.stopPropagation();
+                    line_editor.save_next_line();
+                    break;
+                case 81:
+                    line_editor.skip_line();
+                    break;
+            }
+        };
+
+    </script>
+{% endblock %}

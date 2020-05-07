@@ -40,7 +40,7 @@ def make_image_result_preview(image_db):
         scale = (100000.0 / (image.shape[0] * image.shape[1]))**0.5
         image = cv2.resize(image, (0,0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
         if image_db.textregions:
-            regions = [(region.np_points * scale).astype(np.int32) for region in image_db.textregions]
+            regions = [(region.np_points * scale).astype(np.int32) for region in image_db.textregions if not region.deleted]
             cv2.polylines(image, regions, isClosed=True, thickness=4, color=(0,255,0))
         print(image.shape, scale)
 

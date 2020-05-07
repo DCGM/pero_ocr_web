@@ -16,7 +16,8 @@ from client_helper import add_log_to_request
 
 def check_and_process_layout_request(config):
     with requests.Session() as session:
-        if not log_in(config, session, verbose=False):
+        if not log_in(session, config['SETTINGS']['login'], config['SETTINGS']['password'], config['SERVER']['base_url'],
+                      config['SERVER']['authentification'], config['SERVER']['login_page']):
             return False
 
         base_url = config['SERVER']['base_url']

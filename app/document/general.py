@@ -1,3 +1,6 @@
+import cv2
+import numpy as np
+
 from app.db.model import Document, DocumentState, Image
 from app.db.general import get_document_by_id, remove_document_by_id, save_document, save_image_to_document,\
     get_all_users, get_user_by_id, get_image_by_id, is_image_duplicate
@@ -8,7 +11,7 @@ from PIL import Image as PILImage
 import uuid
 import datetime
 from lxml import etree as ET
-from app.db import Document, Image, TextLine, Annotation, UserDocument, User
+from app.db import Document, Image, TextLine, Annotation, UserDocument, User, TextRegion
 
 import pero_ocr.document_ocr.layout as layout
 
@@ -237,6 +240,7 @@ def update_confidences(changes):
 
         conf_string = ' '.join(str(round(x, 3)) for x in confidences)
         line.confidences = conf_string.replace('1.0', '1')
+        line.score = np.average(line.np_confidences)
         line.text = transcription
 
     db_session.commit()
@@ -258,10 +262,27 @@ def is_page_from_doc(image_id, user):
         return False
 
 
+def is_line_from_doc(line_id, user):
+    document_id = Image.query.join(TextRegion).join(TextLine).filter(TextLine.id==line_id).first().document_id
+    if is_user_owner_or_collaborator(document_id, user):
+        return True
+    else:
+        return False
+
+
 def is_granted_acces_for_page(image_id, user):
     if is_user_trusted(user):
         return True
     elif is_page_from_doc(image_id, user):
+        return True
+    else:
+        return False
+
+
+def is_granted_acces_for_line(line_id, user):
+    if is_user_trusted(user):
+        return True
+    elif is_line_from_doc(line_id, user):
         return True
     else:
         return False
@@ -274,3 +295,58 @@ def is_granted_acces_for_document(document_id, user):
         return True
     else:
         return False
+
+
+def get_line_image_by_id(line_id):
+    line = TextLine.query.filter_by(id=line_id).first()
+    region = TextRegion.query.filter_by(id=line.region_id).first()
+    image = cv2.imread(region.image.path)
+
+    # coords
+    min_x = int(np.min(line.np_points[:,0]))
+    min_y = int(np.min(line.np_points[:,1]))
+    max_x = int(np.max(line.np_points[:,0]))
+    max_y = int(np.max(line.np_points[:,1]))
+
+    # crop
+    crop_img = image[min_y:max_y, min_x:max_x]
+    image = cv2.imencode(".jpg", crop_img, [cv2.IMWRITE_JPEG_QUALITY, 98])[1].tobytes()
+
+    return image
+
+
+def get_sucpect_lines_ids(document_id, threshold=0.95):
+    text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id == document_id, TextLine.score < threshold).order_by(TextLine.score.asc())
+
+    lines_dict = {'document_id': document_id, 'lines': []}
+    lines_dict['lines'] += [{
+        'id': line.id,
+        'annotated': True if len(line.annotations) > 0 else False
+    } for line in text_lines]
+
+    return lines_dict
+
+
+def get_line(line_id):
+    text_line = TextLine.query.filter_by(id=line_id).first()
+
+    line_dict = dict()
+    line_dict['id'] = text_line.id
+    line_dict['np_confidences'] = text_line.np_confidences.tolist()
+    line_dict['text'] = text_line.text if text_line.text is not None else ""
+
+    return line_dict
+
+def compute_confidences_of_doc(document_id):
+    lines = TextLine.query.join(TextRegion).join(Image).filter_by(document_id=document_id)
+    for line in lines:
+        line.score = np.average(line.np_confidences)
+
+    db_session.commit()
+
+
+def skip_textline(line_id):
+    line = TextLine.query.filter_by(id=line_id).first()
+    line.score = 10
+
+    db_session.commit()
