@@ -23,9 +23,12 @@ def main():
                                              bind=engine))
 
     textlines = db_session.query(TextLine).all()
-    for textline in textlines:
+    number_of_textlines = len(textlines)
+    for i, textline in enumerate(textlines):
         textline.score = np.average(textline.np_confidences)
-        print(textline.text, textline.score)
+        if (i + 1) % 10000 == 0:
+            db_session.commit()
+            print("{}/{} DONE".format(i + 1, number_of_textlines))
     db_session.commit()
 
 
