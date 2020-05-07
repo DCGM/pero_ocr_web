@@ -57,7 +57,11 @@ def check_request(r):
 
 
 def log_in(session, login, password, base_usr, authentification, login_page):
-    r = session.get(base_usr)
+    try:
+        r = session.get(base_usr)
+    except:
+        print("FAILED")
+        return False
 
     if not check_request(r):
         print("FAILED")
