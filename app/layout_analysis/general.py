@@ -18,12 +18,12 @@ def set_whole_page_region_layout_to_document(document):
     db_session.commit()
 
 
-def insert_regions_to_db(results_folder):
-    for xml_file in os.listdir(results_folder):
-        print(xml_file)
-        image_id = os.path.splitext(xml_file)[0]
+def insert_regions_to_db(results_folder, file_names):
+    for file_name in file_names:
+        print(file_name)
+        image_id = os.path.splitext(file_name)[0]
         image = get_image_by_id(image_id)
-        xml_path = os.path.join(results_folder, xml_file)
+        xml_path = os.path.join(results_folder, file_name)
         page_layout = PageLayout()
         page_layout.from_pagexml(xml_path)
         for order, region in enumerate(page_layout.regions):
@@ -55,10 +55,14 @@ def post_files_to_folder(request, folder):
         shutil.rmtree(folder)
     os.makedirs(folder)
     files = request.files
+    file_names = []
     for file_id in files:
         file = files[file_id]
         path = os.path.join(folder, file.filename)
         file.save(path)
+        file_names.append(file.filename)
+    return file_names
+
 
 
 def create_json_from_request(request):
@@ -109,6 +113,11 @@ def change_layout_request_and_document_state_on_success(request):
     return
 
 
+def change_layout_request_to_fail_and_document_state_to_new(request):
+    change_layout_request_and_document_state(request, RequestState.FAILURE, DocumentState.NEW)
+
+
 def change_document_state_on_complete_layout_analysis(document):
     document.state = DocumentState.COMPLETED_LAYOUT_ANALYSIS
     db_session.commit()
+

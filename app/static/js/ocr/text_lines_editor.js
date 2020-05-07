@@ -13,19 +13,23 @@ class TextLinesEditor
     constructor(container)
     {
         this.container = container;
+        this.container.innerHTML = "<div class='editor-map'></div><div class='status'></div>";
+        this.map_element = this.container.getElementsByClassName("editor-map")[0]
         this.active_line = false;
         this.focused_line = false;
-        let save_btn = document.getElementsByClassName('save-btn');
-        let next_suspect_btn = document.getElementById('nextsucpectline');
-        let show_line_height = document.getElementById('show-line-height');
-        let show_bottom_pad = document.getElementById('show-bottom-pad');
-        for (let btn of save_btn)
+        this.save_btn = document.getElementsByClassName('save-btn');
+        this.next_suspect_btn = document.getElementById('nextsucpectline');
+        this.show_line_height = document.getElementById('show-line-height');
+        this.show_bottom_pad = document.getElementById('show-bottom-pad');
+        for (let btn of this.save_btn)
         {
             btn.addEventListener('click', this.save_annotations.bind(this));
         }
-        next_suspect_btn.addEventListener('click', this.show_next_line.bind(this));
-        show_line_height.addEventListener('input', this.show_line_change.bind(this));
-        show_bottom_pad.addEventListener('input', this.show_line_change.bind(this));
+        this.next_suspect_btn.addEventListener('click', this.show_next_line.bind(this));
+        this.show_line_height.addEventListener('input', this.show_line_change.bind(this));
+        this.show_bottom_pad.addEventListener('input', this.show_line_change.bind(this));
+        this.text_container = document.getElementById('text-container');
+        this.text_container.addEventListener('keypress', this.press_text_container.bind(this));
     }
 
     change_image(image_id)
@@ -54,18 +58,15 @@ class TextLinesEditor
     get_image(image_id)
     {
         let route = Flask.url_for('ocr.get_lines', {'image_id': image_id});
-        $.get(route, this.new_image_callback.bind(this));
-        let text_container = document.getElementById('text-container');
-        text_container.addEventListener('keypress', this.press_text_container.bind(this));
-        while (text_container.firstChild)
+        while (this.text_container.firstChild)
         {
-            text_container.firstChild.remove();
+            this.text_container.firstChild.remove();
         }
+        $.get(route, this.new_image_callback.bind(this));
     }
 
     new_image_callback(data, status)
     {
-        this.container.innerHTML = "<div class='editor-map'></div><div class='status'></div>";
         this.image_id = data['image_id'];
         this.width = data['width'];
         this.height = data['height'];
@@ -78,8 +79,10 @@ class TextLinesEditor
             l.saved = false;
         }
 
-        this.map_element = this.container.getElementsByClassName("editor-map")[0];
-
+        if (this.map)
+        {
+            this.map.remove();
+        }
         this.map = L.map(this.map_element, {
             crs: L.CRS.Simple,
             minZoom: -3,
@@ -129,7 +132,7 @@ class TextLinesEditor
         line.container.addEventListener('focus', this.line_focus.bind(this, line));
         line.container.addEventListener('focusout', this.line_focus_out.bind(this));
 
-        document.getElementById('text-container').appendChild(line.container);
+        this.text_container.appendChild(line.container);
 
         if (line.annotated)
         {
@@ -139,6 +142,7 @@ class TextLinesEditor
 
     press_text_container(e)
     {
+        console.log("KEYPRESS");
         if (e.keyCode == 13)
         {
             let line_number = parseInt(this.active_line.container.getAttribute("id"), 10);
@@ -204,7 +208,7 @@ class TextLinesEditor
             let rest_of_lines = this.lines.slice(index+1);
             if (rest_of_lines.length != 0){
                 for (let line of rest_of_lines) {
-                    if (Math.min.apply(Math, line.confidences) < 0.8 && line.text_line_element.style.backgroundColor != 'rgb(208, 255, 207)') {
+                    if (Math.min.apply(Math, line.confidences) < 0.8 && line.container.style.backgroundColor != 'rgb(208, 255, 207)') {
                         this.line_focus(line);
                         this.polygon_click(line);
                         focused = true;

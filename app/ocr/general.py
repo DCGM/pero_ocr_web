@@ -13,9 +13,9 @@ from pero_ocr.force_alignment import force_align
 from pero_ocr.confidence_estimation import get_letter_confidence
 
 
-def insert_lines_to_db(ocr_results_folder, document_processed):
+def insert_lines_to_db(ocr_results_folder, file_names):
 
-    base_file_names = [os.path.splitext(file_name)[0] for file_name in os.listdir(ocr_results_folder)]
+    base_file_names = [os.path.splitext(file_name)[0] for file_name in file_names]
     base_file_names = list(set(base_file_names))
 
     for base_file_name in base_file_names:
@@ -27,10 +27,11 @@ def insert_lines_to_db(ocr_results_folder, document_processed):
         page_layout.load_logits(logits_path)
         for region in page_layout.regions:
             db_region = get_text_region_by_id(region.id)
+            db_line_map = dict([(str(line.id), line) for line in db_region.textlines])
             if db_region is not None:
                 for order, line in enumerate(region.lines):
-                    if document_processed:
-                        db_line = get_text_line_by_id(line.id)
+                    if line.id in db_line_map:
+                        db_line = db_line_map[line.id]
                         if db_line is not None:
                             if len(db_line.annotations) == 0:
                                 db_line.text = line.transcription
@@ -54,12 +55,10 @@ def insert_lines_to_db(ocr_results_folder, document_processed):
 
 def get_confidences(line):
     if line.transcription is not None and line.transcription != "":
-        c_idx = []
-        for c in line.transcription:
-            c_idx.append(line.characters.index(c))
+        char_map = dict([(c, i) for i, c in enumerate(line.characters)])
+        c_idx = [char_map[c] for c in line.transcription]
 
-        line_logits = np.array(line.logits.todense())
-        line_logits[line_logits == 0] = -80
+        line_logits = line.get_dense_logits()
 
         blank_char_index = line_logits.shape[1] - 1
 
@@ -107,10 +106,13 @@ def post_files_to_folder(request, folder):
         shutil.rmtree(folder)
     os.makedirs(folder)
     files = request.files
+    file_names = []
     for file_id in files:
         file = files[file_id]
         path = os.path.join(folder, file.filename)
         file.save(path)
+        file_names.append(file.filename)
+    return file_names
 
 
 def change_ocr_request_and_document_state(request, request_state, document_state):
@@ -126,6 +128,16 @@ def change_ocr_request_and_document_state_on_success(request):
 
 def change_ocr_request_and_document_state_in_progress(request):
     change_ocr_request_and_document_state(request, RequestState.IN_PROGRESS, DocumentState.RUNNING_OCR)
+    return
+
+
+def change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis(request):
+    change_ocr_request_and_document_state(request, RequestState.FAILURE, DocumentState.COMPLETED_LAYOUT_ANALYSIS)
+    return
+
+
+def change_ocr_request_to_fail_and_document_state_to_success(request):
+    change_ocr_request_and_document_state(request, RequestState.FAILURE, DocumentState.COMPLETED_OCR)
     return
 
 

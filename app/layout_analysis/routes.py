@@ -7,7 +7,7 @@ from app.layout_analysis.general import create_layout_analysis_request, can_star
     add_layout_request_and_change_document_state, get_first_layout_request, change_layout_request_and_document_state_in_progress, \
     create_json_from_request, change_layout_request_and_document_state_on_success, \
     make_image_result_preview, change_document_state_on_complete_layout_analysis, post_files_to_folder, insert_regions_to_db, \
-    set_whole_page_region_layout_to_document
+    set_whole_page_region_layout_to_document, change_layout_request_to_fail_and_document_state_to_new
 import os
 import sys
 import sqlalchemy
@@ -123,23 +123,40 @@ def edit_layout(image_id):
 # POST RESPONSE FROM CLIENT, XMLS
 ########################################################################################################################
 
-@bp.route('/post_result/<string:layout_analysis_request_id>', methods=['POST'])
+@bp.route('/post_result/<string:image_id>', methods=['POST'])
 @login_required
-def post_result(layout_analysis_request_id):
+def post_result(image_id):
     if not is_user_trusted(current_user):
-        flash(u'You do not have sufficient rights to edit collaborators!', 'danger')
+        flash(u'You do not have sufficient rights!', 'danger')
         return redirect(url_for('main.index'))
-    layout_analysis_request = get_request_by_id(layout_analysis_request_id)
-    document = get_document_by_id(layout_analysis_request.document_id)
-    if document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
+    image = get_image_by_id(image_id)
+    if image.document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
         print()
         print("INSERT REGIONS FROM XMLS TO DB")
         print("##################################################################")
-        result_folder = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document.id))
-        post_files_to_folder(request, result_folder)
-        insert_regions_to_db(result_folder)
-        change_layout_request_and_document_state_on_success(layout_analysis_request)
+        result_folder = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(image.document_id))
+        file_names = post_files_to_folder(request, result_folder)
+        insert_regions_to_db(result_folder, file_names)
         print("##################################################################")
+    return 'OK'
+
+
+@bp.route('/change_layout_request_and_document_state_on_success/<string:request_id>', methods=['POST'])
+@login_required
+def success_request(request_id):
+    layout_analysis_request = get_request_by_id(request_id)
+    change_layout_request_and_document_state_on_success(layout_analysis_request)
+    return 'OK'
+
+
+@bp.route('/change_layout_request_to_fail_and_document_state_to_new/<string:request_id>', methods=['POST'])
+@login_required
+def fail_request(request_id):
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights!', 'danger')
+        return redirect(url_for('main.index'))
+    layout_request = get_request_by_id(request_id)
+    change_layout_request_to_fail_and_document_state_to_new(layout_request)
     return 'OK'
 
 

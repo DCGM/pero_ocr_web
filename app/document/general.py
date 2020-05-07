@@ -9,6 +9,7 @@ from flask import current_app as app
 from app import db_session
 from PIL import Image as PILImage
 import uuid
+import datetime
 from lxml import etree as ET
 from app.db import Document, Image, TextLine, Annotation, UserDocument, User, TextRegion
 
@@ -176,7 +177,7 @@ def get_document_images(document):
     return document.images.filter_by(deleted=False)
 
 
-def get_page_layout(image_id, only_regions=False, only_annotated=False, alto=False):
+def get_page_layout(image_id, only_regions=False, only_annotated=False, alto=False, from_time: datetime.datetime=None):
     image = get_image_by_id(image_id)
     page_layout = layout.PageLayout()
     page_layout.id = image.filename
@@ -193,6 +194,8 @@ def get_page_layout(image_id, only_regions=False, only_annotated=False, alto=Fal
                 text_lines = TextLine.query.filter_by(region_id=text_region.id).distinct()
                 if only_annotated:
                     text_lines = text_lines.join(Annotation)
+                    if from_time:
+                        text_lines = text_lines.filter(Annotation.created_date > from_time)
                 text_lines = text_lines.order_by(TextLine.order)
                 text_lines = text_lines.all()
 
