@@ -17,9 +17,9 @@ class ImageList
             let first_image = this.images[0];
             $(first_image).click();
         }
-        let back_btn = document.getElementById('back-btn')
+        let back_btn = document.getElementById('back-btn');
         back_btn.addEventListener('click', this.previous_image.bind(this));
-        let next_btn = document.getElementById('next-btn')
+        let next_btn = document.getElementById('next-btn');
         next_btn.addEventListener('click', this.next_image.bind(this));
         document.addEventListener('keydown', this.keydown.bind(this));
     }
