@@ -51,9 +51,6 @@ def make_image_result_preview(image_db):
 
 
 def post_files_to_folder(request, folder):
-    if os.path.exists(folder):
-        shutil.rmtree(folder)
-    os.makedirs(folder)
     files = request.files
     file_names = []
     for file_id in files:
