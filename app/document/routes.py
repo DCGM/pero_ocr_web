@@ -1,5 +1,6 @@
 import json
 import io
+import _thread
 from app.document import bp
 from flask_login import login_required, current_user
 from flask import render_template, redirect, url_for, request, send_file, flash, Response, jsonify, current_app, make_response
@@ -326,9 +327,12 @@ def compute_scores(document_id):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
-    compute_scores_of_doc(document_id)
 
-    return redirect(url_for('document.documents'))
+    _thread.start_new_thread( compute_scores_of_doc, (document_id, ) )
+
+    flash(u'Computing scores!', 'info')
+
+    return jsonify('success')
 
 
 @bp.route('/skip_line/<string:line_id>')

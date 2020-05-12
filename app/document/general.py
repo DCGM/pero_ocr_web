@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-
+from sqlalchemy import and_
 from app.db.model import Document, DocumentState, Image
 from app.db.general import get_document_by_id, remove_document_by_id, save_document, save_image_to_document,\
     get_all_users, get_user_by_id, get_image_by_id, is_image_duplicate
@@ -248,10 +248,10 @@ def update_confidences(changes):
 
 def is_user_trusted(user):
     user = User.query.filter_by(id=user.id).first()
-    if user.trusted == 0:
-        return False
-    else:
+    if user.trusted == 1:
         return True
+    else:
+        return False
 
 
 def is_page_from_doc(image_id, user):
@@ -313,6 +313,14 @@ def get_line_image_by_id(line_id):
     image = cv2.imencode(".jpg", crop_img, [cv2.IMWRITE_JPEG_QUALITY, 98])[1].tobytes()
 
     return image
+
+
+def is_score_computed(document_id):
+    text_lines = TextLine.query.join(TextRegion).join(Image).filter(and_(Image.document_id == document_id, TextLine.score != None)).all()
+    if len(text_lines) > 0:
+        return True
+    else:
+        return False
 
 
 def get_sucpect_lines_ids(document_id, threshold=0.95):

@@ -16,17 +16,17 @@
 
         <div class="row mb-2">
             <div class="col-xl-3 mb-2">
-                <button class="btn btn-secondary" onclick="previous_page();"><i class="fas fa-arrow-left"></i>&nbsp;&nbsp;Back&nbsp;(b)</button>
-                <button class="btn btn-secondary" onclick="next_page();">Next&nbsp;(n)&nbsp;&nbsp;<i class="fas fa-arrow-right"></i></button>
+                <button id="back-btn" class="btn btn-secondary"><i class="fas fa-arrow-left"></i>&nbsp;&nbsp;Back&nbsp;(b)</button>
+                <button id="next-btn" class="btn btn-secondary">Next&nbsp;(n)&nbsp;&nbsp;<i class="fas fa-arrow-right"></i></button>
             </div>
             <div class="col-xl-6 mb-2 text-xl-center">
-                <button class="btn btn-secondary" onclick="create_new_object();"><i class="fas fa-plus fa-lg"></i>&nbsp;&nbsp;New&nbsp;object&nbsp;(c)</button>
-                <button class="btn btn-secondary" onclick="toggle_delete_object();"><i class="fas fa-times fa-lg"></i>&nbsp;&nbsp;Toggle&nbsp;delete&nbsp;(g)</button>
-                <button class="btn btn-secondary" onclick="toggle_delete_all_objects();"><i class="fas fa-times fa-lg"></i>&nbsp;&nbsp;Toggle&nbsp;delete&nbsp;all&nbsp;(a)</button>
-                <button class="btn btn-secondary" onclick="get_image(annotator_data.uuid)"><i class="fas fa-redo-alt fa-lg"></i>&nbsp;&nbsp;Reset&nbsp;(r)</button>
+                <button id="create-new-object-btn" class="btn btn-secondary"><i class="fas fa-plus fa-lg"></i>&nbsp;&nbsp;New&nbsp;object&nbsp;(c)</button>
+                <button id="toggle-delete-object-btn"class="btn btn-secondary"><i class="fas fa-times fa-lg"></i>&nbsp;&nbsp;Toggle&nbsp;delete&nbsp;(g)</button>
+                <button id="toggle-delete-all-objects-btn" class="btn btn-secondary"><i class="fas fa-times fa-lg"></i>&nbsp;&nbsp;Toggle&nbsp;delete&nbsp;all&nbsp;(a)</button>
+                <button id="reset-btn"class="btn btn-secondary"><i class="fas fa-redo-alt fa-lg"></i>&nbsp;&nbsp;Reset&nbsp;(r)</button>
             </div>
             <div class="col-xl-3 text-xl-right">
-                <button class="btn btn-success" onclick="save_image()"><i class="far fa-save fa-lg"></i>&nbsp;&nbsp;Save&nbsp;(s)</button>
+                <button id="save-image-btn" class="btn btn-success"><i class="far fa-save fa-lg"></i>&nbsp;&nbsp;Save&nbsp;(s)</button>
                 <a id="btn-export-page-xml" class="btn btn-info" role="button" download><i class="far fa-file-code fa-lg"></i>&nbsp;&nbsp;Export PAGE</a>
             </div>
         </div>
@@ -54,13 +54,42 @@
     <script src="/static/leaflet/leaflet.js"></script>
     <script src="/static/leaflet/Leaflet.Editable.js"></script>
     <script src="/static/leaflet/Path.Drag.js"></script>
+    <script src="/static/js/layout/lp_object.js?version=1.4.2"></script>
+    <script src="/static/js/layout/layout_editor.js?version=1.4.2"></script>
+    <script src="/static/js/layout/layout_export_buttons.js?version=1.4.2"></script>
+    <script src="/static/js/image_list.js?version=1.4.2"></script>
     <script>
-        var document_id = '{{ document.id }}';
-        var first_image = '{{ images[0].id }}';
-        var imagesId = [];
-        {% for image in images %}
-            imagesId.push('{{ image.id }}');
-        {% endfor %}
+        let layout_export_buttons = new LayoutExportButtons();
+        var layout_editor = new LayoutEditor();
+        let image_list = new ImageList([layout_export_buttons, layout_editor]);
+
+        document.onkeydown = function (e) {
+            e = e || window.event;
+            if (!e.ctrlKey) return;
+            var code = e.which || e.keyCode;
+            switch (code) {
+                case 66:
+                    image_list.previous_image();
+                    break;
+                case 78:
+                    image_list.next_image();
+                    break;
+                case 67:
+                    layout_editor.create_new_object();
+                    break;
+                case 71:
+                    layout_editor.toggle_delete_object();
+                    break;
+                case 65:
+                    layout_editor.toggle_delete_all_objects();
+                    break;
+                case 82:
+                    layout_editor.reset_image();
+                    break;
+                case 83:
+                    layout_editor.save_image();
+                    break;
+            }
+        };
     </script>
-    <script src="/static/js/LayoutResults.js?version=1.2"></script>
 {% endblock %}

@@ -19,6 +19,7 @@ class TextLinesEditor
         this.focused_line = false;
         this.save_btn = document.getElementsByClassName('save-btn');
         this.next_suspect_btn = document.getElementById('nextsucpectline');
+        this.compute_scores_btn = document.getElementById('btn-compute-scores');
         this.show_line_height = document.getElementById('show-line-height');
         this.show_bottom_pad = document.getElementById('show-bottom-pad');
         for (let btn of this.save_btn)
@@ -30,6 +31,7 @@ class TextLinesEditor
         this.show_bottom_pad.addEventListener('input', this.show_line_change.bind(this));
         this.text_container = document.getElementById('text-container');
         this.text_container.addEventListener('keypress', this.press_text_container.bind(this));
+        this.compute_scores_btn.addEventListener('click', this.compute_scores.bind(this));
     }
 
     change_image(image_id)
@@ -239,10 +241,12 @@ class TextLinesEditor
             }
         }
     }
+
+    compute_scores(){
+        let route_ = Flask.url_for('document.compute_scores', {'document_id': document.querySelector('#document-id').textContent});
+        $.get(route_);
+    }
 }
-
-
-
 
 
 // HELPER FUNCTIONS
@@ -324,7 +328,6 @@ function componentToHex(c) {
 function rgbToHex(r, g, b) {
     return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
-
 
 
 // #############################################################################

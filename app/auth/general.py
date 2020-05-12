@@ -3,7 +3,7 @@ from app.db.general import save_user, get_user_by_email
 
 
 def create_user(email, password, first_name, last_name, institution):
-    user = User(email=email, first_name=first_name, last_name=last_name, institution=institution)
+    user = User(email=email, first_name=first_name, last_name=last_name, institution=institution, trusted=0)
     user.set_password(password)
     save_user(user)
     return user

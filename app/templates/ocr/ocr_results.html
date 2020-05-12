@@ -6,6 +6,7 @@
         <div class="row my-4">
             <div class="col-sm-12">
                 <h3 class="text-left">{{ document.name }} - OCR Results</h3>
+                <h3 id="document-id" style="display: None">{{ document.id }}</h3>
             </div>
         </div>
 
@@ -25,7 +26,12 @@
                 <a id="btn-export-alto-xml" class="btn btn-info mb-2" role="button" download><i class="far fa-file-code fa-lg"></i>&nbsp;&nbsp;Export ALTO</a>
                 <a id="btn-export-text" class="btn btn-info mb-2" role="button" download><i class="far fa-file-alt fa-lg"></i>&nbsp;&nbsp;Export TEXT</a>
                 <a id="btn-export-img" class="btn btn-info mb-2" role="button" download><i class="far fa-file-image fa-lg"></i></i>&nbsp;&nbsp;Export IMAGE</a>
-                <a id="btn-show-suspect-lines" class="btn btn-info mb-2" role="button" style="color:white" href="/document/lines_check/{{ document.id }}">Show Suspect Lines</a>
+                {% if trusted_user == True %}
+                    <a id="btn-compute-scores" class="btn btn-info mb-2" role="button" style="color:white">Compute scores</a>
+                {% endif  %}
+                {% if computed_scores == True %}
+                    <a class="btn btn-info mb-2" role="button" style="color:white" href="/document/lines_check/{{ document.id }}">Show Suspect Lines</a>
+                {% endif  %}
             </div>
         </div>
 
