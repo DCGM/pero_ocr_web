@@ -1,6 +1,7 @@
 import os
 import shutil
 import json
+import uuid
 from natsort import natsorted
 from flask import render_template, request, current_app, send_file
 from flask import url_for, redirect, flash, jsonify
@@ -53,6 +54,8 @@ def revert_ocr(document_id):
     delete_user = db_session.query(User).filter(User.first_name == "#revert_OCR_backup#").first()
     backup_document = Document(name="revert_backup_" + document.name, state=DocumentState.COMPLETED_OCR,
                                user_id=delete_user.id)
+
+    db_session.add(backup_document)
     new_regions = []
     for img in document.images:
         print(str(img.id))
@@ -60,12 +63,12 @@ def revert_ocr(document_id):
                            deleted=img.deleted, imagehash=img.imagehash)
         backup_document.images.append(backup_img)
         for region in img.textregions:
-            backup_region = TextRegion(order=region.order, points=region.points, deleted=region.deleted)
+            backup_region = TextRegion(id=uuid.uuid4(), order=region.order, points=region.points, deleted=region.deleted)
             backup_img.textregions.append(backup_region)
             new_regions.append((region.id, backup_region))
             for line in region.textlines:
                 line.region_id = backup_region.id
-    db_session.add(backup_document)
+        db_session.commit()
     document.state = DocumentState.COMPLETED_LAYOUT_ANALYSIS
     db_session.commit()
     print("##################################################################")
