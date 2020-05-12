@@ -337,7 +337,8 @@ def get_line(line_id):
 
     return line_dict
 
-def compute_confidences_of_doc(document_id):
+
+def compute_scores_of_doc(document_id):
     lines = TextLine.query.join(TextRegion).join(Image).filter_by(document_id=document_id)
     for line in lines:
         line.score = np.average(line.np_confidences)

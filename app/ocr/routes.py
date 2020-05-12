@@ -197,6 +197,8 @@ def post_result(image_id):
         print("INSERT LINES FROM XMLS AND LOGITS TO DB")
         print("##################################################################")
         result_folder = os.path.join(current_app.config['OCR_RESULTS_FOLDER'], str(image.document_id))
+        if not os.path.exists(result_folder):
+            os.makedirs(result_folder)
         file_names = post_files_to_folder(request, result_folder)
         insert_lines_to_db(result_folder, file_names)
         print("##################################################################")
@@ -272,26 +274,26 @@ def get_config(baseline_id, ocr_id, language_model_id):
         language_model_name = get_model_folder_name(get_language_model_by_id(language_model_id).name)
     config_name = "{}_{}_{}.ini".format(baseline_name, ocr_name, language_model_name)
     config_path = os.path.join(current_app.config['MODELS_FOLDER'], "configs", config_name)
-    if not os.path.exists(config_path):
-        base_config = "config_base_ocr.ini"
-        model_types = ["ocr"]
-        model_names = [ocr_name]
-        if baseline_id is not None and language_model_id is None:
-            base_config = "config_base_baseline_ocr.ini"
-            model_types.append("baseline")
-            model_names.append(baseline_name)
-        elif baseline_id is None and language_model_id is not None:
-            base_config = "config_base_ocr_language_model.ini"
-            model_types.append("language_model")
-            model_names.append(language_model_name)
-        elif baseline_id is not None and language_model_id is not None:
-            base_config = "config_base_baseline_ocr_language_model.ini"
-            model_types += ["baseline", "language_model"]
-            model_names += [baseline_name, language_model_name]
-        model_configs = [os.path.join(current_app.config['MODELS_FOLDER'], base_config)]
-        for model_type, model_name in zip(model_types, model_names):
-            model_configs.append(get_model_config(model_type, model_name))
-        concatenate_text_files_and_save(model_configs, config_path)
+
+    base_config = "config_base_ocr.ini"
+    model_types = ["ocr"]
+    model_names = [ocr_name]
+    if baseline_id is not None and language_model_id is None:
+        base_config = "config_base_baseline_ocr.ini"
+        model_types.append("baseline")
+        model_names.append(baseline_name)
+    elif baseline_id is None and language_model_id is not None:
+        base_config = "config_base_ocr_language_model.ini"
+        model_types.append("language_model")
+        model_names.append(language_model_name)
+    elif baseline_id is not None and language_model_id is not None:
+        base_config = "config_base_baseline_ocr_language_model.ini"
+        model_types += ["baseline", "language_model"]
+        model_names += [baseline_name, language_model_name]
+    model_configs = [os.path.join(current_app.config['MODELS_FOLDER'], base_config)]
+    for model_type, model_name in zip(model_types, model_names):
+        model_configs.append(get_model_config(model_type, model_name))
+    concatenate_text_files_and_save(model_configs, config_path)
 
     return send_file(config_path, attachment_filename="config.ini", as_attachment=True)
 
