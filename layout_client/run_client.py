@@ -114,7 +114,7 @@ def check_and_process_layout_request(config):
                 print()
             else:
                 print("PARSE FOLDER FAILED, SETTING REQUEST TO FAILED")
-                session.post(join_url(base_url, layout_analysis_change_layout_request_to_fail_and_document_state_to_new_route))
+                session.post(join_url(base_url, layout_analysis_change_layout_request_to_fail_and_document_state_to_new_route, request_id))
             return True
 
         return False
