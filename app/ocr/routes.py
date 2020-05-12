@@ -17,7 +17,8 @@ from app.ocr.general import create_json_from_request, create_ocr_request, \
                             change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis
 from app.document.general import get_document_images
 from app import db_session
-from app.document.general import is_user_owner_or_collaborator, is_user_trusted, is_granted_acces_for_page, is_granted_acces_for_document
+from app.document.general import is_user_owner_or_collaborator, is_user_trusted, is_granted_acces_for_page, \
+                                 is_granted_acces_for_document, is_score_computed
 
 
 ########################################################################################################################
@@ -37,7 +38,9 @@ def show_results(document_id):
     if document.state != DocumentState.COMPLETED_OCR:
         return  # Bad Request or something like that
     images = get_document_images(document)
-    return render_template('ocr/ocr_results.html', document=document, images=natsorted(list(images), key=lambda x: x.filename))
+
+    return render_template('ocr/ocr_results.html', document=document, images=natsorted(list(images), key=lambda x: x.filename),
+                           trusted_user=is_user_trusted(current_user), computed_scores=is_score_computed(document_id))
 
 
 @bp.route('/revert_ocr/<string:document_id>', methods=['GET'])
