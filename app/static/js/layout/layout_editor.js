@@ -27,8 +27,8 @@ class LayoutEditor{
         this.toggle_delete_all_objects_btn = document.getElementById('toggle-delete-all-objects-btn');
         this.toggle_delete_all_objects_btn.addEventListener('click', this.toggle_delete_all_objects.bind(this));
 
-        this.get_image_btn = document.getElementById('get-image-btn');
-        this.get_image_btn.addEventListener('click', this.get_image.bind(this, this.uuid));
+        this.reset_btn = document.getElementById('reset-btn');
+        this.reset_btn.addEventListener('click', this.reset_image.bind(this));
 
         this.save_image_btn = document.getElementById('save-image-btn');
         this.save_image_btn.addEventListener('click', this.save_image.bind(this));
@@ -56,7 +56,7 @@ class LayoutEditor{
     }
 
     toggle_delete_object() {
-        obj = this.get_selected();
+        let obj = this.get_selected();
         if (obj) {
             obj.deleted = !obj.deleted;
             obj.update_style();
@@ -72,7 +72,12 @@ class LayoutEditor{
         }
     }
 
+    reset_image(){
+        this.change_image(this.uuid)
+    }
+
     change_image(image_id){
+        this.uuid = image_id;
         this.get_image(image_id);
         this.reload_layout_preview();
     }
