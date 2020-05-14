@@ -17,6 +17,7 @@ class LayoutEditor{
         this.uuid = '';
         this.map = null;
         this.objects = [];
+        this.temp_objects = [];
 
         this.create_new_object_btn = document.getElementById('create-new-object-btn');
         this.create_new_object_btn.addEventListener('click', this.create_new_object.bind(this));
@@ -32,6 +33,33 @@ class LayoutEditor{
 
         this.save_image_btn = document.getElementById('save-image-btn');
         this.save_image_btn.addEventListener('click', this.save_image.bind(this));
+    }
+
+    temp_copy_objects(){
+        this.temp_objects = [];
+        for (var i in this.objects) {
+            this.temp_objects[this.temp_objects.length] = [String(this.objects[i].points), this.objects[i].deleted];
+        }
+    }
+
+    is_changed(){
+        if (this.temp_objects.length != this.objects.length){
+            return true;
+        }
+
+        for (var i in this.objects) {
+            if (String(this.objects[i].polygon._latlngs[0]) != this.temp_objects[i][0]){
+                return true;
+            }
+        }
+
+        for (var i in this.objects) {
+            if (this.objects[i].deleted != this.temp_objects[i][1]){
+                return true;
+            }
+        }
+
+        return false;
     }
 
     unselect_objects () {
@@ -77,9 +105,15 @@ class LayoutEditor{
     }
 
     change_image(image_id){
+        if (this.is_changed()){
+            if (confirm("Save changes?"))
+            {
+                this.save_image();
+            }
+        }
         this.uuid = image_id;
         this.get_image(image_id);
-        this.reload_layout_preview();
+        this.reload_layout_preview(image_id);
     }
 
     get_image(image_uuid) {
@@ -136,6 +170,7 @@ class LayoutEditor{
         }
 
         this.report_status('Got image: ' + data['uuid']);
+        this.temp_copy_objects();
     }
 
     report_status(text) {
@@ -143,10 +178,9 @@ class LayoutEditor{
         status_bar.innerHTML = text;
     }
 
-
-    reload_layout_preview(){
-        document.querySelector('figure[class="figure m-1 active"]').children[0].attributes[1].nodeValue = Flask.url_for(
-                'layout_analysis.get_result_preview', {'image_id': document.getElementsByClassName("figure m-1 active")[0].dataset.image});
+    reload_layout_preview(uuid){
+        document.querySelector('figure[data-image="'+ uuid +'"]').children[0].attributes[1].nodeValue = Flask.url_for(
+                'layout_analysis.get_result_preview', {'image_id': uuid});
     }
 
     save_image(){
@@ -174,7 +208,8 @@ class LayoutEditor{
             $.ajax("/layout_analysis/edit_layout/" + imageId, {
                 data: data,
                 contentType: 'application/json', type: 'POST'
-            }).done(this.reload_layout_preview.bind(this))
+            }).done(this.reload_layout_preview.bind(this, this.uuid));
+            this.temp_copy_objects();
         }
     }
 }

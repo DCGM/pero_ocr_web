@@ -63,9 +63,8 @@
         var layout_editor = new LayoutEditor();
         let image_list = new ImageList([layout_export_buttons, layout_editor]);
 
-        document.onkeydown = function (e) {
-            e = e || window.event;
-            if (!e.ctrlKey) return;
+        document.querySelector('body').addEventListener('keydown', shortcut);
+        function shortcut(e) {
             var code = e.which || e.keyCode;
             switch (code) {
                 case 66:
@@ -90,6 +89,6 @@
                     layout_editor.save_image();
                     break;
             }
-        };
+        }
     </script>
 {% endblock %}
