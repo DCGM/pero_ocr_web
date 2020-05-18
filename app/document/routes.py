@@ -312,7 +312,7 @@ def get_lines(document_id):
 @bp.route('/get_cropped_image/<string:line_id>')
 @login_required
 def get_cropped_image(line_id):
-    if not is_granted_acces_for_document(line_id, current_user):
+    if not is_granted_acces_for_line(line_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
 
