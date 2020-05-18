@@ -147,9 +147,9 @@ def check_and_process_ocr_request(config):
             else:
                 print("PARSE FOLDER FAILED, SETTING REQUEST TO FAILED")
                 if baseline_id is None:
-                    session.post(join_url(base_url, ocr_change_ocr_request_to_fail_and_document_state_to_success_route))
+                    session.post(join_url(base_url, ocr_change_ocr_request_to_fail_and_document_state_to_success_route, request_id))
                 else:
-                    session.post(join_url(base_url, ocr_change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis_route))
+                    session.post(join_url(base_url, ocr_change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis_route, request_id))
             return True
 
         return False

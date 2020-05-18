@@ -54,6 +54,21 @@
                 <button id="skip-btn" type="button" class="btn btn-secondary mb-2">Skip (Ctrl+Q)</button>
                 <button id="save-next-btn" type="button" class="btn btn-success mb-2">Save and next (Ctrl+S)&nbsp;&nbsp;<i class="fas fa-arrow-right"></i></button>
             </div>
+            <div class="col-xl-4">
+                <div style="width: fit-content;" class="float-right">
+                    <div class="d-flex flex-row">
+                        <div class="input-group mb-3">
+                            <input id="actual-line" type="number" min="0" max="" class="form-control" placeholder="Line" aria-label="Line" aria-describedby="basic-addon2" style="width: 100px;" value="">
+                            <div class="input-group-append">
+                                <span id="lines-total" class="input-group-text"></span>
+                            </div>
+                            <div class="input-group-append">
+                                <button id="go-to-line-btn" class="btn btn-secondary" type="button">Go to line</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}

@@ -31,7 +31,9 @@ class TextLinesEditor
         this.show_bottom_pad.addEventListener('input', this.show_line_change.bind(this));
         this.text_container = document.getElementById('text-container');
         this.text_container.addEventListener('keypress', this.press_text_container.bind(this));
-        this.compute_scores_btn.addEventListener('click', this.compute_scores.bind(this));
+        if (this.compute_scores_btn != null){
+            this.compute_scores_btn.addEventListener('click', this.compute_scores.bind(this));
+        }
     }
 
     change_image(image_id)
