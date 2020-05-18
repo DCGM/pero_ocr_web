@@ -7,6 +7,7 @@ class LP_object {
         this.ignore = ignore;
         this.text = text;
         this.points = [];
+        this.centroid = null;
 
         if (polygon) {
             this.polygon = polygon;
@@ -21,6 +22,7 @@ class LP_object {
             myself.obj_click()
         });
         this.update_style();
+        this.get_new_centroid();
     }
 
     obj_click() {
@@ -35,6 +37,7 @@ class LP_object {
     }
 
     update_style() {
+        console.log('update_style');
         var color = this.polygon_colors.good;
         if (this.deleted) {
             color = this.polygon_colors.deleted;
@@ -45,6 +48,10 @@ class LP_object {
             color: color, opacity: 1.0, fillColor: color, fillOpacity: 0.1,
             radius: 6, clickable: true
         });
+    }
+
+    get_new_centroid(){
+        this.centroid = this.polygon.getBounds().getCenter();
     }
 
     polygon_colors = {

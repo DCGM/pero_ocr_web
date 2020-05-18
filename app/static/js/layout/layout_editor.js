@@ -18,6 +18,7 @@ class LayoutEditor{
         this.map = null;
         this.objects = [];
         this.temp_objects = [];
+        this.order_lines = [];
 
         this.create_new_object_btn = document.getElementById('create-new-object-btn');
         this.create_new_object_btn.addEventListener('click', this.create_new_object.bind(this));
@@ -134,9 +135,23 @@ class LayoutEditor{
             this.new_image_callback.bind(this));
     }
 
+    recompute_order(){
+        if (this.objects.length > 1){
+            for (var i in this.objects){
+                this.objects[i].get_new_centroid();
+            }
+
+            for (let i = 0; i < (this.objects.length-1); i++) {
+                this.order_lines[i].refresh_line(this.objects[i].centroid, this.objects[i+1].centroid);
+            }
+        }
+    }
+
     new_image_callback(data, status) {
-        var map_region = document.getElementById('map-container');
-        map_region.innerHTML = "<div id='mapid'></div>";
+        this.map_region = document.getElementById('map-container');
+
+        this.map_region.innerHTML = "<div id='mapid'></div>";
+        this.map_region.addEventListener('click', this.recompute_order.bind(this));
         this.uuid = data['uuid'];
         this.width = data['width'];
         this.height = data['height'];
@@ -167,6 +182,12 @@ class LayoutEditor{
                 this.objects[i].uuid,
                 this.objects[i].deleted, false,
                 this.objects[i].points, '');
+        }
+
+        if (this.objects.length > 1){
+            for (let i = 0; i < (this.objects.length-1); i++) {
+                this.order_lines.push(new PL_order(this.objects[i].centroid, this.objects[i+1].centroid, this.map));
+            }
         }
 
         this.report_status('Got image: ' + data['uuid']);
