@@ -38,7 +38,7 @@ class LayoutEditor{
     temp_copy_objects(){
         this.temp_objects = [];
         for (var i in this.objects) {
-            this.temp_objects[this.temp_objects.length] = [String(this.objects[i].points), this.objects[i].deleted];
+            this.temp_objects[this.temp_objects.length] = [String(this.objects[i].polygon._latlngs[0]), this.objects[i].deleted];
         }
     }
 
@@ -101,14 +101,16 @@ class LayoutEditor{
     }
 
     reset_image(){
-        this.change_image(this.uuid)
+        this.change_image(this.uuid, false)
     }
 
-    change_image(image_id){
-        if (this.is_changed()){
-            if (confirm("Save changes?"))
-            {
-                this.save_image();
+    change_image(image_id, ask_for_change=true){
+        if (ask_for_change){
+            if (this.is_changed()){
+                if (confirm("Save changes?"))
+                {
+                    this.save_image();
+                }
             }
         }
         this.uuid = image_id;
@@ -179,8 +181,8 @@ class LayoutEditor{
     }
 
     reload_layout_preview(uuid){
-        document.querySelector('figure[data-image="'+ uuid +'"]').children[0].attributes[1].nodeValue = Flask.url_for(
-                'layout_analysis.get_result_preview', {'image_id': uuid});
+        document.querySelector('figure[data-image="'+ uuid +'"]').children[0].attributes['src'].nodeValue = Flask.url_for(
+                'layout_analysis.get_result_preview', {'image_id': uuid}) + '?a=' + String(Math.random()).substr(2);
     }
 
     save_image(){
