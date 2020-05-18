@@ -27,15 +27,28 @@ class LineEditor {
         this.next_btn = document.getElementById('next-btn');
         this.skip_btn = document.getElementById('skip-btn');
         this.save_next_btn = document.getElementById('save-next-btn');
+        this.go_to_line_btn = document.getElementById("go-to-line-btn");
         this.line_image = document.getElementById('line-img');
         this.text_container = document.getElementById('text-container');
         this.back_btn.addEventListener('click', this.previous_line.bind(this));
         this.next_btn.addEventListener('click', this.next_line.bind(this));
         this.skip_btn.addEventListener('click', this.skip_line.bind(this));
         this.save_next_btn.addEventListener('click', this.save_next_line.bind(this));
+        this.go_to_line_btn.addEventListener('click', this.go_to_line.bind(this));
+
+        this.actual_line_container = document.getElementById('actual-line');
+        this.lines_total_container = document.getElementById('lines-total');
+        this.change_line_index();
 
         let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
         $.get(route_, this.get_line.bind(this));
+    }
+
+    change_line_index(){
+        this.actual_line_container.value = this.image_index;
+        this.actual_line_container.max = String(this.lines.length-1);
+        this.lines_total_container.textContent = String(this.lines.length-1);
+        this.actual_line_container.style.width = String(document.getElementsByClassName("input-group-append")[0].offsetWidth+20) + 'px';
     }
 
     get_line(data){
@@ -55,6 +68,7 @@ class LineEditor {
     previous_line() {
         if (this.image_index > 0) {
             this.get_index('previous');
+            this.actual_line_container.value = this.image_index;
             let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
             $.get(route_, this.get_line.bind(this));
         }
@@ -63,9 +77,22 @@ class LineEditor {
     next_line() {
         if ((this.image_index + 1) < this.lines.length) {
             this.get_index('next');
+            this.actual_line_container.value = this.image_index;
             let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
             $.get(route_, this.get_line.bind(this));
         }
+    }
+
+    go_to_line(){
+        if (Number(this.actual_line_container.value) > Number(this.actual_line_container.max)){
+            this.actual_line_container.value = this.actual_line_container.max;
+        }
+        if (Number(this.actual_line_container.value) < Number(this.actual_line_container.min)){
+            this.actual_line_container.value = this.actual_line_container.min;
+        }
+        this.image_index = Number(this.actual_line_container.value);
+        let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
+        $.get(route_, this.get_line.bind(this));
     }
 
     skip_line() {

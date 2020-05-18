@@ -8,7 +8,7 @@ from app.document.general import create_document, check_and_remove_document, sav
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
     remove_image, get_document_images, get_page_layout, get_page_layout_text, update_confidences, is_user_trusted,\
     is_granted_acces_for_page, is_granted_acces_for_document, get_line_image_by_id, get_sucpect_lines_ids, \
-    compute_scores_of_doc, skip_textline, get_line
+    compute_scores_of_doc, skip_textline, get_line, is_granted_acces_for_line
 from app.db.general import get_user_documents, get_document_by_id
 from app.db import DocumentState, Document
 from app import db_session
@@ -338,7 +338,7 @@ def compute_scores(document_id):
 @bp.route('/skip_line/<string:line_id>')
 @login_required
 def skip_line(line_id):
-    if not is_granted_acces_for_document(line_id, current_user):
+    if not is_granted_acces_for_line(line_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
     skip_textline(line_id)
@@ -349,7 +349,7 @@ def skip_line(line_id):
 @bp.route('/get_line_info/<string:line_id>')
 @login_required
 def get_line_info(line_id):
-    if not is_granted_acces_for_document(line_id, current_user):
+    if not is_granted_acces_for_line(line_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
 
