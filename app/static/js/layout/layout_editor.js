@@ -19,6 +19,8 @@ class LayoutEditor{
         this.objects = [];
         this.temp_objects = [];
         this.order_lines = [];
+        this.reading_order = false;
+        this.active_ordering = false;
 
         this.create_new_object_btn = document.getElementById('create-new-object-btn');
         this.create_new_object_btn.addEventListener('click', this.create_new_object.bind(this));
@@ -34,6 +36,52 @@ class LayoutEditor{
 
         this.save_image_btn = document.getElementById('save-image-btn');
         this.save_image_btn.addEventListener('click', this.save_image.bind(this));
+
+        this.show_reading_order_btn = document.querySelector("input[name=show-reading-order-btn]");
+        this.show_reading_order_btn.addEventListener('click', this.show_reading_order.bind(this));
+
+        this.set_reading_order_btn = document.querySelector("input[name=set-reading-order-btn]");
+        this.set_reading_order_btn.addEventListener('click', this.set_reading_order.bind(this));
+
+        this.previous_object = null;
+    }
+
+    show_reading_order(){
+        this.reading_order = !this.reading_order;
+        this.recompute_order();
+    }
+
+    set_reading_order(){
+        this.active_ordering = !this.active_ordering;
+        this.unselect_objects();
+        for (var i in this.objects) {
+            this.objects[i].ordering = !this.objects[i].ordering;
+        }
+        if (this.active_ordering == false){
+            this.previous_object == null;
+        }
+    }
+
+    reorder(object){
+        if (this.previous_object == null){
+            this.previous_object = object;
+        }
+        else{
+            let order = this.previous_object.order + 1;
+
+            for (var i in this.objects) {
+                if (this.objects[i].order > order){
+                    this.objects[i].order = this.objects[i].order + 1;
+                }
+            }
+            object.order = order;
+            this.previous_object = object;
+        }
+
+        this.objects.sort((a, b) => (a.order) - (b.order));
+        for (var i in this.objects) {
+            this.objects[i].order = i;
+        }
     }
 
     temp_copy_objects(){
@@ -65,7 +113,7 @@ class LayoutEditor{
 
     unselect_objects () {
         for (var i in this.objects) {
-            this.objects[i].polygon.disableEdit()
+            this.objects[i].polygon.disableEdit();
         }
     }
 
@@ -80,8 +128,12 @@ class LayoutEditor{
 
     create_new_object() {
         this.unselect_objects();
+        var order = 0;
+        if (this.objects.length > 0){
+            order = this.objects[this.objects.length-1];
+        }
         var poly = this.map.editTools.startPolygon()
-        this.objects.push(new LP_object(this, guid(), 0, 0, [], '', poly));
+        this.objects.push(new LP_object(this, guid(), 0, 0, [], '', poly, order));
     }
 
     toggle_delete_object() {
@@ -138,13 +190,16 @@ class LayoutEditor{
     }
 
     recompute_order(){
-        if (this.objects.length > 1){
-            for (var i in this.objects){
-                this.objects[i].get_new_centroid();
+        for (var i in this.objects){
+            this.objects[i].show_order = this.reading_order;
+            this.objects[i].get_new_centroid();
+        }
+        for (let i = 0; i < (this.objects.length-1); i++) {
+            if (this.reading_order) {
+                this.order_lines[i].refresh_line(this.objects[i].centroid, this.objects[i + 1].centroid);
             }
-
-            for (let i = 0; i < (this.objects.length-1); i++) {
-                this.order_lines[i].refresh_line(this.objects[i].centroid, this.objects[i+1].centroid);
+            else{
+                this.order_lines[i].remove_line();
             }
         }
     }
@@ -183,14 +238,19 @@ class LayoutEditor{
                 this,
                 this.objects[i].uuid,
                 this.objects[i].deleted, false,
-                this.objects[i].points, '');
+                this.objects[i].points, '', null,
+                this.objects[i].order);
         }
 
+        this.objects.sort((a, b) => (a.order) - (b.order));
+
+        this.order_lines = [];
         if (this.objects.length > 1){
             for (let i = 0; i < (this.objects.length-1); i++) {
                 this.order_lines.push(new PL_order(this.objects[i].centroid, this.objects[i+1].centroid, this.map));
             }
         }
+        this.recompute_order();
 
         this.report_status('Got image: ' + data['uuid']);
         this.temp_copy_objects();

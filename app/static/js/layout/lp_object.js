@@ -1,5 +1,5 @@
 class LP_object {
-    constructor(editor, uuid, deleted, ignore, points, text, polygon) {
+    constructor(editor, uuid, deleted, ignore, points, text, polygon, order) {
         var myself = this;
         this.editor = editor;
         this.uuid = uuid;
@@ -8,21 +8,30 @@ class LP_object {
         this.text = text;
         this.points = [];
         this.centroid = null;
+        this.order = order;
+        this.ordering = false;
+        this.show_order = true;
 
         if (polygon) {
             this.polygon = polygon;
         } else {
             for (var j in points) {
-                this.points[j] = xy(points[j][0], -points[j][1])
+                this.points[j] = xy(points[j][0], -points[j][1]);
             }
             this.polygon = L.polygon(this.points);
         }
         this.polygon.addTo(this.editor.map);
         this.polygon.on('click', function () {
-            myself.obj_click()
+            myself.obj_click();
         });
         this.update_style();
-        this.get_new_centroid();
+        if (this.points.length > 2){
+            this.get_new_centroid(false);
+
+            this.marker = new L.Marker(this.centroid, { opacity: 0.01 });
+            this.marker.bindTooltip("1", { permanent: true, direction: 'right', offset: [-18, 25] });
+            this.marker.addTo(this.editor.map);
+        }
     }
 
     obj_click() {
@@ -34,10 +43,13 @@ class LP_object {
         }
         this.editor.unselect_objects();
         this.polygon.toggleEdit();
+        if (this.ordering){
+            this.editor.reorder(this);
+            this.polygon.disableEdit();
+        }
     }
 
     update_style() {
-        console.log('update_style');
         var color = this.polygon_colors.good;
         if (this.deleted) {
             color = this.polygon_colors.deleted;
@@ -50,8 +62,27 @@ class LP_object {
         });
     }
 
-    get_new_centroid(){
+    get_new_centroid(recompute_order=true){
         this.centroid = this.polygon.getBounds().getCenter();
+        if (recompute_order){
+            this.get_order();
+        }
+    }
+
+    get_order(){
+         if (this.show_order){
+             this.remove_order();
+             this.marker = new L.Marker(this.centroid, { opacity: 0.01 });
+             this.marker.bindTooltip(String(this.order), { permanent: true, direction: 'right', offset: [-18, 25] });
+             this.marker.addTo(this.editor.map);
+         }
+         else{
+             this.remove_order();
+         }
+    }
+
+    remove_order(){
+        this.editor.map.removeLayer(this.marker);
     }
 
     polygon_colors = {

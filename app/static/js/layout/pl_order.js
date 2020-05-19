@@ -14,22 +14,19 @@ class PL_order {
     }
 
     refresh_line(first_centroid, second_centroid){
-        console.log(first_centroid, second_centroid);
         this.pointList = [first_centroid, second_centroid];
         this.map.removeLayer(this.polyline);
 
         this.polyline = new L.Polyline(this.pointList, {
             color: 'red',
             weight: 3,
-            opacity: 0.8,
+            opacity: 1,
             smoothFactor: 1
         });
         this.polyline.addTo(this.map);
-        //this.polyline.addLatLng(this.pointList);
-        //this.polyline._latlngs = this.pointList;
     }
 
     remove_line(){
-
+        this.map.removeLayer(this.polyline);
     }
 }

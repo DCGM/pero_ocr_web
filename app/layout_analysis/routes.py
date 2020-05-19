@@ -180,7 +180,8 @@ def get_image_result(image_id):
         if textregion.deleted:
             continue
         textregion_points = textregion.np_points.tolist()
-        textregions.append({'uuid': textregion.id, 'deleted': textregion.deleted, 'points': textregion_points})
+        textregions.append({'uuid': textregion.id, 'deleted': textregion.deleted, 'points': textregion_points,
+                            'order': textregion.order})
     return jsonify({"uuid": image_id, 'width': width, 'height': height, 'objects': textregions})
 
 

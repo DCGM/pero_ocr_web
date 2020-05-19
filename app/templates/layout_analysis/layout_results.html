@@ -37,11 +37,26 @@
                     <div id="map-container">
                         <div id="mapid"></div>
                     </div>
-                    <p id="status"></p>
                 </div>
             </div>
         </div>
-
+        <div class="row my-2">
+            <div class="col-xl-4">
+                <div class="d-flex flex-row">
+                    <p id="status"></p>
+                </div>
+            </div>
+            <div class="col-xl-4 d-none d-xl-block text-center">
+                <div class="btn-group-toggle" data-toggle="buttons">
+                    <label class="btn btn-dark">
+                        <input type="checkbox" name="show-reading-order-btn" autocomplete="off"> Show reading order
+                    </label>
+                    <label class="btn btn-dark">
+                        <input type="checkbox" name="set-reading-order-btn" autocomplete="off"> Set reading order
+                    </label>
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}
 
