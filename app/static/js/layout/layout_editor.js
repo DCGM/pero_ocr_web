@@ -19,8 +19,6 @@ class LayoutEditor{
         this.objects = [];
         this.temp_objects = [];
         this.order_lines = [];
-        this.reading_order = false;
-        this.active_ordering = false;
 
         this.create_new_object_btn = document.getElementById('create-new-object-btn');
         this.create_new_object_btn.addEventListener('click', this.create_new_object.bind(this));
@@ -38,31 +36,29 @@ class LayoutEditor{
         this.save_image_btn.addEventListener('click', this.save_image.bind(this));
 
         this.show_reading_order_btn = document.querySelector("input[name=show-reading-order-btn]");
-        this.show_reading_order_btn.addEventListener('click', this.show_reading_order.bind(this));
+        this.show_reading_order_btn.addEventListener('change', this.show_reading_order.bind(this));
 
         this.set_reading_order_btn = document.querySelector("input[name=set-reading-order-btn]");
-        this.set_reading_order_btn.addEventListener('click', this.set_reading_order.bind(this));
+        this.set_reading_order_btn.addEventListener('change', this.set_reading_order.bind(this));
 
         this.previous_object = null;
     }
 
     show_reading_order(){
-        this.reading_order = !this.reading_order;
-        this.recompute_order();
+        this.redraw_order();
     }
 
     set_reading_order(){
-        this.active_ordering = !this.active_ordering;
         this.unselect_objects();
         for (var i in this.objects) {
             this.objects[i].ordering = !this.objects[i].ordering;
         }
-        if (this.active_ordering == false){
+        if (this.set_reading_order_btn.checked == false){
             this.previous_object == null;
         }
     }
 
-    reorder(object){
+    reorder_objects(object){
         if (this.previous_object == null){
             this.previous_object = object;
         }
@@ -84,10 +80,64 @@ class LayoutEditor{
         }
     }
 
+    redraw_order(){
+        for (var i in this.objects){
+            this.objects[i].show_order = this.show_reading_order_btn.checked;
+            this.objects[i].get_new_centroid();
+        }
+        for (let i = 0; i < (this.objects.length-1); i++) {
+            if (this.show_reading_order_btn.checked) {
+                this.order_lines[i].refresh_line(this.objects[i].centroid, this.objects[i + 1].centroid);
+            }
+            else{
+                this.order_lines[i].remove_line();
+            }
+        }
+    }
+
+    get_default_order(){
+        var highest_current_order = -1;
+        var not_ordered = [];
+        var hightest_lat = [];
+        for (var i in this.objects) {
+            if (this.objects[i].order == null){
+                not_ordered.push(this.objects[i]);
+                let highest = -100000;
+                for (var e in this.objects[i].polygon._latlngs[0]){
+                    let latitude = layout_editor.objects[i].polygon._latlngs[0][e]["lat"];
+                    if (highest < latitude){
+                        highest = latitude;
+                    }
+                }
+                hightest_lat.push(highest);
+            }
+            else{
+                if (this.objects[i].order > highest_current_order){
+                    highest_current_order = this.objects[i].order;
+                }
+            }
+        }
+
+        var sorted_not_ordered = hightest_lat.map(function(e,i){return i;})
+               .sort(function(a,b){return hightest_lat[a] - hightest_lat[b];})
+               .map(function(e){return not_ordered[e];});
+        sorted_not_ordered = sorted_not_ordered.reverse();
+
+        for (var i in sorted_not_ordered){
+            sorted_not_ordered[i].order = highest_current_order + 1;
+            highest_current_order += 1;
+        }
+    }
+
+    disable_set_order(){
+        $(":checkbox").eq(1).prop('checked', false);
+        $('#setOrderWrapper').removeClass("active");
+    }
+
     temp_copy_objects(){
         this.temp_objects = [];
         for (var i in this.objects) {
-            this.temp_objects[this.temp_objects.length] = [String(this.objects[i].polygon._latlngs[0]), this.objects[i].deleted];
+            this.temp_objects[this.temp_objects.length] = [String(this.objects[i].polygon._latlngs[0]), this.objects[i].deleted, this.objects[i].order];
         }
     }
 
@@ -100,10 +150,10 @@ class LayoutEditor{
             if (String(this.objects[i].polygon._latlngs[0]) != this.temp_objects[i][0]){
                 return true;
             }
-        }
-
-        for (var i in this.objects) {
             if (this.objects[i].deleted != this.temp_objects[i][1]){
+                return true;
+            }
+            if (this.objects[i].order != this.temp_objects[i][2]){
                 return true;
             }
         }
@@ -127,6 +177,7 @@ class LayoutEditor{
     }
 
     create_new_object() {
+        this.disable_set_order();
         this.unselect_objects();
         var order = 0;
         if (this.objects.length > 0){
@@ -137,6 +188,7 @@ class LayoutEditor{
     }
 
     toggle_delete_object() {
+        this.disable_set_order();
         let obj = this.get_selected();
         if (obj) {
             obj.deleted = !obj.deleted;
@@ -145,6 +197,7 @@ class LayoutEditor{
     }
 
     toggle_delete_all_objects() {
+        this.disable_set_order();
         for (let obj of this.objects) {
             if (obj) {
                 obj.deleted = !obj.deleted;
@@ -169,6 +222,10 @@ class LayoutEditor{
         this.uuid = image_id;
         this.get_image(image_id);
         this.reload_layout_preview(image_id);
+        console.log(ask_for_change);
+        if (ask_for_change){
+            this.disable_set_order();
+        }
     }
 
     get_image(image_uuid) {
@@ -189,30 +246,16 @@ class LayoutEditor{
             this.new_image_callback.bind(this));
     }
 
-    recompute_order(){
-        for (var i in this.objects){
-            this.objects[i].show_order = this.reading_order;
-            this.objects[i].get_new_centroid();
-        }
-        for (let i = 0; i < (this.objects.length-1); i++) {
-            if (this.reading_order) {
-                this.order_lines[i].refresh_line(this.objects[i].centroid, this.objects[i + 1].centroid);
-            }
-            else{
-                this.order_lines[i].remove_line();
-            }
-        }
-    }
-
     new_image_callback(data, status) {
         this.map_region = document.getElementById('map-container');
 
         this.map_region.innerHTML = "<div id='mapid'></div>";
-        this.map_region.addEventListener('click', this.recompute_order.bind(this));
+        this.map_region.addEventListener('click', this.redraw_order.bind(this));
         this.uuid = data['uuid'];
         this.width = data['width'];
         this.height = data['height'];
         this.objects = data['objects'];
+        console.log(data['objects']);
 
         this.map = L.map('mapid', {
             crs: L.CRS.Simple,
@@ -230,7 +273,6 @@ class LayoutEditor{
         this.map.setView(xy(this.width / 2, -this.height / 2), -2);
         var image = L.imageOverlay(`/document/get_image/${this.uuid}`, bounds).addTo(this.map);
 
-        //zoom_level = Math.logthis.width / 256.0) / Math.log(2)
         this.map.fitBounds(bounds);
 
         for (var i in this.objects) {
@@ -241,8 +283,11 @@ class LayoutEditor{
                 this.objects[i].points, '', null,
                 this.objects[i].order);
         }
-
+        this.get_default_order();
         this.objects.sort((a, b) => (a.order) - (b.order));
+        for (var i in this.objects) {
+            this.objects[i].order = i;
+        }
 
         this.order_lines = [];
         if (this.objects.length > 1){
@@ -250,7 +295,7 @@ class LayoutEditor{
                 this.order_lines.push(new PL_order(this.objects[i].centroid, this.objects[i+1].centroid, this.map));
             }
         }
-        this.recompute_order();
+        this.redraw_order();
 
         this.report_status('Got image: ' + data['uuid']);
         this.temp_copy_objects();
@@ -282,6 +327,7 @@ class LayoutEditor{
                         points: points,
                         ignore: obj.ignore,
                         deleted: obj.deleted,
+                        order: obj.order
                     }
                 }
             }

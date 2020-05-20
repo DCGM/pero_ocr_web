@@ -44,7 +44,7 @@ class LP_object {
         this.editor.unselect_objects();
         this.polygon.toggleEdit();
         if (this.ordering){
-            this.editor.reorder(this);
+            this.editor.reorder_objects(this);
             this.polygon.disableEdit();
         }
     }
