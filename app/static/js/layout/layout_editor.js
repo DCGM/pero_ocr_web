@@ -41,6 +41,8 @@ class LayoutEditor{
         this.set_reading_order_btn = document.querySelector("input[name=set-reading-order-btn]");
         this.set_reading_order_btn.addEventListener('change', this.set_reading_order.bind(this));
 
+        this.leaflet = document.querySelector('body')
+
         this.previous_object = null;
     }
 
@@ -81,16 +83,28 @@ class LayoutEditor{
     }
 
     redraw_order(){
+        if (this.objects.length > 1){
+            for (let i = 0; i < (this.objects.length); i++) {
+                if (this.objects[i].polygon._latlngs[0].length >= 3 && this.objects[i].centroid == null) {
+                    this.objects[i].get_new_centroid();
+                    this.order_lines.push(new PL_order(this.objects[i - 1].centroid, this.objects[i].centroid, this.map));
+                }
+            }
+        }
         for (var i in this.objects){
             this.objects[i].show_order = this.show_reading_order_btn.checked;
-            this.objects[i].get_new_centroid();
+            if (this.objects[i].polygon._latlngs[0].length >= 3){
+                this.objects[i].get_new_centroid();
+            }
         }
         for (let i = 0; i < (this.objects.length-1); i++) {
-            if (this.show_reading_order_btn.checked) {
-                this.order_lines[i].refresh_line(this.objects[i].centroid, this.objects[i + 1].centroid);
-            }
-            else{
-                this.order_lines[i].remove_line();
+            if (this.objects[i].polygon._latlngs[0].length >= 3 && this.objects[i + 1].polygon._latlngs[0].length >= 3){
+                if (this.show_reading_order_btn.checked) {
+                    this.order_lines[i].refresh_line(this.objects[i].centroid, this.objects[i + 1].centroid);
+                }
+                else{
+                    this.order_lines[i].remove_line();
+                }
             }
         }
     }
@@ -181,9 +195,9 @@ class LayoutEditor{
         this.unselect_objects();
         var order = 0;
         if (this.objects.length > 0){
-            order = this.objects[this.objects.length-1];
+            order = Number(this.objects[this.objects.length-1].order)+1;
         }
-        var poly = this.map.editTools.startPolygon()
+        var poly = this.map.editTools.startPolygon();
         this.objects.push(new LP_object(this, guid(), 0, 0, [], '', poly, order));
     }
 
@@ -316,7 +330,7 @@ class LayoutEditor{
             var obj_to_send = [];
             for (var obj_key in this.objects) {
                 var obj = this.objects[obj_key];
-                if (obj.polygon._latlngs[0].length > 3) {
+                if (obj.polygon._latlngs[0].length >= 3) {
                     var points = [];
                     for (var i in obj.polygon._latlngs[0]) {
                         points[i] = [obj.polygon._latlngs[0][i].lng, -obj.polygon._latlngs[0][i].lat];

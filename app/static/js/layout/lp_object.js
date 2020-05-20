@@ -82,7 +82,12 @@ class LP_object {
     }
 
     remove_order(){
-        this.editor.map.removeLayer(this.marker);
+        try{
+            this.editor.map.removeLayer(this.marker);
+        }
+        catch (e) {
+            ;
+        }
     }
 
     polygon_colors = {

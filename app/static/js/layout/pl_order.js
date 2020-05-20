@@ -27,6 +27,11 @@ class PL_order {
     }
 
     remove_line(){
-        this.map.removeLayer(this.polyline);
+        try {
+            this.map.removeLayer(this.polyline);
+        }
+        catch (e) {
+            ;
+        }
     }
 }
