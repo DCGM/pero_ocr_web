@@ -39,6 +39,13 @@
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                         <button id="revert-OCR-modal-remove-button" type="button" class="btn btn-danger">Revert</button>
                     </div>
+                    <div id="revert-OCR-loader" class="container py-5">
+                        <div class="row">
+                            <div class="col" align="center">
+                                <div class="loader"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -163,13 +170,16 @@
         </div>
     </div>
 {% endblock %}
+
 {% block styles %}
+    <link rel="stylesheet" href="/static/css/loader.css">
     <style>
         .document-action-btn{
             min-height: 25px;
         }
     </style>
 {% endblock %}
+
 {% block scripts %}
     <script>
         let $modal_delete = $('#exampleModal');
@@ -202,6 +212,7 @@
         $('.revert-OCR-button').on('click', function (event) {
             event.preventDefault();
             last_document_id = $(this).data('document');
+            $("#revert-OCR-loader").hide();
             $modal_revert_OCR.modal('show');
         });
 
@@ -211,9 +222,10 @@
             $.get("/ocr/revert_ocr/" + last_document_id).done(function (document_id) {
                 $('tr[data-document="' + document_id + '"').remove();
                 $modal_revert_OCR.modal('hide');
-                location.reload();
             });
-            $modal_revert_OCR.modal('hide');
+            $("#revert-OCR-modal .modal-body").hide();
+            $("#revert-OCR-modal .modal-footer").hide();
+            $("#revert-OCR-loader").show();
         });
 
     </script>
