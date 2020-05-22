@@ -357,23 +357,3 @@ def get_line_info(line_id):
 
     return jsonify(lines)
 
-
-@bp.route('/revert_layout/<string:document_id>', methods=['GET'])
-@login_required
-def revert_ocr(document_id):
-    if not is_user_owner_or_collaborator(document_id, current_user):
-        flash(u'You do not have sufficient rights to this document!', 'danger')
-        return redirect(url_for('main.index'))
-    print()
-    print("REVERT Layout")
-    print("##################################################################")
-    document = Document.query.filter_by(id=document_id, deleted=False).first()
-    if document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
-        return f'Error: Unable to revert layout, document in wrong state {document.state}.', 400
-    for img in document.images:
-        for region in img.textregions:
-            db_session.delete(region)
-    document.state = DocumentState.NEW
-    db_session.commit()
-    print("##################################################################")
-    return document_id

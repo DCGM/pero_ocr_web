@@ -11,7 +11,7 @@ from app.layout_analysis.general import create_layout_analysis_request, can_star
 import os
 import sys
 import sqlalchemy
-from app.db.model import DocumentState, TextRegion, LayoutDetector
+from app.db.model import DocumentState, TextRegion, LayoutDetector, Document
 from app.document.general import is_user_owner_or_collaborator, is_granted_acces_for_document, is_user_trusted
 from PIL import Image
 from app import db_session
@@ -37,6 +37,27 @@ def show_results(document_id):
         return 'Layout analysis is not completed yet!', 400
     return render_template('layout_analysis/layout_results.html', document=document, images=natsorted(list(document.images), key=lambda x: x.filename))
 
+
+@bp.route('/revert_layout_analysis/<string:document_id>', methods=['GET'])
+@login_required
+def revert_layout(document_id):
+    if not is_user_owner_or_collaborator(document_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
+    print()
+    print("REVERT Layout")
+    print("##################################################################")
+    document = Document.query.filter_by(id=document_id, deleted=False).first()
+    if document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
+        return f'Error: Unable to revert layout, document in wrong state {document.state}.', 400
+    for img in document.images:
+        print(img.id)
+        for region in img.textregions:
+            db_session.delete(region)
+    document.state = DocumentState.NEW
+    db_session.commit()
+    print("##################################################################")
+    return document_id
 
 # SELECT PAGE
 ########################################################################################################################

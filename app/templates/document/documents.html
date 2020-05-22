@@ -23,6 +23,30 @@
             </div>
         </div>
 
+        <div class="modal fade" id="revert-layout-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="revert-layout-modal-label">Revert layout analysis</h5>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to revert layout analysis for this document? All existing manual layout will be lost.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button id="revert-layout-modal-remove-button" type="button" class="btn btn-danger">Revert</button>
+                    </div>
+                    <div id="revert-layout-loader" class="container py-5">
+                        <div class="row">
+                            <div class="col" align="center">
+                                <div class="loader"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="modal fade" id="revert-OCR-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -116,6 +140,13 @@
                                         title="Run OCR">
                                         <ion-icon name="fastforward"></ion-icon>
                                     </a>
+                                    <a  class="document-action-btn btn btn-secondary text-white revert-layout-button"
+                                        data-toggle="tooltip"
+                                        data-placement="right"
+                                        title="Revert layout analysis"
+                                        data-document="{{ document.id }}">
+                                        <ion-icon name="rewind"></ion-icon>
+                                    </a>
                                 {% endif %}
 
                                 {% if document.state.name == 'COMPLETED_OCR' %}
@@ -180,10 +211,16 @@
 {% block scripts %}
     <script>
         let $modal_delete = $('#exampleModal');
+        let $modal_revert_layout = $('#revert-layout-modal');
         let $modal_revert_OCR = $('#revert-OCR-modal');
         let last_document_id = null;
         $('[data-toggle="tooltip"]').tooltip();
         $modal_delete.modal({
+            show: false
+        });
+        $modal_revert_layout.modal({
+            backdrop: 'static',
+            keyboard: false,
             show: false
         });
         $modal_revert_OCR.modal({
@@ -208,6 +245,13 @@
             });
         });
 
+        $('.revert-layout-button').on('click', function (event) {
+            event.preventDefault();
+            last_document_id = $(this).data('document');
+            $("#revert-layout-loader").hide();
+            $modal_revert_layout.modal('show');
+        });
+
         $('.revert-OCR-button').on('click', function (event) {
             event.preventDefault();
             last_document_id = $(this).data('document');
@@ -215,11 +259,22 @@
             $modal_revert_OCR.modal('show');
         });
 
+        $('#revert-layout-modal-remove-button').on('click', function (event) {
+            event.preventDefault();
+            console.log(last_document_id);
+            $.get("/layout_analysis/revert_layout_analysis/" + last_document_id).done(function (document_id) {
+                $modal_revert_layout.modal('hide');
+                location.reload();
+            });
+            $("#revert-layout-modal .modal-body").hide();
+            $("#revert-layout-modal .modal-footer").hide();
+            $("#revert-layout-loader").show();
+        });
+
         $('#revert-OCR-modal-remove-button').on('click', function (event) {
             event.preventDefault();
             console.log(last_document_id);
             $.get("/ocr/revert_ocr/" + last_document_id).done(function (document_id) {
-                $('tr[data-document="' + document_id + '"').remove();
                 $modal_revert_OCR.modal('hide');
                 location.reload();
             });
