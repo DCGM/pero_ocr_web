@@ -47,24 +47,42 @@ class LayoutEditor{
     }
 
     show_reading_order(){
+        if (this.show_reading_order_btn.checked){
+            let parent_element = this.show_reading_order_btn.parentElement;
+            parent_element.children[1].innerText = 'Hide reading order (o)';
+        }
+        else{
+            let parent_element = this.show_reading_order_btn.parentElement;
+            parent_element.children[1].innerText = 'Show reading order (o)';
+        }
         this.redraw_order();
     }
 
     set_reading_order(){
+        if (this.show_reading_order_btn.checked == false){
+            this.enable_show_order();
+            this.show_reading_order();
+        }
         this.unselect_objects();
         for (var i in this.objects) {
             this.objects[i].ordering = !this.objects[i].ordering;
         }
         if (this.set_reading_order_btn.checked == false){
             this.previous_object == null;
+            for (var i in this.objects){
+                this.objects[i].changeToolTipColor('base');
+            }
+            this.show_reading_order();
         }
     }
 
     reorder_objects(object){
+        object.changeToolTipColor('last');
         if (this.previous_object == null){
             this.previous_object = object;
         }
         else{
+            this.previous_object.changeToolTipColor('ordered');
             let order = this.previous_object.order + 1;
 
             for (var i in this.objects) {
@@ -143,9 +161,27 @@ class LayoutEditor{
         }
     }
 
+    enable_set_order(){
+        $(":checkbox").eq(1).prop('checked', true);
+        $('#setOrderWrapper').addClass("active");
+    }
+
     disable_set_order(){
         $(":checkbox").eq(1).prop('checked', false);
         $('#setOrderWrapper').removeClass("active");
+        for (var i in this.objects){
+            this.objects[i].changeToolTipColor('base');
+        }
+    }
+
+    enable_show_order(){
+        $(":checkbox").eq(0).prop('checked', true);
+        $('#showOrderWrapper').addClass("active");
+    }
+
+    disable_show_order(){
+        $(":checkbox").eq(0).prop('checked', false);
+        $('#showOrderWrapper').removeClass("active");
     }
 
     temp_copy_objects(){

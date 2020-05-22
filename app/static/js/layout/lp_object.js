@@ -11,6 +11,7 @@ class LP_object {
         this.order = order;
         this.ordering = false;
         this.show_order = true;
+        this.toolTipColor = this.changeToolTipColor('base');
 
         if (polygon) {
             this.polygon = polygon;
@@ -25,12 +26,13 @@ class LP_object {
             myself.obj_click();
         });
         this.update_style();
-        if (this.points.length > 2){
+        if (this.points.length >= 3){
             this.get_new_centroid(false);
 
             this.marker = new L.Marker(this.centroid, { opacity: 0.01 });
             this.marker.bindTooltip("1", { permanent: true, direction: 'right', offset: [-18, 25] });
             this.marker.addTo(this.editor.map);
+            this.marker._tooltip._container.style.backgroundColor = this.toolTipColor;
         }
     }
 
@@ -73,8 +75,9 @@ class LP_object {
          if (this.show_order){
              this.remove_order();
              this.marker = new L.Marker(this.centroid, { opacity: 0.01 });
-             this.marker.bindTooltip(String(this.order), { permanent: true, direction: 'right', offset: [-18, 25] });
+             this.marker.bindTooltip(String(Number(this.order)+1), { permanent: true, direction: 'right', offset: [-18, 25] });
              this.marker.addTo(this.editor.map);
+             this.marker._tooltip._container.style.backgroundColor = this.toolTipColor;
          }
          else{
              this.remove_order();
@@ -87,6 +90,21 @@ class LP_object {
         }
         catch (e) {
             ;
+        }
+    }
+
+    changeToolTipColor(type){
+        console.log('here');
+        switch (type) {
+            case 'base':
+                this.toolTipColor = 'white';
+                break;
+            case 'last':
+                this.toolTipColor = 'deepskyblue';
+                break;
+            case 'ordered':
+                this.toolTipColor = 'skyblue';
+                break;
         }
     }
 
