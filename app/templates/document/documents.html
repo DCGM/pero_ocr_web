@@ -222,6 +222,7 @@
             $.get("/ocr/revert_ocr/" + last_document_id).done(function (document_id) {
                 $('tr[data-document="' + document_id + '"').remove();
                 $modal_revert_OCR.modal('hide');
+                location.reload();
             });
             $("#revert-OCR-modal .modal-body").hide();
             $("#revert-OCR-modal .modal-footer").hide();
