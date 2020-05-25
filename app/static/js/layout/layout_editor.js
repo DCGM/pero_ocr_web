@@ -41,9 +41,13 @@ class LayoutEditor{
         this.set_reading_order_btn = document.querySelector("input[name=set-reading-order-btn]");
         this.set_reading_order_btn.addEventListener('change', this.set_reading_order.bind(this));
 
-        this.leaflet = document.querySelector('body')
+        this.map_region = document.getElementById('map-container');
+        this.map_region.addEventListener('click', this.redraw_order.bind(this));
+
+        this.leaflet = document.querySelector('body');
 
         this.previous_object = null;
+        this.last_action = null;
     }
 
     show_reading_order(){
@@ -68,39 +72,50 @@ class LayoutEditor{
             this.objects[i].ordering = !this.objects[i].ordering;
         }
         if (this.set_reading_order_btn.checked == false){
-            this.previous_object == null;
+            this.previous_object = null;
             for (var i in this.objects){
                 this.objects[i].changeToolTipColor('base');
             }
             this.show_reading_order();
         }
+
+        this.last_action = "redraw_order";
     }
 
     reorder_objects(object){
+        this.last_action = "reorder_objects";
         object.changeToolTipColor('last');
         if (this.previous_object == null){
             this.previous_object = object;
         }
-        else{
+        else {
             this.previous_object.changeToolTipColor('ordered');
-            let order = this.previous_object.order + 1;
-
+            let order = Number(this.previous_object.order) + 1;
             for (var i in this.objects) {
-                if (this.objects[i].order > order){
-                    this.objects[i].order = this.objects[i].order + 1;
+                if (this.objects[i].order >= order){
+                    this.objects[i].order = Number(this.objects[i].order) + 1;
                 }
             }
             object.order = order;
             this.previous_object = object;
         }
 
-        this.objects.sort((a, b) => (a.order) - (b.order));
+        this.objects.sort((a, b) => (Number(a.order)) - (Number(b.order)));
         for (var i in this.objects) {
             this.objects[i].order = i;
         }
     }
 
     redraw_order(){
+        if (this.last_action != null){
+            if (this.last_action == "redraw_order"){
+                if (this.set_reading_order_btn.checked){
+                    this.disable_set_order();
+                    this.set_reading_order();
+                }
+            }
+            this.last_action = "redraw_order";
+        }
         if (this.objects.length > 1){
             for (let i = 0; i < (this.objects.length); i++) {
                 if (this.objects[i].polygon._latlngs[0].length >= 3 && this.objects[i].centroid == null) {
@@ -172,6 +187,7 @@ class LayoutEditor{
         for (var i in this.objects){
             this.objects[i].changeToolTipColor('base');
         }
+        this.previous_object = null;
     }
 
     enable_show_order(){
@@ -257,7 +273,11 @@ class LayoutEditor{
     }
 
     reset_image(){
-        this.change_image(this.uuid, false)
+        if (this.set_reading_order_btn.checked){
+            this.disable_set_order();
+            this.set_reading_order();
+        }
+        this.change_image(this.uuid, false);
     }
 
     change_image(image_id, ask_for_change=true){
@@ -272,7 +292,7 @@ class LayoutEditor{
         this.uuid = image_id;
         this.get_image(image_id);
         this.reload_layout_preview(image_id);
-        console.log(ask_for_change);
+        this.last_action = null;
         if (ask_for_change){
             this.disable_set_order();
         }
@@ -297,15 +317,11 @@ class LayoutEditor{
     }
 
     new_image_callback(data, status) {
-        this.map_region = document.getElementById('map-container');
-
         this.map_region.innerHTML = "<div id='mapid'></div>";
-        this.map_region.addEventListener('click', this.redraw_order.bind(this));
         this.uuid = data['uuid'];
         this.width = data['width'];
         this.height = data['height'];
         this.objects = data['objects'];
-        console.log(data['objects']);
 
         this.map = L.map('mapid', {
             crs: L.CRS.Simple,

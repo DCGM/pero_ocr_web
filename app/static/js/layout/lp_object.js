@@ -94,7 +94,6 @@ class LP_object {
     }
 
     changeToolTipColor(type){
-        console.log('here');
         switch (type) {
             case 'base':
                 this.toolTipColor = 'white';
