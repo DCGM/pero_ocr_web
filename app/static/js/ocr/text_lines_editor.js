@@ -13,6 +13,7 @@ class TextLinesEditor
     constructor(container)
     {
         this.container = container;
+        this.current_image_id = null;
         this.container.innerHTML = "<div class='editor-map'></div><div class='status'></div>";
         this.map_element = this.container.getElementsByClassName("editor-map")[0]
         this.active_line = false;
@@ -61,6 +62,7 @@ class TextLinesEditor
 
     get_image(image_id)
     {
+        this.current_image_id = image_id;
         let route = Flask.url_for('ocr.get_lines', {'image_id': image_id});
         while (this.text_container.firstChild)
         {
@@ -71,50 +73,53 @@ class TextLinesEditor
 
     new_image_callback(data, status)
     {
-        this.image_id = data['image_id'];
-        this.width = data['width'];
-        this.height = data['height'];
-        this.active_line = false;
-        this.lines = [];
-
-        for (let l of this.lines)
+        if (this.current_image_id == data['image_id'])
         {
-            l.edited = false;
-            l.saved = false;
-        }
+            this.image_id = data['image_id'];
+            this.width = data['width'];
+            this.height = data['height'];
+            this.active_line = false;
+            this.lines = [];
 
-        if (this.map)
-        {
-            this.map.remove();
-        }
-        this.map = L.map(this.map_element, {
-            crs: L.CRS.Simple,
-            minZoom: -3,
-            maxZoom: 3,
-            center: [0, 0],
-            zoom: 0,
-            editable: true,
-            fadeAnimation: true,
-            zoomAnimation: true,
-            zoomSnap: 0
-        });
+            for (let l of this.lines)
+            {
+                l.edited = false;
+                l.saved = false;
+            }
 
-        let bounds = [xy(0, -this.height), xy(this.width, 0)];
-        this.map.setView(xy(this.width / 2, -this.height / 2), -2);
-        L.imageOverlay(Flask.url_for('document.get_image', {'image_id': this.image_id}), bounds).addTo(this.map);
-        this.map.fitBounds(bounds);
+            if (this.map)
+            {
+                this.map.remove();
+            }
+            this.map = L.map(this.map_element, {
+                crs: L.CRS.Simple,
+                minZoom: -3,
+                maxZoom: 3,
+                center: [0, 0],
+                zoom: 0,
+                editable: true,
+                fadeAnimation: true,
+                zoomAnimation: true,
+                zoomSnap: 0
+            });
 
-        let i = 0;
-        for (let l of data['lines'])
-        {
-            let line = new TextLine(l.id, l.text, l.np_confidences)
-            line.np_points = l.np_points;
-            line.annotated = l.annotated;
-            this.add_line_to_map(i, line);
-            this.lines.push(line);
-            i += 1;
+            let bounds = [xy(0, -this.height), xy(this.width, 0)];
+            this.map.setView(xy(this.width / 2, -this.height / 2), -2);
+            L.imageOverlay(Flask.url_for('document.get_image', {'image_id': this.image_id}), bounds).addTo(this.map);
+            this.map.fitBounds(bounds);
+
+            let i = 0;
+            for (let l of data['lines'])
+            {
+                let line = new TextLine(l.id, l.text, l.np_confidences)
+                line.np_points = l.np_points;
+                line.annotated = l.annotated;
+                this.add_line_to_map(i, line);
+                this.lines.push(line);
+                i += 1;
+            }
+            this.map_element.focus();
         }
-        this.map_element.focus();
     }
 
     add_line_to_map(i, line)
