@@ -113,6 +113,19 @@ class LineEditor {
             this.lines_total_container.textContent = String(this.lines.length-1);
             this.image_index -= 1;
         }
+        else {
+            this.line.skip();
+            this.get_index('previous');
+            this.line_image.setAttribute("src", "/static/img/loading.gif");
+            let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
+            $.get(route_, this.get_line.bind(this));
+            this.lines.splice(this.image_index-1, 1);
+            this.annotated_in_session.splice(this.image_index-1, 1);
+            this.actual_line_container.max = String(this.lines.length-1);
+            this.actual_line_container.value = String(this.lines.length-1);
+            this.lines_total_container.textContent = String(this.lines.length-1);
+            this.image_index -= 1;
+        }
     }
 
     save_next_line() {
@@ -124,6 +137,11 @@ class LineEditor {
             this.line_image.setAttribute("src", "/static/img/loading.gif");
             let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
             $.get(route_, this.get_line.bind(this));
+        }
+        else{
+            this.line.save();
+            this.line.skip();
+            this.annotated_in_session[this.image_index] = true;
         }
     }
 
