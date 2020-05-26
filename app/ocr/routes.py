@@ -41,7 +41,7 @@ def show_results(document_id):
     images = get_document_images(document)
 
     return render_template('ocr/ocr_results.html', document=document, images=natsorted(list(images), key=lambda x: x.filename),
-                           trusted_user=is_user_trusted(current_user), computed_scores=is_score_computed(document_id))
+                           trusted_user=is_user_trusted(current_user), computed_scores=True)
 
 
 @bp.route('/revert_ocr/<string:document_id>', methods=['GET'])
