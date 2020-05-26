@@ -9,6 +9,9 @@ class LineEditor {
         this.image_index = 0;
         this.document_id = document_id;
 
+        this.line_image = document.getElementById('line-img');
+        this.line_image.setAttribute("src", "/static/img/loading.gif");
+
         let route_ = Flask.url_for('document.get_lines', {'document_id': this.document_id});
 
         $.get(route_, this.parse_lines.bind(this));
@@ -28,7 +31,6 @@ class LineEditor {
         this.skip_btn = document.getElementById('skip-btn');
         this.save_next_btn = document.getElementById('save-next-btn');
         this.go_to_line_btn = document.getElementById("go-to-line-btn");
-        this.line_image = document.getElementById('line-img');
         this.text_container = document.getElementById('text-container');
         this.back_btn.addEventListener('click', this.previous_line.bind(this));
         this.next_btn.addEventListener('click', this.next_line.bind(this));
@@ -69,6 +71,7 @@ class LineEditor {
         if (this.image_index > 0) {
             this.get_index('previous');
             this.actual_line_container.value = this.image_index;
+            this.line_image.setAttribute("src", "/static/img/loading.gif");
             let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
             $.get(route_, this.get_line.bind(this));
         }
@@ -78,6 +81,7 @@ class LineEditor {
         if ((this.image_index + 1) < this.lines.length) {
             this.get_index('next');
             this.actual_line_container.value = this.image_index;
+            this.line_image.setAttribute("src", "/static/img/loading.gif");
             let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
             $.get(route_, this.get_line.bind(this));
         }
@@ -91,6 +95,7 @@ class LineEditor {
             this.actual_line_container.value = this.actual_line_container.min;
         }
         this.image_index = Number(this.actual_line_container.value);
+        this.line_image.setAttribute("src", "/static/img/loading.gif");
         let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
         $.get(route_, this.get_line.bind(this));
     }
@@ -99,6 +104,7 @@ class LineEditor {
         if ((this.image_index + 1) < this.lines.length) {
             this.line.skip();
             this.get_index('next');
+            this.line_image.setAttribute("src", "/static/img/loading.gif");
             let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
             $.get(route_, this.get_line.bind(this));
             this.lines.splice(this.image_index-1, 1);
@@ -115,6 +121,7 @@ class LineEditor {
             this.line.skip();
             this.annotated_in_session[this.image_index] = true;
             this.get_index('next');
+            this.line_image.setAttribute("src", "/static/img/loading.gif");
             let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
             $.get(route_, this.get_line.bind(this));
         }
