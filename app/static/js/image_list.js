@@ -37,7 +37,11 @@ class ImageList
         }
         $(image).addClass('active');
         $($(image).children()[0]).css('background-color', '#ff00f2');
-        document.getElementsByClassName('figure m-1 active')[0].scrollIntoView();
+
+        const pageYOffset = window.pageYOffset;
+        document.getElementsByClassName('figure m-1 active')[0].scrollIntoView({block: "nearest"});
+        window.scrollTo(0, pageYOffset);
+
         for (let o of this.objects_to_change)
         {
             o.change_image(image_id)
