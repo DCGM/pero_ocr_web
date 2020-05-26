@@ -22,9 +22,8 @@ class LP_object {
             this.polygon = L.polygon(this.points);
         }
         this.polygon.addTo(this.editor.map);
-        this.polygon.on('click', function () {
-            myself.obj_click();
-        });
+        this.polygon.on('click', this.obj_click.bind(this));
+        this.polygon.on("dblclick", this.obj_dblclick.bind(this));
         this.update_style();
         if (this.points.length >= 3){
             this.get_new_centroid(false);
@@ -35,6 +34,17 @@ class LP_object {
             this.marker._tooltip._container.style.backgroundColor = this.toolTipColor;
             let element = this.marker.getElement();
             element.addEventListener('click', this.obj_click.bind(this));
+        }
+    }
+
+    obj_dblclick(){
+        if (this.ordering){
+            if (this.editor.previous_object.length == 2){
+                this.editor.make_first(this);
+            }
+            else{
+                this.editor.make_append(this);
+            }
         }
     }
 

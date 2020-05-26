@@ -46,7 +46,7 @@ class LayoutEditor{
 
         this.leaflet = document.querySelector('body');
 
-        this.previous_object = null;
+        this.previous_object = [];
         this.last_action = null;
     }
 
@@ -70,9 +70,11 @@ class LayoutEditor{
 
         if (this.set_reading_order_btn.checked){
             this.enable_set_order();
+            this.map.doubleClickZoom.disable();
         }
         else {
             this.disable_set_order();
+            this.map.doubleClickZoom.enable();
         }
 
         this.unselect_objects();
@@ -80,7 +82,7 @@ class LayoutEditor{
             this.objects[i].ordering = !this.objects[i].ordering;
         }
         if (this.set_reading_order_btn.checked == false){
-            this.previous_object = null;
+            this.previous_object = [];
             for (var i in this.objects){
                 this.objects[i].changeToolTipColor('base');
             }
@@ -90,24 +92,32 @@ class LayoutEditor{
         this.last_action = "redraw_order";
     }
 
+    make_first(object){
+        console.log(object);
+    }
+
+    make_append(object){
+        console.log(object);
+    }
+
     reorder_objects(object){
         this.last_action = "reorder_objects";
         object.changeToolTipColor('last');
-        if (this.previous_object == null){
-            this.previous_object = object;
+        if (this.previous_object.length == 0){
+            this.previous_object.push(object);
         }
         else {
-            if (this.previous_object !== object){
-                this.previous_object.changeToolTipColor('ordered');
+            if (this.previous_object[this.previous_object.length - 1] !== object){
+                this.previous_object[this.previous_object.length - 1].changeToolTipColor('ordered');
             }
-            let order = Number(this.previous_object.order) + 1;
+            let order = Number(this.previous_object[this.previous_object.length - 1].order) + 1;
             for (var i in this.objects) {
                 if (this.objects[i].order >= order){
                     this.objects[i].order = Number(this.objects[i].order) + 1;
                 }
             }
             object.order = order;
-            this.previous_object = object;
+            this.previous_object.push(object);
         }
 
         this.objects.sort((a, b) => (Number(a.order)) - (Number(b.order)));
@@ -197,7 +207,7 @@ class LayoutEditor{
         for (var i in this.objects){
             this.objects[i].changeToolTipColor('base');
         }
-        this.previous_object = null;
+        this.previous_object = [];
     }
 
     enable_show_order(){
