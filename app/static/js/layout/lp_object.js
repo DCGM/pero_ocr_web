@@ -33,11 +33,12 @@ class LP_object {
             this.marker.bindTooltip("1", { permanent: true, direction: 'right', offset: [-18, 25] });
             this.marker.addTo(this.editor.map);
             this.marker._tooltip._container.style.backgroundColor = this.toolTipColor;
+            let element = this.marker.getElement();
+            element.addEventListener('click', this.obj_click.bind(this));
         }
     }
 
     obj_click() {
-        this.editor.edited = true;
         if (this.deleted || this.ignore) {
             this.deleted = 0;
             this.ignore = 0;
@@ -78,6 +79,8 @@ class LP_object {
              this.marker.bindTooltip(String(Number(this.order)+1), { permanent: true, direction: 'right', offset: [-18, 25] });
              this.marker.addTo(this.editor.map);
              this.marker._tooltip._container.style.backgroundColor = this.toolTipColor;
+             let element = this.marker.getElement();
+             element.addEventListener('click', this.obj_click.bind(this));
          }
          else{
              this.remove_order();

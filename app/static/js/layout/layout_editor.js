@@ -53,11 +53,11 @@ class LayoutEditor{
     show_reading_order(){
         if (this.show_reading_order_btn.checked){
             let parent_element = this.show_reading_order_btn.parentElement;
-            parent_element.children[1].innerText = 'Hide reading order (o)';
+            parent_element.children[1].innerText = 'Hide reading order (w)';
         }
         else{
             let parent_element = this.show_reading_order_btn.parentElement;
-            parent_element.children[1].innerText = 'Show reading order (o)';
+            parent_element.children[1].innerText = 'Show reading order (w)';
         }
         this.redraw_order();
     }
@@ -67,6 +67,14 @@ class LayoutEditor{
             this.enable_show_order();
             this.show_reading_order();
         }
+
+        if (this.set_reading_order_btn.checked){
+            this.enable_set_order();
+        }
+        else {
+            this.disable_set_order();
+        }
+
         this.unselect_objects();
         for (var i in this.objects) {
             this.objects[i].ordering = !this.objects[i].ordering;
@@ -89,7 +97,9 @@ class LayoutEditor{
             this.previous_object = object;
         }
         else {
-            this.previous_object.changeToolTipColor('ordered');
+            if (this.previous_object !== object){
+                this.previous_object.changeToolTipColor('ordered');
+            }
             let order = Number(this.previous_object.order) + 1;
             for (var i in this.objects) {
                 if (this.objects[i].order >= order){
@@ -178,12 +188,12 @@ class LayoutEditor{
 
     enable_set_order(){
         $(":checkbox").eq(1).prop('checked', true);
-        $('#setOrderWrapper').addClass("active");
+        $('#setOrderWrapper').addClass("active").css({"background-color": "deepskyblue", "border-color": "deepskyblue"});
     }
 
     disable_set_order(){
         $(":checkbox").eq(1).prop('checked', false);
-        $('#setOrderWrapper').removeClass("active");
+        $('#setOrderWrapper').removeClass("active").css({"background-color": "", "border-color": ""});
         for (var i in this.objects){
             this.objects[i].changeToolTipColor('base');
         }
