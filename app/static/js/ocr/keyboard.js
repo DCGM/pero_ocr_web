@@ -134,7 +134,7 @@ class Keyboard{
         e.preventDefault();
         if (this.text_lines_editor.focused_line)
         {
-            insert_new_char_to_current_position(char, this.text_lines_editor.active_line.text_line_element);
+            this.text_lines_editor.active_line.insert_new_char_to_current_position(char);
         }
     }
 
