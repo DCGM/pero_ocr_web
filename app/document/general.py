@@ -6,6 +6,7 @@ from app.db.general import get_document_by_id, remove_document_by_id, save_docum
     get_all_users, get_user_by_id, get_image_by_id, is_image_duplicate
 import os
 from flask import current_app as app
+from flask import Response
 from app import db_session
 from PIL import Image as PILImage
 import uuid
@@ -14,6 +15,8 @@ from lxml import etree as ET
 from app.db import Document, Image, TextLine, Annotation, UserDocument, User, TextRegion
 
 import pero_ocr.document_ocr.layout as layout
+import unicodedata
+from werkzeug.urls import url_quote
 
 
 def dhash(image, hash_size=8):
@@ -211,6 +214,23 @@ def get_page_layout(image_id, only_regions=False, only_annotated=False, alto=Fal
         page_layout.load_logits(logits_path)
 
     return page_layout
+
+
+def create_string_response(filename, string, minetype):
+    r = Response(string, mimetype=minetype)
+
+    try:
+        filename = filename.encode('latin-1')
+    except UnicodeEncodeError:
+        filenames = {
+            'filename': unicodedata.normalize('NFKD', filename).encode('latin-1', 'ignore'),
+            'filename*': "UTF-8''{}".format(url_quote(filename)),
+        }
+    else:
+        filenames = {'filename': filename}
+
+    r.headers.set('Content-Disposition', 'attachment', **filenames)
+    return r
 
 
 def get_page_layout_text(page_layout):

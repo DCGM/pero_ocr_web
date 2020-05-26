@@ -3,15 +3,13 @@ import io
 import _thread
 from app.document import bp
 from flask_login import login_required, current_user
-from flask import render_template, redirect, url_for, request, send_file, flash, Response, jsonify, current_app, make_response
+from flask import render_template, redirect, url_for, request, send_file, flash, jsonify, current_app, make_response
 from app.document.general import create_document, check_and_remove_document, save_images, get_image_by_id,\
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
     remove_image, get_document_images, get_page_layout, get_page_layout_text, update_confidences, is_user_trusted,\
     is_granted_acces_for_page, is_granted_acces_for_document, get_line_image_by_id, get_sucpect_lines_ids, \
-    compute_scores_of_doc, skip_textline, get_line, is_granted_acces_for_line
+    compute_scores_of_doc, skip_textline, get_line, is_granted_acces_for_line, create_string_response
 from app.db.general import get_user_documents, get_document_by_id
-from app.db import DocumentState, Document
-from app import db_session
 from app.document.forms import CreateDocumentForm
 from io import BytesIO
 import dateutil.parser
@@ -97,8 +95,8 @@ def get_page_xml_regions(image_id):
         return redirect(url_for('main.index'))
 
     page_layout = get_page_layout(image_id, only_regions=True)
-    return Response(page_layout.to_pagexml_string(), mimetype='text/xml',
-                    headers={"Content-disposition": "attachment; filename={}.xml".format(page_layout.id)})
+    filename = "{}.xml".format(os.path.splitext(page_layout.id)[0])
+    return create_string_response(filename, page_layout.to_pagexml_string(), minetype='text/xml')
 
 
 @bp.route('/get_page_xml_lines/<string:image_id>')
@@ -108,10 +106,9 @@ def get_page_xml_lines(image_id):
         flash(u'You do not have sufficient rights to download xml!', 'danger')
         return redirect(url_for('main.index'))
 
-    page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False)
-    file_name = "{}.xml".format(os.path.splitext(page_layout.id)[0])
-    return Response(page_layout.to_pagexml_string(), mimetype='text/xml',
-                    headers={"Content-disposition": "attachment; filename={}".format(file_name)})
+    page_layout = get_page_layout(image_id, only_regions=False)
+    filename = "{}.xml".format(os.path.splitext(page_layout.id)[0])
+    return create_string_response(filename, page_layout.to_pagexml_string(), minetype='text/xml')
 
 
 @bp.route('/get_annotated_page_xml_lines/<string:image_id>')
@@ -129,9 +126,8 @@ def get_annotated_page_xml_lines(image_id, from_time=None):
             return 'ERROR: Could not parse from_time argument.', 400
 
     page_layout = get_page_layout(image_id, only_regions=False, only_annotated=True, from_time=from_time)
-    file_name = "{}.xml".format(os.path.splitext(page_layout.id)[0])
-    return Response(page_layout.to_pagexml_string(), mimetype='text/xml',
-                    headers={"Content-disposition": "attachment; filename={}".format(file_name)})
+    filename = "{}.xml".format(os.path.splitext(page_layout.id)[0])
+    return create_string_response(filename, page_layout.to_pagexml_string(), minetype='text/xml')
 
 
 @bp.route('/get_alto_xml/<string:image_id>')
@@ -142,9 +138,8 @@ def get_alto_xml(image_id):
         return redirect(url_for('main.index'))
 
     page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False, alto=True)
-    file_name = "{}.xml".format(os.path.splitext(page_layout.id)[0])
-    return Response(page_layout.to_altoxml_string(), mimetype='text/xml',
-                    headers={"Content-disposition": "attachment; filename={}".format(file_name)})
+    filename = "{}.xml".format(os.path.splitext(page_layout.id)[0])
+    return create_string_response(filename, page_layout.to_altoxml_string(), minetype='text/xml')
 
 
 @bp.route('/get_text/<string:image_id>')
@@ -156,9 +151,7 @@ def get_text(image_id):
 
     page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False)
     file_name = "{}.txt".format(os.path.splitext(page_layout.id)[0])
-    return Response(get_page_layout_text(page_layout),
-                    mimetype='text/plain',
-                    headers={"Content-disposition": "attachment; filename={}".format(file_name)})
+    return create_string_response(file_name, get_page_layout_text(page_layout), minetype='text/plain')
 
 
 @bp.route('/get_image/<string:image_id>')
