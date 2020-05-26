@@ -88,6 +88,16 @@
         let document_id = document.getElementById('document-id').textContent;
         let line_editor = new LineEditor(document_id);
 
+        document.querySelector('div.text-center').addEventListener('keydown', shortcut);
+        function shortcut(e) {
+            var code = e.which || e.keyCode;
+            switch (code) {
+                case 13:
+                    line_editor.save_next_line();
+                    break;
+            }
+        }
+
         document.onkeydown = function (e) {
             e = e || window.event;
             if (!e.ctrlKey) return;

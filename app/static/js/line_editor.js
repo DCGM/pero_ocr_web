@@ -103,6 +103,8 @@ class LineEditor {
             $.get(route_, this.get_line.bind(this));
             this.lines.splice(this.image_index-1, 1);
             this.annotated_in_session.splice(this.image_index-1, 1);
+            this.actual_line_container.max = String(this.lines.length-1);
+            this.lines_total_container.textContent = String(this.lines.length-1);
             this.image_index -= 1;
         }
     }
