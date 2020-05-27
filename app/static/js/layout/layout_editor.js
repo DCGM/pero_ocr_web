@@ -96,7 +96,25 @@ class LayoutEditor{
         this.last_action = "redraw_order";
     }
 
+    remove_empty(){
+        var end = true;
+        while (true){
+            for (var i in this.objects){
+                if (this.objects[i].polygon._latlngs[0].length < 3){
+                    this.objects.splice(i, 1);
+                    end = false;
+                    break;
+                }
+                end = true;
+            }
+            if (end){
+                break;
+            }
+        }
+    }
+
     make_first(object){
+        this.remove_empty();
         let order = Number(object.order);
         let highest = Number(this.objects[this.objects.length-1].order);
         for (var i in this.objects) {
@@ -119,6 +137,7 @@ class LayoutEditor{
     }
 
     make_append(object){
+        this.remove_empty();
         for (var i in this.objects){
             this.objects[i].prev_order_to_order();
         }
@@ -282,6 +301,7 @@ class LayoutEditor{
 
         for (var i in sorted_not_ordered){
             sorted_not_ordered[i].order = highest_current_order + 1;
+            sorted_not_ordered[i].prev_order = highest_current_order + 1;
             highest_current_order += 1;
         }
     }
