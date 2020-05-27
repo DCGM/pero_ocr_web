@@ -309,6 +309,9 @@ class LayoutEditor{
     enable_set_order(){
         $(":checkbox").eq(1).prop('checked', true);
         $('#setOrderWrapper').addClass("active").css({"background-color": "deepskyblue", "border-color": "deepskyblue"});
+        this.create_new_object_btn.disabled = true;
+        this.toggle_delete_object_btn.disabled = true;
+        this.toggle_delete_all_objects_btn.disabled = true;
     }
 
     disable_set_order(){
@@ -318,6 +321,9 @@ class LayoutEditor{
             this.objects[i].changeToolTipColor('base');
         }
         this.previous_object = [];
+        this.create_new_object_btn.disabled = false;
+        this.toggle_delete_object_btn.disabled = false;
+        this.toggle_delete_all_objects_btn.disabled = false;
     }
 
     enable_show_order(){
