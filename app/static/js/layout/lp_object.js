@@ -9,6 +9,7 @@ class LP_object {
         this.points = [];
         this.centroid = null;
         this.order = order;
+        this.prev_order = order;
         this.ordering = false;
         this.show_order = true;
         this.toolTipColor = this.changeToolTipColor('base');
@@ -37,13 +38,23 @@ class LP_object {
         }
     }
 
+    change_order(new_order){
+        this.prev_order = this.order;
+        this.order = new_order;
+    }
+
+    prev_order_to_order(){
+        this.order = this.prev_order;
+    }
+
     obj_dblclick(){
         if (this.ordering){
-            if (this.editor.previous_object.length == 2){
-                this.editor.make_first(this);
+            var self = this;
+            if (this.editor.previous_object.length == 1){
+                this.editor.make_first(self);
             }
             else{
-                this.editor.make_append(this);
+                this.editor.make_append(self);
             }
         }
     }

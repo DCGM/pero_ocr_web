@@ -93,11 +93,86 @@ class LayoutEditor{
     }
 
     make_first(object){
-        console.log(object);
+        let order = Number(object.order);
+        let highest = Number(this.objects[this.objects.length-1].order);
+        for (var i in this.objects) {
+            if (Number(this.objects[i].order) < order){
+                this.objects[i].order = Number(highest) + Number(i) + 1;
+            }
+        }
+        this.objects.sort((a, b) => (Number(a.order)) - (Number(b.order)));
+        for (var i in this.objects) {
+            this.objects[i].order = i;
+        }
+        if (this.previous_object[this.previous_object.length - 1].uuid !== object.uuid){
+            this.previous_object.push(Object.assign( Object.create( Object.getPrototypeOf(object)), object));
+        }
+        else{
+            this.previous_object[this.previous_object.length-1].order = object.order;
+        }
+        this.last_action = "reorder_objects";
+        this.redraw_order()
     }
 
     make_append(object){
-        console.log(object);
+        for (var i in this.objects){
+            this.objects[i].prev_order_to_order();
+        }
+
+        this.objects.sort((a, b) => (Number(a.order)) - (Number(b.order)));
+        for (var i in this.objects) {
+            this.objects[i].order = i;
+        }
+
+        var actual_order = String(object.order);
+        this.previous_object.reverse();
+        for (var i in this.previous_object){
+            if (object.uuid !== this.previous_object[i].uuid){
+                var previous_order = String(this.previous_object[i].order);
+                break;
+            }
+        }
+        this.previous_object.reverse();
+        let highest = Number(this.objects[this.objects.length-1].order);
+
+        if (Number(actual_order) > Number(previous_order)){
+                for (var i in this.objects){
+                    if (Number(this.objects[i].order) > Number(previous_order) && this.objects[i].order < Number(actual_order)){
+                        this.objects[i].order = Number(highest) + Number(i) + 1;
+                    }
+                    else{
+                        if (Number(this.objects[i].order) > Number(actual_order)){
+                            this.objects[i].order = Number(previous_order) + Number(i) + 1;
+                        }
+                    }
+                }
+        }
+        else {
+            if (Number(actual_order) < Number(previous_order)){
+                for (var i in this.objects) {
+                    if (Number(this.objects[i].order) > Number(previous_order)){
+                        this.objects[i].order = Number(highest) + Number(i) + 1;
+                    }
+                }
+                for (var i in this.objects){
+                    if (Number(this.objects[i].order) >= Number(actual_order) && this.objects[i].order < Number(previous_order)){
+                        this.objects[i].order = Number(previous_order) + Number(i) + 1;
+                    }
+                }
+            }
+        }
+        this.objects.sort((a, b) => (Number(a.order)) - (Number(b.order)));
+        for (var i in this.objects) {
+            this.objects[i].order = i;
+        }
+        if (this.previous_object[this.previous_object.length - 1].uuid !== object.uuid){
+            this.previous_object.push(Object.assign( Object.create( Object.getPrototypeOf(object)), object));
+        }
+        else{
+            this.previous_object[this.previous_object.length-1].order = object.order;
+        }
+        this.last_action = "reorder_objects";
+        this.redraw_order();
     }
 
     reorder_objects(object){
@@ -107,22 +182,33 @@ class LayoutEditor{
             this.previous_object.push(object);
         }
         else {
-            if (this.previous_object[this.previous_object.length - 1] !== object){
+            if (this.previous_object[this.previous_object.length - 1].uuid !== object.uuid){
                 this.previous_object[this.previous_object.length - 1].changeToolTipColor('ordered');
+                let order = Number(this.previous_object[this.previous_object.length - 1].order) + 1;
+
+                for (var i in this.objects) {
+                    if (this.objects[i].order >= Number(order)){
+                        this.objects[i].change_order(Number(this.objects[i].order) + 1);
+                    }
+                    else{
+                        this.objects[i].change_order(this.objects[i].order);
+                    }
+                }
+                object.order = order;
             }
-            let order = Number(this.previous_object[this.previous_object.length - 1].order) + 1;
-            for (var i in this.objects) {
-                if (this.objects[i].order >= order){
-                    this.objects[i].order = Number(this.objects[i].order) + 1;
+            for (var i in this.previous_object){
+                if (this.previous_object[i].uuid !== object.uuid){
+                    this.previous_object[i].changeToolTipColor('ordered');
                 }
             }
-            object.order = order;
-            this.previous_object.push(object);
         }
 
         this.objects.sort((a, b) => (Number(a.order)) - (Number(b.order)));
         for (var i in this.objects) {
-            this.objects[i].order = i;
+            this.objects[i].order = Number(i);
+        }
+        if (this.previous_object[this.previous_object.length - 1].uuid !== object.uuid){
+            this.previous_object.push(object);
         }
     }
 
