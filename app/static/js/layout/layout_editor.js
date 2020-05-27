@@ -63,18 +63,22 @@ class LayoutEditor{
     }
 
     set_reading_order(){
-        if (this.show_reading_order_btn.checked == false){
+        if (this.show_reading_order_btn.checked == false && this.set_reading_order_btn.checked){
+            this.disable_set_order();
             this.enable_show_order();
             this.show_reading_order();
-        }
+            this.enable_set_order();
 
+        }
         if (this.set_reading_order_btn.checked){
             this.enable_set_order();
             this.map.doubleClickZoom.disable();
         }
         else {
-            this.disable_set_order();
-            this.map.doubleClickZoom.enable();
+            if (this.show_reading_order_btn.checked == true){
+                this.disable_set_order();
+                this.map.doubleClickZoom.enable();
+            }
         }
 
         this.unselect_objects();
