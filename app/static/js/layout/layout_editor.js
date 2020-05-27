@@ -46,33 +46,47 @@ class LayoutEditor{
 
         this.leaflet = document.querySelector('body');
 
-        this.previous_object = null;
+        this.previous_object = [];
         this.last_action = null;
     }
 
     show_reading_order(){
         if (this.show_reading_order_btn.checked){
             let parent_element = this.show_reading_order_btn.parentElement;
-            parent_element.children[1].innerText = 'Hide reading order (o)';
+            parent_element.children[1].innerText = 'Hide reading order (w)';
         }
         else{
             let parent_element = this.show_reading_order_btn.parentElement;
-            parent_element.children[1].innerText = 'Show reading order (o)';
+            parent_element.children[1].innerText = 'Show reading order (w)';
         }
         this.redraw_order();
     }
 
     set_reading_order(){
-        if (this.show_reading_order_btn.checked == false){
+        if (this.show_reading_order_btn.checked == false && this.set_reading_order_btn.checked){
+            this.disable_set_order();
             this.enable_show_order();
             this.show_reading_order();
+            this.enable_set_order();
+
         }
+        if (this.set_reading_order_btn.checked){
+            this.enable_set_order();
+            this.map.doubleClickZoom.disable();
+        }
+        else {
+            if (this.show_reading_order_btn.checked == true){
+                this.disable_set_order();
+                this.map.doubleClickZoom.enable();
+            }
+        }
+
         this.unselect_objects();
         for (var i in this.objects) {
             this.objects[i].ordering = !this.objects[i].ordering;
         }
         if (this.set_reading_order_btn.checked == false){
-            this.previous_object = null;
+            this.previous_object = [];
             for (var i in this.objects){
                 this.objects[i].changeToolTipColor('base');
             }
@@ -82,27 +96,142 @@ class LayoutEditor{
         this.last_action = "redraw_order";
     }
 
-    reorder_objects(object){
-        this.last_action = "reorder_objects";
-        object.changeToolTipColor('last');
-        if (this.previous_object == null){
-            this.previous_object = object;
-        }
-        else {
-            this.previous_object.changeToolTipColor('ordered');
-            let order = Number(this.previous_object.order) + 1;
-            for (var i in this.objects) {
-                if (this.objects[i].order >= order){
-                    this.objects[i].order = Number(this.objects[i].order) + 1;
+    remove_empty(){
+        var end = true;
+        while (true){
+            for (var i in this.objects){
+                if (this.objects[i].polygon._latlngs[0].length < 3){
+                    this.objects.splice(i, 1);
+                    end = false;
+                    break;
                 }
+                end = true;
             }
-            object.order = order;
-            this.previous_object = object;
+            if (end){
+                break;
+            }
+        }
+    }
+
+    make_first(object){
+        this.remove_empty();
+        let order = Number(object.order);
+        let highest = Number(this.objects[this.objects.length-1].order);
+        for (var i in this.objects) {
+            if (Number(this.objects[i].order) < order){
+                this.objects[i].order = Number(highest) + Number(i) + 1;
+            }
+        }
+        this.objects.sort((a, b) => (Number(a.order)) - (Number(b.order)));
+        for (var i in this.objects) {
+            this.objects[i].order = i;
+        }
+        if (this.previous_object[this.previous_object.length - 1].uuid !== object.uuid){
+            this.previous_object.push(Object.assign( Object.create( Object.getPrototypeOf(object)), object));
+        }
+        else{
+            this.previous_object[this.previous_object.length-1].order = object.order;
+        }
+        this.last_action = "reorder_objects";
+        this.redraw_order()
+    }
+
+    make_append(object){
+        this.remove_empty();
+        for (var i in this.objects){
+            this.objects[i].prev_order_to_order();
         }
 
         this.objects.sort((a, b) => (Number(a.order)) - (Number(b.order)));
         for (var i in this.objects) {
             this.objects[i].order = i;
+        }
+
+        var actual_order = String(object.order);
+        this.previous_object.reverse();
+        for (var i in this.previous_object){
+            if (object.uuid !== this.previous_object[i].uuid){
+                var previous_order = String(this.previous_object[i].order);
+                break;
+            }
+        }
+        this.previous_object.reverse();
+        let highest = Number(this.objects[this.objects.length-1].order);
+
+        if (Number(actual_order) > Number(previous_order)){
+                for (var i in this.objects){
+                    if (Number(this.objects[i].order) > Number(previous_order) && this.objects[i].order < Number(actual_order)){
+                        this.objects[i].order = Number(highest) + Number(i) + 1;
+                    }
+                    else{
+                        if (Number(this.objects[i].order) > Number(actual_order)){
+                            this.objects[i].order = Number(previous_order) + Number(i) + 1;
+                        }
+                    }
+                }
+        }
+        else {
+            if (Number(actual_order) < Number(previous_order)){
+                for (var i in this.objects) {
+                    if (Number(this.objects[i].order) > Number(previous_order)){
+                        this.objects[i].order = Number(highest) + Number(i) + 1;
+                    }
+                }
+                for (var i in this.objects){
+                    if (Number(this.objects[i].order) >= Number(actual_order) && this.objects[i].order < Number(previous_order)){
+                        this.objects[i].order = Number(previous_order) + Number(i) + 1;
+                    }
+                }
+            }
+        }
+        this.objects.sort((a, b) => (Number(a.order)) - (Number(b.order)));
+        for (var i in this.objects) {
+            this.objects[i].order = i;
+        }
+        if (this.previous_object[this.previous_object.length - 1].uuid !== object.uuid){
+            this.previous_object.push(Object.assign( Object.create( Object.getPrototypeOf(object)), object));
+        }
+        else{
+            this.previous_object[this.previous_object.length-1].order = object.order;
+        }
+        this.last_action = "reorder_objects";
+        this.redraw_order();
+    }
+
+    reorder_objects(object){
+        this.last_action = "reorder_objects";
+        object.changeToolTipColor('last');
+        if (this.previous_object.length == 0){
+            this.previous_object.push(object);
+        }
+        else {
+            if (this.previous_object[this.previous_object.length - 1].uuid !== object.uuid){
+                this.previous_object[this.previous_object.length - 1].changeToolTipColor('ordered');
+                let order = Number(this.previous_object[this.previous_object.length - 1].order) + 1;
+
+                for (var i in this.objects) {
+                    if (this.objects[i].order >= Number(order)){
+                        this.objects[i].change_order(Number(this.objects[i].order) + 1);
+                    }
+                    else{
+                        this.objects[i].change_order(this.objects[i].order);
+                    }
+                }
+                object.order = order;
+            }
+            for (var i in this.previous_object){
+                if (this.previous_object[i].uuid !== object.uuid){
+                    this.previous_object[i].changeToolTipColor('ordered');
+                }
+            }
+        }
+
+        this.objects.sort((a, b) => (Number(a.order)) - (Number(b.order)));
+        for (var i in this.objects) {
+            this.objects[i].order = Number(i);
+        }
+        if (this.previous_object[this.previous_object.length - 1].uuid !== object.uuid){
+            this.previous_object.push(object);
         }
     }
 
@@ -172,22 +301,29 @@ class LayoutEditor{
 
         for (var i in sorted_not_ordered){
             sorted_not_ordered[i].order = highest_current_order + 1;
+            sorted_not_ordered[i].prev_order = highest_current_order + 1;
             highest_current_order += 1;
         }
     }
 
     enable_set_order(){
         $(":checkbox").eq(1).prop('checked', true);
-        $('#setOrderWrapper').addClass("active");
+        $('#setOrderWrapper').addClass("active").css({"background-color": "deepskyblue", "border-color": "deepskyblue"});
+        this.create_new_object_btn.disabled = true;
+        this.toggle_delete_object_btn.disabled = true;
+        this.toggle_delete_all_objects_btn.disabled = true;
     }
 
     disable_set_order(){
         $(":checkbox").eq(1).prop('checked', false);
-        $('#setOrderWrapper').removeClass("active");
+        $('#setOrderWrapper').removeClass("active").css({"background-color": "", "border-color": ""});
         for (var i in this.objects){
             this.objects[i].changeToolTipColor('base');
         }
-        this.previous_object = null;
+        this.previous_object = [];
+        this.create_new_object_btn.disabled = false;
+        this.toggle_delete_object_btn.disabled = false;
+        this.toggle_delete_all_objects_btn.disabled = false;
     }
 
     enable_show_order(){

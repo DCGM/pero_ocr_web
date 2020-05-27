@@ -11,6 +11,7 @@ class PL_order {
             smoothFactor: 1
         });
         this.polyline.addTo(this.map);
+        this.polyline.bringToBack();
     }
 
     refresh_line(first_centroid, second_centroid){
@@ -24,6 +25,7 @@ class PL_order {
             smoothFactor: 1
         });
         this.polyline.addTo(this.map);
+        this.polyline.bringToBack();
     }
 
     remove_line(){

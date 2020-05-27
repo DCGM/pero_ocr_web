@@ -9,6 +9,7 @@ class LP_object {
         this.points = [];
         this.centroid = null;
         this.order = order;
+        this.prev_order = order;
         this.ordering = false;
         this.show_order = true;
         this.toolTipColor = this.changeToolTipColor('base');
@@ -22,9 +23,8 @@ class LP_object {
             this.polygon = L.polygon(this.points);
         }
         this.polygon.addTo(this.editor.map);
-        this.polygon.on('click', function () {
-            myself.obj_click();
-        });
+        this.polygon.on('click', this.obj_click.bind(this));
+        this.polygon.on("dblclick", this.obj_dblclick.bind(this));
         this.update_style();
         if (this.points.length >= 3){
             this.get_new_centroid(false);
@@ -33,11 +33,33 @@ class LP_object {
             this.marker.bindTooltip("1", { permanent: true, direction: 'right', offset: [-18, 25] });
             this.marker.addTo(this.editor.map);
             this.marker._tooltip._container.style.backgroundColor = this.toolTipColor;
+            let element = this.marker.getElement();
+            element.addEventListener('click', this.obj_click.bind(this));
+        }
+    }
+
+    change_order(new_order){
+        this.prev_order = this.order;
+        this.order = new_order;
+    }
+
+    prev_order_to_order(){
+        this.order = this.prev_order;
+    }
+
+    obj_dblclick(){
+        if (this.ordering){
+            var self = this;
+            if (this.editor.previous_object.length == 1){
+                this.editor.make_first(self);
+            }
+            else{
+                this.editor.make_append(self);
+            }
         }
     }
 
     obj_click() {
-        this.editor.edited = true;
         if (this.deleted || this.ignore) {
             this.deleted = 0;
             this.ignore = 0;
@@ -78,6 +100,8 @@ class LP_object {
              this.marker.bindTooltip(String(Number(this.order)+1), { permanent: true, direction: 'right', offset: [-18, 25] });
              this.marker.addTo(this.editor.map);
              this.marker._tooltip._container.style.backgroundColor = this.toolTipColor;
+             let element = this.marker.getElement();
+             element.addEventListener('click', this.obj_click.bind(this));
          }
          else{
              this.remove_order();
