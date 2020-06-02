@@ -324,7 +324,7 @@ def is_score_computed(document_id):
 
 
 def get_sucpect_lines_ids(document_id, threshold=0.95):
-    text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id == document_id, TextLine.score < threshold).order_by(TextLine.score.asc())
+    text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id == document_id).order_by(TextLine.score.asc())[:2000]
 
     lines_dict = {'document_id': document_id, 'lines': []}
     lines_dict['lines'] += [{
