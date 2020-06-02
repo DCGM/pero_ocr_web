@@ -120,13 +120,14 @@ def edit_layout(image_id):
             continue
         points = region['points']
         if region['uuid'] not in existing_regions:
-            db_region = TextRegion(id=region['uuid'], deleted=region['deleted'], image_id=image_id)
+            db_region = TextRegion(id=region['uuid'], deleted=region['deleted'], image_id=image_id, order=region['order'])
             db_region.np_points = points
             image.textregions.append(db_region)
         else:
             db_region = existing_regions[region['uuid']]
             db_region.np_points = points
             db_region.deleted = region['deleted']
+            db_region.order = region['order']
     try:
         db_session.commit()
         make_image_result_preview(image)
@@ -201,7 +202,8 @@ def get_image_result(image_id):
         if textregion.deleted:
             continue
         textregion_points = textregion.np_points.tolist()
-        textregions.append({'uuid': textregion.id, 'deleted': textregion.deleted, 'points': textregion_points})
+        textregions.append({'uuid': textregion.id, 'deleted': textregion.deleted, 'points': textregion_points,
+                            'order': textregion.order})
     return jsonify({"uuid": image_id, 'width': width, 'height': height, 'objects': textregions})
 
 

@@ -18,6 +18,7 @@ class LayoutEditor{
         this.map = null;
         this.objects = [];
         this.temp_objects = [];
+        this.order_lines = [];
 
         this.create_new_object_btn = document.getElementById('create-new-object-btn');
         this.create_new_object_btn.addEventListener('click', this.create_new_object.bind(this));
@@ -33,12 +34,176 @@ class LayoutEditor{
 
         this.save_image_btn = document.getElementById('save-image-btn');
         this.save_image_btn.addEventListener('click', this.save_image.bind(this));
+
+        this.show_reading_order_btn = document.querySelector("input[name=show-reading-order-btn]");
+        this.show_reading_order_btn.addEventListener('change', this.show_reading_order.bind(this));
+
+        this.set_reading_order_btn = document.querySelector("input[name=set-reading-order-btn]");
+        this.set_reading_order_btn.addEventListener('change', this.set_reading_order.bind(this));
+
+        this.map_region = document.getElementById('map-container');
+        this.map_region.addEventListener('click', this.redraw_order.bind(this));
+
+        this.leaflet = document.querySelector('body');
+
+        this.previous_object = null;
+        this.last_action = null;
+    }
+
+    show_reading_order(){
+        if (this.show_reading_order_btn.checked){
+            let parent_element = this.show_reading_order_btn.parentElement;
+            parent_element.children[1].innerText = 'Hide reading order (o)';
+        }
+        else{
+            let parent_element = this.show_reading_order_btn.parentElement;
+            parent_element.children[1].innerText = 'Show reading order (o)';
+        }
+        this.redraw_order();
+    }
+
+    set_reading_order(){
+        if (this.show_reading_order_btn.checked == false){
+            this.enable_show_order();
+            this.show_reading_order();
+        }
+        this.unselect_objects();
+        for (var i in this.objects) {
+            this.objects[i].ordering = !this.objects[i].ordering;
+        }
+        if (this.set_reading_order_btn.checked == false){
+            this.previous_object = null;
+            for (var i in this.objects){
+                this.objects[i].changeToolTipColor('base');
+            }
+            this.show_reading_order();
+        }
+
+        this.last_action = "redraw_order";
+    }
+
+    reorder_objects(object){
+        this.last_action = "reorder_objects";
+        object.changeToolTipColor('last');
+        if (this.previous_object == null){
+            this.previous_object = object;
+        }
+        else {
+            this.previous_object.changeToolTipColor('ordered');
+            let order = Number(this.previous_object.order) + 1;
+            for (var i in this.objects) {
+                if (this.objects[i].order >= order){
+                    this.objects[i].order = Number(this.objects[i].order) + 1;
+                }
+            }
+            object.order = order;
+            this.previous_object = object;
+        }
+
+        this.objects.sort((a, b) => (Number(a.order)) - (Number(b.order)));
+        for (var i in this.objects) {
+            this.objects[i].order = i;
+        }
+    }
+
+    redraw_order(){
+        if (this.last_action != null){
+            if (this.last_action == "redraw_order"){
+                if (this.set_reading_order_btn.checked){
+                    this.disable_set_order();
+                    this.set_reading_order();
+                }
+            }
+            this.last_action = "redraw_order";
+        }
+        if (this.objects.length > 1){
+            for (let i = 0; i < (this.objects.length); i++) {
+                if (this.objects[i].polygon._latlngs[0].length >= 3 && this.objects[i].centroid == null) {
+                    this.objects[i].get_new_centroid();
+                    this.order_lines.push(new PL_order(this.objects[i - 1].centroid, this.objects[i].centroid, this.map));
+                }
+            }
+        }
+        for (var i in this.objects){
+            this.objects[i].show_order = this.show_reading_order_btn.checked;
+            if (this.objects[i].polygon._latlngs[0].length >= 3){
+                this.objects[i].get_new_centroid();
+            }
+        }
+        for (let i = 0; i < (this.objects.length-1); i++) {
+            if (this.objects[i].polygon._latlngs[0].length >= 3 && this.objects[i + 1].polygon._latlngs[0].length >= 3){
+                if (this.show_reading_order_btn.checked) {
+                    this.order_lines[i].refresh_line(this.objects[i].centroid, this.objects[i + 1].centroid);
+                }
+                else{
+                    this.order_lines[i].remove_line();
+                }
+            }
+        }
+    }
+
+    get_default_order(){
+        var highest_current_order = -1;
+        var not_ordered = [];
+        var hightest_lat = [];
+        for (var i in this.objects) {
+            if (this.objects[i].order == null){
+                not_ordered.push(this.objects[i]);
+                let highest = -100000;
+                for (var e in this.objects[i].polygon._latlngs[0]){
+                    let latitude = layout_editor.objects[i].polygon._latlngs[0][e]["lat"];
+                    if (highest < latitude){
+                        highest = latitude;
+                    }
+                }
+                hightest_lat.push(highest);
+            }
+            else{
+                if (this.objects[i].order > highest_current_order){
+                    highest_current_order = this.objects[i].order;
+                }
+            }
+        }
+
+        var sorted_not_ordered = hightest_lat.map(function(e,i){return i;})
+               .sort(function(a,b){return hightest_lat[a] - hightest_lat[b];})
+               .map(function(e){return not_ordered[e];});
+        sorted_not_ordered = sorted_not_ordered.reverse();
+
+        for (var i in sorted_not_ordered){
+            sorted_not_ordered[i].order = highest_current_order + 1;
+            highest_current_order += 1;
+        }
+    }
+
+    enable_set_order(){
+        $(":checkbox").eq(1).prop('checked', true);
+        $('#setOrderWrapper').addClass("active");
+    }
+
+    disable_set_order(){
+        $(":checkbox").eq(1).prop('checked', false);
+        $('#setOrderWrapper').removeClass("active");
+        for (var i in this.objects){
+            this.objects[i].changeToolTipColor('base');
+        }
+        this.previous_object = null;
+    }
+
+    enable_show_order(){
+        $(":checkbox").eq(0).prop('checked', true);
+        $('#showOrderWrapper').addClass("active");
+    }
+
+    disable_show_order(){
+        $(":checkbox").eq(0).prop('checked', false);
+        $('#showOrderWrapper').removeClass("active");
     }
 
     temp_copy_objects(){
         this.temp_objects = [];
         for (var i in this.objects) {
-            this.temp_objects[this.temp_objects.length] = [String(this.objects[i].polygon._latlngs[0]), this.objects[i].deleted];
+            this.temp_objects[this.temp_objects.length] = [String(this.objects[i].polygon._latlngs[0]), this.objects[i].deleted, this.objects[i].order];
         }
     }
 
@@ -51,10 +216,10 @@ class LayoutEditor{
             if (String(this.objects[i].polygon._latlngs[0]) != this.temp_objects[i][0]){
                 return true;
             }
-        }
-
-        for (var i in this.objects) {
             if (this.objects[i].deleted != this.temp_objects[i][1]){
+                return true;
+            }
+            if (this.objects[i].order != this.temp_objects[i][2]){
                 return true;
             }
         }
@@ -64,7 +229,7 @@ class LayoutEditor{
 
     unselect_objects () {
         for (var i in this.objects) {
-            this.objects[i].polygon.disableEdit()
+            this.objects[i].polygon.disableEdit();
         }
     }
 
@@ -78,12 +243,18 @@ class LayoutEditor{
     }
 
     create_new_object() {
+        this.disable_set_order();
         this.unselect_objects();
-        var poly = this.map.editTools.startPolygon()
-        this.objects.push(new LP_object(this, guid(), 0, 0, [], '', poly));
+        var order = 0;
+        if (this.objects.length > 0){
+            order = Number(this.objects[this.objects.length-1].order)+1;
+        }
+        var poly = this.map.editTools.startPolygon();
+        this.objects.push(new LP_object(this, guid(), 0, 0, [], '', poly, order));
     }
 
     toggle_delete_object() {
+        this.disable_set_order();
         let obj = this.get_selected();
         if (obj) {
             obj.deleted = !obj.deleted;
@@ -92,6 +263,7 @@ class LayoutEditor{
     }
 
     toggle_delete_all_objects() {
+        this.disable_set_order();
         for (let obj of this.objects) {
             if (obj) {
                 obj.deleted = !obj.deleted;
@@ -101,7 +273,11 @@ class LayoutEditor{
     }
 
     reset_image(){
-        this.change_image(this.uuid, false)
+        if (this.set_reading_order_btn.checked){
+            this.disable_set_order();
+            this.set_reading_order();
+        }
+        this.change_image(this.uuid, false);
     }
 
     change_image(image_id, ask_for_change=true){
@@ -116,6 +292,10 @@ class LayoutEditor{
         this.uuid = image_id;
         this.get_image(image_id);
         this.reload_layout_preview(image_id);
+        this.last_action = null;
+        if (ask_for_change){
+            this.disable_set_order();
+        }
     }
 
     get_image(image_uuid) {
@@ -137,8 +317,7 @@ class LayoutEditor{
     }
 
     new_image_callback(data, status) {
-        var map_region = document.getElementById('map-container');
-        map_region.innerHTML = "<div id='mapid'></div>";
+        this.map_region.innerHTML = "<div id='mapid'></div>";
         this.uuid = data['uuid'];
         this.width = data['width'];
         this.height = data['height'];
@@ -160,7 +339,6 @@ class LayoutEditor{
         this.map.setView(xy(this.width / 2, -this.height / 2), -2);
         var image = L.imageOverlay(`/document/get_image/${this.uuid}`, bounds).addTo(this.map);
 
-        //zoom_level = Math.logthis.width / 256.0) / Math.log(2)
         this.map.fitBounds(bounds);
 
         for (var i in this.objects) {
@@ -168,8 +346,22 @@ class LayoutEditor{
                 this,
                 this.objects[i].uuid,
                 this.objects[i].deleted, false,
-                this.objects[i].points, '');
+                this.objects[i].points, '', null,
+                this.objects[i].order);
         }
+        this.get_default_order();
+        this.objects.sort((a, b) => (a.order) - (b.order));
+        for (var i in this.objects) {
+            this.objects[i].order = i;
+        }
+
+        this.order_lines = [];
+        if (this.objects.length > 1){
+            for (let i = 0; i < (this.objects.length-1); i++) {
+                this.order_lines.push(new PL_order(this.objects[i].centroid, this.objects[i+1].centroid, this.map));
+            }
+        }
+        this.redraw_order();
 
         this.report_status('Got image: ' + data['uuid']);
         this.temp_copy_objects();
@@ -190,7 +382,7 @@ class LayoutEditor{
             var obj_to_send = [];
             for (var obj_key in this.objects) {
                 var obj = this.objects[obj_key];
-                if (obj.polygon._latlngs[0].length > 3) {
+                if (obj.polygon._latlngs[0].length >= 3) {
                     var points = [];
                     for (var i in obj.polygon._latlngs[0]) {
                         points[i] = [obj.polygon._latlngs[0][i].lng, -obj.polygon._latlngs[0][i].lat];
@@ -201,6 +393,7 @@ class LayoutEditor{
                         points: points,
                         ignore: obj.ignore,
                         deleted: obj.deleted,
+                        order: obj.order
                     }
                 }
             }
