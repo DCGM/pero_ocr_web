@@ -22,9 +22,16 @@
               <li class="nav-item{%- if request.path == "/document/documents" %} active{% endif %}" >
                   <a class="nav-link my-2" href="{{ url_for('document.documents') }}"><strong>Browser</strong></a>
               </li>
-              <li class="nav-item{%- if request.path == "/profile" %} active{% endif %}">
-                  <a class="nav-link my-2" href="{{ url_for('profile.profile') }}"><strong>Profile</strong></a>
-              </li>
+                <li class="nav-item dropdown">
+                  <button class="btn dropdown-toggle nav-link my-2" type="button" style="font-size: 120%; background-color: #ccd1d8; border: 0px; color: black;padding-top: 6px !important; padding-bottom: 10px !important;" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <strong>Help</strong>
+                  </button>
+                  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="right: 0; left: auto;">
+                    <a class="dropdown-item" target="_blank" href="https://youtu.be/r9aFeKVDyck">Document management</a>
+                    <a class="dropdown-item" target="_blank" href="https://youtu.be/-Of2TrjJlwU">Layout Editor</a>
+                    <a class="dropdown-item" target="_blank" href="https://youtu.be/mbB4svRmfqA">OCR Editor</a>
+                  </div>
+                </li>
               <li class="nav-item">
                   <a class="nav-link my-2" href="{{ url_for('auth.logout') }}"><strong>Logout</strong></a>
               </li>
