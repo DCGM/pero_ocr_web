@@ -297,14 +297,38 @@ def lines_check(document_id):
     return render_template('document/lines_check.html', document=document)
 
 
-@bp.route('/get_lines/<string:document_id>', methods=['GET'])
+@bp.route('/get_all_lines/<string:document_id>', methods=['GET'])
 @login_required
-def get_lines(document_id):
+def get_all_lines(document_id):
     if not is_granted_acces_for_document(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
 
-    lines = get_sucpect_lines_ids(document_id)
+    lines = get_sucpect_lines_ids(document_id, 'all')
+
+    return jsonify(lines)
+
+
+@bp.route('/get_annotated_lines/<string:document_id>', methods=['GET'])
+@login_required
+def get_annotated_lines(document_id):
+    if not is_granted_acces_for_document(document_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
+
+    lines = get_sucpect_lines_ids(document_id, 'annotated')
+
+    return jsonify(lines)
+
+
+@bp.route('/get_not_annotated_lines/<string:document_id>', methods=['GET'])
+@login_required
+def get_not_annotated_lines(document_id):
+    if not is_granted_acces_for_document(document_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
+
+    lines = get_sucpect_lines_ids(document_id, 'not_annotated')
 
     return jsonify(lines)
 
