@@ -260,7 +260,9 @@ def update_confidences(changes):
 
         conf_string = ' '.join(str(round(x, 3)) for x in confidences)
         line.confidences = conf_string.replace('1.0', '1')
-        line.score = np.average(line.np_confidences)
+        line_conf = line.np_confidences
+        line.score = 1 - (np.sum((1 - line_conf) ** 2) / (line_conf.shape[0] + 2))
+
         line.text = transcription
 
     db_session.commit()
@@ -374,7 +376,8 @@ def get_line(line_id):
 def compute_scores_of_doc(document_id):
     lines = TextLine.query.join(TextRegion).join(Image).filter_by(document_id=document_id)
     for line in lines:
-        line.score = np.average(line.np_confidences)
+        line_conf = line.np_confidences
+        line.score = 1 - (np.sum((1 - line_conf) ** 2) / (line_conf.shape[0] + 2))
 
     db_session.commit()
 
