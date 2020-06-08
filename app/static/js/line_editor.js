@@ -12,20 +12,6 @@ class LineEditor {
         this.line_image = document.getElementById('line-img');
         this.line_image.setAttribute("src", "/static/img/loading.gif");
 
-        let route_ = Flask.url_for('document.get_lines', {'document_id': this.document_id});
-
-        $.get(route_, this.parse_lines.bind(this));
-
-        $("#line_options input[name='line_type']").click(this.change_mode.bind(this));
-    }
-
-    parse_lines(data){
-        let lines_json = data['lines'];
-        for (let i = 0; i < lines_json.length; i++) {
-            this.lines.push([lines_json[i].id, lines_json[i].annotated]);
-            this.annotated_in_session.push(false);
-        }
-
         this.back_btn = document.getElementById('back-btn');
         this.next_btn = document.getElementById('next-btn');
         this.skip_btn = document.getElementById('skip-btn');
@@ -40,6 +26,21 @@ class LineEditor {
 
         this.actual_line_container = document.getElementById('actual-line');
         this.lines_total_container = document.getElementById('lines-total');
+
+        let route_ = Flask.url_for('document.get_all_lines', {'document_id': this.document_id});
+        $.get(route_, this.parse_lines.bind(this));
+
+        $("#line_options input[name='line_type']").click(this.change_mode.bind(this));
+    }
+
+    parse_lines(data){
+        this.lines = [];
+        let lines_json = data['lines'];
+        for (let i = 0; i < lines_json.length; i++) {
+            this.lines.push([lines_json[i].id, lines_json[i].annotated]);
+            this.annotated_in_session.push(false);
+        }
+
         this.change_line_index();
 
         let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
@@ -69,7 +70,7 @@ class LineEditor {
 
     previous_line() {
         if (this.image_index > 0) {
-            this.get_index('previous');
+            this.image_index -= 1;
             this.actual_line_container.value = this.image_index;
             this.line_image.setAttribute("src", "/static/img/loading.gif");
             let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
@@ -79,7 +80,7 @@ class LineEditor {
 
     next_line() {
         if ((this.image_index + 1) < this.lines.length) {
-            this.get_index('next');
+            this.image_index += 1;
             this.actual_line_container.value = this.image_index;
             this.line_image.setAttribute("src", "/static/img/loading.gif");
             let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
@@ -103,7 +104,7 @@ class LineEditor {
     skip_line() {
         if ((this.image_index + 1) < this.lines.length) {
             this.line.skip();
-            this.get_index('next');
+            this.image_index += 1;
             this.line_image.setAttribute("src", "/static/img/loading.gif");
             let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
             $.get(route_, this.get_line.bind(this));
@@ -115,12 +116,12 @@ class LineEditor {
         }
         else {
             this.line.skip();
-            this.get_index('previous');
+            this.image_index -= 1;
             this.line_image.setAttribute("src", "/static/img/loading.gif");
             let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
             $.get(route_, this.get_line.bind(this));
-            this.lines.splice(this.image_index-1, 1);
-            this.annotated_in_session.splice(this.image_index-1, 1);
+            this.lines.splice(this.lines.length-1, 1);
+            this.annotated_in_session.splice(this.lines.length-1, 1);
             this.actual_line_container.max = String(this.lines.length-1);
             this.actual_line_container.value = String(this.lines.length-1);
             this.lines_total_container.textContent = String(this.lines.length-1);
@@ -133,7 +134,7 @@ class LineEditor {
             this.line.save();
             this.line.skip();
             this.annotated_in_session[this.image_index] = true;
-            this.get_index('next');
+            this.image_index += 1;
             this.line_image.setAttribute("src", "/static/img/loading.gif");
             let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
             $.get(route_, this.get_line.bind(this));
@@ -145,29 +146,22 @@ class LineEditor {
         }
     }
 
-    get_index(position){
-        let change;
-        if (position == 'next'){
-            change = 1;
-        }
-        else{
-            change = -1;
-        }
-        while (true){
-            this.image_index += change;
-            if (this.mode == 'all'){
-                break;
-            }
-            else{
-                if (!this.lines[this.image_index][1]){
-                    break;
-                }
-            }
-        }
-    }
-
     change_mode(){
         this.mode = $('input:radio[name=line_type]:checked').val();
+        this.image_index = 0;
+        this.line_image.setAttribute("src", "/static/img/loading.gif");
+        switch(this.mode) {
+          case 'all':
+            var route_ = Flask.url_for('document.get_all_lines', {'document_id': this.document_id});
+            break;
+          case 'annotated':
+            var route_ = Flask.url_for('document.get_annotated_lines', {'document_id': this.document_id});
+            break;
+          case 'not_annotated':
+            var route_ = Flask.url_for('document.get_not_annotated_lines', {'document_id': this.document_id});
+            break;
+        }
+        $.get(route_, this.parse_lines.bind(this));
     }
 }
 
