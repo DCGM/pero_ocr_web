@@ -64,7 +64,7 @@ class LineEditor {
         this.text_container.appendChild(this.line.container);
         this.text_container.children[0].focus();
         if (this.annotated_in_session[this.image_index] || this.lines[this.image_index][1]){
-            this.line.set_background_to_save()
+            this.line.set_background_to_annotated()
         }
     }
 
