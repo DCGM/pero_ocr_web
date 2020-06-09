@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import sys
 from sqlalchemy import and_
 from app.db.model import Document, DocumentState, Image
 from app.db.general import get_document_by_id, remove_document_by_id, save_document, save_image_to_document,\
@@ -325,10 +326,13 @@ def get_line_image_by_id(line_id):
     image = cv2.imread(region.image.path)
 
     # coords
-    min_x = int(np.min(line.np_points[:,0]))
+    min_x = int(np.min(line.np_points[:,0])) - 15
     min_y = int(np.min(line.np_points[:,1]))
-    max_x = int(np.max(line.np_points[:,0]))
+    max_x = int(np.max(line.np_points[:,0])) + 15
     max_y = int(np.max(line.np_points[:,1]))
+    min_y -= int(0.1 * (max_y - min_y) + 5.5)
+    min_y = max(min_y, 0)
+    min_x = max(min_x, 0)
 
     # crop
     crop_img = image[min_y:max_y, min_x:max_x]
