@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import sys
 from sqlalchemy import and_
 from app.db.model import Document, DocumentState, Image
 from app.db.general import get_document_by_id, remove_document_by_id, save_document, save_image_to_document,\
@@ -260,7 +261,9 @@ def update_confidences(changes):
 
         conf_string = ' '.join(str(round(x, 3)) for x in confidences)
         line.confidences = conf_string.replace('1.0', '1')
-        line.score = np.average(line.np_confidences)
+        line_conf = line.np_confidences
+        line.score = 1 - (np.sum((1 - line_conf) ** 2) / (line_conf.shape[0] + 2))
+
         line.text = transcription
 
     db_session.commit()
@@ -323,10 +326,13 @@ def get_line_image_by_id(line_id):
     image = cv2.imread(region.image.path)
 
     # coords
-    min_x = int(np.min(line.np_points[:,0]))
+    min_x = int(np.min(line.np_points[:,0])) - 15
     min_y = int(np.min(line.np_points[:,1]))
-    max_x = int(np.max(line.np_points[:,0]))
+    max_x = int(np.max(line.np_points[:,0])) + 15
     max_y = int(np.max(line.np_points[:,1]))
+    min_y -= int(0.1 * (max_y - min_y) + 5.5)
+    min_y = max(min_y, 0)
+    min_x = max(min_x, 0)
 
     # crop
     crop_img = image[min_y:max_y, min_x:max_x]
@@ -343,8 +349,13 @@ def is_score_computed(document_id):
         return False
 
 
-def get_sucpect_lines_ids(document_id, threshold=0.95):
-    text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id == document_id, TextLine.score < threshold).order_by(TextLine.score.asc())
+def get_sucpect_lines_ids(document_id, type, threshold=0.95):
+    if type == "all":
+        text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id == document_id).order_by(TextLine.score.asc())[:2000]
+    elif type == "annotated":
+        text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id == document_id, TextLine.annotations.any()).order_by(TextLine.score.asc())[:2000]
+    elif type == "not_annotated":
+        text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id == document_id, ~TextLine.annotations.any()).order_by(TextLine.score.asc())[:2000]
 
     lines_dict = {'document_id': document_id, 'lines': []}
     lines_dict['lines'] += [{
@@ -369,7 +380,8 @@ def get_line(line_id):
 def compute_scores_of_doc(document_id):
     lines = TextLine.query.join(TextRegion).join(Image).filter_by(document_id=document_id)
     for line in lines:
-        line.score = np.average(line.np_confidences)
+        line_conf = line.np_confidences
+        line.score = 1 - (np.sum((1 - line_conf) ** 2) / (line_conf.shape[0] + 2))
 
     db_session.commit()
 

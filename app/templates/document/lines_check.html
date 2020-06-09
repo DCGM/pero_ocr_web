@@ -18,7 +18,7 @@
 
         <div class="row">
             <div class="col-sm-12 text-center">
-                <div id="text-container" style="height: 40px; overflow-y: auto;"></div>
+                <div id="text-container" onkeypress="save_next_line(event)" style="height: 40px; overflow-y: auto;"></div>
             </div>
         </div>
 
@@ -41,6 +41,10 @@
                               <label class="form-check-label" for="inlineRadio1">All Lines</label>
                             </div>
                             <div class="form-check form-check-inline">
+                              <input class="form-check-input" type="radio" name="line_type" id="inlineRadio3" value="annotated">
+                              <label class="form-check-label" for="inlineRadio3">Annotated Lines</label>
+                            </div>
+                            <div class="form-check form-check-inline">
                               <input class="form-check-input" type="radio" name="line_type" id="inlineRadio2" value="not_annotated">
                               <label class="form-check-label" for="inlineRadio2">Not Annotated Lines</label>
                             </div>
@@ -49,8 +53,8 @@
                 </div>
             </div>
             <div class="col-xl-4 d-none d-xl-block text-center">
-                <button id="back-btn" type="button" class="btn btn-secondary mb-2"><i class="fas fa-arrow-left"></i>&nbsp;&nbsp;Back</button>
-                <button id="next-btn" type="button" class="btn btn-secondary mb-2">Next&nbsp;&nbsp;<i class="fas fa-arrow-right"></i></button>
+                <button id="back-btn" type="button" class="btn btn-secondary mb-2"><i class="fas fa-arrow-left"></i>&nbsp;&nbsp;Back (Ctrl+B)</button>
+                <button id="next-btn" type="button" class="btn btn-secondary mb-2">Next (Ctrl+M)&nbsp;&nbsp;<i class="fas fa-arrow-right"></i></button>
                 <button id="skip-btn" type="button" class="btn btn-secondary mb-2">Skip (Ctrl+Q)</button>
                 <button id="save-next-btn" type="button" class="btn btn-success mb-2">Save and next (Ctrl+S)&nbsp;&nbsp;<i class="fas fa-arrow-right"></i></button>
             </div>
@@ -58,7 +62,7 @@
                 <div style="width: fit-content;" class="float-right">
                     <div class="d-flex flex-row">
                         <div class="input-group mb-3">
-                            <input id="actual-line" type="number" min="0" max="" class="form-control" placeholder="Line" aria-label="Line" aria-describedby="basic-addon2" style="width: 100px;" value="">
+                            <input id="actual-line" onkeypress="go_to_line(event)" type="number" min="0" max="" class="form-control" placeholder="Line" aria-label="Line" aria-describedby="basic-addon2" style="width: 100px;" value="">
                             <div class="input-group-append">
                                 <span id="lines-total" class="input-group-text"></span>
                             </div>
@@ -88,12 +92,20 @@
         let document_id = document.getElementById('document-id').textContent;
         let line_editor = new LineEditor(document_id);
 
-        document.querySelector('div.text-center').addEventListener('keydown', shortcut);
-        function shortcut(e) {
-            var code = e.which || e.keyCode;
+        function save_next_line(event) {
+            var code = event.which || event.keyCode;
             switch (code) {
                 case 13:
                     line_editor.save_next_line();
+                    break;
+            }
+        }
+
+        function go_to_line(event) {
+            var code = event.which || event.keyCode;
+            switch (code) {
+                case 13:
+                    line_editor.go_to_line();
                     break;
             }
         }
@@ -102,15 +114,22 @@
             e = e || window.event;
             if (!e.ctrlKey) return;
             var code = e.which || e.keyCode;
+            e.preventDefault();
+            e.stopPropagation();
             switch (code) {
                 case 83:
-                case 87:
-                    e.preventDefault();
-                    e.stopPropagation();
                     line_editor.save_next_line();
                     break;
                 case 81:
                     line_editor.skip_line();
+                    break;
+                case 66:
+                    line_editor.previous_line();
+                    break;
+                case 77:
+                    e.preventDefault();
+                    e.stopPropagation();
+                    line_editor.next_line();
                     break;
             }
         };

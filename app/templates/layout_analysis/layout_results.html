@@ -49,7 +49,7 @@
             <div class="col-xl-4 d-none d-xl-block text-center">
                 <div class="btn-group-toggle" data-toggle="buttons">
                     <label id="showOrderWrapper" class="btn btn-secondary">
-                        <input type="checkbox" name="show-reading-order-btn" autocomplete="off"><span> Show reading order (o)</span>
+                        <input type="checkbox" name="show-reading-order-btn" autocomplete="off"><span> Show reading order (w)</span>
                     </label>
                     <label id="setOrderWrapper" class="btn btn-secondary">
                         <input type="checkbox" name="set-reading-order-btn" autocomplete="off"><span> Set reading order (e)</span>
@@ -90,13 +90,19 @@
                     image_list.next_image();
                     break;
                 case 67:
-                    layout_editor.create_new_object();
+                    if (layout_editor.create_new_object_btn.disabled == false){
+                        layout_editor.create_new_object();
+                    }
                     break;
                 case 71:
-                    layout_editor.toggle_delete_object();
+                    if (layout_editor.toggle_delete_object_btn.disabled == false){
+                        layout_editor.toggle_delete_object();
+                    }
                     break;
                 case 65:
-                    layout_editor.toggle_delete_all_objects();
+                    if (layout_editor.toggle_delete_all_objects_btn.disabled == false){
+                        layout_editor.toggle_delete_all_objects();
+                    }
                     break;
                 case 82:
                     layout_editor.reset_image();
@@ -104,7 +110,7 @@
                 case 83:
                     layout_editor.save_image();
                     break;
-                case 79:
+                case 87:
                     if (layout_editor.show_reading_order_btn.checked == false){
                         layout_editor.enable_show_order();
                         layout_editor.show_reading_order();
@@ -117,6 +123,10 @@
                 case 69:
                     if (layout_editor.set_reading_order_btn.checked == false){
                         layout_editor.enable_set_order();
+                        layout_editor.set_reading_order();
+                    }
+                    else {
+                        layout_editor.disable_set_order();
                         layout_editor.set_reading_order();
                     }
                     break;
