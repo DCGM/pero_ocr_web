@@ -123,12 +123,16 @@ def check_and_process_ocr_request(config):
 
             output_xmls_folder = os.path.join(output_folder, "page")
             output_logits_folder = os.path.join(output_folder, "logits")
-            number_of_xmls = len(os.listdir(output_xmls_folder))
-            number_of_logits = len(os.listdir(output_logits_folder))
+            no_output = False
+            if os.path.isdir(output_xmls_folder) and os.path.isdir(output_logits_folder):
+                number_of_xmls = len(os.listdir(output_xmls_folder))
+                number_of_logits = len(os.listdir(output_logits_folder))
+            else:
+                no_output = True
 
             add_log_to_request(session, base_url, main_add_log_to_request_route, request_id, log)
 
-            if parse_folder_process.returncode == 0 and number_of_images == number_of_xmls and number_of_images == number_of_logits:
+            if not no_output and parse_folder_process.returncode == 0 and number_of_images == number_of_xmls and number_of_images == number_of_logits:
                 data_folders = [output_xmls_folder, output_logits_folder]
                 data_types = ["xml", "logits"]
                 print()
