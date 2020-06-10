@@ -39,3 +39,7 @@
 .container-fluid {
     padding-bottom: 400px;
 }
+
+.text-line {
+    font-family: "Times New Roman", Times, serif;
+}
