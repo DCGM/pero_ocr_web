@@ -69,6 +69,8 @@ def is_document_owner(document_id, user):
 
 
 def is_user_owner_or_collaborator(document_id, user):
+    if is_user_trusted(user):
+        return True
     document = get_document_by_id(document_id)
     if is_document_owner(document_id, user):
         return True
@@ -172,6 +174,8 @@ def save_collaborators(document_id, collaborators_ids):
 
 
 def is_user_collaborator(document, user):
+    if is_user_trusted(user):
+        return True
     if user in document.collaborators:
         return True
     return False
