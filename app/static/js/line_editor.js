@@ -3,7 +3,8 @@
 class LineEditor {
     constructor(document_id) {
         this.mode = 'all';
-        this.line = null;
+        this.focused_line = false;
+        this.active_line = null;
         this.lines = [];
         this.annotated_in_session = [];
         this.image_index = 0;
@@ -33,6 +34,15 @@ class LineEditor {
         $("#line_options input[name='line_type']").click(this.change_mode.bind(this));
     }
 
+    line_focus(){
+
+        this.focused_line = true;
+    }
+
+    line_focus_out(){
+        this.focused_line = false;
+    }
+
     parse_lines(data){
         this.lines = [];
         let lines_json = data['lines'];
@@ -56,16 +66,19 @@ class LineEditor {
 
     get_line(data){
         let line_json = data;
-        this.line = new TextLine(line_json['id'], line_json['text'], line_json['np_confidences']);
+        this.active_line = new TextLine(line_json['id'], line_json['text'], line_json['np_confidences']);
         while (this.text_container.firstChild) {
                 this.text_container.firstChild.remove();
         }
-        this.line_image.setAttribute("src", Flask.url_for('document.get_cropped_image', {'line_id': this.line.id}));
-        this.text_container.appendChild(this.line.container);
+        this.line_image.setAttribute("src", Flask.url_for('document.get_cropped_image', {'line_id': this.active_line.id}));
+        this.text_container.appendChild(this.active_line.container);
         this.text_container.children[0].focus();
+        this.line_focus();
         if (this.annotated_in_session[this.image_index] || this.lines[this.image_index][1]){
-            this.line.set_background_to_annotated()
+            this.active_line.set_background_to_annotated()
         }
+        this.text_container.children[0].addEventListener('focus', this.line_focus.bind(this));
+        this.text_container.children[0].addEventListener('focusout', this.line_focus_out.bind(this));
     }
 
     previous_line() {
@@ -103,7 +116,7 @@ class LineEditor {
 
     skip_line() {
         if ((this.image_index + 1) < this.lines.length) {
-            this.line.skip();
+            this.active_line.skip();
             this.image_index += 1;
             this.line_image.setAttribute("src", "/static/img/loading.gif");
             let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
@@ -115,7 +128,7 @@ class LineEditor {
             this.image_index -= 1;
         }
         else {
-            this.line.skip();
+            this.active_line.skip();
             this.image_index -= 1;
             this.line_image.setAttribute("src", "/static/img/loading.gif");
             let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
@@ -131,8 +144,8 @@ class LineEditor {
 
     save_next_line() {
         if ((this.image_index + 1) < this.lines.length) {
-            this.line.save();
-            this.line.skip();
+            this.active_line.save();
+            this.active_line.skip();
             this.annotated_in_session[this.image_index] = true;
             this.image_index += 1;
             this.line_image.setAttribute("src", "/static/img/loading.gif");
@@ -140,8 +153,8 @@ class LineEditor {
             $.get(route_, this.get_line.bind(this));
         }
         else{
-            this.line.save();
-            this.line.skip();
+            this.active_line.save();
+            this.active_line.skip();
             this.annotated_in_session[this.image_index] = true;
         }
     }
