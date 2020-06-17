@@ -16,6 +16,9 @@ def get_user_by_email(email):
 def get_document_by_id(document_id):
     return Document.query.filter_by(id=document_id, deleted=False).first()
 
+def get_all_documents():
+    all_documents = Document.query.filter_by(deleted=False).all()
+    return all_documents
 
 def get_user_documents(user):
     user_created_documents = user.documents.filter_by(deleted=False).all()
