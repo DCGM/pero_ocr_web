@@ -70,10 +70,35 @@
                                 <button id="go-to-line-btn" class="btn btn-secondary" type="button">Go to line</button>
                             </div>
                         </div>
+                        <div class="col-xl-4 d-none d-xl-block text-right" style="max-width: fit-content;">
+                            <button type="button" class="keyboard-btn btn btn-secondary"><i class="far fa-keyboard fa-lg"></i></i></button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <div id="keyboard" class="d-none">
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <label class="input-group-text" for="layout-select">Layout</label>
+                </div>
+                <select class="custom-select" id="layout-select">
+                </select>
+            </div>
+            <div id="layouts"></div>
+            <div class="d-flex flex-row pt-4">
+                <div class="input-group pr-3">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="new-letter">New letter</span>
+                    </div>
+                    <input type="text" maxlength="1"  id="new-letter-input" class="form-control" aria-label="Default" aria-describedby="new-letter">
+                </div>
+                <div id="add-new-letter-btn" class="btn btn-success mr-2">Add</div>
+                <div id="remove-custom-letters-btn" class="btn btn-danger">Remove custom letters</div>
+            </div>
+        </div>
+
     </div>
 {% endblock %}
 
@@ -86,11 +111,13 @@
     <script src="/static/leaflet/leaflet.js"></script>
     <script src="/static/leaflet/Leaflet.Editable.js"></script>
     <script src="/static/leaflet/Path.Drag.js"></script>
+    <script src="/static/js/ocr/keyboard.js?version=1.4.3"></script>
     <script src="/static/js/line_editor.js?version=1.4.2"></script>
     <script src="/static/js/ocr/text_line.js?version=1.4.2"></script>
     <script>
         let document_id = document.getElementById('document-id').textContent;
         let line_editor = new LineEditor(document_id);
+        let keyboard = new Keyboard(document.getElementById('keyboard'), line_editor);
 
         function save_next_line(event) {
             var code = event.which || event.keyCode;
