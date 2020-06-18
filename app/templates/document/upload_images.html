@@ -64,7 +64,7 @@
                     <div class="card d-inline-block m-3">
                         <div class="card-image-container pt-3">
                             <img
-                                src="{{url_for('document.get_image' ,document_id=document.id, image_id=image.id)}}"
+                                src="{{url_for('layout_analysis.get_result_preview', image_id=image.id)}}"
                                 alt="{{ image.filename }}"
                                 class="uploaded_image card-img-top"
                             />
