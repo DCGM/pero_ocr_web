@@ -95,11 +95,15 @@ def check_and_process_layout_request(config):
             print("##############################################################")
 
             output_xmls_folder = os.path.join(output_folder, "page")
-            number_of_xmls = len(os.listdir(output_xmls_folder))
+            no_output = False
+            if os.path.isdir(output_xmls_folder):
+                number_of_xmls = len(os.listdir(output_xmls_folder))
+            else:
+                no_output = True
 
             add_log_to_request(session, base_url, main_add_log_to_request_route, request_id, log)
 
-            if parse_folder_process.returncode == 0 and number_of_images == number_of_xmls:
+            if not no_output and parse_folder_process.returncode == 0 and number_of_images == number_of_xmls:
                 data_folders = [output_xmls_folder]
                 data_types = ["xml"]
                 print()
