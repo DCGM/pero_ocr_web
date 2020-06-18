@@ -82,13 +82,13 @@
 
         <div class="row">
             <div class="offset-xl-1 col-xl-10">
-                <table class="table table-hover">
+                <table id="document_table" class="table table-hover">
                     <thead>
-                    <tr>
+                    <tr role="row">
                         <th scope="col">Name</th>
                         <th scope="col">Owner</th>
                         <th scope="col">State</th>
-                        <th scope="col">Actions</th>
+                        <th scope="col" class="action_column">Actions</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -200,6 +200,7 @@
 {% endblock %}
 
 {% block styles %}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
     <link rel="stylesheet" href="/static/css/loader.css">
     <style>
         .document-action-btn{
@@ -209,6 +210,32 @@
 {% endblock %}
 
 {% block scripts %}
+    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Setup table - add a text input to each footer cell
+            $('#document_table thead tr').clone(true).appendTo('#document_table thead');
+            $('#document_table thead tr:eq(1) th').each(function (i) {
+                var title = $(this).text();
+                if (title != 'Actions') {
+                    $(this).html('<input type="text" placeholder="Search" />');
+                    $('input', this).on('keyup change', function () {
+                        if (table.column(i).search() !== this.value) {
+                            table.column(i).search(this.value).draw();
+                        }
+                    });
+                } else {
+                    $(this).html('');
+                }
+            });
+
+            var table = $('#document_table').DataTable({
+                orderCellsTop: true,
+                fixedHeader: true
+            });
+        });
+    </script>
     <script>
         let $modal_delete = $('#exampleModal');
         let $modal_revert_layout = $('#revert-layout-modal');
