@@ -7,8 +7,8 @@
                         data-document="{{ document.id }}"
                         data-image="{{ image.id }}"
                         data-index="{{ loop.index }}">
-                    <img class="figure-img img-thumbnail mx-auto d-block"
-                         src="/layout_analysis/get_result_preview/{{ image.id }}"
+                    <img class="figure-img img-thumbnail mx-auto d-block lazy-img"
+                         data-src="{{url_for('layout_analysis.get_result_preview', image_id=image.id)}}"
                          alt="{{ image.filename }}"
                          style="height: 200px; min-width: {{ image.width * (200 / image.height) }}px;">
                     <figcaption class="figure-caption text-center"><strong>{{ image.filename }}</strong></figcaption>
