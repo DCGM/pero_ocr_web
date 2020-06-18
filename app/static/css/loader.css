@@ -8,7 +8,22 @@
 }
 
 .action_column {
-  min-width: 200px;
+  min-width: 100px;
+  max-width: 200px;
+}
+
+.image_column {
+  width: 150px;
+}
+
+.image-preview-cont {
+  width: 150px;
+  height: 150px;
+}
+
+.image-preview {
+  max-width: 150px;
+  max-height: 150px;
 }
 
 @keyframes spin {

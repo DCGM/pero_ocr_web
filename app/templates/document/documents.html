@@ -85,6 +85,7 @@
                 <table id="document_table" class="table table-hover">
                     <thead>
                     <tr role="row">
+                        <th scope="col" class="image_column">Page</th>
                         <th scope="col">Name</th>
                         <th scope="col">Owner</th>
                         <th scope="col">State</th>
@@ -94,6 +95,12 @@
                     <tbody>
                     {% for document in documents %}
                         <tr data-document="{{ document.id }}">
+                            <td>
+                                <div class="image-preview-cont">
+                                    <img data-src="{{url_for('layout_analysis.get_result_preview', image_id=document.images.first().id)}}" class="lazy-img image-preview" src=""/>
+                                </div>
+                            </td>
+
                             <td>{{ document.name }}</td>
                             <td>{{ document.user.first_name }} {{ document.user.last_name }}</td>
                             <td>{{ document.state.value }}</td>
@@ -201,7 +208,7 @@
 
 {% block styles %}
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
-    <link rel="stylesheet" href="/static/css/loader.css">
+    <link rel="stylesheet" href="/static/css/loader.css?v=1.0">
     <style>
         .document-action-btn{
             min-height: 25px;
@@ -212,13 +219,19 @@
 {% block scripts %}
     <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script>
+    <script src="{{ url_for('static', filename='js/lazy_image.js') }}"></script>
+
     <script>
+        document.addEventListener("DOMContentLoaded",
+            function () {
+                manage_lazy_images(template_set_url_callback)
+            });
         $(document).ready(function () {
             // Setup table - add a text input to each footer cell
             $('#document_table thead tr').clone(true).appendTo('#document_table thead');
             $('#document_table thead tr:eq(1) th').each(function (i) {
                 var title = $(this).text();
-                if (title != 'Actions') {
+                if (title != 'Actions' && title != 'Page') {
                     $(this).html('<input type="text" placeholder="Search" />');
                     $('input', this).on('keyup change', function () {
                         if (table.column(i).search() !== this.value) {
