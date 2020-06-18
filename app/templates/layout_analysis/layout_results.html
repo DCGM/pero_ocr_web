@@ -66,6 +66,14 @@
 {% endblock %}
 
 {% block scripts %}
+    <script src="{{ url_for('static', filename='js/lazy_image.js') }}"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded",
+            function () {
+                manage_lazy_images(template_set_url_callback)
+            });
+    </script>
+
     <script src="/static/leaflet/leaflet.js"></script>
     <script src="/static/leaflet/Leaflet.Editable.js"></script>
     <script src="/static/leaflet/Path.Drag.js"></script>
