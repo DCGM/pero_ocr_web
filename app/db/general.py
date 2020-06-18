@@ -88,5 +88,5 @@ def get_language_model_by_id(id):
 
 
 def is_image_duplicate(document_id, imagehash):
-    image_db = Image.query.filter_by(imagehash=imagehash, deleted=False, document_id= document_id).first()
-    return image_db != None
+    image_db = Image.query.filter_by(imagehash=imagehash, deleted=False, document_id=document_id).first()
+    return image_db

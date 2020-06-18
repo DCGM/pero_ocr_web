@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
-import sys
+import hashlib
+import io
+import exifread
 from sqlalchemy import and_
 from app.db.model import Document, DocumentState, Image
 from app.db.general import get_document_by_id, remove_document_by_id, save_document, save_image_to_document,\
@@ -9,12 +11,9 @@ import os
 from flask import current_app as app
 from flask import Response
 from app import db_session
-from PIL import Image as PILImage
 import uuid
-import datetime
-from lxml import etree as ET
 from app.db import Document, Image, TextLine, Annotation, UserDocument, User, TextRegion
-
+import datetime
 import pero_ocr.document_ocr.layout as layout
 import unicodedata
 from werkzeug.urls import url_quote
@@ -79,28 +78,44 @@ def is_user_owner_or_collaborator(document_id, user):
     return False
 
 
-def save_images(file, document_id):
+def save_image(file, document_id):
+    file_data = file.stream.read()
+
+    img_hash = hashlib.md5(file_data).hexdigest()
+    db_image = is_image_duplicate(document_id, img_hash)
+    if db_image:
+        return f'Image is already uploaded as {db_image.filename}.'
+
+    image = cv2.imdecode(np.frombuffer(file_data, np.uint8), 0)
+    if image is None:
+        return f'Unable to decode the image. It is corrupted or the type is not supported.'
+
+    original_file_name, extension = os.path.splitext(file.filename)
+
+    if extension.lower() in ['.jpg', '.jpeg', '.jfif', '.pjpeg', '.pjp']:
+        exif = exifread.process_file(io.BytesIO(file_data))
+        if 'Image Orientation' in exif and exif['Image Orientation'].values[0] != 0:
+            _, file_data = cv2.imencode('.jpg', image, [int(cv2.IMWRITE_JPEG_QUALITY), 92])
+
+    if extension.lower() not in ['.jpg', '.jpeg', '.jfif', '.pjpeg', '.pjp', '.png']:
+        _, file_data = cv2.imencode('.jpg', image, [int(cv2.IMWRITE_JPEG_QUALITY), 92])
+        extension = '.jpg'
+
     document = get_document_by_id(document_id)
     directory_path = get_and_create_document_image_directory(document_id)
 
-    if is_allowed_file(file):
-        image_db = Image(id=uuid.uuid4(), filename=file.filename)
-        image_id = str(image_db.id)
-        extension = os.path.splitext(file.filename)[1]
-        file_path = os.path.join(directory_path, "{}{}".format(image_id, extension))
-        file.save(file_path)
-        img = PILImage.open(file_path)
-        img_hash = str(dhash(img))
-        if is_image_duplicate(document_id, img_hash):
-            return 'Image is already uploaded.'
-        width, height = img.size
+    image_db = Image(id=uuid.uuid4(), filename=original_file_name + extension)
+    image_id = str(image_db.id)
+
+    file_path = os.path.join(directory_path, "{}{}".format(image_id, extension))
+    with open(file_path, 'wb') as f:
+        f.write(file_data)
         image_db.path = file_path
-        image_db.width = width
-        image_db.height = height
+        image_db.width = image.shape[1]
+        image_db.height = image.shape[0]
         image_db.imagehash = img_hash
         save_image_to_document(document, image_db)
-    else:
-        return 'Not allowed extension.'
+
     return ''
 
 
