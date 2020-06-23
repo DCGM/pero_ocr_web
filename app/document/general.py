@@ -86,7 +86,7 @@ def save_image(file, document_id):
     if db_image:
         return f'Image is already uploaded as {db_image.filename}.'
 
-    image = cv2.imdecode(np.frombuffer(file_data, np.uint8), 0)
+    image = cv2.imdecode(np.frombuffer(file_data, np.uint8), -1)
     if image is None:
         return f'Unable to decode the image. It is corrupted or the type is not supported.'
 
@@ -94,7 +94,7 @@ def save_image(file, document_id):
 
     if extension.lower() in ['.jpg', '.jpeg', '.jfif', '.pjpeg', '.pjp']:
         exif = exifread.process_file(io.BytesIO(file_data))
-        if 'Image Orientation' in exif and exif['Image Orientation'].values[0] != 0:
+        if 'Image Orientation' in exif and exif['Image Orientation'].values[0] != 1:
             _, file_data = cv2.imencode('.jpg', image, [int(cv2.IMWRITE_JPEG_QUALITY), 92])
 
     if extension.lower() not in ['.jpg', '.jpeg', '.jfif', '.pjpeg', '.pjp', '.png']:
