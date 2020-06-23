@@ -37,6 +37,13 @@ def make_image_result_preview(image_db):
     image_id = str(image_db.id)
     if image_db:
         image = cv2.imread(image_path, 1)
+
+        # Fix historicaly swapped image width and height
+        if image.shape[0] != image_db.height or image.shape[1] != image_db.width:
+            image_db.height = image.shape[0]
+            image_db.width = image.shape[1]
+            db_session.commit()
+
         scale = (100000.0 / (image.shape[0] * image.shape[1]))**0.5
         image = cv2.resize(image, (0,0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
         if image_db.textregions:
