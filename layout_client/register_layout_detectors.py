@@ -17,7 +17,8 @@ layout_engines = [
     {"name": "NONE", "description": "Don't use any layout detector."},
     {"name": "Whole Page Region", "description": "Set layout as whole page region."},
     {"name": "Simple Threshold Region", "description": "Simple layout detector based on segmentation that works on single column pages."},
-    {"name": "Simple Line Clustering", "description": "Based on line detection and clustering."}
+    {"name": "Simple Line Clustering", "description": "Based on line detection and clustering."},
+    {"name": "Simple Line Clustering Experimental", "description": "Experimental layout detector based on line detection and clustering."}
 ]
 
 
