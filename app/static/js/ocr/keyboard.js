@@ -7,6 +7,7 @@ class Keyboard{
         for (let btn of this.keyboard_btn)
         {
             btn.addEventListener('click',  this.toogle.bind(this));
+            btn.addEventListener('mousedown', this.prevent_focus.bind(this))
         }
         this.selected_layout = "default";
         this.layout_select = document.getElementById('layout-select');
@@ -31,6 +32,11 @@ class Keyboard{
     toogle(e)
     {
         this.container.classList.toggle("d-none");
+    }
+
+    prevent_focus(e)
+    {
+        e.preventDefault()
     }
 
     init(data, status)
