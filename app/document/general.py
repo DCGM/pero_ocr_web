@@ -410,3 +410,13 @@ def skip_textline(line_id):
     line.score = 10
 
     db_session.commit()
+
+def document_exists(document_id):
+    try:
+        document = Document.query.filter_by(id=document_id).first()
+    except:
+        return False
+    if document is not None:
+        return True
+    else:
+        return False

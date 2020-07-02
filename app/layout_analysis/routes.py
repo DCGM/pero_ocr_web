@@ -12,7 +12,7 @@ import os
 import sys
 import sqlalchemy
 from app.db.model import DocumentState, TextRegion, LayoutDetector, Document
-from app.document.general import is_user_owner_or_collaborator, is_granted_acces_for_document, is_user_trusted
+from app.document.general import is_user_owner_or_collaborator, is_granted_acces_for_document, is_user_trusted, document_exists
 from PIL import Image
 from app import db_session
 from flask import jsonify
@@ -29,6 +29,9 @@ import shutil
 @bp.route('/show_results/<string:document_id>', methods=['GET'])
 @login_required
 def show_results(document_id):
+    if not document_exists(document_id):
+        flash(u'Document with this id does not exist!', 'danger')
+        return redirect(url_for('main.index'))
     if not is_granted_acces_for_document(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
