@@ -7,12 +7,14 @@ from app.layout_analysis.general import create_layout_analysis_request, can_star
     add_layout_request_and_change_document_state, get_first_layout_request, change_layout_request_and_document_state_in_progress, \
     create_json_from_request, change_layout_request_and_document_state_on_success, \
     make_image_result_preview, change_document_state_on_complete_layout_analysis, post_files_to_folder, insert_regions_to_db, \
-    set_whole_page_region_layout_to_document, change_layout_request_to_fail_and_document_state_to_new
+    set_whole_page_region_layout_to_document, change_layout_request_to_fail_and_document_state_to_new, \
+    not_deleted_images_in_document
 import os
 import sys
 import sqlalchemy
 from app.db.model import DocumentState, TextRegion, LayoutDetector, Document
-from app.document.general import is_user_owner_or_collaborator, is_granted_acces_for_document, is_user_trusted, document_exists
+from app.document.general import is_user_owner_or_collaborator, is_granted_acces_for_document, is_user_trusted, \
+                                 document_exists, get_document_images
 from PIL import Image
 from app import db_session
 from flask import jsonify
@@ -38,7 +40,9 @@ def show_results(document_id):
     document = get_document_by_id(document_id)
     if document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
         return 'Layout analysis is not completed yet!', 400
-    return render_template('layout_analysis/layout_results.html', document=document, images=natsorted(list(document.images), key=lambda x: x.filename))
+    images = get_document_images(document)
+
+    return render_template('layout_analysis/layout_results.html', document=document, images=natsorted(list(images), key=lambda x: x.filename))
 
 
 @bp.route('/revert_layout_analysis/<string:document_id>', methods=['GET'])
@@ -83,7 +87,7 @@ def start_layout(document_id):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
     document = get_document_by_id(document_id)
-    if len(document.images.all()) == 0:
+    if not not_deleted_images_in_document(document):
         flash(u'Can\'t create request without uploading images.', 'danger')
         return redirect(request.referrer)
     layout_detector_id = request.form['layout_detector_id']
