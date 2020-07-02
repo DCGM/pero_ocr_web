@@ -141,8 +141,6 @@
             e = e || window.event;
             if (!e.ctrlKey) return;
             var code = e.which || e.keyCode;
-            e.preventDefault();
-            e.stopPropagation();
             switch (code) {
                 case 83:
                     line_editor.save_next_line();
@@ -158,7 +156,13 @@
                     e.stopPropagation();
                     line_editor.next_line();
                     break;
+                case 67:
+                case 86:
+                case 88:
+                    return;
             }
+            e.preventDefault();
+            e.stopPropagation();
         };
 
     </script>
