@@ -3,7 +3,7 @@ import numpy as np
 import hashlib
 import io
 import exifread
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from app.db.model import Document, DocumentState, Image
 from app.db.general import get_document_by_id, remove_document_by_id, save_document, save_image_to_document,\
     get_all_users, get_user_by_id, get_image_by_id, is_image_duplicate
@@ -153,18 +153,20 @@ def remove_image(document_id, image_id):
 
 
 class UserSelectItem:
-    def __init__(self, user, is_selected=False):
+    def __init__(self, user, is_selected=None):
         self.user = user
         self.is_selected = is_selected
 
 
 def get_collaborators_select_data(document):
-    all_users = get_all_users()
-    users = list(filter(lambda user: user.id != document.user.id, all_users))
-    
-    select_items = []
-    for user in users:
-        select_items.append(UserSelectItem(user=user, is_selected=(not user.trusted and user.id != document.user.id and user in document.collaborators)))
+    users = db_session.query(User, UserDocument.document_id)\
+            .outerjoin(UserDocument, and_(UserDocument.document_id == document.id, UserDocument.user_id == User.id))\
+            .filter(or_(UserDocument.document_id == document.id, UserDocument.document_id == None))\
+            .filter(User.id != document.user.id)\
+            .filter(User.email != '#revert_OCR_backup#')\
+            .all()
+
+    select_items = [UserSelectItem(user=user, is_selected=selected) for user, selected in users]
 
     return select_items
 
