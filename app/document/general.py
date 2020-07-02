@@ -152,11 +152,6 @@ def remove_image(document_id, image_id):
     return False
 
 
-def get_possible_collaborators(document):
-    users = get_all_users()
-    return list(filter(lambda user: user.id != document.user.id and user.email != 'client@client.cz', users))
-
-
 class UserSelectItem:
     def __init__(self, user, is_selected=False):
         self.user = user
@@ -164,13 +159,13 @@ class UserSelectItem:
 
 
 def get_collaborators_select_data(document):
+    all_users = get_all_users()
+    users = list(filter(lambda user: user.id != document.user.id, all_users))
+    
     select_items = []
-    possible_collaborators = get_possible_collaborators(document)
+    for user in users:
+        select_items.append(UserSelectItem(user=user, is_selected=(not user.trusted and user.id != document.user.id and user in document.collaborators)))
 
-    for user in possible_collaborators:
-        is_selected = is_user_collaborator(document, user)
-        user_select_item = UserSelectItem(user=user, is_selected=is_selected)
-        select_items.append(user_select_item)
     return select_items
 
 
@@ -411,12 +406,21 @@ def skip_textline(line_id):
 
     db_session.commit()
 
+
 def document_exists(document_id):
     try:
         document = Document.query.filter_by(id=document_id).first()
     except:
         return False
     if document is not None:
+        return True
+    else:
+        return False
+
+
+def document_in_allowed_state(document_id, state):
+    document = Document.query.filter_by(id=document_id).first()
+    if document.state == state:
         return True
     else:
         return False
