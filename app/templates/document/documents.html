@@ -105,7 +105,7 @@
                             <td>{{ document.user.first_name }} {{ document.user.last_name }}</td>
                             <td>{{ document.state.value }}</td>
                             <td>
-                                {% if document.user.id == current_user.id %}
+                                {% if document.user.id == current_user.id or current_user.trusted == 1 %}
                                     <a  class="document-action-btn btn btn-secondary"
                                         href="{{ url_for('document.collaborators_get', document_id=document.id) }}"
                                         data-toggle="tooltip"
