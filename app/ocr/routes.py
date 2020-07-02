@@ -19,7 +19,8 @@ from app.ocr.general import create_json_from_request, create_ocr_request, \
 from app.document.general import get_document_images
 from app import db_session
 from app.document.general import is_user_owner_or_collaborator, is_user_trusted, is_granted_acces_for_page, \
-                                 is_granted_acces_for_document, is_score_computed, document_exists
+                                 is_granted_acces_for_document, is_score_computed, document_exists, \
+                                 document_in_allowed_state
 
 
 ########################################################################################################################
@@ -34,6 +35,9 @@ from app.document.general import is_user_owner_or_collaborator, is_user_trusted,
 def show_results(document_id):
     if not document_exists(document_id):
         flash(u'Document with this id does not exist!', 'danger')
+        return redirect(url_for('main.index'))
+    if not document_in_allowed_state(document_id, DocumentState.COMPLETED_OCR):
+        flash(u'Document is in the state prohibiting this action!', 'danger')
         return redirect(url_for('main.index'))
     if not is_user_owner_or_collaborator(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')

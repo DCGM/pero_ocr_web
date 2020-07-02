@@ -14,7 +14,7 @@ import sys
 import sqlalchemy
 from app.db.model import DocumentState, TextRegion, LayoutDetector, Document
 from app.document.general import is_user_owner_or_collaborator, is_granted_acces_for_document, is_user_trusted, \
-                                 document_exists, get_document_images
+                                 document_exists, get_document_images, document_in_allowed_state
 from PIL import Image
 from app import db_session
 from flask import jsonify
@@ -33,6 +33,9 @@ import shutil
 def show_results(document_id):
     if not document_exists(document_id):
         flash(u'Document with this id does not exist!', 'danger')
+        return redirect(url_for('main.index'))
+    if not document_in_allowed_state(document_id, DocumentState.COMPLETED_LAYOUT_ANALYSIS):
+        flash(u'Document is in the state prohibiting this action!', 'danger')
         return redirect(url_for('main.index'))
     if not is_granted_acces_for_document(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
