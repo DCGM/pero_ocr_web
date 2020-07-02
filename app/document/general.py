@@ -154,7 +154,7 @@ def remove_image(document_id, image_id):
 
 def get_possible_collaborators(document):
     users = get_all_users()
-    return list(filter(lambda user: user.id != document.user.id, users))
+    return list(filter(lambda user: user.id != document.user.id and user.email != 'client@client.cz', users))
 
 
 class UserSelectItem:
