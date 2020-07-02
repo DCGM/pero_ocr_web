@@ -97,7 +97,7 @@
                         <tr data-document="{{ document.id }}">
                             <td>
                                 <div class="image-preview-cont">
-                                    <img data-src="{{url_for('layout_analysis.get_result_preview', image_id=document.images.first().id)}}" class="lazy-img image-preview" src=""/>
+                                    <img data-src="{{url_for('layout_analysis.get_result_preview', image_id=document.images.first().id)}}" class="lazy-img image-preview" src="" onerror="this.src='/static/img/missing_page.png'"/>
                                 </div>
                             </td>
 
