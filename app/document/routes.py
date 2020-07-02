@@ -230,7 +230,7 @@ def remove_image_get(document_id, image_id):
 @bp.route('/collaborators/<string:document_id>', methods=['GET'])
 @login_required
 def collaborators_get(document_id):
-    if not is_document_owner(document_id, current_user):
+    if not is_document_owner(document_id, current_user) and not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights to edit collaborators!', 'danger')
         return redirect(url_for('main.index'))
     else:
@@ -243,7 +243,7 @@ def collaborators_get(document_id):
 @login_required
 def collaborators_post(document_id):
     collaborators_ids = request.form.getlist('collaborators')
-    if not is_document_owner(document_id, current_user):
+    if not is_document_owner(document_id, current_user) and not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights to edit collaborators!', 'danger')
         return redirect(url_for('main.index'))
     else:
