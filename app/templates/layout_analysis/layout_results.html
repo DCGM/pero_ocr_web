@@ -91,34 +91,34 @@
         function shortcut(e) {
             var code = e.which || e.keyCode;
             switch (code) {
-                case 66:
+                case 66: // b
                     image_list.previous_image();
                     break;
-                case 78:
+                case 78: // b
                     image_list.next_image();
                     break;
-                case 67:
+                case 67: // c
                     if (layout_editor.create_new_object_btn.disabled == false){
                         layout_editor.create_new_object();
                     }
                     break;
-                case 71:
+                case 71: // g
                     if (layout_editor.toggle_delete_object_btn.disabled == false){
                         layout_editor.toggle_delete_object();
                     }
                     break;
-                case 65:
+                case 65: // a
                     if (layout_editor.toggle_delete_all_objects_btn.disabled == false){
                         layout_editor.toggle_delete_all_objects();
                     }
                     break;
-                case 82:
+                case 82: // r
                     layout_editor.reset_image();
                     break;
-                case 83:
+                case 83:  // s
                     layout_editor.save_image();
                     break;
-                case 87:
+                case 87: // w
                     if (layout_editor.show_reading_order_btn.checked == false){
                         layout_editor.enable_show_order();
                         layout_editor.show_reading_order();
@@ -128,7 +128,7 @@
                         layout_editor.show_reading_order();
                     }
                     break;
-                case 69:
+                case 69: // e
                     if (layout_editor.set_reading_order_btn.checked == false){
                         layout_editor.enable_set_order();
                         layout_editor.set_reading_order();
@@ -138,7 +138,7 @@
                         layout_editor.set_reading_order();
                     }
                     break;
-                case 27:
+                case 27: // Escape
                     layout_editor.unselect_objects()
             }
         }
