@@ -28,6 +28,13 @@ def get_user_documents(user):
     return user_created_documents + collaborators_documents
 
 
+def get_previews_for_documents(document_ids: list):
+    images = Image.query.filter(Image.deleted == False).filter(Image.document_id.in_(document_ids))
+    images = images.distinct(Image.document_id)
+    images = images.all()
+    return images
+
+
 def get_user_by_id(id):
     return User.query.get(int(id))
 

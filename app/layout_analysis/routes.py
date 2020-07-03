@@ -218,12 +218,21 @@ def get_image_result(image_id):
 
 
 @bp.route('/get_result_preview/<string:image_id>')
+@bp.route('/get_result_preview/')
 @login_required
-def get_result_preview(image_id):
-    document_id = get_image_by_id(image_id).document_id
+def get_result_preview(image_id=None):
+    if not image_id:
+        return send_file('/static/img/missing_page.png', cache_timeout=10000000)
+
+    db_image = get_image_by_id(image_id)
+    if db_image is None:
+        return "Image does not exist.", 404
+
+    document_id = db_image.document_id
     if not is_granted_acces_for_document(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
+
     image_path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document_id), str(image_id) + '.jpg')
     if not os.path.isfile(image_path):
         image_db = get_image_by_id(image_id)
