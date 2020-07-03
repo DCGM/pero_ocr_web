@@ -3,7 +3,7 @@ import numpy as np
 import hashlib
 import io
 import exifread
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from app.db.model import Document, DocumentState, Image
 from app.db.general import get_document_by_id, remove_document_by_id, save_document, save_image_to_document,\
     get_all_users, get_user_by_id, get_image_by_id, is_image_duplicate
@@ -152,25 +152,21 @@ def remove_image(document_id, image_id):
     return False
 
 
-def get_possible_collaborators(document):
-    users = get_all_users()
-    return list(filter(lambda user: user.id != document.user.id, users))
-
-
 class UserSelectItem:
-    def __init__(self, user, is_selected=False):
+    def __init__(self, user, is_selected=None):
         self.user = user
         self.is_selected = is_selected
 
 
 def get_collaborators_select_data(document):
-    select_items = []
-    possible_collaborators = get_possible_collaborators(document)
+    users = db_session.query(User, UserDocument.document_id)\
+            .outerjoin(UserDocument, and_(UserDocument.document_id == document.id, UserDocument.user_id == User.id))\
+            .filter(User.id != document.user.id)\
+            .filter(User.email != '#revert_OCR_backup#')\
+            .all()
 
-    for user in possible_collaborators:
-        is_selected = is_user_collaborator(document, user)
-        user_select_item = UserSelectItem(user=user, is_selected=is_selected)
-        select_items.append(user_select_item)
+    select_items = [UserSelectItem(user=user, is_selected=selected) for user, selected in users]
+
     return select_items
 
 
@@ -410,3 +406,22 @@ def skip_textline(line_id):
     line.score = 10
 
     db_session.commit()
+
+
+def document_exists(document_id):
+    try:
+        document = Document.query.filter_by(id=document_id).first()
+    except:
+        return False
+    if document is not None:
+        return True
+    else:
+        return False
+
+
+def document_in_allowed_state(document_id, state):
+    document = Document.query.filter_by(id=document_id).first()
+    if document.state == state:
+        return True
+    else:
+        return False

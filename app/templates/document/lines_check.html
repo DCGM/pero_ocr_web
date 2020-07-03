@@ -122,7 +122,7 @@
         function save_next_line(event) {
             var code = event.which || event.keyCode;
             switch (code) {
-                case 13:
+                case 13: // Enter
                     line_editor.save_next_line();
                     break;
             }
@@ -141,24 +141,24 @@
             e = e || window.event;
             if (!e.ctrlKey) return;
             var code = e.which || e.keyCode;
-            e.preventDefault();
-            e.stopPropagation();
             switch (code) {
-                case 83:
+                case 83: // ctrl+S
                     line_editor.save_next_line();
                     break;
-                case 81:
+                case 81: // ctrl+Q
                     line_editor.skip_line();
                     break;
-                case 66:
+                case 66: // ctrl+B
                     line_editor.previous_line();
                     break;
-                case 77:
-                    e.preventDefault();
-                    e.stopPropagation();
+                case 77: // ctrl+M
                     line_editor.next_line();
                     break;
+                default:
+                    return;
             }
+            e.preventDefault();
+            e.stopPropagation();
         };
 
     </script>

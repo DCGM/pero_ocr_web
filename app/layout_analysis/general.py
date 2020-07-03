@@ -125,3 +125,9 @@ def change_document_state_on_complete_layout_analysis(document):
     document.state = DocumentState.COMPLETED_LAYOUT_ANALYSIS
     db_session.commit()
 
+
+def not_deleted_images_in_document(document):
+    for image in document.images:
+        if not image.deleted:
+            return True
+    return False
