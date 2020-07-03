@@ -3,6 +3,7 @@ import numpy as np
 import hashlib
 import io
 import exifread
+import sqlalchemy
 from sqlalchemy import and_, or_
 from app.db.model import Document, DocumentState, Image
 from app.db.general import get_document_by_id, remove_document_by_id, save_document, save_image_to_document,\
@@ -411,7 +412,7 @@ def skip_textline(line_id):
 def document_exists(document_id):
     try:
         document = Document.query.filter_by(id=document_id).first()
-    except:
+    except sqlalchemy.exc.StatementError:
         return False
     if document is not None:
         return True

@@ -222,9 +222,13 @@ def get_image_result(image_id):
 @login_required
 def get_result_preview(image_id=None):
     if not image_id:
-        return send_file('/static/img/missing_page.png', cache_timeout=10000000)
+        return send_file('static/img/missing_page.png', cache_timeout=10000000)
 
-    db_image = get_image_by_id(image_id)
+    try:
+        db_image = get_image_by_id(image_id)
+    except sqlalchemy.exc.StatementError:
+        pass
+
     if db_image is None:
         return "Image does not exist.", 404
 
