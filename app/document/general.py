@@ -161,7 +161,6 @@ class UserSelectItem:
 def get_collaborators_select_data(document):
     users = db_session.query(User, UserDocument.document_id)\
             .outerjoin(UserDocument, and_(UserDocument.document_id == document.id, UserDocument.user_id == User.id))\
-            .filter(or_(UserDocument.document_id == document.id, UserDocument.document_id == None))\
             .filter(User.id != document.user.id)\
             .filter(User.email != '#revert_OCR_backup#')\
             .all()
