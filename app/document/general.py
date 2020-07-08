@@ -290,7 +290,7 @@ def update_confidences(changes):
         else:
             line.score = score
 
-        if transcription is None:
+        if transcription is not None:
             line.text = transcription
 
     db_session.commit()
