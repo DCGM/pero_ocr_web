@@ -272,13 +272,20 @@ def update_confidences(changes):
         changed_line = changes[uuid]
         transcription = changed_line[0]
         confidences = changed_line[1]
+        if len(changed_line) > 2:
+            score = changed_line[2]
+        else:
+            score = None
 
         line = TextLine.query.filter_by(id=uuid.replace("-", "")).first()
 
         conf_string = ' '.join(str(round(x, 3)) for x in confidences)
         line.confidences = conf_string.replace('1.0', '1')
         line_conf = line.np_confidences
-        line.score = 1 - (np.sum((1 - line_conf) ** 2) / (line_conf.shape[0] + 2))
+        if score is None:
+            line.score = 1 - (np.sum((1 - line_conf) ** 2) / (line_conf.shape[0] + 2))
+        else:
+            line.score = score
 
         line.text = transcription
 
