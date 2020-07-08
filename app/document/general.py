@@ -281,6 +281,7 @@ def update_confidences(changes):
 
         if confidences is None:
             conf_string = ' '.join(str(round(x, 3)) for x in confidences)
+            line.confidences = conf_string
             #line.confidences = conf_string.replace('1.0', '1') --- this is dangerous
 
         if score is None:
