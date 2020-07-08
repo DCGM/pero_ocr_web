@@ -279,7 +279,7 @@ def update_confidences(changes):
 
         line = TextLine.query.filter_by(id=uuid.replace("-", "")).first()
 
-        if confidences is None:
+        if confidences is not None:
             conf_string = ' '.join(str(round(x, 3)) for x in confidences)
             line.confidences = conf_string
             #line.confidences = conf_string.replace('1.0', '1') --- this is dangerous
