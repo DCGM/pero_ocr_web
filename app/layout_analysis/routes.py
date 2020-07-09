@@ -205,8 +205,6 @@ def get_image_result(image_id):
     if not is_granted_acces_for_document(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
-    img = Image.open(image.path)
-    width, height = img.size
     textregions = []
     for textregion in image.textregions:
         if textregion.deleted:
@@ -214,7 +212,7 @@ def get_image_result(image_id):
         textregion_points = textregion.np_points.tolist()
         textregions.append({'uuid': textregion.id, 'deleted': textregion.deleted, 'points': textregion_points,
                             'order': textregion.order})
-    return jsonify({"uuid": image_id, 'width': width, 'height': height, 'objects': textregions})
+    return jsonify({"uuid": image_id, 'width': image.width, 'height': image.height, 'objects': textregions})
 
 
 @bp.route('/get_result_preview/<string:image_id>')
