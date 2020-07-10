@@ -44,9 +44,9 @@ def documents():
 def new_document():
     form = CreateDocumentForm()
     if form.validate_on_submit():
-        create_document(form.document_name.data, current_user)
+        document = create_document(form.document_name.data, current_user)
         flash(u'Document successfully created!', 'success')
-        return redirect(url_for('document.documents'))
+        return redirect(url_for('document.upload_document_get', document_id=document.id))
     else:
         return render_template('document/new_document.html', form=form)
 
