@@ -123,7 +123,7 @@
             var code = event.which || event.keyCode;
             switch (code) {
                 case 13: // Enter
-                    line_editor.save_next_line();
+                    line_editor.save_next_line(false);
                     break;
             }
         }
