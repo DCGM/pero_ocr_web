@@ -108,7 +108,7 @@ def get_document_ids(session, base_url, document_ids, document_id):
         return False, None
 
 
-def check_and_process_update_request(config):
+def update_confidences(config):
     with requests.Session() as session:
         print()
         print("LOGGING IN")
@@ -187,6 +187,69 @@ def check_and_process_update_request(config):
         return True
 
 
+def update_baselines(config):
+    with requests.Session() as session:
+        print()
+        print("LOGGING IN")
+        print("##############################################################")
+        if not log_in(session, config['SETTINGS']['login'], config['SETTINGS']['password'], config['SERVER']['base_url'],
+                      config['SERVER']['authentification'], config['SERVER']['login_page']):
+            return False
+        print("##############################################################")
+
+        print()
+        print("CREATING WORK FOLDERS")
+        print("##############################################################")
+        create_work_folders(config)
+        print("##############################################################")
+
+        print()
+        print("GETTING PAGES IDS")
+        print("##############################################################")
+        done, page_uuids = get_document_ids(session, config['SERVER']['base_url'], config['SERVER']['document_ids'], config['SETTINGS']['document_id'])
+        if not done:
+            return False
+        print("##############################################################")
+
+        print()
+        print("DOWNLOADING XMLS")
+        print("##############################################################")
+        if not download_xmls(session, config['SERVER']['base_url'], config['SERVER'][config['SETTINGS']['type']], config['SETTINGS']['working_directory'], page_uuids):
+            return False
+        print("##############################################################")
+
+        print()
+        print("DOWNLOADING IMAGES")
+        print("##############################################################")
+        if not download_images(session, config['SERVER']['base_url'], config['SERVER']['download_images'], config['SETTINGS']['working_directory'], page_uuids):
+            return False
+        print("##############################################################")
+
+        print()
+        print("LINE FIXER PROCESS")
+        print("##############################################################")
+        parse_folder_process = subprocess.Popen(['python', config['SETTINGS']['line_fixer_path'],
+                                                 '-i', config['SETTINGS']['image_path'],
+                                                 '-x', config['SETTINGS']['xml_path'],
+                                                 '-o', config['SETTINGS']['ocr'],
+                                                 '--output', os.path.join(config['SETTINGS']['working_directory'], "other"),
+                                                 '--output-file', os.path.join(config['SETTINGS']['working_directory'], "changes.json")],
+                                                 cwd=config['SETTINGS']['working_directory'])
+
+        parse_folder_process.wait()
+        print("SUCCESFUL")
+        print("##############################################################")
+
+        print()
+        print("SENDING DATA TO SERVER")
+        print("##############################################################")
+        if not send_data(session, config['SETTINGS']['working_directory'], config['SERVER']['base_url'], config['SERVER']['update_path']):
+            return False
+        print("##############################################################")
+
+        return True
+
+
 def main():
     args = get_args()
 
@@ -203,7 +266,7 @@ def main():
     if args.password is not None:
         config["SETTINGS"]['password'] = args.password
 
-    if check_and_process_update_request(config):
+    if update_confidences(config):
         print("REQUEST COMPLETED")
     else:
         print("REQUEST FAILED")
