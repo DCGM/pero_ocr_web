@@ -4,6 +4,7 @@ class Keyboard{
         this.container = container;
         this.text_lines_editor = text_lines_editor;
         this.keyboard_btn = document.getElementsByClassName("keyboard-btn");
+        document.addEventListener('keydown', this.keydown.bind(this));
         for (let btn of this.keyboard_btn)
         {
             btn.addEventListener('click',  this.toogle.bind(this));
@@ -151,6 +152,16 @@ class Keyboard{
         let selected_layout_element = $("[layout-name=" + this.selected_layout + "]")[0];
         active_layout_element.setAttribute("class", "layout d-none");
         selected_layout_element.setAttribute("class", "layout d-flex flex-wrap active");
+    }
+
+    keydown(e)
+    {
+        // TOGGLE
+        if (e.keyCode == 75 && !e.ctrlKey && !e.shiftKey && e.altKey)
+        {
+            e.preventDefault();
+            this.container.classList.toggle("d-none");
+        }
     }
 }
 
