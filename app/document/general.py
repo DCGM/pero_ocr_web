@@ -296,6 +296,15 @@ def update_confidences(changes):
     db_session.commit()
 
 
+def update_baselines(changes):
+    for uuid in changes.keys():
+        baseline = changes[uuid]
+        line = TextLine.query.filter_by(id=uuid.replace("-", "")).first()
+        line.np_baseline = baseline
+
+    db_session.commit()
+
+
 def is_user_trusted(user):
     user = User.query.filter_by(id=user.id).first()
     if user.trusted == 1:

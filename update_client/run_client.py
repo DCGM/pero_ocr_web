@@ -180,7 +180,7 @@ def update_confidences(config):
         print()
         print("SENDING DATA TO SERVER")
         print("##############################################################")
-        if not send_data(session, config['SETTINGS']['working_directory'], config['SERVER']['base_url'], config['SERVER']['update_all_confidences']):
+        if not send_data(session, config['SETTINGS']['working_directory'], config['SERVER']['base_url'], config['SERVER']['update_path']):
             return False
         print("##############################################################")
 
@@ -229,8 +229,8 @@ def update_baselines(config):
         print("LINE FIXER PROCESS")
         print("##############################################################")
         parse_folder_process = subprocess.Popen(['python', config['SETTINGS']['line_fixer_path'],
-                                                 '-i', config['SETTINGS']['image_path'],
-                                                 '-x', config['SETTINGS']['xml_path'],
+                                                 '-i', os.path.join(config['SETTINGS']['working_directory'], "img"),
+                                                 '-x', os.path.join(config['SETTINGS']['working_directory'], "xml"),
                                                  '-o', config['SETTINGS']['ocr'],
                                                  '--output', os.path.join(config['SETTINGS']['working_directory'], "other"),
                                                  '--output-file', os.path.join(config['SETTINGS']['working_directory'], "changes.json")],
@@ -257,7 +257,7 @@ def main():
     if args.config is not None:
         config.read(args.config)
     else:
-        config.read('config.ini')
+        config.read('config_baselines.ini')
 
     if args.document_id is not None:
         config["SETTINGS"]['document_id'] = args.document_id
@@ -266,11 +266,16 @@ def main():
     if args.password is not None:
         config["SETTINGS"]['password'] = args.password
 
-    if update_confidences(config):
-        print("REQUEST COMPLETED")
-    else:
-        print("REQUEST FAILED")
-
+    if config["SETTINGS"]['update_type'] == 'confidences':
+        if update_confidences(config):
+            print("REQUEST COMPLETED")
+        else:
+            print("REQUEST FAILED")
+    elif config["SETTINGS"]['update_type'] == 'baselines':
+        if update_baselines(config):
+            print("REQUEST COMPLETED")
+        else:
+            print("REQUEST FAILED")
 
 if __name__ == '__main__':
     main()
