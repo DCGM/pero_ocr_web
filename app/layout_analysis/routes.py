@@ -117,14 +117,18 @@ def start_layout(document_id):
 @bp.route('/edit_layout/<string:image_id>', methods=['POST'])
 @login_required
 def edit_layout(image_id):
-    image = get_image_by_id(image_id)
-    document_id = image.document_id
-    if image is None:
-        return 'Image does not exist!', 404
+    try:
+        db_image = get_image_by_id(image_id)
+    except sqlalchemy.exc.StatementError:
+        pass
+    if db_image is None:
+        return "Image does not exist.", 404
+    
+    document_id = db_image.document_id
     if not is_granted_acces_for_document(document_id, current_user):
         return 'You do not have sufficient rights to this document!', 403
     regions = request.get_json()
-    existing_regions = dict([(str(region.id), region) for region in image.textregions])
+    existing_regions = dict([(str(region.id), region) for region in db_image.textregions])
     for region in regions:
         if not region or 'points' not in region or len(region['points']) <= 2:
             continue
@@ -132,7 +136,7 @@ def edit_layout(image_id):
         if region['uuid'] not in existing_regions:
             db_region = TextRegion(id=region['uuid'], deleted=region['deleted'], image_id=image_id, order=region['order'])
             db_region.np_points = points
-            image.textregions.append(db_region)
+            db_image.textregions.append(db_region)
         else:
             db_region = existing_regions[region['uuid']]
             db_region.np_points = points
@@ -140,7 +144,7 @@ def edit_layout(image_id):
             db_region.order = region['order']
     try:
         db_session.commit()
-        make_image_result_preview(image)
+        make_image_result_preview(db_image)
     except sqlalchemy.exc.IntegrityError as err:
         print('ERROR: Unable to save text regions.', err, file=sys.stderr)
         db_session.rollback()
@@ -200,19 +204,25 @@ def fail_request(request_id):
 @bp.route('/get_image_result/<string:image_id>', methods=['GET'])
 @login_required
 def get_image_result(image_id):
-    image = get_image_by_id(image_id)
-    document_id = image.document_id
+    try:
+        db_image = get_image_by_id(image_id)
+    except sqlalchemy.exc.StatementError:
+        pass
+    if db_image is None:
+        return "Image does not exist.", 404
+
+    document_id = db_image.document_id
     if not is_granted_acces_for_document(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
     textregions = []
-    for textregion in image.textregions:
+    for textregion in db_image.textregions:
         if textregion.deleted:
             continue
         textregion_points = textregion.np_points.tolist()
         textregions.append({'uuid': textregion.id, 'deleted': textregion.deleted, 'points': textregion_points,
                             'order': textregion.order})
-    return jsonify({"uuid": image_id, 'width': image.width, 'height': image.height, 'objects': textregions})
+    return jsonify({"uuid": image_id, 'width': db_image.width, 'height': db_image.height, 'objects': textregions})
 
 
 @bp.route('/get_result_preview/<string:image_id>')

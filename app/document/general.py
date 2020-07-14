@@ -197,8 +197,7 @@ def get_document_images(document):
     return document.images.filter_by(deleted=False)
 
 
-def get_page_layout(image_id, only_regions=False, only_annotated=False, alto=False, from_time: datetime.datetime=None):
-    image = get_image_by_id(image_id)
+def get_page_layout(image, only_regions=False, only_annotated=False, alto=False, from_time: datetime.datetime=None):
     page_layout = layout.PageLayout()
     page_layout.id = image.filename
     page_layout.page_size = (image.height, image.width)
