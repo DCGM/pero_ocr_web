@@ -18,6 +18,7 @@ import datetime
 import pero_ocr.document_ocr.layout as layout
 import unicodedata
 from werkzeug.urls import url_quote
+from pero_ocr.line_engine.line_postprocessing import baseline_to_textline
 
 
 def dhash(image, hash_size=8):
@@ -298,10 +299,11 @@ def update_confidences(changes):
 
 def update_baselines(changes):
     for uuid in changes.keys():
-        baseline = changes[uuid]
+        baseline = changes[uuid][0]
+        heights = changes[uuid][1]
         line = TextLine.query.filter_by(id=uuid.replace("-", "")).first()
         line.np_baseline = baseline
-
+        line.np_points = baseline_to_textline(baseline, heights)
     db_session.commit()
 
 
