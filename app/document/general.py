@@ -303,7 +303,7 @@ def update_baselines(changes):
         heights = changes[uuid][1]
         line = TextLine.query.filter_by(id=uuid.replace("-", "")).first()
         line.np_baseline = baseline
-        line.np_points = baseline_to_textline(baseline, heights)
+        line.np_points = baseline_to_textline(np.array(baseline), np.array(heights))
     db_session.commit()
 
 
