@@ -1,6 +1,7 @@
 import json
 import io
 import _thread
+import sqlalchemy
 from app.document import bp
 from flask_login import login_required, current_user
 from flask import render_template, redirect, url_for, request, send_file, flash, jsonify, current_app, make_response
@@ -44,9 +45,9 @@ def documents():
 def new_document():
     form = CreateDocumentForm()
     if form.validate_on_submit():
-        create_document(form.document_name.data, current_user)
+        document = create_document(form.document_name.data, current_user)
         flash(u'Document successfully created!', 'success')
-        return redirect(url_for('document.documents'))
+        return redirect(url_for('document.upload_document_get', document_id=document.id))
     else:
         return render_template('document/new_document.html', form=form)
 
@@ -103,11 +104,18 @@ def get_document_image_ids(document_id):
 @bp.route('/get_page_xml_regions/<string:image_id>')
 @login_required
 def get_page_xml_regions(image_id):
+    try:
+        db_image = get_image_by_id(image_id)
+    except sqlalchemy.exc.StatementError:
+        pass
+    if db_image is None:
+        return "Image does not exist.", 404
+
     if not is_granted_acces_for_page(image_id, current_user):
         flash(u'You do not have sufficient rights to download regions!', 'danger')
         return redirect(url_for('main.index'))
 
-    page_layout = get_page_layout(image_id, only_regions=True)
+    page_layout = get_page_layout(db_image, only_regions=True)
     filename = "{}.xml".format(os.path.splitext(page_layout.id)[0])
     return create_string_response(filename, page_layout.to_pagexml_string(), minetype='text/xml')
 
@@ -115,11 +123,18 @@ def get_page_xml_regions(image_id):
 @bp.route('/get_page_xml_lines/<string:image_id>')
 @login_required
 def get_page_xml_lines(image_id):
+    try:
+        db_image = get_image_by_id(image_id)
+    except sqlalchemy.exc.StatementError:
+        pass
+    if db_image is None:
+        return "Image does not exist.", 404
+
     if not is_granted_acces_for_page(image_id, current_user):
         flash(u'You do not have sufficient rights to download xml!', 'danger')
         return redirect(url_for('main.index'))
 
-    page_layout = get_page_layout(image_id, only_regions=False)
+    page_layout = get_page_layout(db_image, only_regions=False)
     filename = "{}.xml".format(os.path.splitext(page_layout.id)[0])
     return create_string_response(filename, page_layout.to_pagexml_string(), minetype='text/xml')
 
@@ -128,6 +143,13 @@ def get_page_xml_lines(image_id):
 @bp.route('/get_annotated_page_xml_lines/<string:image_id>/<string:from_time>/')
 @login_required
 def get_annotated_page_xml_lines(image_id, from_time=None):
+    try:
+        db_image = get_image_by_id(image_id)
+    except sqlalchemy.exc.StatementError:
+        pass
+    if db_image is None:
+        return "Image does not exist.", 404
+
     if not is_granted_acces_for_page(image_id, current_user):
         flash(u'You do not have sufficient rights to download xml!', 'danger')
         return redirect(url_for('main.index'))
@@ -138,7 +160,7 @@ def get_annotated_page_xml_lines(image_id, from_time=None):
         except:
             return 'ERROR: Could not parse from_time argument.', 400
 
-    page_layout = get_page_layout(image_id, only_regions=False, only_annotated=True, from_time=from_time)
+    page_layout = get_page_layout(db_image, only_regions=False, only_annotated=True, from_time=from_time)
     filename = "{}.xml".format(os.path.splitext(page_layout.id)[0])
     return create_string_response(filename, page_layout.to_pagexml_string(), minetype='text/xml')
 
@@ -146,11 +168,18 @@ def get_annotated_page_xml_lines(image_id, from_time=None):
 @bp.route('/get_alto_xml/<string:image_id>')
 @login_required
 def get_alto_xml(image_id):
+    try:
+        db_image = get_image_by_id(image_id)
+    except sqlalchemy.exc.StatementError:
+        pass
+    if db_image is None:
+        return "Image does not exist.", 404
+
     if not is_granted_acces_for_page(image_id, current_user):
         flash(u'You do not have sufficient rights to download alto!', 'danger')
         return redirect(url_for('main.index'))
 
-    page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False, alto=True)
+    page_layout = get_page_layout(db_image, only_regions=False, only_annotated=False, alto=True)
     filename = "{}.xml".format(os.path.splitext(page_layout.id)[0])
     return create_string_response(filename, page_layout.to_altoxml_string(), minetype='text/xml')
 
@@ -158,11 +187,18 @@ def get_alto_xml(image_id):
 @bp.route('/get_text/<string:image_id>')
 @login_required
 def get_text(image_id):
+    try:
+        db_image = get_image_by_id(image_id)
+    except sqlalchemy.exc.StatementError:
+        pass
+    if db_image is None:
+        return "Image does not exist.", 404
+
     if not is_granted_acces_for_page(image_id, current_user):
         flash(u'You do not have sufficient rights to download text!', 'danger')
         return redirect(url_for('main.index'))
 
-    page_layout = get_page_layout(image_id, only_regions=False, only_annotated=False)
+    page_layout = get_page_layout(db_image, only_regions=False, only_annotated=False)
     file_name = "{}.txt".format(os.path.splitext(page_layout.id)[0])
     return create_string_response(file_name, get_page_layout_text(page_layout), minetype='text/plain')
 
@@ -170,12 +206,18 @@ def get_text(image_id):
 @bp.route('/get_image/<string:image_id>')
 @login_required
 def get_image(image_id):
+    try:
+        db_image = get_image_by_id(image_id)
+    except sqlalchemy.exc.StatementError:
+        pass
+    if db_image is None:
+        return "Image does not exist.", 404
+
     if not is_granted_acces_for_page(image_id, current_user):
         flash(u'You do not have sufficient rights to download image!', 'danger')
         return redirect(url_for('main.index'))
 
-    image = get_image_by_id(image_id)
-    return send_file(image.path, as_attachment=True, attachment_filename=image.filename)
+    return send_file(db_image.path, as_attachment=True, attachment_filename=db_image.filename)
 
 
 @bp.route('/download_document_pages/<string:document_id>')
@@ -189,7 +231,7 @@ def get_document_pages(document_id):
     with zipfile.ZipFile(memory_file, 'w') as zf:
         document = get_document_by_id(document_id)
         for image in document.images:
-            page_layout = get_page_layout(str(image.id), only_regions=False, only_annotated=False)
+            page_layout = get_page_layout(get_image_by_id(str(image.id)), only_regions=False, only_annotated=False)
             page_string = page_layout.to_pagexml_string()
             text_string = get_page_layout_text(page_layout)
             d_page = zipfile.ZipInfo("{}.xml".format(os.path.splitext(page_layout.id)[0]))
@@ -216,7 +258,7 @@ def get_document_annotated_pages(document_id):
     with zipfile.ZipFile(memory_file, 'w') as zf:
         document = get_document_by_id(document_id)
         for image in document.images:
-            page_layout = get_page_layout(str(image.id), only_regions=False, only_annotated=True)
+            page_layout = get_page_layout(get_image_by_id(str(image.id)), only_regions=False, only_annotated=True)
             xml_string = page_layout.to_pagexml_string()
             d_XML = zipfile.ZipInfo("{}.xml".format(os.path.splitext(page_layout.id)[0]))
             d_XML.date_time = time.localtime(time.time())[:6]
@@ -229,6 +271,13 @@ def get_document_annotated_pages(document_id):
 @bp.route('/remove_image/<string:document_id>/<string:image_id>')
 @login_required
 def remove_image_get(document_id, image_id):
+    try:
+        db_image = get_image_by_id(image_id)
+    except sqlalchemy.exc.StatementError:
+        pass
+    if db_image is None:
+        return "Image does not exist.", 404
+
     if not is_user_owner_or_collaborator(document_id, current_user):
         flash(u'You do not have sufficient rights to get this image!', 'danger')
         return redirect(url_for('main.index'))

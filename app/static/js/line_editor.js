@@ -142,9 +142,11 @@ class LineEditor {
         }
     }
 
-    save_next_line() {
+    save_next_line(save=true) {
         if ((this.image_index + 1) < this.lines.length) {
-            this.active_line.save();
+            if (save){
+                this.active_line.save();
+            }
             this.active_line.skip();
             this.annotated_in_session[this.image_index] = true;
             this.image_index += 1;

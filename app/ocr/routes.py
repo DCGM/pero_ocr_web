@@ -2,6 +2,7 @@ import os
 import shutil
 import json
 import uuid
+import sqlalchemy
 from natsort import natsorted
 from flask import render_template, request, current_app, send_file
 from flask import url_for, redirect, flash, jsonify
@@ -133,21 +134,28 @@ def start_ocr(document_id):
 @bp.route('/get_lines/<string:image_id>', methods=['GET'])
 @login_required
 def get_lines(image_id):
+    try:
+        db_image = get_image_by_id(image_id)
+    except sqlalchemy.exc.StatementError:
+        pass
+    if db_image is None:
+        return "Image does not exist.", 404
+
     if not is_granted_acces_for_page(image_id, current_user):
         flash(u'You do not have sufficient rights to get lines!', 'danger')
         return redirect(url_for('main.index'))
+
     lines_dict = {'image_id': image_id, 'lines': []}
-    image = get_image_by_id(image_id)
-    lines_dict['height'] = image.height
-    lines_dict['width'] = image.width
+    lines_dict['height'] = db_image.height
+    lines_dict['width'] = db_image.width
     skip_textregion_sorting = False
-    for tr in image.textregions:
+    for tr in db_image.textregions:
         if tr.order is None:
             skip_textregion_sorting = True
     if not skip_textregion_sorting:
-        text_regions = sorted(list(image.textregions), key=lambda x: x.order)
+        text_regions = sorted(list(db_image.textregions), key=lambda x: x.order)
     else:
-        text_regions = image.textregions
+        text_regions = db_image.textregions
 
     annotated_lines = set(get_page_annotated_lines(image_id))
 
@@ -201,15 +209,22 @@ def save_annotations():
 @bp.route('/post_result/<string:image_id>', methods=['POST'])
 @login_required
 def post_result(image_id):
+    try:
+        db_image = get_image_by_id(image_id)
+    except sqlalchemy.exc.StatementError:
+        pass
+    if db_image is None:
+        return "Image does not exist.", 404
+
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights!', 'danger')
         return redirect(url_for('main.index'))
-    image = get_image_by_id(image_id)
-    if image.document.state != DocumentState.COMPLETED_OCR:
+
+    if db_image.document.state != DocumentState.COMPLETED_OCR:
         print()
         print("INSERT LINES FROM XMLS AND LOGITS TO DB")
         print("##################################################################")
-        result_folder = os.path.join(current_app.config['OCR_RESULTS_FOLDER'], str(image.document_id))
+        result_folder = os.path.join(current_app.config['OCR_RESULTS_FOLDER'], str(db_image.document_id))
         if not os.path.exists(result_folder):
             os.makedirs(result_folder)
         file_names = post_files_to_folder(request, result_folder)
