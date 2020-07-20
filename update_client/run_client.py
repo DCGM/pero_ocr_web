@@ -330,7 +330,7 @@ def corrupt_baselines(config):
             page_layout = PageLayout(file=os.path.join(config['SETTINGS']['working_directory'], "xml", xml))
             for line in page_layout.lines_iterator():
                 if np.random.randint(2, size=1)[0]:
-                    remove = np.random.randint(1, 4, size=1)[0]
+                    remove = 2#np.random.randint(1, 4, size=1)[0]
                     baseline = np.int_(line.baseline).tolist()
                     if remove < len(baseline):
                         if np.random.randint(2, size=1)[0]:
