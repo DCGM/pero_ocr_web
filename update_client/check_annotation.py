@@ -131,7 +131,7 @@ def check_and_process_update_request(config, page_parser):
                         print(line.transcription)
                         print(orig_transcriptions[line.id])
             if updates:
-                if not send_data(session, config['SERVER']['base_url'], config['SERVER']['update_all_confidences'], updates):
+                if not send_data(session, config['SERVER']['base_url'], config['SERVER']['update_path'], updates):
                     print('SEND FAILED')
 
     return True
