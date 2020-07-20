@@ -11,6 +11,7 @@ import uuid
 from pero_ocr.document_ocr.layout import PageLayout
 from pero_ocr.force_alignment import force_align
 from pero_ocr.confidence_estimation import get_letter_confidence
+from pero_ocr.confidence_estimation import get_letter_confidence, get_line_confidence
 
 
 def insert_lines_to_db(ocr_results_folder, file_names):
@@ -58,13 +59,8 @@ def get_confidences(line):
         char_map = dict([(c, i) for i, c in enumerate(line.characters)])
         c_idx = [char_map[c] for c in line.transcription]
 
-        line_logits = line.get_dense_logits()
-
-        blank_char_index = line_logits.shape[1] - 1
-
-        al_res = force_align(-line_logits, c_idx, blank_char_index)
-        con_res = get_letter_confidence(line_logits, al_res, blank_char_index)
-        return np.exp(con_res)
+        confidences = get_line_confidence(line, c_idx)
+        return confidences
     return np.asarray([])
 
 
