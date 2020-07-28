@@ -33,9 +33,9 @@ def insert_regions_to_db(results_folder, file_names):
 
 
 def make_image_result_preview(image_db):
-    image_path = image_db.path
-    image_id = str(image_db.id)
-    if image_db:
+    if image_db is not None:
+        image_path = image_db.path
+        image_id = str(image_db.id)
         image = cv2.imread(image_path, 1)
 
         # Fix historicaly swapped image width and height
