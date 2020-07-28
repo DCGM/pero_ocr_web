@@ -247,8 +247,7 @@ def get_result_preview(image_id=None):
 
     image_path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document_id), str(image_id) + '.jpg')
     if not os.path.isfile(image_path):
-        image_db = get_image_by_id(image_id)
-        make_image_result_preview(image_db)
+        make_image_result_preview(db_image)
     return send_file(image_path, cache_timeout=0)
 
 
