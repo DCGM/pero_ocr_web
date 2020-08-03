@@ -33,10 +33,9 @@ def insert_lines_to_db(ocr_results_folder, file_names):
                 for order, line in enumerate(region.lines):
                     if line.id in db_line_map:
                         db_line = db_line_map[line.id]
-                        if db_line is not None:
-                            if len(db_line.annotations) == 0:
-                                db_line.text = line.transcription
-                                db_line.np_confidences = get_confidences(line)
+                        if len(db_line.annotations) == 0:
+                            db_line.text = line.transcription
+                            db_line.np_confidences = get_confidences(line)
                     else:
                         line_id = uuid.uuid4()
                         line.id = str(line_id)
@@ -57,7 +56,7 @@ def insert_lines_to_db(ocr_results_folder, file_names):
 def get_confidences(line):
     if line.transcription is not None and line.transcription != "":
         char_map = dict([(c, i) for i, c in enumerate(line.characters)])
-        c_idx = [char_map[c] for c in line.transcription]
+        c_idx = np.asarray([char_map[c] for c in line.transcription])
 
         confidences = get_line_confidence(line, c_idx)
         return confidences
