@@ -477,12 +477,16 @@ class TextLine
         console.log(annotations);
         console.log(JSON.stringify(annotations));
         let route = Flask.url_for('ocr.save_annotations');
+        let self = this
         $.ajax({
             type: "POST",
             url: route,
             data: {annotations: JSON.stringify(annotations)},
             dataType: "json",
             success: function(data, textStatus) {
+                self.edited = false;
+                self.saved = true;
+                self.set_background_to_save();
                 if (data.status == 'redirect') {
                     // data.redirect contains the string URL to redirect to
                     window.location.href = data.href;
@@ -492,9 +496,6 @@ class TextLine
                 alert('Unable to save annotation. Check your remote connection. ');
             }
         });
-        this.edited = false;
-        this.saved = true;
-        this.set_background_to_save();
     }
 
     skip()
