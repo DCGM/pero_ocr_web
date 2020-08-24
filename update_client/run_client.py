@@ -1,4 +1,5 @@
 import os
+import cv2
 import glob
 import json
 import shutil
@@ -10,6 +11,8 @@ import numpy as np
 
 from client_helper import join_url, log_in, check_request
 from pero_ocr.document_ocr.layout import PageLayout
+from pero_ocr.document_ocr.page_parser import PageParser
+
 
 def get_args():
     """
@@ -352,6 +355,73 @@ def corrupt_baselines(config):
         return True
 
 
+def update_heights(config):
+    with requests.Session() as session:
+        print()
+        print("LOGGING IN")
+        print("##############################################################")
+        if not log_in(session, config['SETTINGS']['login'], config['SETTINGS']['password'], config['SERVER']['base_url'],
+                      config['SERVER']['authentification'], config['SERVER']['login_page']):
+            return False
+        print("##############################################################")
+
+        print()
+        print("CREATING WORK FOLDERS")
+        print("##############################################################")
+        create_work_folders(config)
+        print("##############################################################")
+
+        print()
+        print("GETTING PAGES IDS")
+        print("##############################################################")
+        done, page_uuids = get_document_ids(session, config['SERVER']['base_url'], config['SERVER']['document_ids'], config['SETTINGS']['document_id'])
+        if not done:
+            return False
+        print("##############################################################")
+
+        print()
+        print("DOWNLOADING XMLS")
+        print("##############################################################")
+        if not download_xmls(session, config['SERVER']['base_url'], config['SERVER'][config['SETTINGS']['type']], config['SETTINGS']['working_directory'], page_uuids):
+            return False
+        print("##############################################################")
+
+        print()
+        print("DOWNLOADING IMAGES")
+        print("##############################################################")
+        if not download_images(session, config['SERVER']['base_url'], config['SERVER']['download_images'], config['SETTINGS']['working_directory'], page_uuids):
+            return False
+        print("##############################################################")
+
+        print()
+        print("FIXING HEIGHTS")
+        print("##############################################################")
+        page_parser = PageParser(config)
+        xmls = os.listdir(os.path.join(config['SETTINGS']['working_directory'], "xml"))
+        height_fix = dict()
+        for xml in xmls:
+            page_layout = PageLayout(file=os.path.join(config['SETTINGS']['working_directory'], "xml", xml))
+            image = cv2.imread(os.path.join(config['SETTINGS']['working_directory'], "img", xml[:-4]+'.jpg'))
+            page_layout = page_parser.process_page(image, page_layout)
+            for line in page_layout.lines_iterator():
+                baseline = np.int_(line.baseline).tolist()
+                height_fix[line.id] = [baseline, np.int_(line.heights).tolist()]
+
+        with open(os.path.join(config['SETTINGS']['working_directory'], "height_fix.json"), 'w') as handle:
+            json.dump(height_fix, handle)
+        print("SUCCESFUL")
+        print("##############################################################")
+
+        print()
+        print("SENDING DATA TO SERVER")
+        print("##############################################################")
+        if not send_data(session, config['SETTINGS']['working_directory'], config['SERVER']['base_url'], config['SERVER']['update_path'], file='height_fix.json'):
+            return False
+        print("##############################################################")
+
+        return True
+
+
 def main():
     args = get_args()
 
@@ -388,6 +458,12 @@ def main():
             print("REQUEST COMPLETED")
         else:
             print("REQUEST FAILED")
+    elif config["SETTINGS"]['update_type'] == 'update_heights':
+        if update_heights(config):
+            print("REQUEST COMPLETED")
+        else:
+            print("REQUEST FAILED")
+
 
 if __name__ == '__main__':
     main()
