@@ -232,11 +232,13 @@ def compute_baselines(config):
         print("LINE FIXER PROCESS")
         print("##############################################################")
         line_fixer_process = subprocess.Popen(['python', config['SETTINGS']['line_fixer_path'],
+                                                 '-m', config['SETTINGS']['extension_mode'],
                                                  '-i', os.path.join(config['SETTINGS']['working_directory'], "img"),
                                                  '-x', os.path.join(config['SETTINGS']['working_directory'], "xml"),
                                                  '-o', config['SETTINGS']['ocr'],
                                                  '--output', os.path.join(config['SETTINGS']['working_directory'], "other"),
-                                                 '--output-file', os.path.join(config['SETTINGS']['working_directory'], "changes.json")],
+                                                 '--output-file', os.path.join(config['SETTINGS']['working_directory'], "changes.json"),
+                                                 '--extend-by', config['SETTINGS']['automatic_extension_by']],
                                                  cwd=config['SETTINGS']['working_directory'])
 
         line_fixer_process.wait()
