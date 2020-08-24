@@ -47,11 +47,9 @@ def create_work_folders(config):
     if not os.path.isdir(config['SETTINGS']['working_directory']):
         os.mkdir(config['SETTINGS']['working_directory'])
 
-    if not os.path.isdir(os.path.join(config['SETTINGS']['working_directory'], "other")):
-        os.mkdir(os.path.join(config['SETTINGS']['working_directory'], "other"))
-
     make_empty_folder(config, "xml")
     make_empty_folder(config, "img")
+    make_empty_folder(config, "other")
 
     print("SUCCESFUL")
 
@@ -192,7 +190,7 @@ def update_confidences(config):
         return True
 
 
-def update_baselines(config):
+def compute_baselines(config):
     with requests.Session() as session:
         print()
         print("LOGGING IN")
@@ -233,7 +231,7 @@ def update_baselines(config):
         print()
         print("LINE FIXER PROCESS")
         print("##############################################################")
-        parse_folder_process = subprocess.Popen(['python', config['SETTINGS']['line_fixer_path'],
+        line_fixer_process = subprocess.Popen(['python', config['SETTINGS']['line_fixer_path'],
                                                  '-i', os.path.join(config['SETTINGS']['working_directory'], "img"),
                                                  '-x', os.path.join(config['SETTINGS']['working_directory'], "xml"),
                                                  '-o', config['SETTINGS']['ocr'],
@@ -241,8 +239,33 @@ def update_baselines(config):
                                                  '--output-file', os.path.join(config['SETTINGS']['working_directory'], "changes.json")],
                                                  cwd=config['SETTINGS']['working_directory'])
 
+        line_fixer_process.wait()
+        print("SUCCESFUL")
+        print("##############################################################")
+
+        print()
+        print("PARSE FOLDER PROCESS")
+        print("##############################################################")
+        parse_folder_process = subprocess.Popen(['python', config['SETTINGS']['parse_folder_path'],
+                                                 '-c', config['SETTINGS']['parse_folder_config_path']],
+                                                 cwd=config['SETTINGS']['working_directory'])
+
         parse_folder_process.wait()
         print("SUCCESFUL")
+        print("##############################################################")
+
+        return True
+
+
+def upload_baselines(config):
+    with requests.Session() as session:
+        print()
+        print("LOGGING IN")
+        print("##############################################################")
+        if not log_in(session, config['SETTINGS']['login'], config['SETTINGS']['password'],
+                        config['SERVER']['base_url'],
+                      config['SERVER']['authentification'], config['SERVER']['login_page']):
+            return False
         print("##############################################################")
 
         print()
@@ -443,8 +466,13 @@ def main():
             print("REQUEST COMPLETED")
         else:
             print("REQUEST FAILED")
-    elif config["SETTINGS"]['update_type'] == 'baselines':
-        if update_baselines(config):
+    elif config["SETTINGS"]['update_type'] == 'baselines_compute':
+        if compute_baselines(config):
+            print("REQUEST COMPLETED")
+        else:
+            print("REQUEST FAILED")
+    elif config["SETTINGS"]['update_type'] == 'baselines_upload':
+        if upload_baselines(config):
             print("REQUEST COMPLETED")
         else:
             print("REQUEST FAILED")
