@@ -238,7 +238,9 @@ def compute_baselines(config):
                                                  '-o', config['SETTINGS']['ocr'],
                                                  '--output', os.path.join(config['SETTINGS']['working_directory'], "other"),
                                                  '--output-file', os.path.join(config['SETTINGS']['working_directory'], "changes.json"),
-                                                 '--extend-by', config['SETTINGS']['automatic_extension_by']],
+                                                 '--extend-by', config['SETTINGS']['automatic_extension_by'],
+                                                 '--ocr-start-offset', config['SETTINGS']['ocr_start_offset'],
+                                                 '--ocr-end-offset', config['SETTINGS']['ocr_end_offset']],
                                                  cwd=config['SETTINGS']['working_directory'])
 
         line_fixer_process.wait()
