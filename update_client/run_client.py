@@ -1,4 +1,5 @@
 import os
+import cv2
 import glob
 import json
 import shutil
@@ -10,6 +11,8 @@ import numpy as np
 
 from client_helper import join_url, log_in, check_request
 from pero_ocr.document_ocr.layout import PageLayout
+from pero_ocr.document_ocr.page_parser import PageParser
+
 
 def get_args():
     """
@@ -44,11 +47,9 @@ def create_work_folders(config):
     if not os.path.isdir(config['SETTINGS']['working_directory']):
         os.mkdir(config['SETTINGS']['working_directory'])
 
-    if not os.path.isdir(os.path.join(config['SETTINGS']['working_directory'], "other")):
-        os.mkdir(os.path.join(config['SETTINGS']['working_directory'], "other"))
-
     make_empty_folder(config, "xml")
     make_empty_folder(config, "img")
+    make_empty_folder(config, "other")
 
     print("SUCCESFUL")
 
@@ -189,7 +190,7 @@ def update_confidences(config):
         return True
 
 
-def update_baselines(config):
+def compute_baselines(config):
     with requests.Session() as session:
         print()
         print("LOGGING IN")
@@ -230,16 +231,45 @@ def update_baselines(config):
         print()
         print("LINE FIXER PROCESS")
         print("##############################################################")
-        parse_folder_process = subprocess.Popen(['python', config['SETTINGS']['line_fixer_path'],
+        line_fixer_process = subprocess.Popen(['python', config['SETTINGS']['line_fixer_path'],
+                                                 '-m', config['SETTINGS']['extension_mode'],
                                                  '-i', os.path.join(config['SETTINGS']['working_directory'], "img"),
                                                  '-x', os.path.join(config['SETTINGS']['working_directory'], "xml"),
                                                  '-o', config['SETTINGS']['ocr'],
                                                  '--output', os.path.join(config['SETTINGS']['working_directory'], "other"),
-                                                 '--output-file', os.path.join(config['SETTINGS']['working_directory'], "changes.json")],
+                                                 '--output-file', os.path.join(config['SETTINGS']['working_directory'], "changes.json"),
+                                                 '--extend-by', config['SETTINGS']['automatic_extension_by'],
+                                                 '--ocr-start-offset', config['SETTINGS']['ocr_start_offset'],
+                                                 '--ocr-end-offset', config['SETTINGS']['ocr_end_offset']],
+                                                 cwd=config['SETTINGS']['working_directory'])
+
+        line_fixer_process.wait()
+        print("SUCCESFUL")
+        print("##############################################################")
+
+        print()
+        print("PARSE FOLDER PROCESS")
+        print("##############################################################")
+        parse_folder_process = subprocess.Popen(['python', config['SETTINGS']['parse_folder_path'],
+                                                 '-c', config['SETTINGS']['parse_folder_config_path']],
                                                  cwd=config['SETTINGS']['working_directory'])
 
         parse_folder_process.wait()
         print("SUCCESFUL")
+        print("##############################################################")
+
+        return True
+
+
+def upload_baselines(config):
+    with requests.Session() as session:
+        print()
+        print("LOGGING IN")
+        print("##############################################################")
+        if not log_in(session, config['SETTINGS']['login'], config['SETTINGS']['password'],
+                        config['SERVER']['base_url'],
+                      config['SERVER']['authentification'], config['SERVER']['login_page']):
+            return False
         print("##############################################################")
 
         print()
@@ -352,6 +382,73 @@ def corrupt_baselines(config):
         return True
 
 
+def update_heights(config):
+    with requests.Session() as session:
+        print()
+        print("LOGGING IN")
+        print("##############################################################")
+        if not log_in(session, config['SETTINGS']['login'], config['SETTINGS']['password'], config['SERVER']['base_url'],
+                      config['SERVER']['authentification'], config['SERVER']['login_page']):
+            return False
+        print("##############################################################")
+
+        print()
+        print("CREATING WORK FOLDERS")
+        print("##############################################################")
+        create_work_folders(config)
+        print("##############################################################")
+
+        print()
+        print("GETTING PAGES IDS")
+        print("##############################################################")
+        done, page_uuids = get_document_ids(session, config['SERVER']['base_url'], config['SERVER']['document_ids'], config['SETTINGS']['document_id'])
+        if not done:
+            return False
+        print("##############################################################")
+
+        print()
+        print("DOWNLOADING XMLS")
+        print("##############################################################")
+        if not download_xmls(session, config['SERVER']['base_url'], config['SERVER'][config['SETTINGS']['type']], config['SETTINGS']['working_directory'], page_uuids):
+            return False
+        print("##############################################################")
+
+        print()
+        print("DOWNLOADING IMAGES")
+        print("##############################################################")
+        if not download_images(session, config['SERVER']['base_url'], config['SERVER']['download_images'], config['SETTINGS']['working_directory'], page_uuids):
+            return False
+        print("##############################################################")
+
+        print()
+        print("FIXING HEIGHTS")
+        print("##############################################################")
+        page_parser = PageParser(config)
+        xmls = os.listdir(os.path.join(config['SETTINGS']['working_directory'], "xml"))
+        height_fix = dict()
+        for xml in xmls:
+            page_layout = PageLayout(file=os.path.join(config['SETTINGS']['working_directory'], "xml", xml))
+            image = cv2.imread(os.path.join(config['SETTINGS']['working_directory'], "img", xml[:-4]+'.jpg'))
+            page_layout = page_parser.process_page(image, page_layout)
+            for line in page_layout.lines_iterator():
+                baseline = np.int_(line.baseline).tolist()
+                height_fix[line.id] = [baseline, np.int_(line.heights).tolist()]
+
+        with open(os.path.join(config['SETTINGS']['working_directory'], "height_fix.json"), 'w') as handle:
+            json.dump(height_fix, handle)
+        print("SUCCESFUL")
+        print("##############################################################")
+
+        print()
+        print("SENDING DATA TO SERVER")
+        print("##############################################################")
+        if not send_data(session, config['SETTINGS']['working_directory'], config['SERVER']['base_url'], config['SERVER']['update_path'], file='height_fix.json'):
+            return False
+        print("##############################################################")
+
+        return True
+
+
 def main():
     args = get_args()
 
@@ -373,8 +470,13 @@ def main():
             print("REQUEST COMPLETED")
         else:
             print("REQUEST FAILED")
-    elif config["SETTINGS"]['update_type'] == 'baselines':
-        if update_baselines(config):
+    elif config["SETTINGS"]['update_type'] == 'baselines_compute':
+        if compute_baselines(config):
+            print("REQUEST COMPLETED")
+        else:
+            print("REQUEST FAILED")
+    elif config["SETTINGS"]['update_type'] == 'baselines_upload':
+        if upload_baselines(config):
             print("REQUEST COMPLETED")
         else:
             print("REQUEST FAILED")
@@ -388,6 +490,12 @@ def main():
             print("REQUEST COMPLETED")
         else:
             print("REQUEST FAILED")
+    elif config["SETTINGS"]['update_type'] == 'update_heights':
+        if update_heights(config):
+            print("REQUEST COMPLETED")
+        else:
+            print("REQUEST FAILED")
+
 
 if __name__ == '__main__':
     main()

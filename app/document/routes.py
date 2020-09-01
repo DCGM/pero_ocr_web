@@ -182,7 +182,7 @@ def get_alto_xml(image_id):
 
     page_layout = get_page_layout(db_image, only_regions=False, only_annotated=False, alto=True)
     filename = "{}.xml".format(os.path.splitext(page_layout.id)[0])
-    return create_string_response(filename, page_layout.to_altoxml_string(), minetype='text/xml')
+    return create_string_response(filename, page_layout.to_altoxml_string(page_uuid=image_id), minetype='text/xml')
 
 
 @bp.route('/get_text/<string:image_id>')
