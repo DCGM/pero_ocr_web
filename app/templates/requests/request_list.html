@@ -64,10 +64,13 @@
             var state = table.state.loaded();
             $('#document_table thead tr:eq(1) th').each(function (i) {
                 var title = $(this).text();
-                var colSearch = state.columns[i].search;
-                console.log(i, title, colSearch)
+                try {
+                    input_value = state.columns[i].search.search;
+                } catch(err){
+                    console.log('ERROR')
+                }
                 if (title != 'Actions' && title != 'Page') {
-                    $(this).html('<input type="text" placeholder="Search"  value="' + colSearch.search + '"/>');
+                    $(this).html('<input type="text" placeholder="Search"  value="' + input_value + '"/>');
                     $('input', this).on('keyup change', function () {
                         if (table.column(i).search() !== this.value) {
                             table.column(i).search(this.value).draw();
