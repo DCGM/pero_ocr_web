@@ -20,7 +20,10 @@
       <ul class="navbar-nav ml-auto">
 	      {% if current_user.is_authenticated %}
               <li class="nav-item{%- if request.path == "/document/documents" %} active{% endif %}" >
-                  <a class="nav-link my-2" href="{{ url_for('document.documents') }}"><strong>Browser</strong></a>
+                  <a class="nav-link my-2" href="{{ url_for('document.documents') }}"><strong>Documents</strong></a>
+              </li>
+              <li class="nav-item{%- if request.path == "/document/requests" %} active{% endif %}" >
+                  <a class="nav-link my-2" href="{{ url_for('document.requests') }}"><strong>Requests</strong></a>
               </li>
                 <li class="nav-item dropdown">
                   <button class="btn dropdown-toggle nav-link my-2" type="button" style="font-size: 120%; background-color: #ccd1d8; border: 0px; color: black;padding-top: 6px !important; padding-bottom: 10px !important;" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
