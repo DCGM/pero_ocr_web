@@ -1,0 +1,86 @@
+{% extends "base/base.html" %}
+{% block content %}
+    <div class="container-fluid px-4">
+        <div class="row">
+            <div class="offset-xl-1 col-xl-10">
+                <table id="document_table" class="table table-hover">
+                    <thead>
+                    <tr role="row">
+                        <th scope="col">Created</th>
+                        <th scope="col">Document</th>
+                        <th scope="col">State</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">Models</th>
+                        <th scope="col">User</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for request in requests %}
+                        <tr data-document="{{ request.id }}">
+                            <td>{{ request.created_date }}</td>
+                            <td>{{ request.document.name }}</td>
+                            <td>{{ request.state.name }}</td>
+                            <td>{{ request.request_type.name }}</td>
+                            <td>{{ request.layout_detector.name }} {{ request.baseline.name }} {{ request.ocr.name }} {{ request.ocr.language_model }}</td>
+                            <td>{{ request.document.user.first_name }} {{ request.document.user.last_name }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block styles %}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="/static/css/loader.css?v=1.0">
+    <style>
+        .document-action-btn{
+            min-height: 25px;
+        }
+    </style>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script>
+    <script src="{{ url_for('static', filename='js/lazy_image.js') }}"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded",
+            function () {
+                manage_lazy_images(template_set_url_callback)
+            });
+        $(document).ready(function () {
+            // Setup table - add a text input to each footer cell
+            $('#document_table thead tr').clone(true).appendTo('#document_table thead');
+            table = $('#document_table').DataTable({
+                stateSave: true,
+                orderCellsTop: true,
+                fixedHeader: true
+            });
+
+            var state = table.state.loaded();
+            $('#document_table thead tr:eq(1) th').each(function (i) {
+                var title = $(this).text();
+                try {
+                    input_value = state.columns[i].search.search;
+                } catch(err){
+                    console.log('ERROR')
+                }
+                if (title != 'Actions' && title != 'Page') {
+                    $(this).html('<input type="text" placeholder="Search"  value="' + input_value + '"/>');
+                    $('input', this).on('keyup change', function () {
+                        if (table.column(i).search() !== this.value) {
+                            table.column(i).search(this.value).draw();
+                        }
+                    });
+                } else {
+                    $(this).html('');
+                }
+            });
+
+        });
+    </script>
+{% endblock %}

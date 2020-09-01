@@ -12,6 +12,8 @@ from app.document.general import create_document, check_and_remove_document, sav
     compute_scores_of_doc, skip_textline, get_line, is_granted_acces_for_line, create_string_response, \
     update_baselines
 
+from app.db.general import get_requests
+
 from app.db.general import get_user_documents, get_document_by_id, get_all_documents, get_previews_for_documents
 from app.document.forms import CreateDocumentForm
 from io import BytesIO
@@ -39,6 +41,20 @@ def documents():
             previews[d.id] = ""
 
     return render_template('document/documents.html', documents=user_documents, previews=previews)
+
+
+@bp.route('/requests')
+@login_required
+def requests():
+    if is_user_trusted(current_user):
+       user_documents = get_all_documents()
+    else:
+       user_documents = get_user_documents(current_user)
+
+    document_ids = [d.id for d in user_documents]
+    requests = get_requests(document_ids)
+
+    return render_template('requests/request_list.html', requests=requests)
 
 
 @bp.route('/new_document', methods=['GET', 'POST'])
