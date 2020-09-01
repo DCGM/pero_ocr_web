@@ -64,6 +64,7 @@
             var state = table.state.loaded();
             $('#document_table thead tr:eq(1) th').each(function (i) {
                 var title = $(this).text();
+                var input_value = '';
                 try {
                     input_value = state.columns[i].search.search;
                 } catch(err){
