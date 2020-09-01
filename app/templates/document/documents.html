@@ -229,10 +229,18 @@
         $(document).ready(function () {
             // Setup table - add a text input to each footer cell
             $('#document_table thead tr').clone(true).appendTo('#document_table thead');
+            var table = $('#document_table').DataTable({
+                stateSave: true,
+                orderCellsTop: true,
+                fixedHeader: true
+            });
+
+            var state = table.state.loaded();
             $('#document_table thead tr:eq(1) th').each(function (i) {
                 var title = $(this).text();
+                var colSearch = state.columns[i].search;
                 if (title != 'Actions' && title != 'Page') {
-                    $(this).html('<input type="text" placeholder="Search" />');
+                    $(this).html('<input type="text" placeholder="Search"  value="' + colSearch.search + '"/>');
                     $('input', this).on('keyup change', function () {
                         if (table.column(i).search() !== this.value) {
                             table.column(i).search(this.value).draw();
@@ -241,11 +249,6 @@
                 } else {
                     $(this).html('');
                 }
-            });
-
-            var table = $('#document_table').DataTable({
-                orderCellsTop: true,
-                fixedHeader: true
             });
         });
     </script>
