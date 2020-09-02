@@ -9,7 +9,7 @@ from flask import url_for, redirect, flash, jsonify
 from flask_login import login_required, current_user
 from app.ocr import bp
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_baseline_by_id, get_ocr_by_id, \
-                           get_language_model_by_id, get_text_line_by_id
+                           get_language_model_by_id, get_text_line_by_id, get_image_annotation_statistics_db
 from app.db import DocumentState, OCR, Document, Image, TextRegion, Baseline, LanguageModel, User
 from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
@@ -130,6 +130,25 @@ def start_ocr(document_id):
 
 # RESULTS PAGE
 ########################################################################################################################
+
+@bp.route('/get_image_annotation_statistics/<string:image_id>', methods=['GET'])
+@login_required
+def get_image_annotation_statistics(image_id):
+    try:
+        db_image = get_image_by_id(image_id)
+    except sqlalchemy.exc.StatementError:
+        pass
+    if db_image is None:
+        return "Image does not exist.", 404
+
+    if not is_granted_acces_for_page(image_id, current_user):
+        return "Access denied.", 401
+
+    line_count, annotated_count = get_image_annotation_statistics_db(image_id)
+    response = {'image_id': image_id, 'line_count': line_count, 'annotated_count': annotated_count}
+
+    return jsonify(response)
+
 
 @bp.route('/get_lines/<string:image_id>', methods=['GET'])
 @login_required

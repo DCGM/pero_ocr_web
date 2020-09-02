@@ -1,5 +1,7 @@
 from app import db_session
-from app.db import User, Document, Request, Image, TextRegion, TextLine, LayoutDetector, Baseline, OCR, LanguageModel
+from app.db import User, Document, Request, Image, TextRegion, TextLine, LayoutDetector, Baseline, OCR, LanguageModel, \
+    Annotation
+from sqlalchemy import distinct, func
 
 
 def save_user(user):
@@ -15,6 +17,12 @@ def get_user_by_email(email):
 
 def get_document_by_id(document_id):
     return Document.query.filter_by(id=document_id, deleted=False).first()
+
+
+def get_image_annotation_statistics_db(image_id):
+    line_count = db_session.query(func.count(TextLine.id)).join(TextRegion).join(Image).filter(Image.id == image_id).one()[0]
+    annotated_count = db_session.query(func.count(distinct(TextLine.id))).join(TextRegion).join(Image).join(Annotation).filter(Image.id == image_id).one()[0]
+    return line_count, annotated_count
 
 
 def get_all_documents():
