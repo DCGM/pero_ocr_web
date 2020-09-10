@@ -18,7 +18,7 @@ import datetime
 import pero_ocr.document_ocr.layout as layout
 import unicodedata
 from werkzeug.urls import url_quote
-from pero_ocr.line_engine.line_postprocessing import baseline_to_textline
+from pero_ocr.layout_engines.layout_helpers import baseline_to_textline
 
 
 def dhash(image, hash_size=8):
