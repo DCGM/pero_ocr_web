@@ -191,7 +191,7 @@ def get_lines(image_id):
                     'np_confidences':  line.np_confidences.tolist(),
                     'np_textregion_width':  [text_region.np_points[:, 0].min(), text_region.np_points[:, 0].max()],
                     'annotated': line.id in annotated_lines,
-                    'text': arabic_helper.label_form_to_visual_form(line.text) if line.text is not None else ""
+                    'text': arabic_helper.label_form_to_visual_form(line.text, reverse_after=False) if line.text is not None else ""
                 } for line in text_lines]
     return jsonify(lines_dict)
 
