@@ -3,6 +3,7 @@ import shutil
 import json
 import uuid
 import sqlalchemy
+from pero_ocr.document_ocr.arabic_helper import ArabicHelper
 from natsort import natsorted
 from flask import render_template, request, current_app, send_file
 from flask import url_for, redirect, flash, jsonify
@@ -178,6 +179,8 @@ def get_lines(image_id):
 
     annotated_lines = set(get_page_annotated_lines(image_id))
 
+    arabic_helper = ArabicHelper()
+
     for text_region in text_regions:
         text_lines = sorted(list(text_region.textlines), key=lambda x: x.order)
         lines_dict['lines'] += [{
@@ -188,7 +191,7 @@ def get_lines(image_id):
                     'np_confidences':  line.np_confidences.tolist(),
                     'np_textregion_width':  [text_region.np_points[:, 0].min(), text_region.np_points[:, 0].max()],
                     'annotated': line.id in annotated_lines,
-                    'text': line.text if line.text is not None else ""
+                    'text': arabic_helper.label_form_to_visual_form(line.text) if line.text is not None else ""
                 } for line in text_lines]
     return jsonify(lines_dict)
 
