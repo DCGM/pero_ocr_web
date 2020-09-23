@@ -183,16 +183,43 @@ def get_lines(image_id):
 
     for text_region in text_regions:
         text_lines = sorted(list(text_region.textlines), key=lambda x: x.order)
-        lines_dict['lines'] += [{
-                    'id': line.id,
-                    'np_points':  line.np_points.tolist(),
-                    'np_baseline':  line.np_baseline.tolist(),
-                    'np_heights':  line.np_heights.tolist(),
-                    'np_confidences':  line.np_confidences.tolist(),
-                    'np_textregion_width':  [text_region.np_points[:, 0].min(), text_region.np_points[:, 0].max()],
-                    'annotated': line.id in annotated_lines,
-                    'text': arabic_helper.label_form_to_visual_form(line.text, reverse_after=False) if line.text is not None else ""
-                } for line in text_lines]
+
+        for line in text_lines:
+            confidences = line.np_confidences.tolist()
+            
+            arabic = arabic_helper.is_arabic_line(line.text)
+            if arabic:
+                text = arabic_helper.label_form_to_visual_form(line.text, reverse_after=False) if line.text is not None else ""
+
+                new_confidences = []
+
+                ligatures_mapping = arabic_helper.ligatures_mapping(text)
+                for ligature_mapping in ligatures_mapping:
+                    confidence_sum = 0
+                    length = len(ligature_mapping)
+                    
+                    for confidence_index in ligature_mapping:
+                        confidence_sum += confidences[confidence_index]
+                    new_confidences.append(confidence_sum / length)
+                
+                confidences = new_confidences
+                            
+            else:
+                text = line.text if line.text is not None else ""
+
+
+            lines_dict['lines'].append({
+                        'id': line.id,
+                        'np_points':  line.np_points.tolist(),
+                        'np_baseline':  line.np_baseline.tolist(),
+                        'np_heights':  line.np_heights.tolist(),
+                        'np_confidences': confidences,
+                        'np_textregion_width':  [text_region.np_points[:, 0].min(), text_region.np_points[:, 0].max()],
+                        'annotated': line.id in annotated_lines,
+                        'text': text,
+                        'arabic': arabic
+                    })
+
     return jsonify(lines_dict)
 
 

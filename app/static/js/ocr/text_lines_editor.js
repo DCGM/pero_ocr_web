@@ -111,7 +111,7 @@ class TextLinesEditor
             let i = 0;
             for (let l of data['lines'])
             {
-                let line = new TextLine(l.id, l.text, l.np_confidences)
+                let line = new TextLine(l.id, l.text, l.np_confidences, l.arabic)
                 line.np_points = l.np_points;
                 line.annotated = l.annotated;
                 this.add_line_to_map(i, line);

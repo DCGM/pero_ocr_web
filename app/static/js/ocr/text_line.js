@@ -2,11 +2,12 @@
 
 class TextLine
 {
-    constructor(id, text, confidences)
+    constructor(id, text, confidences, arabic)
     {
         this.id = id;
         this.text = text;
         this.confidences = confidences;
+        this.arabic = arabic;
         this.edited = false;
         this.saved = false;
 
@@ -14,6 +15,11 @@ class TextLine
         this.container.setAttribute("class", "text-line");
         this.container.setAttribute("contentEditable", "true");
         this.container.style.lineHeight = "220%";
+
+        if (this.arabic)
+        {
+            this.container.style.direction = "rtl";
+        }
 
         this.container.addEventListener('keypress', this.press.bind(this));
         this.container.addEventListener('keydown', this.keydown.bind(this));
@@ -29,7 +35,7 @@ class TextLine
     set_line_confidences_to_text_line_element()
     {
         let chars = this.text.split("");
-        for (let i in this.confidences)
+        for (let i in chars)
         {
             let char_span = document.createElement('span');
             char_span.setAttribute("style", "font-size: 150%; background: " + rgbToHex(255, Math.floor(this.confidences[i] * 255),
