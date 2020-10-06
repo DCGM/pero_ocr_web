@@ -1,0 +1,75 @@
+{% extends "base/base.html" %}
+{% block content %}
+    <div class="container-fluid px-4">
+        <div class="row my-4">
+            <div class="col-sm-12">
+                <h3 class="text-left">{{ document.name }} - OCR Results</h3>
+                <h3 id="document-id" style="display: None">{{ document.id }}</h3>
+            </div>
+        </div>
+        <div class="row">
+            <div class="offset-xl-1 col-xl-10">
+                <table id="document_table" class="table table-hover">
+                    <thead>
+                    <tr role="row">
+                        <th scope="col">User</th>
+                        <th scope="col">Lines</th>
+                        <th scope="col">Changed lines</th>
+                        <th scope="col">Characters</th>
+                        <th scope="col">Changes</th>
+                        <th scope="col">Time</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for stat in statistics %}
+                        <tr data-document="{{ request.id }}">
+                            <td>{{ stat['user'] }}</td>
+                            <td>{{ stat['lines'] }}</td>
+                            <td>{{ stat['changed_lines'] }}</td>
+                            <td>{{ stat['characters'] }}</td>
+                            <td>{{ stat['changed_characters'] }}</td>
+                            <td>{{ stat['time'] }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block styles %}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="/static/css/loader.css?v=1.0">
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Setup table - add a text input to each footer cell
+            $('#document_table thead tr').clone(true).appendTo('#document_table thead');
+            table = $('#document_table').DataTable({
+                stateSave: true,
+                orderCellsTop: true,
+                fixedHeader: true
+            });
+            var state = table.state.loaded();
+            $('#document_table thead tr:eq(1) th').each(function (i) {
+                var input_value = '';
+                try {
+                    input_value = state.columns[i].search.search;
+                } catch(err){
+                    console.log('ERROR')
+                }
+                $(this).html('<input type="text" placeholder="Search"  value="' + input_value + '"/>');
+                $('input', this).on('keyup change', function () {
+                    if (table.column(i).search() !== this.value) {
+                        table.column(i).search(this.value).draw();
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

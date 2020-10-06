@@ -16,13 +16,13 @@ from app.db.general import get_requests
 
 from app.db.general import get_user_documents, get_document_by_id, get_all_documents, get_previews_for_documents
 from app.document.forms import CreateDocumentForm
+from app.document.annotation_statistics import get_document_annotation_statistics
 from io import BytesIO
 import dateutil.parser
 import zipfile
 import time
 import os
 import json
-
 
 
 @bp.route('/documents')
@@ -41,6 +41,19 @@ def documents():
             previews[d.id] = ""
 
     return render_template('document/documents.html', documents=user_documents, previews=previews)
+
+
+@bp.route('/annotation_statistics/<string:document_id>')
+@login_required
+def annotation_statistics(document_id):
+    if not (is_user_owner_or_collaborator(document_id, current_user) or is_user_trusted(current_user)):
+        flash(u'You do not have sufficient rights to view statistics for this document!', 'danger')
+        return redirect(url_for('main.index'))
+
+    document = get_document_by_id(document_id)
+    statistics = get_document_annotation_statistics(document)
+
+    return render_template('document/annotation_statistics.html', statistics=statistics, document=document)
 
 
 @bp.route('/requests')
