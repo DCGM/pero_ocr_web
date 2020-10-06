@@ -178,6 +178,13 @@
                                         title="Download pages">
                                         <ion-icon name="document"></ion-icon>
                                     </a>
+                                    <a  class="document-action-btn btn btn-secondary text-white"
+                                        href="{{ url_for('document.annotation_statistics', document_id=document.id) }}"
+                                        data-toggle="tooltip"
+                                        data-placement="right"
+                                        title="Statistics">
+                                        <ion-icon name="stats"></ion-icon>
+                                    </a>
                                     <a  class="document-action-btn btn btn-secondary text-white revert-OCR-button"
                                         data-toggle="tooltip"
                                         data-placement="right"
