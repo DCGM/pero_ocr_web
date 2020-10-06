@@ -10,7 +10,7 @@ def filter_document(query, document_db):
     return query
 
 
-def get_document_annotation_statistics(document_db=None, activity_timeout=30):
+def get_document_annotation_statistics(document_db=None, activity_timeout=120):
     user_lines = defaultdict(set)
     user_changed_lines = defaultdict(set)
     user_times = defaultdict(list)
@@ -61,8 +61,9 @@ def get_document_annotation_statistics(document_db=None, activity_timeout=30):
             delta = (t - last_t).total_seconds()
             if delta < activity_timeout:
                 user_activity_duration += delta
-            else:
-                user_activity_duration += activity_timeout
+            #else:
+            #    user_activity_duration += activity_timeout
+            last_t = t
         user_times[user_id] = user_activity_duration
         total_activity_time += user_activity_duration
 
