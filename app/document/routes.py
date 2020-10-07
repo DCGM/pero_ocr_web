@@ -14,9 +14,9 @@ from app.document.general import create_document, check_and_remove_document, sav
 
 from app.db.general import get_requests
 
-from app.db.general import get_user_documents, get_document_by_id, get_all_documents, get_previews_for_documents
+from app.db.general import get_user_documents, get_document_by_id, get_user_by_email, get_all_documents, get_previews_for_documents
 from app.document.forms import CreateDocumentForm
-from app.document.annotation_statistics import get_document_annotation_statistics
+from app.document.annotation_statistics import get_document_annotation_statistics, get_user_annotation_statistics
 from io import BytesIO
 import dateutil.parser
 import zipfile
@@ -53,7 +53,7 @@ def annotation_statistics(document_id):
     document = get_document_by_id(document_id)
     statistics = get_document_annotation_statistics(document)
 
-    return render_template('document/annotation_statistics.html', statistics=statistics, document=document)
+    return render_template('document/annotation_statistics.html', statistics=statistics, header_name=document.name)
 
 
 @bp.route('/annotation_statistics')
@@ -65,7 +65,42 @@ def annotation_statistics_global():
 
     statistics = get_document_annotation_statistics()
 
-    return render_template('document/annotation_statistics.html', statistics=statistics, document=None)
+    return render_template('document/annotation_statistics.html', statistics=statistics, header_name='All documents')
+
+
+@bp.route('/user_annotation_statistics/<string:user_email>')
+@login_required
+def user_annotation_statistics(user_email):
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights to view statistics for other users!', 'danger')
+        return redirect(url_for('main.index'))
+
+    user = get_user_by_email(user_email)
+    statistics = get_user_annotation_statistics(user)
+
+    return render_template('document/annotation_statistics.html',
+                           statistics=statistics, header_name=f'{user.first_name} {user.last_name}')
+
+
+@bp.route('/user_annotation_statistics')
+@login_required
+def user_annotation_statistics_current_user():
+    statistics = get_user_annotation_statistics(current_user)
+
+    return render_template('document/annotation_statistics.html',
+                           statistics=statistics, header_name=f'{current_user.first_name} {current_user.last_name}')
+
+
+@bp.route('/user_annotation_statistics_global')
+@login_required
+def user_annotation_statistics_global():
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights to view statistics for other users!', 'danger')
+        return redirect(url_for('main.index'))
+
+    statistics = get_user_annotation_statistics()
+
+    return render_template('document/annotation_statistics.html', statistics=statistics, header_name='All users')
 
 
 @bp.route('/requests')

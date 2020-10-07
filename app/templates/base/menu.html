@@ -35,9 +35,15 @@
                     <a class="dropdown-item" target="_blank" href="https://youtu.be/mbB4svRmfqA">OCR Editor</a>
                   </div>
                 </li>
-              <li class="nav-item">
-                  <a class="nav-link my-2" href="{{ url_for('auth.logout') }}"><strong>Logout</strong></a>
-              </li>
+              <li class="nav-item dropdown">
+                  <button class="btn dropdown-toggle nav-link my-2" type="button" style="font-size: 120%; background-color: #ccd1d8; border: 0px; color: black;padding-top: 6px !important; padding-bottom: 10px !important;" id="dropdownUserButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <strong>User</strong>
+                  </button>
+                  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="right: 0; left: auto;">
+                    <a class="dropdown-item" href="{{ url_for('document.user_annotation_statistics_current_user') }}">Statistics</a>
+                    <a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a>
+                  </div>
+                </li>
           {% elif request.path == '/' or request.path == '/index' %}
               <li class="nav-item">
               {{ wtf.quick_form(form_login, action= url_for('auth.login'), extra_classes="form-inline my-2 my-lg-0 login-form") }}
