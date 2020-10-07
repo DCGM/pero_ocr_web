@@ -56,6 +56,18 @@ def annotation_statistics(document_id):
     return render_template('document/annotation_statistics.html', statistics=statistics, document=document)
 
 
+@bp.route('/annotation_statistics')
+@login_required
+def annotation_statistics_global():
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights to view global statistics!', 'danger')
+        return redirect(url_for('main.index'))
+
+    statistics = get_document_annotation_statistics()
+
+    return render_template('document/annotation_statistics.html', statistics=statistics, document=None)
+
+
 @bp.route('/requests')
 @login_required
 def requests():
