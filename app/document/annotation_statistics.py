@@ -73,11 +73,7 @@ def get_document_annotation_statistics(document_db=None, activity_timeout=120):
     all_stats = []
     for user_id in user_lines:
         user_db = User.query.get(user_id)
-        all_stats.append({or t in times[1:]:
-            delta = (t - last_t).total_seconds()
-            if delta < activity_timeout:
-                user_activity_duration += delta
-            last_t = t
+        all_stats.append({
             'user': f'{user_db.first_name} {user_db.last_name}',
             'lines': user_lines[user_id],
             'changed_lines': user_changed_lines[user_id],
