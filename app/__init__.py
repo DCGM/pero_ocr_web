@@ -64,6 +64,10 @@ def create_app():
     from app.ocr import bp as ocr_bp
     app.register_blueprint(ocr_bp, url_prefix='/ocr')
 
+    @app.teardown_appcontext
+    def shutdown_session(exception=None):
+        db_session.remove()
+
     return app
 
 
