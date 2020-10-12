@@ -12,6 +12,8 @@ def create_user(email, password, first_name, last_name, institution):
 def check_user(email, password):
     user = get_user_by_email(email)
 
+    print('LOGIN CHECK_USER', email)
+
     if not user or not user.check_password(password):
         return None
     return user
