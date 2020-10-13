@@ -25,19 +25,23 @@ def main():
                     time.sleep(timeout)
 
                 while True:
+                    nothing = True
                     print()
                     print("CHECK LAYOUT REQUEST")
-                    if check_and_process_layout_request(layout_config):
+                    if check_and_process_layout_request(layout_config, session):
                         print("LAYOUT REQUEST COMPLETED")
+                        nothing = False
                     else:
                         print("NO LAYOUT REQUEST")
                     print()
                     print("CHECK OCR REQUEST")
-                    if check_and_process_ocr_request(ocr_config):
+                    if check_and_process_ocr_request(ocr_config, session):
                         print("OCR REQUEST COMPLETED")
+                        nothing = False
                     else:
                         print("NO OCR REQUEST")
-                        time.sleep(2)
+                    if nothing:
+                        time.sleep(timeout)
         except:
             print('ERROR exception')
             traceback.print_exc()

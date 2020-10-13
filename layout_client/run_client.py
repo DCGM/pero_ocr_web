@@ -16,10 +16,6 @@ from client_helper import add_log_to_request
 
 
 def check_and_process_layout_request(config, session):
-    if not log_in(session, config['SETTINGS']['login'], config['SETTINGS']['password'], config['SERVER']['base_url'],
-                  config['SERVER']['authentification'], config['SERVER']['login_page']):
-        return False
-
     base_url = config['SERVER']['base_url']
     layout_analysis_get_request_route = config['SERVER']['layout_analysis_get_request_route']
     layout_analysis_change_layout_request_and_document_state_on_success_route = config['SERVER']['layout_analysis_change_layout_request_and_document_state_on_success_route']
