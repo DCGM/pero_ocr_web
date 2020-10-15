@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 import uuid
 import datetime
 import numpy as np
+import Levenshtein
 
 
 class DocumentState(enum.Enum):
@@ -35,8 +36,9 @@ class Document(Base):
     __tablename__ = 'documents'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(100))
-    state = Column(Enum(DocumentState))
+    state = Column(Enum(DocumentState), index=True)
     deleted = Column(Boolean(), default=False)
+    #preview_image_id = Column(GUID(), ForeignKey('documents.id'), nullable=True, index=True)
 
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", back_populates="documents")
@@ -54,8 +56,8 @@ class Image(Base):
     height = Column(Integer())
     deleted = Column(Boolean(), default=False)
     imagehash = Column(String())
+    document_id = Column(GUID(), ForeignKey('documents.id'), index=True)
 
-    document_id = Column(GUID(), ForeignKey('documents.id'))
     document = relationship('Document', back_populates="images")
     textregions = relationship('TextRegion', back_populates="image", lazy='dynamic')
 
@@ -63,8 +65,8 @@ class Image(Base):
 class UserDocument(Base):
     __tablename__ = 'userdocuments'
     id = Column(Integer(), primary_key=True)
-    user_id = Column(Integer(), ForeignKey('users.id'), nullable=False)
-    document_id = Column(GUID(), ForeignKey('documents.id'), nullable=False)
+    user_id = Column(Integer(), ForeignKey('users.id'), nullable=False, index=True)
+    document_id = Column(GUID(), ForeignKey('documents.id'), nullable=False, index=True)
 
 
 class Request(Base):
@@ -74,11 +76,11 @@ class Request(Base):
     baseline_id = Column(GUID(), ForeignKey('baseline.id'))
     ocr_id = Column(GUID(), ForeignKey('ocr.id'))
     language_model_id = Column(GUID(), ForeignKey('language_model.id'))
-    created_date = Column(DateTime, default=datetime.datetime.utcnow)
+    created_date = Column(DateTime, default=datetime.datetime.utcnow, index=True)
     request_type = Column(Enum(RequestType))
     state = Column(Enum(RequestState))
     log = Column(String())
-    document_id = Column(GUID(), ForeignKey('documents.id'))
+    document_id = Column(GUID(), ForeignKey('documents.id'), index=True)
 
     document = relationship('Document', back_populates="requests")
     ocr = relationship('OCR')
@@ -93,11 +95,10 @@ class TextRegion(Base):
     order = Column(Integer())
     points = Column(String())
     deleted = Column(Boolean(), default=False)
+    image_id = Column(GUID(), ForeignKey('images.id'), index=True)
 
-    image_id = Column(GUID(), ForeignKey('images.id'))
     image = relationship('Image', back_populates="textregions")
     textlines = relationship('TextLine')
-
 
     @property
     def np_points(self):
@@ -111,7 +112,7 @@ class TextRegion(Base):
 class TextLine(Base):
     __tablename__ = 'textlines'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    region_id = Column(GUID(), ForeignKey('textregions.id'))
+    region_id = Column(GUID(), ForeignKey('textregions.id'), index=True)
     order = Column(Integer())
     points = Column(String())
     baseline = Column(String())
@@ -119,11 +120,10 @@ class TextLine(Base):
     confidences = Column(String())
     deleted = Column(Boolean())
     text = Column(String())
-    score = Column(Float())
+    score = Column(Float(), index=True)
 
     region = relationship('TextRegion')
     annotations = relationship('Annotation', cascade="all, delete-orphan")
-
 
     @property
     def np_points(self):
@@ -158,15 +158,24 @@ class TextLine(Base):
         self.confidences = confidences_to_str(cs)
 
 
+def init_character_change_count(context):
+    return Levenshtein.distance(context.get_current_parameters()['text_original'], context.get_current_parameters()['text_edited'])
+
+def init_character_count(context):
+    return len(context.get_current_parameters()['text_edited'])
+
+
 class Annotation(Base):
     __tablename__ = 'annotations'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    text_line_id = Column(GUID(), ForeignKey('textlines.id'))
+    text_line_id = Column(GUID(), ForeignKey('textlines.id'), index=True)
     text_original = Column(String())
     text_edited = Column(String())
-    created_date = Column(DateTime, default=datetime.datetime.utcnow)
+    created_date = Column(DateTime, default=datetime.datetime.utcnow, index=True)
     deleted = Column(Boolean())
-    user_id = Column(Integer, ForeignKey('users.id'))
+    user_id = Column(Integer, ForeignKey('users.id'), index=True)
+    character_change_count = Column(Integer, default=init_character_change_count)
+    character_count = Column(Integer, default=init_character_count)
 
     text_line = relationship('TextLine')
     user = relationship('User')

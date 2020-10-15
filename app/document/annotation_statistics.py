@@ -1,7 +1,9 @@
-from app import db_session
+from app import db_session, engine
 from app.db import Document, Image, TextLine, Annotation, User, TextRegion
 from collections import defaultdict
 from Levenshtein import distance
+from sqlalchemy import func
+from sqlalchemy.sql import select, and_
 
 
 def filter_document(query, document_db):
@@ -10,52 +12,52 @@ def filter_document(query, document_db):
     return query
 
 
+def fill_stats():
+    annotations = db_session.query(Annotation).filter(Annotation.character_change_count == None)
+    for annotation_db in annotations:
+        annotation_db.character_change_count = distance(annotation_db.text_edited, annotation_db.text_original)
+    db_session.commit()
+    annotations = db_session.query(Annotation).filter(Annotation.character_count == None)
+    for annotation_db in annotations:
+        annotation_db.character_count = len(annotation_db.text_edited)
+    db_session.commit()
+
 def filter_user(query, user_db):
     if user_db is not None:
         query = query.filter(Annotation.user_id == user_db.id)
     return query
 
-
-def get_document_annotation_statistics(document_db=None, activity_timeout=120):
+def compute_statistics(results, activity_timeout):
     user_lines = defaultdict(set)
     user_changed_lines = defaultdict(set)
     user_times = defaultdict(list)
     user_changed_chars = defaultdict(int)
+    line_lengths = dict()
 
-    annotations = db_session.query(Annotation).join(TextLine).join(TextRegion).join(Image)
-    annotations = filter_document(annotations, document_db)
-    for annotation_db in annotations:
-        user_id = annotation_db.user_id
-        user_times[user_id].append(annotation_db.created_date)
-        user_lines[user_id].add(annotation_db.text_line_id)
-        if annotation_db.text_original != annotation_db.text_edited:
-            user_changed_lines[user_id].add(annotation_db.text_line_id)
-            user_changed_chars[user_id] += distance(annotation_db.text_edited, annotation_db.text_original)
+    for user_id, text_line_id, created_date, character_change_count, character_count in results:
+        user_id = user_id
+        user_times[user_id].append(created_date)
+        user_lines[user_id].add(text_line_id)
+        line_lengths[text_line_id] = character_count
+        if character_change_count != 0:
+            user_changed_lines[user_id].add(text_line_id)
+            user_changed_chars[user_id] += character_change_count
 
-    total_lines = set()
+    total_characters = sum(line_lengths.values())
+    user_chars = dict()
+    for user_id in user_lines:
+        user_chars[user_id] = sum([line_lengths[line_id] for line_id in user_lines[user_id]])
+
+    total_lines = len(line_lengths)
     total_changed_lines = set()
     total_changed_chars = 0
     for user_id in user_lines:
-        total_lines |= user_lines[user_id]
         total_changed_lines |= user_changed_lines[user_id]
         total_changed_chars += user_changed_chars[user_id]
-    total_lines = len(total_lines)
     total_changed_lines = len(total_changed_lines)
 
     user_lines = {user_id: len(user_lines[user_id]) for user_id in user_lines}
     user_changed_lines = {user_id: len(user_changed_lines[user_id]) for user_id in user_changed_lines}
-
-    total_characters = 0
-    used_ids = set()
-    user_chars = defaultdict(int)
-    for user_id in user_lines:
-        user_texts = db_session.query(TextLine.id, TextLine.text).join(Annotation).join(TextRegion).join(Image).distinct()
-        user_texts = filter_document(user_texts, document_db).filter(Annotation.user_id == user_id)
-        for id, text in user_texts:
-            user_chars[user_id] += len(text)
-            if id not in used_ids:
-                total_characters += len(text)
-                used_ids.add(id)
 
     total_activity_time = 0
     for user_id in user_times:
@@ -69,6 +71,27 @@ def get_document_annotation_statistics(document_db=None, activity_timeout=120):
             last_t = t
         user_times[user_id] = user_activity_duration
         total_activity_time += user_activity_duration
+
+    return user_lines, user_changed_lines, user_chars, user_changed_chars, user_times, total_lines, total_changed_lines, total_characters, total_changed_chars, total_activity_time
+
+
+def get_document_annotation_statistics(document_db=None, activity_timeout=120):
+    annotations = db_session.query(Annotation).with_entities(Annotation.user_id, Annotation.text_line_id, Annotation.created_date, Annotation.character_change_count, Annotation.character_count)
+    annotations = annotations.join(TextLine).join(TextRegion).join(Image)
+    annotations = filter_document(annotations, document_db).order_by(Annotation.created_date)
+
+    conn = engine.connect()
+    sel = select([Annotation.user_id, Annotation.text_line_id, Annotation.created_date, Annotation.character_change_count, Annotation.character_count])
+    if document_db:
+        sel = sel.where(and_(
+            Annotation.text_line_id == TextLine.id,
+            TextLine.region_id == TextRegion.id,
+            TextRegion.image_id == Image.id,
+            Image.document_id == document_db.id))
+    results = conn.execute(sel)
+
+    user_lines, user_changed_lines, user_chars, user_changed_chars, user_times, total_lines, total_changed_lines, total_characters, total_changed_chars, total_activity_time = \
+        compute_statistics(results, activity_timeout)
 
     all_stats = []
     for user_id in user_lines:
@@ -100,61 +123,25 @@ def get_user_annotation_statistics(user_db=None, activity_timeout=120):
     document_times = defaultdict(list)
     document_changed_chars = defaultdict(int)
 
-    annotated_documents = db_session.query(Document).join(Image).join(TextRegion).join(TextLine).join(Annotation)
-    annotated_documents = filter_user(annotated_documents, user_db).distinct().all()
+    conn = engine.connect()
+    sel = select([Document.id, Annotation.text_line_id, Annotation.created_date, Annotation.character_change_count, Annotation.character_count])
+    if user_db:
+        sel = sel.where(and_(
+            Annotation.text_line_id == TextLine.id,
+            TextLine.region_id == TextRegion.id,
+            TextRegion.image_id == Image.id,
+            Image.document_id == Document.id,
+            Annotation.user_id == user_db.id))
+    else:
+        sel = sel.where(and_(
+            Annotation.text_line_id == TextLine.id,
+            TextLine.region_id == TextRegion.id,
+            TextRegion.image_id == Image.id,
+            Image.document_id == Document.id))
+    results = conn.execute(sel)
 
-    for document_db in annotated_documents:
-        document_id = document_db.id
-        annotations = db_session.query(Annotation).join(TextLine).join(TextRegion).join(Image)
-        annotations = filter_user(annotations, user_db)
-        annotations = filter_document(annotations, document_db)
-        for annotation_db in annotations:
-            document_times[document_id].append(annotation_db.created_date)
-            document_lines[document_id].add(annotation_db.text_line_id)
-            if annotation_db.text_original != annotation_db.text_edited:
-                document_changed_lines[document_id].add(annotation_db.text_line_id)
-                document_changed_chars[document_id] += distance(annotation_db.text_edited, annotation_db.text_original)
-
-    total_lines = set()
-    total_changed_lines = set()
-    total_changed_chars = 0
-    for document_id in document_lines:
-        total_lines |= document_lines[document_id]
-        total_changed_lines |= document_changed_lines[document_id]
-        total_changed_chars += document_changed_chars[document_id]
-    total_lines = len(total_lines)
-    total_changed_lines = len(total_changed_lines)
-
-    document_lines = {document_id: len(document_lines[document_id]) for document_id in document_lines}
-    document_changed_lines = {document_id: len(document_changed_lines[document_id]) for document_id in document_changed_lines}
-
-
-    total_characters = 0
-    used_ids = set()
-    document_chars = defaultdict(int)
-    for document_id in document_lines:
-        document_texts = db_session.query(TextLine.id, TextLine.text).join(Annotation).join(TextRegion).join(
-            Image).join(Document).filter(Document.id == document_id).distinct()
-        document_texts = filter_user(document_texts, user_db)
-        for id, text in document_texts:
-            l = len(text)
-            document_chars[document_id] += l
-            if id not in used_ids:
-                total_characters += l
-                used_ids.add(id)
-
-    total_activity_time = 0
-    for document_id in document_times:
-        times = sorted(document_times[document_id])
-        last_t = times[0]
-        document_activity_duration = 0
-        for t in times[1:]:
-            delta = (t - last_t).total_seconds()
-            if delta < activity_timeout:
-                document_activity_duration += delta
-            last_t = t
-        document_times[document_id] = document_activity_duration
-        total_activity_time += document_activity_duration
+    document_lines, document_changed_lines, document_chars, document_changed_chars, document_times, total_lines, total_changed_lines, total_characters, total_changed_chars, total_activity_time = \
+        compute_statistics(results, activity_timeout)
 
     all_stats = []
     for document_id in document_lines:
@@ -178,9 +165,3 @@ def get_user_annotation_statistics(user_db=None, activity_timeout=120):
     })
 
     return all_stats
-
-
-
-
-
-
