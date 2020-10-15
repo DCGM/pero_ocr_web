@@ -13,14 +13,17 @@ def filter_document(query, document_db):
 
 
 def fill_stats():
+    print('query')
     annotations = db_session.query(Annotation).filter(Annotation.character_change_count == None)
+    print('start')
     for annotation_db in annotations:
         annotation_db.character_change_count = distance(annotation_db.text_edited, annotation_db.text_original)
-    db_session.commit()
-    annotations = db_session.query(Annotation).filter(Annotation.character_count == None)
-    for annotation_db in annotations:
         annotation_db.character_count = len(annotation_db.text_edited)
+    print('commit')
     db_session.commit()
+    print('done')
+    #annotations = db_session.query(Annotation).filter(Annotation.character_count == None)
+    #for annotation_db in annotations:
 
 def filter_user(query, user_db):
     if user_db is not None:
@@ -80,18 +83,17 @@ def get_document_annotation_statistics(document_db=None, activity_timeout=120):
     annotations = annotations.join(TextLine).join(TextRegion).join(Image)
     annotations = filter_document(annotations, document_db).order_by(Annotation.created_date)
 
-    conn = engine.connect()
-    sel = select([Annotation.user_id, Annotation.text_line_id, Annotation.created_date, Annotation.character_change_count, Annotation.character_count])
-    if document_db:
-        sel = sel.where(and_(
-            Annotation.text_line_id == TextLine.id,
-            TextLine.region_id == TextRegion.id,
-            TextRegion.image_id == Image.id,
-            Image.document_id == document_db.id))
-    results = conn.execute(sel)
-
-    user_lines, user_changed_lines, user_chars, user_changed_chars, user_times, total_lines, total_changed_lines, total_characters, total_changed_chars, total_activity_time = \
-        compute_statistics(results, activity_timeout)
+    with engine.connect() as conn:
+        sel = select([Annotation.user_id, Annotation.text_line_id, Annotation.created_date, Annotation.character_change_count, Annotation.character_count])
+        if document_db:
+            sel = sel.where(and_(
+                Annotation.text_line_id == TextLine.id,
+                TextLine.region_id == TextRegion.id,
+                TextRegion.image_id == Image.id,
+                Image.document_id == document_db.id))
+        results = conn.execute(sel)
+        user_lines, user_changed_lines, user_chars, user_changed_chars, user_times, total_lines, total_changed_lines, total_characters, total_changed_chars, total_activity_time = \
+            compute_statistics(results, activity_timeout)
 
     all_stats = []
     for user_id in user_lines:
@@ -123,25 +125,25 @@ def get_user_annotation_statistics(user_db=None, activity_timeout=120):
     document_times = defaultdict(list)
     document_changed_chars = defaultdict(int)
 
-    conn = engine.connect()
-    sel = select([Document.id, Annotation.text_line_id, Annotation.created_date, Annotation.character_change_count, Annotation.character_count])
-    if user_db:
-        sel = sel.where(and_(
-            Annotation.text_line_id == TextLine.id,
-            TextLine.region_id == TextRegion.id,
-            TextRegion.image_id == Image.id,
-            Image.document_id == Document.id,
-            Annotation.user_id == user_db.id))
-    else:
-        sel = sel.where(and_(
-            Annotation.text_line_id == TextLine.id,
-            TextLine.region_id == TextRegion.id,
-            TextRegion.image_id == Image.id,
-            Image.document_id == Document.id))
-    results = conn.execute(sel)
+    with engine.connect() as conn:
+        sel = select([Document.id, Annotation.text_line_id, Annotation.created_date, Annotation.character_change_count, Annotation.character_count])
+        if user_db:
+            sel = sel.where(and_(
+                Annotation.text_line_id == TextLine.id,
+                TextLine.region_id == TextRegion.id,
+                TextRegion.image_id == Image.id,
+                Image.document_id == Document.id,
+                Annotation.user_id == user_db.id))
+        else:
+            sel = sel.where(and_(
+                Annotation.text_line_id == TextLine.id,
+                TextLine.region_id == TextRegion.id,
+                TextRegion.image_id == Image.id,
+                Image.document_id == Document.id))
+        results = conn.execute(sel)
 
-    document_lines, document_changed_lines, document_chars, document_changed_chars, document_times, total_lines, total_changed_lines, total_characters, total_changed_chars, total_activity_time = \
-        compute_statistics(results, activity_timeout)
+        document_lines, document_changed_lines, document_chars, document_changed_chars, document_times, total_lines, total_changed_lines, total_characters, total_changed_chars, total_activity_time = \
+            compute_statistics(results, activity_timeout)
 
     all_stats = []
     for document_id in document_lines:
