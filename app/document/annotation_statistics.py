@@ -2,7 +2,6 @@ from app import db_session, engine
 from app.db import Document, Image, TextLine, Annotation, User, TextRegion
 from collections import defaultdict
 from Levenshtein import distance
-from sqlalchemy import func
 from sqlalchemy.sql import select, and_
 
 
@@ -22,13 +21,13 @@ def fill_stats():
     print('commit')
     db_session.commit()
     print('done')
-    #annotations = db_session.query(Annotation).filter(Annotation.character_count == None)
-    #for annotation_db in annotations:
+
 
 def filter_user(query, user_db):
     if user_db is not None:
         query = query.filter(Annotation.user_id == user_db.id)
     return query
+
 
 def compute_statistics(results, activity_timeout):
     user_lines = defaultdict(set)
@@ -79,10 +78,6 @@ def compute_statistics(results, activity_timeout):
 
 
 def get_document_annotation_statistics(document_db=None, activity_timeout=120):
-    annotations = db_session.query(Annotation).with_entities(Annotation.user_id, Annotation.text_line_id, Annotation.created_date, Annotation.character_change_count, Annotation.character_count)
-    annotations = annotations.join(TextLine).join(TextRegion).join(Image)
-    annotations = filter_document(annotations, document_db).order_by(Annotation.created_date)
-
     with engine.connect() as conn:
         sel = select([Annotation.user_id, Annotation.text_line_id, Annotation.created_date, Annotation.character_change_count, Annotation.character_count])
         if document_db:
@@ -120,11 +115,6 @@ def get_document_annotation_statistics(document_db=None, activity_timeout=120):
 
 
 def get_user_annotation_statistics(user_db=None, activity_timeout=120):
-    document_lines = defaultdict(set)
-    document_changed_lines = defaultdict(set)
-    document_times = defaultdict(list)
-    document_changed_chars = defaultdict(int)
-
     with engine.connect() as conn:
         sel = select([Document.id, Annotation.text_line_id, Annotation.created_date, Annotation.character_change_count, Annotation.character_count])
         if user_db:
