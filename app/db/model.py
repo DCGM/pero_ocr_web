@@ -35,7 +35,7 @@ class RequestType(enum.Enum):
 class Document(Base):
     __tablename__ = 'documents'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    name = Column(String(100))
+    name = Column(String())
     state = Column(Enum(DocumentState), index=True)
     deleted = Column(Boolean(), default=False)
     #preview_image_id = Column(GUID(), ForeignKey('documents.id'), nullable=True, index=True)
@@ -50,8 +50,8 @@ class Document(Base):
 class Image(Base):
     __tablename__ = 'images'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    filename = Column(String(100))
-    path = Column(String(255))
+    filename = Column(String())
+    path = Column(String())
     width = Column(Integer())
     height = Column(Integer())
     deleted = Column(Boolean(), default=False)

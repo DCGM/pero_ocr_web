@@ -11,7 +11,7 @@ from config import *
 from .db import Base
 from app.db.user import User
 
-engine = create_engine(database_url, convert_unicode=True, connect_args={'check_same_thread': False})
+engine = create_engine(database_url, convert_unicode=True, connect_args={})
 
 db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=False,
@@ -26,7 +26,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     init_db()
-    add_delete_user_for_deleted_documents()
+    #add_delete_user_for_deleted_documents()
     Bootstrap(app)
     Dropzone(app)
 
