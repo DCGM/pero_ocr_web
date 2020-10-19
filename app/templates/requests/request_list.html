@@ -18,10 +18,14 @@
                     {% for request in requests %}
                         <tr data-document="{{ request.id }}">
                             <td>{{ request.created_date }}</td>
-                            <td>{{ request.document.name }}</td>
+                            {% if  request.ocr.name %}
+                                <td><a href="{{ url_for('ocr.show_results', document_id=request.document.id) }}">{{ request.document.name }}</a></td>
+                            {% else %}
+                                <td><a href="{{ url_for('layout_analysis.select_layout', document_id=request.document.id) }}">{{ request.document.name }}</a></td>
+                            {% endif %}
                             <td>{{ request.state.name }}</td>
                             <td>{{ request.request_type.name }}</td>
-                            <td>{{ request.layout_detector.name }} {{ request.baseline.name }} {{ request.ocr.name }} {{ request.ocr.language_model }}</td>
+                            <td>{{ request.layout_detector.name if request.layout_detector.name else "---"}}, {{ request.baseline.name if request.baseline.name else "---"}}, {{ request.ocr.name if request.ocr.name else "---" }}, {{ request.language_model.name if request.language_model.name else "---" }}</td>
                             <td>{{ request.document.user.first_name }} {{ request.document.user.last_name }}</td>
                         </tr>
                     {% endfor %}
