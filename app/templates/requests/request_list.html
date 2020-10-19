@@ -21,7 +21,7 @@
                             {% if  request.ocr.name %}
                                 <td><a href="{{ url_for('ocr.show_results', document_id=request.document.id) }}">{{ request.document.name }}</a></td>
                             {% else %}
-                                <td><a href="{{ url_for('layout_analysis.select_layout', document_id=request.document.id) }}">{{ request.document.name }}</a></td>
+                                <td><a href="{{ url_for('layout_analysis.show_results', document_id=request.document.id) }}">{{ request.document.name }}</a></td>
                             {% endif %}
                             <td>{{ request.state.name }}</td>
                             <td>{{ request.request_type.name }}</td>
