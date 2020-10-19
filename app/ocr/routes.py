@@ -195,9 +195,6 @@ def get_lines(image_id):
                 ligatures_mapping = arabic_helper.ligatures_mapping(text_visual)
                 new_confidences = []
 
-                for t, m in zip(text_visual, ligatures_mapping):
-                    print(t, m)
-
                 if ligatures_mapping[-1][-1] == len(confidences) - 1:
                     for index_visual, ligature_mapping in enumerate(ligatures_mapping):
                         confidence_sum = 0

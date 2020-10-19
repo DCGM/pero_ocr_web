@@ -21,9 +21,7 @@ class TextLine
         {
             this.container.style.direction = "rtl";
             this.arabic_resharper = new ArabicReshaper();
-            console.log(this.text);
             this.text = this.arabic_resharper.reshape(this.text);
-            console.log(this.text);
         }
 
         this.container.addEventListener('keypress', this.press.bind(this));

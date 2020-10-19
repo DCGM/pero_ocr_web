@@ -146,7 +146,6 @@ class ArabicReshaper
 
 
         let result = '';
-        console.log(output);
         for (let o of output)
         {
             if (o[this.LETTER])
@@ -159,7 +158,6 @@ class ArabicReshaper
                 {
                     result += this.letters[o[this.LETTER]][o[this.FORM]];
                 }
-                console.log(o[this.LETTER], o[this.FORM], result[result.length - 1]);
             }
         }
         return result;
