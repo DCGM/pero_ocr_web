@@ -2,11 +2,12 @@
 
 class TextLine
 {
-    constructor(id, text, confidences, arabic)
+    constructor(id, text, confidences, ligatures_mapping, arabic)
     {
         this.id = id;
         this.text = text;
         this.confidences = confidences;
+        this.ligatures_mapping = ligatures_mapping;
         this.arabic = arabic;
         this.edited = false;
         this.saved = false;
@@ -19,6 +20,10 @@ class TextLine
         if (this.arabic)
         {
             this.container.style.direction = "rtl";
+            this.arabic_resharper = new ArabicReshaper();
+            console.log(this.text);
+            this.text = this.arabic_resharper.reshape(this.text);
+            console.log(this.text);
         }
 
         this.container.addEventListener('keypress', this.press.bind(this));
@@ -35,13 +40,19 @@ class TextLine
     set_line_confidences_to_text_line_element()
     {
         let chars = this.text.split("");
-        for (let i in chars)
+        if (this.confidences.length)
         {
-            let char_span = document.createElement('span');
-            char_span.setAttribute("style", "font-size: 150%; background: " + rgbToHex(255, Math.floor(this.confidences[i] * 255),
-                                                                                            Math.floor(this.confidences[i] * 255)));
-            char_span.innerHTML = chars[i];
-            this.container.appendChild(char_span);
+            this.confidences.forEach((confidence, index) =>
+            {
+                let char_span = document.createElement('span');
+                char_span.setAttribute("style", "font-size: 150%; background: " + rgbToHex(255, Math.floor(confidence * 255),
+                                                                                                Math.floor(confidence * 255)));
+                for (let char_index of this.ligatures_mapping[index])
+                {
+                    char_span.innerHTML += chars[char_index];
+                }
+                this.container.appendChild(char_span);
+            });
         }
     }
 

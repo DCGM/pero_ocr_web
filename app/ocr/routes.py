@@ -185,28 +185,29 @@ def get_lines(image_id):
         text_lines = sorted(list(text_region.textlines), key=lambda x: x.order)
 
         for line in text_lines:
+            text = line.text if line.text is not None else ""
             confidences = line.np_confidences.tolist()
-            
             arabic = arabic_helper.is_arabic_line(line.text)
-            if arabic:
-                text = arabic_helper.label_form_to_visual_form(line.text, reverse_after=False) if line.text is not None else ""
 
+            if arabic:
+                text = arabic_helper.string_to_label_form(text)
+                text_visual = arabic_helper.label_form_to_visual_form(text, reverse_before=False, reverse_after=False)
+                ligatures_mapping = arabic_helper.ligatures_mapping(text_visual)
                 new_confidences = []
 
-                ligatures_mapping = arabic_helper.ligatures_mapping(text)
-                for ligature_mapping in ligatures_mapping:
-                    confidence_sum = 0
-                    length = len(ligature_mapping)
-                    
-                    for confidence_index in ligature_mapping:
-                        confidence_sum += confidences[confidence_index]
-                    new_confidences.append(confidence_sum / length)
-                
-                confidences = new_confidences
-                            
-            else:
-                text = line.text if line.text is not None else ""
+                for t, m in zip(text_visual, ligatures_mapping):
+                    print(t, m)
 
+                if ligatures_mapping[-1][-1] == len(confidences) - 1:
+                    for index_visual, ligature_mapping in enumerate(ligatures_mapping):
+                        confidence_sum = 0
+                        length = len(ligature_mapping)
+                        for confidence_index in ligature_mapping:
+                            confidence_sum += confidences[confidence_index]
+                        new_confidences.append(confidence_sum / length)
+                confidences = new_confidences
+            else:
+                ligatures_mapping = [[x] for x in range(len(confidences))]
 
             lines_dict['lines'].append({
                         'id': line.id,
@@ -214,6 +215,7 @@ def get_lines(image_id):
                         'np_baseline':  line.np_baseline.tolist(),
                         'np_heights':  line.np_heights.tolist(),
                         'np_confidences': confidences,
+                        'ligatures_mapping': ligatures_mapping,
                         'np_textregion_width':  [text_region.np_points[:, 0].min(), text_region.np_points[:, 0].max()],
                         'annotated': line.id in annotated_lines,
                         'text': text,
