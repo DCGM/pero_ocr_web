@@ -127,20 +127,28 @@
 {% block scripts %}
     <script src="{{ url_for('static', filename='js/lazy_image.js') }}"></script>
     <script>
-        function lazy_callback(element){
-            element.src = element.dataset.src;
-            var figure = element.parentElement
-            $.get( "/ocr/get_image_annotation_statistics/" + figure.dataset['image'], function( data ) {
-                if(data['annotated_count'] == data['line_count']){
-                    element.parentElement.style.backgroundColor = '#83d8f7';
-                } else if (data['annotated_count'] > 0){
-                    element.parentElement.style.backgroundColor = '#faed8e';
-                }
+        function my_lazy_callback(element){
+            let image_fetch = new Promise((resolve, reject) => {
+                element.onload = resolve;
+                element.onerror = reject;
+                element.src = element.dataset.src;
             });
+            let figure = element.parentElement;
+            let state_fetch = fetch("/ocr/get_image_annotation_statistics/" + figure.dataset['image'])
+                .then(response => response.json())
+                .then(data => {
+                    if(data['annotated_count'] == data['line_count']){
+                        element.parentElement.style.backgroundColor = '#83d8f7';
+                    } else if (data['annotated_count'] > 0){
+                        element.parentElement.style.backgroundColor = '#faed8e';
+                    }
+                });
+            return Promise.all([image_fetch, state_fetch]);
         }
+
         document.addEventListener("DOMContentLoaded",
             function () {
-                manage_lazy_images(lazy_callback)
+                manage_lazy_images(my_lazy_callback)
             });
     </script>
     <script>
