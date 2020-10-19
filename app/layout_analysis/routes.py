@@ -15,8 +15,8 @@ import sqlalchemy
 from app.db.model import DocumentState, TextRegion, LayoutDetector, Document
 from app.document.general import is_user_owner_or_collaborator, is_granted_acces_for_document, is_user_trusted, \
                                  document_exists, get_document_images, document_in_allowed_state
-from PIL import Image
 from app import db_session
+from app.db import Image
 from flask import jsonify
 import shutil
 
@@ -43,9 +43,9 @@ def show_results(document_id):
     document = get_document_by_id(document_id)
     if document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
         return 'Layout analysis is not completed yet!', 400
-    images = get_document_images(document)
+    images = get_document_images(document).order_by(Image.filename).all()
 
-    return render_template('layout_analysis/layout_results.html', document=document, images=natsorted(list(images), key=lambda x: x.filename))
+    return render_template('layout_analysis/layout_results.html', document=document, images=images)
 
 
 @bp.route('/revert_layout_analysis/<string:document_id>', methods=['GET'])
