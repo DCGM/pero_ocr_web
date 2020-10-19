@@ -38,17 +38,20 @@ def show_results(document_id):
     if not document_exists(document_id):
         flash(u'Document with this id does not exist!', 'danger')
         return redirect(url_for('main.index'))
-    if not document_in_allowed_state(document_id, DocumentState.COMPLETED_OCR):
-        flash(u'Document is in the state prohibiting this action!', 'danger')
-        return redirect(url_for('main.index'))
     if not is_user_owner_or_collaborator(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
-    document = get_document_by_id(document_id)
-    if document.state != DocumentState.COMPLETED_OCR:
-        return  # Bad Request or something like that
-    images = get_document_images(document).order_by(Image.filename).all()
 
+    document = get_document_by_id(document_id)
+    if document.state == DocumentState.NEW:
+        return redirect(url_for('document.upload_document_get', document_id=document.id))
+    elif document.state == DocumentState.COMPLETED_LAYOUT_ANALYSIS:
+        return redirect(url_for('layout_analysis.show_results', document_id=document.id))
+    elif document.state != DocumentState.COMPLETED_OCR:
+        flash(u'Document can not be edited int its current state.', 'danger')
+        return redirect(url_for('main.index'))
+
+    images = get_document_images(document).order_by(Image.filename).all()
     return render_template('ocr/ocr_results.html', document=document, images=images,
                            trusted_user=is_user_trusted(current_user), computed_scores=True)
 
@@ -59,10 +62,15 @@ def revert_ocr(document_id):
     if not is_user_owner_or_collaborator(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
+
+    document = get_document_by_id(document_id)
+    if document.state != DocumentState.COMPLETED_OCR:
+        flash(u'Document is in the state prohibiting OCR revert!', 'danger')
+        return redirect(url_for('main.index'))
+
     print()
     print("REVERT OCR")
     print("##################################################################")
-    document = Document.query.filter_by(id=document_id, deleted=False).first()
     delete_user = db_session.query(User).filter(User.first_name == "#revert_OCR_backup#").first()
     backup_document = Document(name="revert_backup_" + document.name, state=DocumentState.COMPLETED_OCR,
                                user_id=delete_user.id)
@@ -258,16 +266,16 @@ def save_annotations():
 @bp.route('/post_result/<string:image_id>', methods=['POST'])
 @login_required
 def post_result(image_id):
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights!', 'danger')
+        return redirect(url_for('main.index'))
+
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
         pass
     if db_image is None:
         return "Image does not exist.", 404
-
-    if not is_user_trusted(current_user):
-        flash(u'You do not have sufficient rights!', 'danger')
-        return redirect(url_for('main.index'))
 
     if db_image.document.state != DocumentState.COMPLETED_OCR:
         print()
