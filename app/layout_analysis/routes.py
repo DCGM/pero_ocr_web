@@ -34,6 +34,10 @@ def show_results(document_id):
     if not document_exists(document_id):
         flash(u'Document with this id does not exist!', 'danger')
         return redirect(url_for('main.index'))
+    if not is_user_owner_or_collaborator(document_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
+
     if not document_in_allowed_state(document_id, DocumentState.COMPLETED_LAYOUT_ANALYSIS):
         flash(u'Document is in the state prohibiting this action!', 'danger')
         return redirect(url_for('main.index'))
