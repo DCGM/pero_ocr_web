@@ -67,7 +67,7 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('static', filename='js/lazy_image.js?version=0.0.1') }}"></script>
+    <script src="{{ url_for('static', filename='js/lazy_image.js') + '?version=0.0.1' }}"></script>
     <script>
         document.addEventListener("DOMContentLoaded",
             function () {
