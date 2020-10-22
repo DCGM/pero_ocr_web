@@ -91,7 +91,7 @@ class TextLine
             e.keyCode != 25 &&
             e.keyCode != 26)
         {
-            this.insert_new_char_to_current_position(String.fromCharCode(e.keyCode));
+            this.remove_selection_and_prepare_line_for_insertion()
         }
     }
 
@@ -130,13 +130,10 @@ class TextLine
         // BACKSPACE
         if (e.keyCode == 8 && !empty_text_line_element)
         {
-            let selection = document.getSelection();
-            let range = selection.getRangeAt(0);
-            let text_selected = range.cloneContents().children.length;
-            if (text_selected)
+            if (this.text_selected())
             {
-                this.insert_new_char_to_current_position("&#8203;")
                 e.preventDefault();
+                this.remove_selection_and_set_caret();
             }
             else
             {
@@ -150,12 +147,7 @@ class TextLine
 
     paste(e)
     {
-        e.preventDefault();
-        let text = (e.originalEvent || e).clipboardData.getData('text/plain');
-        for (let i = 0; i < text.length; i++)
-        {
-            this.insert_new_char_to_current_position(text.charAt(i));
-        }
+        this.remove_selection_and_prepare_line_for_insertion();
     }
 
     mutate()
@@ -165,84 +157,83 @@ class TextLine
         this.container.style.backgroundColor = "#ffcc54";
     }
 
-    insert_new_char_to_current_position(char)
+    remove_selection_and_prepare_line_for_insertion()
+    {
+        if (this.text_selected)
+        {
+            this.remove_selection_and_set_caret();
+        }
+        this.prepare_line_for_insertion();
+    }
+
+    // Creates new user-input span if needed
+    prepare_line_for_insertion()
     {
         let empty_text_line_element = !($(this.container).has('span').length);
+        let caret_span;
         if (empty_text_line_element)
         {
             $(this.container).html('');
-        }
-
-        // Insert nonbreaking space instead of normal space (more robust)
-        if (char == " ")
-        {
-          char = "&nbsp;";
-        }
-
-        let selection = document.getSelection();
-        let range = selection.getRangeAt(0);
-        let text_selected = range.cloneContents().children.length;
-
-        let caret_element;
-
-        if (empty_text_line_element)
-        {
-            caret_element = this.container;
+            caret_span = this.container;
         }
         else
         {
-            // If text is selected remove it and set caret appropriately
-            if (text_selected)
-            {
-                let selected_spans_length = range.cloneContents().children.length;
-                let current_span = range.startContainer.parentNode;
-                let first_span = current_span;
-                let first_span_text = current_span.innerHTML;
-                current_span.innerHTML = first_span_text.slice(0, range.startOffset);
-                for (let i = 1; i < selected_spans_length - 1; i++)
-                {
-                    current_span = current_span.nextSibling;
-                    current_span.innerHTML = '';
-                }
-                current_span = current_span.nextSibling;
-                let last_span = current_span;
-                let last_span_text = last_span.innerHTML;
-                current_span.innerHTML = last_span_text.slice(range.endOffset, last_span_text.length);
-                range.selectNodeContents(first_span);
-                range.collapse(false);
-            }
-            caret_element = this.get_caret_span();
+            caret_span = this.get_caret_span();
         }
-
-        if (caret_element.getAttribute("class") != "user-input")
+        if (caret_span.getAttribute("class") != "user-input")
         {
             // Create new span for new char
             // Set it's content to &#8203; special empty char so caret can be set inside
             let new_span = document.createElement('span');
             new_span.setAttribute("class", "user-input");
             new_span.setAttribute("style", "font-size: 150%; background: #ffffff; color: #028700");
-            new_span.innerHTML = "&#8203;";
-
+            new_span.innerHTML = "&#8203";
             if (empty_text_line_element)
             {
                 caret_element.appendChild(new_span);
             }
             else
             {
-                if (this.check_caret_is_at_the_beginning_of_the_first_span(caret_element))
+                if (this.check_caret_is_at_the_beginning_of_the_first_span(caret_span))
                 {
-                    caret_element.parentNode.insertBefore(new_span, caret_element);
+                    caret_span.parentNode.insertBefore(new_span, caret_span);
                 }
                 else
                 {
-                    caret_element.parentNode.insertBefore(new_span, caret_element.nextSibling);
+                    caret_span.parentNode.insertBefore(new_span, caret_span.nextSibling);
                 }
             }
-
+            let selection = document.getSelection();
+            let range = selection.getRangeAt(0);
             range.selectNodeContents(new_span.childNodes[0]);
             selection.removeAllRanges();
             selection.addRange(range);
         }
+    }
+
+    remove_selection_and_set_caret()
+    {
+        let range = this.get_range();
+        if (range.startContainer == range.endContainer)
+        {
+            return;
+        }
+        let selected_spans_length = range.cloneContents().children.length;
+        let current_span = range.startContainer.parentNode;
+        let first_span = current_span;
+        let first_span_text = current_span.innerHTML;
+        current_span.innerHTML = first_span_text.slice(0, range.startOffset);
+        for (let i = 1; i < selected_spans_length - 1; i++)
+        {
+            current_span = current_span.nextSibling;
+            current_span.innerHTML = '';
+        }
+        current_span = current_span.nextSibling;
+        let last_span = current_span;
+        let last_span_text = last_span.innerHTML;
+        current_span.innerHTML = last_span_text.slice(range.endOffset, last_span_text.length);
+        range.selectNodeContents(first_span);
+        range.collapse(false);
     }
 
     move_caret_to_the_left()
@@ -435,6 +426,16 @@ class TextLine
             }
         }
         return false;
+    }
+
+    text_selected()
+    {
+        return this.get_range().cloneContents().children.length;
+    }
+
+    get_range()
+    {
+        return document.getSelection().getRangeAt(0);
     }
 
     save()

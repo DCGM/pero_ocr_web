@@ -141,7 +141,8 @@ class Keyboard{
         e.preventDefault();
         if (this.text_lines_editor.focused_line)
         {
-            this.text_lines_editor.active_line.insert_new_char_to_current_position(char);
+            this.text_lines_editor.active_line.remove_selection_and_prepare_line_for_insertion();
+            document.execCommand("insertText", false, char);
         }
     }
 
