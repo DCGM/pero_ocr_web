@@ -18,8 +18,9 @@ layout_engines = [
     {"name": "Whole Page Region", "description": "Set layout as whole page region."},
     {"name": "Simple Threshold Region", "description": "Simple and fast layout detector based on segmentation that works on nice binarized single column pages."},
     {"name": "Complex printed and handwritten layout", "description": "This model is able to segmenent most documents. It is suitable for most prints (including complex pages such as newspapers) and for most handwritten documents. It may fail on handwritten tables where text lines cross table boundaries."},
-    {"name": "Complex printed and handwritten layout (experimental)", "description": "This is experimental version, use at your own risk. This model is able to segmenent most documents. It is suitable for most prints (icluding complex pages such as newspapers) and for most handwritten documents. It may fail on handwritten tables where text lines cross table boundaries."}
-]
+    {"name": "Complex printed and handwritten layout (experimental)", "description": "This is experimental version, use at your own risk. This model is able to segmenent most documents. It is suitable for most prints (icluding complex pages such as newspapers) and for most handwritten documents. It may fail on handwritten tables where text lines cross table boundaries."},
+    {"name": "Printed layout", "description": "Layout detector optimized for a variety of historical printed books and documents including complex layouts such as newspapers and legal documents."}
+    ]
 
 
 def main():
