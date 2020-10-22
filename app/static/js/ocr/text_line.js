@@ -71,10 +71,11 @@ class TextLine
 
     press(e)
     {
-        e.preventDefault();
+
 
         if (e.keyCode == 13)
         {
+            e.preventDefault();
             this.save();
         }
 
@@ -183,7 +184,6 @@ class TextLine
         let text_selected = range.cloneContents().children.length;
 
         let caret_element;
-        let caret_at_the_beginning_of_the_first_span = false;
 
         if (empty_text_line_element)
         {
@@ -191,10 +191,7 @@ class TextLine
         }
         else
         {
-            caret_element = this.get_caret_span();
-            caret_at_the_beginning_of_the_first_span = this.check_caret_is_at_the_beginning_of_the_first_span(caret_element);
-
-            // If text is selected remove it
+            // If text is selected remove it and set caret appropriately
             if (text_selected)
             {
                 let selected_spans_length = range.cloneContents().children.length;
@@ -208,11 +205,13 @@ class TextLine
                     current_span.innerHTML = '';
                 }
                 current_span = current_span.nextSibling;
-                let last_span_text = current_span.innerHTML;
+                let last_span = current_span;
+                let last_span_text = last_span.innerHTML;
                 current_span.innerHTML = last_span_text.slice(range.endOffset, last_span_text.length);
                 range.selectNodeContents(first_span);
                 range.collapse(false);
             }
+            caret_element = this.get_caret_span();
         }
 
         if (caret_element.getAttribute("class") != "user-input")
@@ -230,7 +229,7 @@ class TextLine
             }
             else
             {
-                if (caret_at_the_beginning_of_the_first_span)
+                if (this.check_caret_is_at_the_beginning_of_the_first_span(caret_element))
                 {
                     caret_element.parentNode.insertBefore(new_span, caret_element);
                 }
@@ -240,36 +239,9 @@ class TextLine
                 }
             }
 
-
-            // Set range (selection) on content of new span &#8203
             range.selectNodeContents(new_span.childNodes[0]);
             selection.removeAllRanges();
             selection.addRange(range);
-
-            let isFirefox = typeof InstallTrigger !== 'undefined';
-            if (isFirefox)
-            {
-                new_span = document.createElement('span');
-                new_span.setAttribute("style", "font-size: 150%; background: #ffffff; color: #028700");
-                new_span.innerHTML = char;
-
-                // Replace current span with new span
-                document.execCommand("insertHTML", false, new_span.outerHTML);
-            }
-            else
-            {
-                // Replace the content (&#8203) of current new span
-                document.execCommand("insertHTML", false, char);
-            }
-
-            // Usage of &#8203 and execCommand ensures that CTRL+Z and CTRL+Y works
-            // properly. After pressing CTRL+Z the char is replaced by &#8203 and after
-            // pressing CTRL+Y the &#8203 is replaced with the char.
-
-        }
-        else
-        {
-            document.execCommand("insertHTML", false, char);
         }
     }
 
@@ -420,13 +392,9 @@ class TextLine
             }
         }
         let selection = document.getSelection();
-        let range = selection.getRangeAt(0);
         if (valid_span_char && !caret_at_the_beginning_of_the_first_span)
         {
-            range.selectNodeContents(previous_span.childNodes[0]);
-            range.collapse(false);
-            selection.removeAllRanges();
-            selection.addRange(range);
+            selection.collapse(previous_span.childNodes[0], previous_span.childNodes[0].length);
             return true;
         }
         else
