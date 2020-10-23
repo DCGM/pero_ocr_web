@@ -17,7 +17,7 @@
                     <tbody>
                     {% for request in requests %}
                         <tr data-document="{{ request.id }}">
-                            <td>{{ request.created_date }}</td>
+                            <td class="utc-time" data-sort="{{loop.index}}">{{ request.created_date.isoformat() }}</td>
                             {% if  request.ocr.name %}
                                 <td><a href="{{ url_for('ocr.show_results', document_id=request.document.id) }}">{{ request.document.name }}</a></td>
                             {% else %}
@@ -87,5 +87,10 @@
             });
 
         });
+
+        for(var elem of document.getElementsByClassName("utc-time")){
+            const date = new Date(elem.textContent + 'Z');
+            elem.innerHTML = date.toLocaleString();
+        };
     </script>
 {% endblock %}
