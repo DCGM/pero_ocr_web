@@ -15,15 +15,16 @@ def parseargs():
 
 baseline_engines = [
     {"name": "Universal", "description": "Universal baseline detector that should work on majority of documents."},
-    {"name": "Experimental", "description": "Experimental baseline detector that should work on majority of documents (under development)."}
+    {"name": "Experimental", "description": "Experimental baseline detector that should work on majority of documents (under development)."},
+    {"name": "Printed", "description": "Text line detector optimized for a variety of historical printed books and documents including complex layouts such as newspapers and legal documents."}
 ]
 
 
 def main():
     args = parseargs()
 
-    database_url = 'sqlite:///' + args.database
-    engine = create_engine(database_url, convert_unicode=True, connect_args={'check_same_thread': False})
+    database_url = 'postgres://postgres:pero@localhost:5432/' + args.database
+    engine = create_engine(database_url, convert_unicode=True)
     db_session = scoped_session(sessionmaker(autocommit=False,
                                              autoflush=False,
                                              bind=engine))
