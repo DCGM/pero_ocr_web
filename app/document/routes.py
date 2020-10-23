@@ -12,6 +12,8 @@ from app.document.general import create_document, check_and_remove_document, sav
     compute_scores_of_doc, skip_textline, get_line, is_granted_acces_for_line, create_string_response, \
     update_baselines
 
+from werkzeug.exceptions import NotFound
+
 from app.db.general import get_requests
 
 from app.db.general import get_user_documents, get_document_by_id, get_user_by_email, get_all_documents, get_previews_for_documents
@@ -294,7 +296,10 @@ def get_image(image_id):
         flash(u'You do not have sufficient rights to download image!', 'danger')
         return redirect(url_for('main.index'))
 
-    return send_from_directory(current_app.config['UPLOAD_IMAGE_FOLDER'], db_image.path, as_attachment=True, attachment_filename=db_image.filename)
+    if not os.path.isfile(db_image.path):
+        raise NotFound()
+
+    return send_file(db_image.path, as_attachment=True, attachment_filename=db_image.filename)
 
 
 @bp.route('/download_document_pages/<string:document_id>')
