@@ -4,7 +4,7 @@ import _thread
 import sqlalchemy
 from app.document import bp
 from flask_login import login_required, current_user
-from flask import render_template, redirect, url_for, request, send_file, flash, jsonify, current_app, make_response
+from flask import render_template, redirect, url_for, request, send_file, flash, jsonify, current_app, send_from_directory
 from app.document.general import create_document, check_and_remove_document, save_image, get_image_by_id,\
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
     remove_image, get_document_images, get_page_layout, get_page_layout_text, update_confidences, is_user_trusted,\
@@ -294,7 +294,7 @@ def get_image(image_id):
         flash(u'You do not have sufficient rights to download image!', 'danger')
         return redirect(url_for('main.index'))
 
-    return send_file(db_image.path, as_attachment=True, attachment_filename=db_image.filename)
+    return send_from_directory(current_app.config['UPLOAD_IMAGE_FOLDER'], db_image.path, as_attachment=True, attachment_filename=db_image.filename)
 
 
 @bp.route('/download_document_pages/<string:document_id>')
