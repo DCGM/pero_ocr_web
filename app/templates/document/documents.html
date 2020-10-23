@@ -100,109 +100,11 @@
                                     <img data-src="{{url_for('layout_analysis.get_result_preview', image_id=previews[document.id].id)}}" class="lazy-img image-preview" src="" onerror="this.src='/static/img/missing_page.png'"/>
                                 </div>
                             </td>
-
-                            <td>{{ document.name }}</td>
+                            <td><a href="{{ url_for('ocr.show_results', document_id=document.id) }}">{{ document.name }}</a></td>
                             <td>{{ document.user.first_name }} {{ document.user.last_name }}</td>
                             <td>{{ document.state.value }}</td>
                             <td>
-                                {% if document.user.id == current_user.id or current_user.trusted == 1 %}
-                                    <a  class="document-action-btn btn btn-secondary"
-                                        href="{{ url_for('document.collaborators_get', document_id=document.id) }}"
-                                        data-toggle="tooltip"
-                                        data-placement="right"
-                                        title="Edit Collaborators">
-                                        <ion-icon name="contacts"></ion-icon>
-                                    </a>
-                                {% endif %}
-
-                                {% if document.state.name == 'NEW' %}
-                                    <a  class="document-action-btn btn btn-secondary"
-                                        href="{{ url_for('document.upload_document_get', document_id=document.id) }}"
-                                        data-toggle="tooltip"
-                                        data-placement="right"
-                                        title="Upload Images">
-                                        <ion-icon name="cloud-upload"></ion-icon>
-                                    </a>
-                                    <a  class="document-action-btn btn btn-secondary text-white"
-                                        href="{{ url_for('layout_analysis.select_layout', document_id=document.id) }}"
-                                        data-toggle="tooltip"
-                                        data-placement="right"
-                                        title="Run layout analysis">
-                                        <ion-icon name="fastforward"></ion-icon>
-                                    </a>
-                                {% endif %}
-
-                                {% if document.state.name == 'COMPLETED_LAYOUT_ANALYSIS' %}
-                                    <a  class="document-action-btn btn btn-secondary text-white"
-                                        href="{{ url_for('layout_analysis.show_results', document_id=document.id) }}"
-                                        data-toggle="tooltip"
-                                        data-placement="right"
-                                        title="Show layout analysis results">
-                                        <ion-icon name="eye"></ion-icon>
-                                    </a>
-                                    <a  class="document-action-btn btn btn-secondary text-white"
-                                        href="{{ url_for('ocr.select_ocr', document_id=document.id) }}"
-                                        data-toggle="tooltip"
-                                        data-placement="right"
-                                        title="Run OCR">
-                                        <ion-icon name="fastforward"></ion-icon>
-                                    </a>
-                                    <a  class="document-action-btn btn btn-secondary text-white revert-layout-button"
-                                        data-toggle="tooltip"
-                                        data-placement="right"
-                                        title="Revert layout analysis"
-                                        data-document="{{ document.id }}">
-                                        <ion-icon name="rewind"></ion-icon>
-                                    </a>
-                                {% endif %}
-
-                                {% if document.state.name == 'COMPLETED_OCR' %}
-                                    <a  class="document-action-btn btn btn-secondary text-white"
-                                        href="{{ url_for('ocr.show_results', document_id=document.id) }}"
-                                        data-toggle="tooltip"
-                                        data-placement="right"
-                                        title="Show ocr results">
-                                        <ion-icon name="eye"></ion-icon>
-                                    </a>
-                                    <a  class="document-action-btn btn btn-secondary text-white"
-                                        href="{{ url_for('ocr.select_ocr', document_id=document.id) }}"
-                                        data-toggle="tooltip"
-                                        data-placement="right"
-                                        title="Run OCR">
-                                        <ion-icon name="fastforward"></ion-icon>
-                                    </a>
-                                    <a  class="document-action-btn btn btn-secondary text-white"
-                                        href="{{ url_for('document.get_document_pages', document_id=document.id) }}"
-                                        data-toggle="tooltip"
-                                        data-placement="right"
-                                        title="Download pages">
-                                        <ion-icon name="document"></ion-icon>
-                                    </a>
-                                    <a  class="document-action-btn btn btn-secondary text-white"
-                                        href="{{ url_for('document.annotation_statistics', document_id=document.id) }}"
-                                        data-toggle="tooltip"
-                                        data-placement="right"
-                                        title="Statistics">
-                                        <ion-icon name="stats"></ion-icon>
-                                    </a>
-                                    <a  class="document-action-btn btn btn-secondary text-white revert-OCR-button"
-                                        data-toggle="tooltip"
-                                        data-placement="right"
-                                        title="Revert OCR"
-                                        data-document="{{ document.id }}">
-                                        <ion-icon name="rewind"></ion-icon>
-                                    </a>
-                                {% endif %}
-
-                                {% if document.user.id == current_user.id %}
-                                    <a class="document-action-btn btn btn-secondary text-white delete-document-button"
-                                       data-toggle="tooltip"
-                                       data-placement="right"
-                                       title="Remove Document"
-                                       data-document="{{ document.id }}">
-                                        <ion-icon name="trash"></ion-icon>
-                                    </a>
-                                {% endif %}
+                                {% include '/document/document_action_buttons.html' %}
                             </td>
                         </tr>
                     {% endfor %}
