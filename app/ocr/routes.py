@@ -1,3 +1,5 @@
+from typing import re
+
 import os
 import shutil
 import json
@@ -9,16 +11,18 @@ from flask import url_for, redirect, flash, jsonify
 from flask_login import login_required, current_user
 from app.ocr import bp
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_baseline_by_id, get_ocr_by_id, \
-                           get_language_model_by_id, get_text_line_by_id, get_image_annotation_statistics_db
-from app.db import DocumentState, OCR, Document, Image, TextRegion, Baseline, LanguageModel, User
+                           get_language_model_by_id, get_text_line_by_id, get_image_annotation_statistics_db, \
+                           get_previews_for_documents
+from app.db import DocumentState, OCR, Document, Image, TextRegion, Baseline, LanguageModel, User, OCRTrainingDocuments
 from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
                             insert_lines_to_db, change_ocr_request_and_document_state_on_success, insert_annotations_to_db, \
                             update_text_lines, get_page_annotated_lines, change_ocr_request_and_document_state_in_progress, \
                             post_files_to_folder, change_ocr_request_to_fail_and_document_state_to_success, \
                             change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis
+
 from app.document.general import get_document_images
-from app import db_session
+from app import db_session, engine
 from app.db import Image
 from app.document.general import is_user_owner_or_collaborator, is_user_trusted, is_granted_acces_for_page, \
                                  is_granted_acces_for_document, is_score_computed, document_exists, \
@@ -97,6 +101,59 @@ def revert_ocr(document_id):
 
 # SELECT PAGE
 ########################################################################################################################
+
+@bp.route('/ocr_training_documents', methods=['GET'])
+@login_required
+def ocr_training_documents():
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights!', 'danger')
+        return redirect(url_for('main.index'))
+
+    db_ocr_engines = db_session.query(OCR).filter(OCR.active).all()
+    ocr_id = request.args.get('ocr_id', default=db_ocr_engines[0].id)
+
+    db_documents = db_session.query(Document).filter(Document.state == DocumentState.COMPLETED_OCR)\
+        .options(sqlalchemy.orm.joinedload(Document.requests_lazy)).filter(Document.name.notlike('revert_backup_%')).all()
+
+    engine_names = {o.id: o.name for o in db_session.query(OCR)}
+
+    document_ids = [d.id for d in db_documents]
+    previews = dict([(im.document_id, im) for im in get_previews_for_documents(document_ids)])
+
+    selected_documents = db_session.query(OCRTrainingDocuments.document_id).filter(OCRTrainingDocuments.ocr_id == ocr_id).all()
+    selected_documents = set([i[0] for i in selected_documents])
+
+    return render_template('ocr/ocr_training_documents.html',
+                           documents=db_documents, ocr_engines=db_ocr_engines, ocr_id=ocr_id, previews=previews,
+                           engine_names=engine_names, selected_documents=selected_documents)
+
+@bp.route('/ocr_training_documents', methods=['POST'])
+@login_required
+def ocr_training_documents_post():
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights!', 'danger')
+        return redirect(url_for('main.index'))
+
+    ocr_id = request.form['ocr_id']
+    db_selected_documents = db_session.query(OCRTrainingDocuments).filter(OCRTrainingDocuments.ocr_id == ocr_id).all()
+    set_doc_id = set(d.document_id for d in db_selected_documents)
+    user_chosen_document_ids = set()
+    for i in request.form:
+        if 'document_' in i:
+            doc_id = i.replace('document_', '')
+            user_chosen_document_ids.add(doc_id)
+            if doc_id not in set_doc_id:
+                db_session.add(OCRTrainingDocuments(document_id=doc_id, ocr_id=ocr_id))
+
+    for db_doc in db_selected_documents:
+        if db_doc.document_id not in user_chosen_document_ids:
+            db_session.delete(db_doc)
+
+    db_session.commit()
+
+    flash(u'Training documents for OCR model updated.', 'info')
+    return redirect(url_for('ocr.ocr_training_documents'))
+
 
 @bp.route('/select_ocr/<string:document_id>', methods=['GET'])
 @login_required

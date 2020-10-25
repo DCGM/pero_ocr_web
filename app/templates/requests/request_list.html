@@ -91,6 +91,6 @@
         for(var elem of document.getElementsByClassName("utc-time")){
             const date = new Date(elem.textContent + 'Z');
             elem.innerHTML = date.toLocaleString();
-        };
+        }
     </script>
 {% endblock %}

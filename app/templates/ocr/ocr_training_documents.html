@@ -1,0 +1,36 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+    <div class="container-fluid px-4">
+        <form action="{{ url_for('ocr.ocr_documents') }}" method="get">
+            <div class="row mt-4">
+                <div class="offset-xl-2 col-xl-10 offset-lg-1 col-lg-11">
+                    <h5 class="text-left">Select OCR</h5>
+                </div>
+            </div>
+            <div class="row">
+                <div class="offset-xl-2 col-xl-5 offset-lg-1 col-lg-6">
+                    <select class="form-control" name="ocr_id">
+                        {% for ocr in ocr_engines %}
+                        <option value="{{ ocr.id }}" model-type-description="ocr-description" data-description="{{ ocr.description }}">{{ocr.name}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="offset-xl-2 col-xl-5 offset-lg-1 col-lg-6 text-justify" id="ocr-description">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="offset-xl-2 col-xl-10 offset-lg-1 col-lg-11">
+                    <input class="btn btn-primary my-3" type="submit" value="Submit">
+                </div>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="/static/js/select.js?version=1.1"></script>
+{% endblock %}

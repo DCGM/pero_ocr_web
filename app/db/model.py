@@ -45,6 +45,7 @@ class Document(Base):
     images = relationship('Image', back_populates="document", lazy='dynamic')
     collaborators = relationship('User', secondary='userdocuments')
     requests = relationship('Request', back_populates="document", lazy='dynamic')
+    requests_lazy = relationship('Request')
 
 
 class Image(Base):
@@ -199,6 +200,13 @@ class OCR(Base):
     active = Column(Boolean(), default=True, nullable=False)
 
     requests = relationship('Request')
+
+
+class OCRTrainingDocuments(Base):
+    __tablename__ = 'ocr_training_documents'
+    document_id = Column(GUID(), ForeignKey('documents.id'), primary_key=True)
+    ocr_id = Column(GUID(), ForeignKey('ocr.id'), primary_key=True)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
 
 
 class Baseline(Base):
