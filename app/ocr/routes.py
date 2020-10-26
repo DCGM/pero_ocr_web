@@ -266,7 +266,6 @@ def get_lines(image_id):
                         ligatures_mapping.append([i])
 
             new_confidences = []
-            print(ligatures_mapping)
             if ligatures_mapping and ligatures_mapping[-1][-1] == len(confidences) - 1:
                 for index_visual, ligature_mapping in enumerate(ligatures_mapping):
                     ligature_confidence = 1
