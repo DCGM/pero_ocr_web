@@ -153,6 +153,16 @@ def ocr_training_documents_post(document_id, ocr_id, state):
     return '', 204
 
 
+@bp.route('/get_ocr_training_documents/<string:ocr_id>', methods=['GET'])
+def get_ocr_training_documents(ocr_id):
+    db_training_document = db_session.query(OCRTrainingDocuments)\
+        .filter(OCRTrainingDocuments.ocr_id == ocr_id).all()
+
+    document_ids = [d.document_id for d in db_training_document]
+
+    return ','.join(document_ids), 200
+
+
 @bp.route('/select_ocr/<string:document_id>', methods=['GET'])
 @login_required
 def select_ocr(document_id):
