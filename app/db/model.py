@@ -45,7 +45,7 @@ class Document(Base):
     images = relationship('Image', back_populates="document", lazy='dynamic')
     collaborators = relationship('User', secondary='userdocuments')
     requests = relationship('Request', back_populates="document", lazy='dynamic')
-    requests_lazy = relationship('Request')
+    requests_lazy = relationship('Request', order_by="Request.created_date")
 
 
 class Image(Base):
