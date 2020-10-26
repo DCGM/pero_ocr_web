@@ -159,7 +159,7 @@ class TextLine
 
     remove_selection_and_prepare_line_for_insertion()
     {
-        if (this.text_selected)
+        if (this.text_selected())
         {
             this.remove_selection_and_set_caret();
         }
@@ -214,24 +214,23 @@ class TextLine
     remove_selection_and_set_caret()
     {
         let range = this.get_range();
-        if (range.startContainer == range.endContainer)
-        {
-            return;
-        }
         let selected_spans_length = range.cloneContents().children.length;
         let current_span = range.startContainer.parentNode;
         let first_span = current_span;
         let first_span_text = current_span.innerHTML;
         current_span.innerHTML = first_span_text.slice(0, range.startOffset);
-        for (let i = 1; i < selected_spans_length - 1; i++)
+        if (range.startContainer != range.endContainer)
         {
+            for (let i = 1; i < selected_spans_length - 1; i++)
+            {
+                current_span = current_span.nextSibling;
+                current_span.innerHTML = '';
+            }
             current_span = current_span.nextSibling;
-            current_span.innerHTML = '';
+            let last_span = current_span;
+            let last_span_text = last_span.innerHTML;
+            current_span.innerHTML = last_span_text.slice(range.endOffset, last_span_text.length);
         }
-        current_span = current_span.nextSibling;
-        let last_span = current_span;
-        let last_span_text = last_span.innerHTML;
-        current_span.innerHTML = last_span_text.slice(range.endOffset, last_span_text.length);
         range.selectNodeContents(first_span);
         range.collapse(false);
     }
@@ -430,7 +429,19 @@ class TextLine
 
     text_selected()
     {
-        return this.get_range().cloneContents().children.length;
+        let range = this.get_range();
+        if (range.startContainer != range.endContainer)
+        {
+            return true;
+        }
+        else
+        {
+            if (range.startOffset != range.endOffset)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     get_range()
