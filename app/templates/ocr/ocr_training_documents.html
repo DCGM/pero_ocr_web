@@ -15,7 +15,7 @@
         <form action="{{ url_for('ocr.ocr_training_documents') }}" method="get">
             <div class="row mt-4">
                 <div class="offset-xl-2 col-xl-10 offset-lg-1 col-lg-11">
-                    <h5 class="text-left">Select OCR</h5>
+                    <h5 class="text-left">Select OCR engine</h5>
                 </div>
             </div>
             <div class="row">
@@ -38,21 +38,13 @@
 
             <div class="row">
                 <div class="offset-xl-2 col-xl-10 offset-lg-1 col-lg-11">
-                    <input class="btn btn-primary my-3" type="submit" value="Submit">
+                    <input class="btn btn-primary my-3" type="submit" value="Switch to OCR engine">
                 </div>
             </div>
         </form>
     </div>
     <div class="row">
         <div class="offset-xl-1 col-xl-10">
-            <form action="{{ url_for('ocr.ocr_training_documents') }}" method="post">
-                <div class="row">
-                    <div class="offset-xl-2 col-xl-10 offset-lg-1 col-lg-11">
-                        <input class="btn btn-primary my-3" type="submit" value="Submit training documents">
-                    </div>
-                </div>
-                 <input type="hidden" id="ocr_id" name="ocr_id" value="{{ocr_id}}">
-
 <table id="training_doc_table" class="table table-hover">
     <thead>
     <tr role="row">
@@ -60,8 +52,8 @@
         <th scope="col">Timestamp</th>
         <th scope="col">Name</th>
         <th scope="col">Owner</th>
-        <th scope="col" class="action_column">Model</th>
-        <th scope="col" class="action_column">Selected</th>
+        <th scope="col" >Model</th>
+        <th scope="col" id="selected_column">Selected</th>
     </tr>
     </thead>
     <tbody>
@@ -86,14 +78,13 @@
             {% else %}
                 <td>{{ engine_names[document.requests_lazy[-1].ocr_id] }}</td>
             {% endif %}
-            <td>
+            <td data-sort="{{ document.id in selected_documents }}" id="{{document.id}}">
                 <input name="{{document.id}}" type="checkbox" {{"checked" if document.id in selected_documents}} data-toggle="toggle" />
             </td>
         </tr>
     {% endfor %}
     </tbody>
 </table>
-            </form>
         </div>
     </div>
 {% endblock %}
@@ -120,16 +111,16 @@
         $(document).ready(function () {
             // Setup table - add a text input to each footer cell
             $('#training_doc_table thead tr').clone(true).appendTo('#training_doc_table thead');
-            var table = $('#training_doc_table').DataTable({
+            let table = $('#training_doc_table').DataTable({
                 stateSave: true,
                 orderCellsTop: true,
                 fixedHeader: true
             });
 
-            var state = table.state.loaded();
+            let state = table.state.loaded();
             $('#training_doc_table thead tr:eq(1) th').each(function (i) {
-                var title = $(this).text();
-                var input_value = '';
+                let title = $(this).text();
+                let input_value = '';
                 try {
                     input_value = state.columns[i].search.search;
                 } catch(err){
@@ -146,10 +137,16 @@
                     $(this).html('');
                 }
             });
-        });
-        $('input:checkbox').change(function() {
-            let url = Flask.url_for('ocr.ocr_training_documents_post', {document_id: this.name, ocr_id: "{{ocr_id}}", state: $(this).prop('checked')});
-            fetch(url).then(data => { if(data.status > 400){alert('ERROR: Failed to set training document. ' + data.status);}}, error => alert('ERROR: Failed to set training document. ' + error));
+            $('input:checkbox').change(function() {
+                let url = Flask.url_for('ocr.ocr_training_documents_post', {document_id: this.name, ocr_id: "{{ocr_id}}", state: $(this).prop('checked')});
+                fetch(url).then(data => { if(data.status > 400){alert('ERROR: Failed to set training document. ' + data.status);}}, error => alert('ERROR: Failed to set training document. ' + error));
+                if($(this).prop('checked')) {
+                    this.parentElement.parentElement.dataset.sort = 'True';
+                } else{
+                    this.parentElement.parentElement.dataset.sort = 'False';
+                }
+                table.cell("#" + this.name).invalidate();
+            });
         });
     </script>
 {% endblock %}
