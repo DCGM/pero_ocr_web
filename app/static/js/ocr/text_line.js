@@ -137,9 +137,13 @@ class TextLine
             }
             else
             {
-                if (!this.set_caret_before_actual_char())
+                let caret_span = this.get_caret_span();
+                if (caret_span.getAttribute("class") != "user-input")
                 {
-                    e.preventDefault();
+                    if (!this.set_caret_before_actual_char())
+                    {
+                        e.preventDefault();
+                    }
                 }
             }
         }
@@ -147,7 +151,10 @@ class TextLine
 
     paste(e)
     {
+        e.preventDefault();
+        var text = (e.originalEvent || e).clipboardData.getData('text/plain');
         this.remove_selection_and_prepare_line_for_insertion();
+        document.execCommand("insertText", false, text);
     }
 
     mutate()

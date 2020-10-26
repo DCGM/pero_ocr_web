@@ -3,6 +3,7 @@ import shutil
 import json
 import uuid
 import sqlalchemy
+import unicodedata
 from pero_ocr.document_ocr.arabic_helper import ArabicHelper
 from natsort import natsorted
 from flask import render_template, request, current_app, send_file
@@ -189,22 +190,27 @@ def get_lines(image_id):
             confidences = line.np_confidences.tolist()
             arabic = arabic_helper.is_arabic_line(line.text)
 
+            ligatures_mapping = []
             if arabic:
                 text = arabic_helper.string_to_label_form(text)
                 text_visual = arabic_helper.label_form_to_visual_form(text, reverse_before=False, reverse_after=False)
                 ligatures_mapping = arabic_helper.ligatures_mapping(text_visual)
-                new_confidences = []
-
-                if ligatures_mapping[-1][-1] == len(confidences) - 1:
-                    for index_visual, ligature_mapping in enumerate(ligatures_mapping):
-                        confidence_sum = 0
-                        length = len(ligature_mapping)
-                        for confidence_index in ligature_mapping:
-                            confidence_sum += confidences[confidence_index]
-                        new_confidences.append(confidence_sum / length)
-                confidences = new_confidences
             else:
-                ligatures_mapping = [[x] for x in range(len(confidences))]
+                for i, c in enumerate(text):
+                    if unicodedata.combining(c) and i:
+                        ligatures_mapping[-1].append(i)
+                    else:
+                        ligatures_mapping.append([i])
+
+            new_confidences = []
+            print(ligatures_mapping)
+            if ligatures_mapping and ligatures_mapping[-1][-1] == len(confidences) - 1:
+                for index_visual, ligature_mapping in enumerate(ligatures_mapping):
+                    ligature_confidence = 1
+                    for confidence_index in ligature_mapping:
+                        ligature_confidence = min(ligature_confidence, confidences[confidence_index])
+                    new_confidences.append(ligature_confidence)
+            confidences = new_confidences
 
             lines_dict['lines'].append({
                         'id': line.id,
