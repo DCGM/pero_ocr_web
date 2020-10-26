@@ -87,7 +87,7 @@
                 <td>{{ engine_names[document.requests_lazy[-1].ocr_id] }}</td>
             {% endif %}
             <td>
-                <input name="document_{{document.id}}" type="checkbox" {{"checked" if document.id in selected_documents}} data-toggle="toggle" />
+                <input name="{{document.id}}" type="checkbox" {{"checked" if document.id in selected_documents}} data-toggle="toggle" />
             </td>
         </tr>
     {% endfor %}
@@ -146,6 +146,11 @@
                     $(this).html('');
                 }
             });
+        });
+        $('input:checkbox').change(function() {
+            let url = Flask.url_for('ocr.ocr_training_documents_post', {document_id: this.name, ocr_id: "{{ocr_id}}", state: $(this).prop('checked')});
+            console.log(url);
+            fetch(url).catch(error => console.log('Error:', error));
         });
     </script>
 {% endblock %}

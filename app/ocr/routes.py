@@ -127,32 +127,30 @@ def ocr_training_documents():
                            documents=db_documents, ocr_engines=db_ocr_engines, ocr_id=ocr_id, previews=previews,
                            engine_names=engine_names, selected_documents=selected_documents)
 
-@bp.route('/ocr_training_documents', methods=['POST'])
+@bp.route('/set_ocr_training_document/<string:document_id>/<string:ocr_id>/<string:state>', methods=['GET'])
 @login_required
-def ocr_training_documents_post():
+def ocr_training_documents_post(document_id, ocr_id, state):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights!', 'danger')
         return redirect(url_for('main.index'))
 
-    ocr_id = request.form['ocr_id']
-    db_selected_documents = db_session.query(OCRTrainingDocuments).filter(OCRTrainingDocuments.ocr_id == ocr_id).all()
-    set_doc_id = set(d.document_id for d in db_selected_documents)
-    user_chosen_document_ids = set()
-    for i in request.form:
-        if 'document_' in i:
-            doc_id = i.replace('document_', '')
-            user_chosen_document_ids.add(doc_id)
-            if doc_id not in set_doc_id:
-                db_session.add(OCRTrainingDocuments(document_id=doc_id, ocr_id=ocr_id))
+    db_training_document = db_session.query(OCRTrainingDocuments)\
+        .filter(OCRTrainingDocuments.ocr_id == ocr_id)\
+        .filter(OCRTrainingDocuments.document_id == document_id).all()
 
-    for db_doc in db_selected_documents:
-        if db_doc.document_id not in user_chosen_document_ids:
-            db_session.delete(db_doc)
+    if len(db_training_document) == 1:
+        db_training_document = db_training_document[0]
+    else:
+        db_training_document = None
 
-    db_session.commit()
+    if state == 'false' and db_training_document:
+        db_session.delete(db_training_document)
+        db_session.commit()
+    elif state == 'true' and not db_training_document:
+        db_session.add(OCRTrainingDocuments(document_id=document_id, ocr_id=ocr_id))
+        db_session.commit()
 
-    flash(u'Training documents for OCR model updated.', 'info')
-    return redirect(url_for('ocr.ocr_training_documents'))
+    return '', 204
 
 
 @bp.route('/select_ocr/<string:document_id>', methods=['GET'])
