@@ -2,11 +2,12 @@
 
 class TextLine
 {
-    constructor(id, text, confidences, arabic)
+    constructor(id, text, confidences, ligatures_mapping, arabic)
     {
         this.id = id;
         this.text = text;
         this.confidences = confidences;
+        this.ligatures_mapping = ligatures_mapping;
         this.arabic = arabic;
         this.edited = false;
         this.saved = false;
@@ -19,6 +20,8 @@ class TextLine
         if (this.arabic)
         {
             this.container.style.direction = "rtl";
+            this.arabic_resharper = new ArabicReshaper();
+            this.text = this.arabic_resharper.reshape(this.text);
         }
 
         this.container.addEventListener('keypress', this.press.bind(this));
@@ -35,13 +38,19 @@ class TextLine
     set_line_confidences_to_text_line_element()
     {
         let chars = this.text.split("");
-        for (let i in chars)
+        if (this.confidences.length)
         {
-            let char_span = document.createElement('span');
-            char_span.setAttribute("style", "font-size: 150%; background: " + rgbToHex(255, Math.floor(this.confidences[i] * 255),
-                                                                                            Math.floor(this.confidences[i] * 255)));
-            char_span.innerHTML = chars[i];
-            this.container.appendChild(char_span);
+            this.confidences.forEach((confidence, index) =>
+            {
+                let char_span = document.createElement('span');
+                char_span.setAttribute("style", "font-size: 150%; background: " + rgbToHex(255, Math.floor(confidence * 255),
+                                                                                                Math.floor(confidence * 255)));
+                for (let char_index of this.ligatures_mapping[index])
+                {
+                    char_span.innerHTML += chars[char_index];
+                }
+                this.container.appendChild(char_span);
+            });
         }
     }
 
@@ -62,10 +71,11 @@ class TextLine
 
     press(e)
     {
-        e.preventDefault();
+
 
         if (e.keyCode == 13)
         {
+            e.preventDefault();
             this.save();
         }
 
@@ -81,7 +91,7 @@ class TextLine
             e.keyCode != 25 &&
             e.keyCode != 26)
         {
-            this.insert_new_char_to_current_position(String.fromCharCode(e.keyCode));
+            this.remove_selection_and_prepare_line_for_insertion()
         }
     }
 
@@ -93,32 +103,47 @@ class TextLine
         if (e.keyCode == 37 && !e.ctrlKey && !e.shiftKey && !empty_text_line_element)
         {
             e.preventDefault();
-            this.skip_all_empty_spans_to_the_left()
+            if (!this.arabic)
+            {
+                this.move_caret_to_the_left();
+            }
+            else
+            {
+                this.move_caret_to_the_right();
+            }
         }
 
         // RIGHT ARROW
         if (e.keyCode == 39 && !e.ctrlKey && !e.shiftKey && !empty_text_line_element)
         {
             e.preventDefault();
-            this.skip_all_empty_spans_to_the_right();
+            if (!this.arabic)
+            {
+                this.move_caret_to_the_right();
+            }
+            else
+            {
+                this.move_caret_to_the_left();
+            }
         }
 
         // BACKSPACE
         if (e.keyCode == 8 && !empty_text_line_element)
         {
-            let selection = document.getSelection();
-            let range = selection.getRangeAt(0);
-            let text_selected = range.cloneContents().children.length;
-            if (text_selected)
+            if (this.text_selected())
             {
-                insert_new_char_to_current_position("&#8203;")
                 e.preventDefault();
+                this.remove_selection_and_set_caret();
             }
             else
             {
-                if (!this.set_caret_before_actual_char())
+                let caret_span = this.get_caret_span();
+                if (caret_span.getAttribute("class") != "user-input")
                 {
-                    e.preventDefault();
+                    if (!this.set_caret_before_actual_char())
+                    {
+                        e.preventDefault();
+                    }
                 }
             }
         }
@@ -127,11 +152,9 @@ class TextLine
     paste(e)
     {
         e.preventDefault();
-        let text = (e.originalEvent || e).clipboardData.getData('text/plain');
-        for (let i = 0; i < text.length; i++)
-        {
-            this.insert_new_char_to_current_position(text.charAt(i));
-        }
+        var text = (e.originalEvent || e).clipboardData.getData('text/plain');
+        this.remove_selection_and_prepare_line_for_insertion();
+        document.execCommand("insertText", false, text);
     }
 
     mutate()
@@ -141,109 +164,97 @@ class TextLine
         this.container.style.backgroundColor = "#ffcc54";
     }
 
-    insert_new_char_to_current_position(char)
+    remove_selection_and_prepare_line_for_insertion()
+    {
+        if (this.text_selected())
+        {
+            this.remove_selection_and_set_caret();
+        }
+        this.prepare_line_for_insertion();
+    }
+
+    // Creates new user-input span if needed
+    prepare_line_for_insertion()
     {
         let empty_text_line_element = !($(this.container).has('span').length);
+        let caret_span;
         if (empty_text_line_element)
         {
             $(this.container).html('');
-        }
-
-        // Insert nonbreaking space instead of normal space (more robust)
-        if (char == " ")
-        {
-          char = "&nbsp;";
-        }
-
-        let selection = document.getSelection();
-        let range = selection.getRangeAt(0);
-        let text_selected = range.cloneContents().children.length;
-
-        let start_span;
-        let end_span;
-
-        let caret_element;
-        let caret_before_first_span = false;
-
-        if (empty_text_line_element)
-        {
-            caret_element = this.container;
+            caret_span = this.container;
         }
         else
         {
-            caret_element = this.get_caret_span();
-            caret_before_first_span = this.check_caret_before_first_span(caret_element);
-
-            // If text is selected remove it
-            // Removal of selection keeps two empty spans, store them for deletion
-            if (text_selected)
-            {
-                start_span = range.startContainer.parentNode;
-                end_span = range.endContainer.parentNode;
-                range.deleteContents();
-            }
+            caret_span = this.get_caret_span();
         }
-
-        // Create new span for new char
-        // Set it's content to &#8203; special empty char so caret can be set inside
-        let new_span = document.createElement('span');
-        new_span.setAttribute("style", "font-size: 150%; background: #ffffff; color: #028700");
-        new_span.innerHTML = "&#8203;";
-
-        if (empty_text_line_element)
+        if (caret_span.getAttribute("class") != "user-input")
         {
-            caret_element.appendChild(new_span);
-        }
-        else
-        {
-            if (caret_before_first_span)
-            {
-                caret_element.parentNode.insertBefore(new_span, caret_element);
-            }
-            else
-            {
-                caret_element.parentNode.insertBefore(new_span, caret_element.nextSibling);
-            }
-        }
-
-
-        // Set range (selection) on content of new span &#8203
-        range.selectNodeContents(new_span.childNodes[0]);
-        selection.removeAllRanges();
-        selection.addRange(range);
-
-        let isFirefox = typeof InstallTrigger !== 'undefined';
-        if (isFirefox)
-        {
-            new_span = document.createElement('span');
+            // Create new span for new char
+            // Set it's content to &#8203; special empty char so caret can be set inside
+            let new_span = document.createElement('span');
+            new_span.setAttribute("class", "user-input");
             new_span.setAttribute("style", "font-size: 150%; background: #ffffff; color: #028700");
-            new_span.innerHTML = char;
-
-            // Replace current span with new span
-            document.execCommand("insertHTML", false, new_span.outerHTML);
-        }
-        else
-        {
-            // Replace the content (&#8203) of current new span
-            document.execCommand("insertHTML", false, char);
-        }
-
-        // Usage of &#8203 and execCommand ensures that CTRL+Z and CTRL+Y works
-        // properly. After pressing CTRL+Z the char is replaced by &#8203 and after
-        // pressing CTRL+Y the &#8203 is replaced with the char.
-
-        // Remove empty spans
-        if (text_selected)
-        {
-            start_span.remove();
-            end_span.remove();
+            new_span.innerHTML = "&#8203";
+            if (empty_text_line_element)
+            {
+                caret_element.appendChild(new_span);
+            }
+            else
+            {
+                if (this.check_caret_is_at_the_beginning_of_the_first_span(caret_span))
+                {
+                    caret_span.parentNode.insertBefore(new_span, caret_span);
+                }
+                else
+                {
+                    caret_span.parentNode.insertBefore(new_span, caret_span.nextSibling);
+                }
+            }
+            let selection = document.getSelection();
+            let range = selection.getRangeAt(0);
+            range.selectNodeContents(new_span.childNodes[0]);
+            selection.removeAllRanges();
+            selection.addRange(range);
         }
     }
 
-    skip_all_empty_spans_to_the_left()
+    remove_selection_and_set_caret()
     {
+        let range = this.get_range();
+        let selected_spans_length = range.cloneContents().children.length;
+        let current_span = range.startContainer.parentNode;
+        let first_span = current_span;
+        let first_span_text = current_span.innerHTML;
+        current_span.innerHTML = first_span_text.slice(0, range.startOffset);
+        if (range.startContainer != range.endContainer)
+        {
+            for (let i = 1; i < selected_spans_length - 1; i++)
+            {
+                current_span = current_span.nextSibling;
+                current_span.innerHTML = '';
+            }
+            current_span = current_span.nextSibling;
+            let last_span = current_span;
+            let last_span_text = last_span.innerHTML;
+            current_span.innerHTML = last_span_text.slice(range.endOffset, last_span_text.length);
+        }
+        range.selectNodeContents(first_span);
+        range.collapse(false);
+    }
+
+    move_caret_to_the_left()
+    {
+        let selection = document.getSelection();
+
+        // moving caret to the left but caret is not on the last char in span (just move the caret normally)
+        if (selection.anchorOffset > 1)
+        {
+            selection.collapse(selection.anchorNode, selection.anchorOffset - 1);
+            return;
+        }
+
         let caret_span = this.get_caret_span();
-        let previous_span = caret_span;
+        let previous_span = caret_span.previousSibling;
         while (previous_span)
         {
             let skip_span = ((previous_span.innerHTML.charCodeAt(0) == 8203) || (previous_span.innerHTML == ""));
@@ -264,100 +275,56 @@ class TextLine
                 break;
             }
         }
-        let selection = document.getSelection();
-        let range = selection.getRangeAt(0);
-        if (previous_span.previousSibling)
+
+        if (previous_span)
         {
-            if (previous_span.previousSibling.childNodes.length)
+            let span_to_move;
+            if (previous_span.childNodes.length)
             {
-                range.selectNodeContents(previous_span.previousSibling.childNodes[0]);
+                span_to_move = previous_span.childNodes[0];
             }
             else
             {
-                range.selectNodeContents(previous_span.previousSibling);
+                span_to_move = previous_span;
             }
-            range.collapse(false);
+            selection.collapse(span_to_move, span_to_move.length);
         }
         else
         {
-            if (previous_span.childNodes.length)
+            let span_to_move;
+            if (caret_span.childNodes.length)
             {
-                range.selectNodeContents(previous_span.childNodes[0]);
+                span_to_move = caret_span.childNodes[0];
             }
             else
             {
-                range.selectNodeContents(previous_span);
+                span_to_move = caret_span;
             }
-            range.collapse(true);
+            selection.collapse(span_to_move, 0);
         }
-        selection.removeAllRanges();
-        selection.addRange(range);
+        return;
     }
 
-    select_span_to_the_left()
+    move_caret_to_the_right()
     {
-        let caret_span = this.get_caret_span();
-        let previous_span = caret_span;
-        while (previous_span)
-        {
-            let skip_span = ((previous_span.innerHTML.charCodeAt(0) == 8203) || (previous_span.innerHTML == ""));
-
-            if (skip_span)
-            {
-                if (previous_span.previousSibling)
-                {
-                    previous_span = previous_span.previousSibling;
-                }
-                else
-                {
-                    break;
-                }
-            }
-            else
-            {
-                break;
-            }
-        }
         let selection = document.getSelection();
-        let range = selection.getRangeAt(0);
-        console.log(selection);
-        if (previous_span.previousSibling)
-        {
-            if (previous_span.previousSibling.childNodes.length)
-            {
-                range.setStartAfter(previous_span.previousSibling.childNodes[0]);
-            }
-            else
-            {
-                range.setStartAfter(previous_span.previousSibling);
-            }
-        }
-        else
-        {
-            if (previous_span.childNodes.length)
-            {
-                range.setStartAfter(previous_span.childNodes[0]);
-            }
-            else
-            {
-                range.setStartAfter(previous_span);
-            }
-        }
-        selection.removeAllRanges();
-        selection.addRange(range);
-    }
 
-    skip_all_empty_spans_to_the_right()
-    {
+        // moving caret to the left but caret is not on the last char in span (just move the caret normally)
+        if (selection.anchorNode.length - selection.anchorOffset > 0)
+        {
+            selection.collapse(selection.anchorNode, selection.anchorOffset + 1);
+            return;
+        }
+
         let caret_span = this.get_caret_span();
-        let caret_before_first_span = this.check_caret_before_first_span(caret_span);
+        let caret_at_the_beginning_of_the_first_span = this.check_caret_is_at_the_beginning_of_the_first_span(caret_span);
         let valid_current_span = false;
-        if (caret_before_first_span)
+        if (caret_at_the_beginning_of_the_first_span)
         {
             valid_current_span = ((caret_span.innerHTML.charCodeAt(0) != 8203) && (caret_span.innerHTML != ""));
         }
         let next_span = caret_span;
-        if (caret_span.nextSibling && !valid_current_span)
+        if (caret_span.nextSibling && !(valid_current_span && caret_at_the_beginning_of_the_first_span))
         {
             next_span = caret_span.nextSibling;
             while (next_span)
@@ -380,25 +347,24 @@ class TextLine
                 }
             }
         }
-        let selection = document.getSelection();
-        let range = selection.getRangeAt(0);
+
+        let span_to_move;
         if (next_span.childNodes.length)
         {
-            range.selectNodeContents(next_span.childNodes[0]);
+            span_to_move = next_span.childNodes[0];
         }
         else
         {
-            range.selectNodeContents(next_span);
+            span_to_move = next_span;
         }
-        range.collapse(false);
-        selection.removeAllRanges();
-        selection.addRange(range);
+        selection.collapse(span_to_move, 1);
+        return;
     }
 
     set_caret_before_actual_char()
     {
         let caret_span = this.get_caret_span();
-        let caret_before_first_span = this.check_caret_before_first_span(caret_span);
+        let caret_at_the_beginning_of_the_first_span = this.check_caret_is_at_the_beginning_of_the_first_span(caret_span);
         let previous_span = caret_span;
         let valid_span_char = false;
         while (previous_span)
@@ -423,13 +389,9 @@ class TextLine
             }
         }
         let selection = document.getSelection();
-        let range = selection.getRangeAt(0);
-        if (valid_span_char && !caret_before_first_span)
+        if (valid_span_char && !caret_at_the_beginning_of_the_first_span)
         {
-            range.selectNodeContents(previous_span.childNodes[0]);
-            range.collapse(false);
-            selection.removeAllRanges();
-            selection.addRange(range);
+            selection.collapse(previous_span.childNodes[0], previous_span.childNodes[0].length);
             return true;
         }
         else
@@ -459,7 +421,7 @@ class TextLine
         return caret_span;
     }
 
-    check_caret_before_first_span(caret_span)
+    check_caret_is_at_the_beginning_of_the_first_span(caret_span)
     {
         let selection = document.getSelection();
         if (selection.anchorOffset == 0)
@@ -470,6 +432,28 @@ class TextLine
             }
         }
         return false;
+    }
+
+    text_selected()
+    {
+        let range = this.get_range();
+        if (range.startContainer != range.endContainer)
+        {
+            return true;
+        }
+        else
+        {
+            if (range.startOffset != range.endOffset)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    get_range()
+    {
+        return document.getSelection().getRangeAt(0);
     }
 
     save()

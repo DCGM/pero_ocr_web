@@ -159,7 +159,6 @@ class TextLinesEditor
 
     press_text_container(e)
     {
-        console.log("KEYPRESS");
         if (e.keyCode == 13)
         {
             let line_number = parseInt(this.active_line.container.getAttribute("id"), 10);

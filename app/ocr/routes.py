@@ -5,6 +5,7 @@ import shutil
 import json
 import uuid
 import sqlalchemy
+import unicodedata
 from pero_ocr.document_ocr.arabic_helper import ArabicHelper
 from flask import render_template, request, current_app, send_file
 from flask import url_for, redirect, flash, jsonify
@@ -248,28 +249,31 @@ def get_lines(image_id):
         text_lines = sorted(list(text_region.textlines), key=lambda x: x.order)
 
         for line in text_lines:
+            text = line.text if line.text is not None else ""
             confidences = line.np_confidences.tolist()
-            
             arabic = arabic_helper.is_arabic_line(line.text)
+
+            ligatures_mapping = []
             if arabic:
-                text = arabic_helper.label_form_to_visual_form(line.text, reverse_after=False) if line.text is not None else ""
-
-                new_confidences = []
-
-                ligatures_mapping = arabic_helper.ligatures_mapping(text)
-                for ligature_mapping in ligatures_mapping:
-                    confidence_sum = 0
-                    length = len(ligature_mapping)
-                    
-                    for confidence_index in ligature_mapping:
-                        confidence_sum += confidences[confidence_index]
-                    new_confidences.append(confidence_sum / length)
-                
-                confidences = new_confidences
-                            
+                text = arabic_helper.string_to_label_form(text)
+                text_visual = arabic_helper.label_form_to_visual_form(text, reverse_before=False, reverse_after=False)
+                ligatures_mapping = arabic_helper.ligatures_mapping(text_visual)
             else:
-                text = line.text if line.text is not None else ""
+                for i, c in enumerate(text):
+                    if unicodedata.combining(c) and i:
+                        ligatures_mapping[-1].append(i)
+                    else:
+                        ligatures_mapping.append([i])
 
+            new_confidences = []
+            print(ligatures_mapping)
+            if ligatures_mapping and ligatures_mapping[-1][-1] == len(confidences) - 1:
+                for index_visual, ligature_mapping in enumerate(ligatures_mapping):
+                    ligature_confidence = 1
+                    for confidence_index in ligature_mapping:
+                        ligature_confidence = min(ligature_confidence, confidences[confidence_index])
+                    new_confidences.append(ligature_confidence)
+            confidences = new_confidences
 
             lines_dict['lines'].append({
                         'id': line.id,
@@ -277,6 +281,7 @@ def get_lines(image_id):
                         'np_baseline':  line.np_baseline.tolist(),
                         'np_heights':  line.np_heights.tolist(),
                         'np_confidences': confidences,
+                        'ligatures_mapping': ligatures_mapping,
                         'np_textregion_width':  [text_region.np_points[:, 0].min(), text_region.np_points[:, 0].max()],
                         'annotated': line.id in annotated_lines,
                         'text': text,
