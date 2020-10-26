@@ -149,8 +149,7 @@
         });
         $('input:checkbox').change(function() {
             let url = Flask.url_for('ocr.ocr_training_documents_post', {document_id: this.name, ocr_id: "{{ocr_id}}", state: $(this).prop('checked')});
-            console.log(url);
-            fetch(url).catch(error => console.log('Error:', error));
+            fetch(url).then(data => { if(data.status > 400){alert('ERROR: Failed to set training document. ' + data.status);}}, error => alert('ERROR: Failed to set training document. ' + error));
         });
     </script>
 {% endblock %}
