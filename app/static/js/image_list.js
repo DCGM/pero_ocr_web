@@ -37,13 +37,11 @@ class ImageList
     change(image)
     {
         let image_id = $(image).data('image');
-        if(this.image_index != $(image).data('index')) {
-            this.image_index = $(image).data('index');
-            if (typeof URLSearchParams != "undefined") {
-                const params = new URLSearchParams(location.search);
-                params.set('page', this.image_index);
-                window.history.replaceState({}, '', `${location.pathname}?${params}`);
-            }
+        this.image_index = $(image).data('index');
+        if (typeof URLSearchParams != "undefined") {
+            const params = new URLSearchParams(location.search);
+            params.set('page', this.image_index);
+            window.history.replaceState({}, '', `${location.pathname}?${params}`);
         }
 
         let previous_active_figure = $('.scrolling-wrapper .figure.active');
