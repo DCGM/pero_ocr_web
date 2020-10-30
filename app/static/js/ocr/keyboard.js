@@ -142,7 +142,7 @@ class Keyboard{
         if (this.text_lines_editor.focused_line)
         {
             this.text_lines_editor.active_line.remove_selection_and_prepare_line_for_insertion();
-            document.execCommand("insertText", false, char);
+            document.execCommand("insertHTML", false, char);
         }
     }
 

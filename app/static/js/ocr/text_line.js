@@ -182,7 +182,7 @@ class TextLine
         e.preventDefault();
         var text = (e.originalEvent || e).clipboardData.getData('text/plain');
         this.remove_selection_and_prepare_line_for_insertion();
-        document.execCommand("insertText", false, text);
+        document.execCommand("insertHTML", false, text);
     }
 
     mutate()
@@ -235,6 +235,7 @@ class TextLine
                 }
                 else
                 {
+                    console.log("inserting");
                     caret_span.parentNode.insertBefore(new_span, caret_span.nextSibling);
                 }
             }
