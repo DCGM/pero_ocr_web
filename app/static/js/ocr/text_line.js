@@ -98,6 +98,7 @@ class TextLine
     keydown(e)
     {
         let empty_text_line_element = this.empty_text_line_element();
+        let isFirefox = typeof InstallTrigger !== 'undefined';
 
         // LEFT ARROW
         if (e.keyCode == 37 && !e.ctrlKey && !e.shiftKey && !empty_text_line_element)
@@ -154,9 +155,12 @@ class TextLine
             }
             else
             {
-                if (!this.set_caret_before_actual_char_for_delete())
+                if (!isFirefox)
                 {
-                    e.preventDefault();
+                    if (!this.set_caret_before_actual_char_for_delete())
+                    {
+                        e.preventDefault();
+                    }
                 }
             }
         }
@@ -171,7 +175,6 @@ class TextLine
             range.setStart(first_span, 0);
             let last_span = this.container.childNodes[this.container.childNodes.length - 1];
             range.setEnd(last_span, last_span.innerHTML.length);
-            console.log(range);
             selection.removeAllRanges();
             selection.addRange(range);
         }
@@ -181,8 +184,8 @@ class TextLine
     {
         e.preventDefault();
         var text = (e.originalEvent || e).clipboardData.getData('text/plain');
-        this.remove_selection_and_prepare_line_for_insertion();
-        document.execCommand("insertHTML", false, text);
+        //this.remove_selection_and_prepare_line_for_insertion();
+        document.execCommand("insertText", false, text);
     }
 
     mutate()
@@ -222,7 +225,7 @@ class TextLine
             let new_span = document.createElement('span');
             new_span.setAttribute("class", "user-input");
             new_span.setAttribute("style", "font-size: 150%; background: #ffffff; color: #028700");
-            new_span.innerHTML = "&#8203";
+            new_span.innerHTML = "&#8203;";
             if (empty_text_line_element)
             {
                 caret_span.appendChild(new_span);
@@ -235,7 +238,6 @@ class TextLine
                 }
                 else
                 {
-                    console.log("inserting");
                     caret_span.parentNode.insertBefore(new_span, caret_span.nextSibling);
                 }
             }
@@ -306,16 +308,7 @@ class TextLine
         }
         else
         {
-            let span_to_move;
-            if (caret_span.childNodes.length)
-            {
-                span_to_move = caret_span.childNodes[0];
-            }
-            else
-            {
-                span_to_move = caret_span;
-            }
-            selection.collapse(span_to_move, 0);
+            selection.collapse(this.get_span_to_move(caret_span), 0);
         }
         return;
     }
@@ -336,22 +329,13 @@ class TextLine
         {
             valid_current_span = ((caret_span.innerHTML.charCodeAt(0) != 8203) && (caret_span.innerHTML != ""));
         }
-        let next_span = caret_span;
-        if (caret_span.nextSibling && !(valid_current_span && caret_at_the_beginning_of_the_first_span))
+        let next_span = this.get_next_valid_span();
+        if (next_span && !(valid_current_span && caret_at_the_beginning_of_the_first_span))
         {
-            let next_span = this.get_next_valid_span();
-            let span_to_move;
-            if (next_span.childNodes.length)
-            {
-                span_to_move = next_span.childNodes[0];
-            }
-            else
-            {
-                span_to_move = next_span;
-            }
-            selection.collapse(span_to_move, 1);
+            selection.collapse(this.get_span_to_move(next_span), 1);
             return;
         }
+        return;
     }
 
     set_caret_before_actual_char_for_backspace()
@@ -369,13 +353,11 @@ class TextLine
         }
         if (previous_span)
         {
-            selection.collapse(previous_span.childNodes[0], previous_span.childNodes[0].length);
+            let span_to_move = this.get_span_to_move(previous_span);
+            selection.collapse(span_to_move, span_to_move.length);
             return true;
         }
-        else
-        {
-            return false;
-        }
+        return false;
     }
 
     set_caret_before_actual_char_for_delete()
@@ -385,16 +367,15 @@ class TextLine
         {
             return true;
         }
-        let next_span = this.get_next_valid_span();
-        if (next_span)
+        let caret_span = this.get_caret_span();
+        let next_span = this.skip_next_invalid_spans(caret_span.nextSibling);
+        if (caret_span != next_span)
         {
-            selection.collapse(next_span.childNodes[0], 0);
+            let span_to_move = this.get_span_to_move(next_span.previousSibling);
+            selection.collapse(span_to_move, span_to_move.length);
             return true;
         }
-        else
-        {
-            return false;
-        }
+        return false;
     }
 
     get_previous_valid_span()
@@ -445,8 +426,25 @@ class TextLine
         return next_span;
     }
 
+    get_span_to_move(caret_span)
+    {
+        let span_to_move;
+        if (caret_span.childNodes.length)
+        {
+            span_to_move = caret_span.childNodes[0];
+        }
+        else
+        {
+            span_to_move = caret_span;
+        }
+        return span_to_move;
+    }
+
     get_caret_span()
     {
+        //let selection = document.getSelection();
+        //let range = selection.getRangeAt(0);
+        //let caret_span = range.endContainer;
         let selection = document.getSelection();
         let caret_span = selection.anchorNode;
         //Firefox bug, doesn't delete span after pressing backspace
