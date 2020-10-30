@@ -97,7 +97,7 @@ class TextLine
 
     keydown(e)
     {
-        let empty_text_line_element = !($(this.container).has('span').length);
+        let empty_text_line_element = this.empty_text_line_element();
 
         // LEFT ARROW
         if (e.keyCode == 37 && !e.ctrlKey && !e.shiftKey && !empty_text_line_element)
@@ -137,15 +137,43 @@ class TextLine
             }
             else
             {
-                let caret_span = this.get_caret_span();
-                if (caret_span.getAttribute("class") != "user-input")
+                if (!this.set_caret_before_actual_char_for_backspace())
                 {
-                    if (!this.set_caret_before_actual_char())
-                    {
-                        e.preventDefault();
-                    }
+                    e.preventDefault();
                 }
             }
+        }
+
+        // DELETE
+        if (e.keyCode == 46 && !empty_text_line_element)
+        {
+            if (this.text_selected())
+            {
+                e.preventDefault();
+                this.remove_selection_and_set_caret();
+            }
+            else
+            {
+                if (!this.set_caret_before_actual_char_for_delete())
+                {
+                    e.preventDefault();
+                }
+            }
+        }
+
+        // CTRL + A
+        if (e.ctrlKey && e.keyCode == 65 && !empty_text_line_element)
+        {
+            e.preventDefault();
+            let selection = document.getSelection();
+            let range = selection.getRangeAt(0);
+            let first_span = this.container.childNodes[0];
+            range.setStart(first_span, 0);
+            let last_span = this.container.childNodes[this.container.childNodes.length - 1];
+            range.setEnd(last_span, last_span.innerHTML.length);
+            console.log(range);
+            selection.removeAllRanges();
+            selection.addRange(range);
         }
     }
 
@@ -176,7 +204,7 @@ class TextLine
     // Creates new user-input span if needed
     prepare_line_for_insertion()
     {
-        let empty_text_line_element = !($(this.container).has('span').length);
+        let empty_text_line_element = this.empty_text_line_element();
         let caret_span;
         if (empty_text_line_element)
         {
@@ -197,7 +225,7 @@ class TextLine
             new_span.innerHTML = "&#8203";
             if (empty_text_line_element)
             {
-                caret_element.appendChild(new_span);
+                caret_span.appendChild(new_span);
             }
             else
             {
@@ -228,15 +256,24 @@ class TextLine
         current_span.innerHTML = first_span_text.slice(0, range.startOffset);
         if (range.startContainer != range.endContainer)
         {
+            current_span = current_span.nextSibling;
             for (let i = 1; i < selected_spans_length - 1; i++)
             {
+                let previous_span = current_span;
                 current_span = current_span.nextSibling;
-                current_span.innerHTML = '';
+                previous_span.remove();
             }
-            current_span = current_span.nextSibling;
             let last_span = current_span;
             let last_span_text = last_span.innerHTML;
-            current_span.innerHTML = last_span_text.slice(range.endOffset, last_span_text.length);
+            last_span_text = last_span_text.slice(range.endOffset, last_span_text.length);
+            if (last_span_text == "")
+            {
+                last_span.remove();
+            }
+            else
+            {
+                last_span.innerHTML = last_span_text;
+            }
         }
         range.selectNodeContents(first_span);
         range.collapse(false);
@@ -245,37 +282,14 @@ class TextLine
     move_caret_to_the_left()
     {
         let selection = document.getSelection();
-
-        // moving caret to the left but caret is not on the last char in span (just move the caret normally)
+        // moving caret to the left but caret is not on the first char in span (just move the caret normally)
         if (selection.anchorOffset > 1)
         {
             selection.collapse(selection.anchorNode, selection.anchorOffset - 1);
             return;
         }
-
         let caret_span = this.get_caret_span();
-        let previous_span = caret_span.previousSibling;
-        while (previous_span)
-        {
-            let skip_span = ((previous_span.innerHTML.charCodeAt(0) == 8203) || (previous_span.innerHTML == ""));
-
-            if (skip_span)
-            {
-                if (previous_span.previousSibling)
-                {
-                    previous_span = previous_span.previousSibling;
-                }
-                else
-                {
-                    break;
-                }
-            }
-            else
-            {
-                break;
-            }
-        }
-
+        let previous_span = this.get_previous_valid_span();
         if (previous_span)
         {
             let span_to_move;
@@ -308,14 +322,12 @@ class TextLine
     move_caret_to_the_right()
     {
         let selection = document.getSelection();
-
-        // moving caret to the left but caret is not on the last char in span (just move the caret normally)
+        // moving caret to the right but caret is not on the last char in span (just move the caret normally)
         if (selection.anchorNode.length - selection.anchorOffset > 0)
         {
             selection.collapse(selection.anchorNode, selection.anchorOffset + 1);
             return;
         }
-
         let caret_span = this.get_caret_span();
         let caret_at_the_beginning_of_the_first_span = this.check_caret_is_at_the_beginning_of_the_first_span(caret_span);
         let valid_current_span = false;
@@ -326,70 +338,35 @@ class TextLine
         let next_span = caret_span;
         if (caret_span.nextSibling && !(valid_current_span && caret_at_the_beginning_of_the_first_span))
         {
-            next_span = caret_span.nextSibling;
-            while (next_span)
+            let next_span = this.get_next_valid_span();
+            let span_to_move;
+            if (next_span.childNodes.length)
             {
-                let skip_span = ((next_span.innerHTML.charCodeAt(0) == 8203) || (next_span.innerHTML == ""));
-                if (skip_span)
-                {
-                    if (next_span.nextSibling)
-                    {
-                        next_span = next_span.nextSibling;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-                else
-                {
-                    break;
-                }
-            }
-        }
-
-        let span_to_move;
-        if (next_span.childNodes.length)
-        {
-            span_to_move = next_span.childNodes[0];
-        }
-        else
-        {
-            span_to_move = next_span;
-        }
-        selection.collapse(span_to_move, 1);
-        return;
-    }
-
-    set_caret_before_actual_char()
-    {
-        let caret_span = this.get_caret_span();
-        let caret_at_the_beginning_of_the_first_span = this.check_caret_is_at_the_beginning_of_the_first_span(caret_span);
-        let previous_span = caret_span;
-        let valid_span_char = false;
-        while (previous_span)
-        {
-            let skip_span = ((previous_span.innerHTML.charCodeAt(0) == 8203) || (previous_span.innerHTML == ""));
-
-            if (skip_span)
-            {
-                if (previous_span.previousSibling)
-                {
-                    previous_span = previous_span.previousSibling;
-                }
-                else
-                {
-                    break;
-                }
+                span_to_move = next_span.childNodes[0];
             }
             else
             {
-                valid_span_char = true;
-                break;
+                span_to_move = next_span;
             }
+            selection.collapse(span_to_move, 1);
+            return;
         }
+    }
+
+    set_caret_before_actual_char_for_backspace()
+    {
         let selection = document.getSelection();
-        if (valid_span_char && !caret_at_the_beginning_of_the_first_span)
+        let caret_span = this.get_caret_span();
+        if (this.check_caret_is_at_the_beginning_of_the_first_span(caret_span))
+        {
+            return false;
+        }
+        let previous_span = this.skip_invalid_previous_spans(caret_span);
+        if (previous_span == caret_span)
+        {
+            return true;
+        }
+        if (previous_span)
         {
             selection.collapse(previous_span.childNodes[0], previous_span.childNodes[0].length);
             return true;
@@ -398,6 +375,73 @@ class TextLine
         {
             return false;
         }
+    }
+
+    set_caret_before_actual_char_for_delete()
+    {
+        let selection = document.getSelection();
+        if (selection.anchorNode.length - selection.anchorOffset > 0)
+        {
+            return true;
+        }
+        let next_span = this.get_next_valid_span();
+        if (next_span)
+        {
+            selection.collapse(next_span.childNodes[0], 0);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    get_previous_valid_span()
+    {
+        let caret_span = this.get_caret_span();
+        let previous_span = caret_span.previousSibling;
+        return this.skip_previous_invalid_spans(previous_span);
+    }
+
+    skip_previous_invalid_spans(previous_span)
+    {
+        while (previous_span)
+        {
+            let skip_span = ((previous_span.innerHTML.charCodeAt(0) == 8203) || (previous_span.innerHTML == ""));
+            if (skip_span)
+            {
+                previous_span = previous_span.previousSibling;
+            }
+            else
+            {
+                break;
+            }
+        }
+        return previous_span;
+    }
+
+    get_next_valid_span()
+    {
+        let caret_span = this.get_caret_span();
+        let next_span = caret_span.nextSibling;
+        return this.skip_next_invalid_spans(next_span);
+    }
+
+    skip_next_invalid_spans(next_span)
+    {
+        while (next_span)
+        {
+            let skip_span = ((next_span.innerHTML.charCodeAt(0) == 8203) || (next_span.innerHTML == ""));
+            if (skip_span)
+            {
+                next_span = next_span.nextSibling;
+            }
+            else
+            {
+                break;
+            }
+        }
+        return next_span;
     }
 
     get_caret_span()
@@ -410,7 +454,7 @@ class TextLine
             caret_span = caret_span.parentNode;
         }
         // Anchor offset should be always 1 apart from caret on first position
-        if (selection.anchorOffset == 0)
+        if (selection.anchorOffset == 0 && selection.anchorNode.length > 0)
         {
             // Firefox bug, anchor offset is 0 but caret element is not the first element
             if (caret_span.previousSibling)
@@ -447,6 +491,15 @@ class TextLine
             {
                 return true;
             }
+        }
+        return false;
+    }
+
+    empty_text_line_element()
+    {
+        if (this.get_text_content() == "")
+        {
+            return true;
         }
         return false;
     }
