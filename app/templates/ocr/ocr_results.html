@@ -4,9 +4,12 @@
     <div class="container-fluid px-4">
 
         <div class="row my-4">
-            <div class="col-sm-12">
+              <div class="col-sm-8">
                 <h3 class="text-left">{{ document.name }} - OCR Results</h3>
                 <h3 id="document-id" style="display: None">{{ document.id }}</h3>
+            </div>
+            <div class="col-sm-4 text-right" >
+                {% include '/document/document_action_buttons.html' %}
             </div>
         </div>
 
@@ -125,22 +128,30 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('static', filename='js/lazy_image.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/lazy_image.js') + '?version=0.0.1' }}"></script>
     <script>
-        function lazy_callback(element){
-            element.src = element.dataset.src;
-            var figure = element.parentElement
-            $.get( "/ocr/get_image_annotation_statistics/" + figure.dataset['image'], function( data ) {
-                if(data['annotated_count'] == data['line_count']){
-                    element.parentElement.style.backgroundColor = '#83d8f7';
-                } else if (data['annotated_count'] > 0){
-                    element.parentElement.style.backgroundColor = '#faed8e';
-                }
+        function my_lazy_callback(element){
+            let image_fetch = new Promise((resolve, reject) => {
+                element.onload = resolve;
+                element.onerror = reject;
+                element.src = element.dataset.src;
             });
+            let figure = element.parentElement;
+            let state_fetch = fetch("/ocr/get_image_annotation_statistics/" + figure.dataset['image'])
+                .then(response => response.json())
+                .then(data => {
+                    if(data['annotated_count'] == data['line_count']){
+                        element.parentElement.style.backgroundColor = '#83d8f7';
+                    } else if (data['annotated_count'] > 0){
+                        element.parentElement.style.backgroundColor = '#faed8e';
+                    }
+                });
+            return Promise.all([image_fetch, state_fetch]);
         }
+
         document.addEventListener("DOMContentLoaded",
             function () {
-                manage_lazy_images(lazy_callback)
+                manage_lazy_images(my_lazy_callback)
             });
     </script>
     <script>
@@ -151,11 +162,11 @@
     <script src="/static/leaflet/leaflet.js"></script>
     <script src="/static/leaflet/Leaflet.Editable.js"></script>
     <script src="/static/leaflet/Path.Drag.js"></script>
-    <script src="/static/js/arabic_reshaper.js?version=1.4.2"></script>
+    <script src="/static/js/arabic_reshaper.js?version=1.4.3"></script>
     <script src="/static/js/ocr/ocr_export_buttons.js?version=1.4.2"></script>
-    <script src="/static/js/ocr/text_line.js?version=1.4.2"></script>
-    <script src="/static/js/ocr/text_lines_editor.js?version=1.4.3"></script>
-    <script src="/static/js/ocr/keyboard.js?version=1.4.4"></script>
+    <script src="/static/js/ocr/text_line.js?version=1.4.3"></script>
+    <script src="/static/js/ocr/text_lines_editor.js?version=1.4.5"></script>
+    <script src="/static/js/ocr/keyboard.js?version=1.4.5"></script>
     <script src="/static/js/image_list.js?version=1.4.2"></script>
     <script>
         let ocr_export_buttons = new OCRExportButtons();
