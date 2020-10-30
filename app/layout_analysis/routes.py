@@ -15,8 +15,8 @@ import sqlalchemy
 from app.db.model import DocumentState, TextRegion, LayoutDetector, Document
 from app.document.general import is_user_owner_or_collaborator, is_granted_acces_for_document, is_user_trusted, \
                                  document_exists, get_document_images, document_in_allowed_state
-from PIL import Image
 from app import db_session
+from app.db import Image
 from flask import jsonify
 import shutil
 
@@ -34,18 +34,21 @@ def show_results(document_id):
     if not document_exists(document_id):
         flash(u'Document with this id does not exist!', 'danger')
         return redirect(url_for('main.index'))
-    if not document_in_allowed_state(document_id, DocumentState.COMPLETED_LAYOUT_ANALYSIS):
-        flash(u'Document is in the state prohibiting this action!', 'danger')
-        return redirect(url_for('main.index'))
     if not is_granted_acces_for_document(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
-    document = get_document_by_id(document_id)
-    if document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
-        return 'Layout analysis is not completed yet!', 400
-    images = get_document_images(document)
 
-    return render_template('layout_analysis/layout_results.html', document=document, images=natsorted(list(images), key=lambda x: x.filename))
+    document = get_document_by_id(document_id)
+    if document.state == DocumentState.NEW:
+        return redirect(url_for('document.upload_document_get', document_id=document.id))
+    elif document.state == DocumentState.COMPLETED_OCR:
+        return redirect(url_for('ocr.show_results', document_id=document.id))
+    elif document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
+        flash(u'Document can not be edited in its current state.', 'danger')
+        return redirect(url_for('main.index'))
+
+    images = get_document_images(document).order_by(Image.filename).all()
+    return render_template('layout_analysis/layout_results.html', document=document, images=images)
 
 
 @bp.route('/revert_layout_analysis/<string:document_id>', methods=['GET'])

@@ -3,8 +3,11 @@
     <div class="container-fluid px-4">
 
         <div class="row my-4">
-            <div class="col-sm-12">
+            <div class="col-sm-8">
                 <h3 class="text-left">{{ document.name }} - Layout Analysis Results</h3>
+            </div>
+            <div class="col-sm-4 text-right" >
+                {% include '/document/document_action_buttons.html' %}
             </div>
         </div>
 
@@ -67,7 +70,7 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('static', filename='js/lazy_image.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/lazy_image.js') + '?version=0.0.1' }}"></script>
     <script>
         document.addEventListener("DOMContentLoaded",
             function () {

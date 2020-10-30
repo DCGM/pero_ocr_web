@@ -513,9 +513,11 @@ class TextLine
     {
         let annotations = [];
         let annotation_dict = {};
+        let new_text = this.get_text_content();
+        let this_text_line = this;
         annotation_dict["id"] = this.id;
         annotation_dict["text_original"] = this.text;
-        annotation_dict["text_edited"] = this.get_text_content();
+        annotation_dict["text_edited"] = new_text;
         annotations.push(annotation_dict);
         console.log(annotations);
         console.log(JSON.stringify(annotations));
@@ -529,6 +531,7 @@ class TextLine
             success: function(data, textStatus) {
                 self.edited = false;
                 self.saved = true;
+                this_text_line.text = new_text;
                 self.set_background_to_save();
                 if (data.status == 'redirect') {
                     // data.redirect contains the string URL to redirect to

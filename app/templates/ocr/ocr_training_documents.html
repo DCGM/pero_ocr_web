@@ -1,0 +1,152 @@
+{% extends "base/base.html" %}
+
+{% block styles %}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="/static/css/loader.css?v=1.0">
+    <style>
+        .document-action-btn{
+            min-height: 25px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid px-4">
+        <form action="{{ url_for('ocr.ocr_training_documents') }}" method="get">
+            <div class="row mt-4">
+                <div class="offset-xl-2 col-xl-10 offset-lg-1 col-lg-11">
+                    <h5 class="text-left">Select OCR engine</h5>
+                </div>
+            </div>
+            <div class="row">
+                <div class="offset-xl-2 col-xl-5 offset-lg-1 col-lg-6">
+                    <select class="form-control" name="ocr_id">
+                        {% for ocr in ocr_engines %}
+                        {% if ocr.id == ocr_id %}
+                        <option value="{{ ocr.id }}" model-type-description="ocr-description" data-description="{{ ocr.description }}" selected="selected">{{ocr.name}}</option>
+                        {% else  %}
+                        <option value="{{ ocr.id }}" model-type-description="ocr-description" data-description="{{ ocr.description }}">{{ocr.name}}</option>
+                        {% endif  %}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="offset-xl-2 col-xl-5 offset-lg-1 col-lg-6 text-justify" id="ocr-description">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="offset-xl-2 col-xl-10 offset-lg-1 col-lg-11">
+                    <input class="btn btn-primary my-3" type="submit" value="Switch to OCR engine">
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="row">
+        <div class="offset-xl-1 col-xl-10">
+<table id="training_doc_table" class="table table-hover">
+    <thead>
+    <tr role="row">
+        <th scope="col" class="image_column">Page</th>
+        <th scope="col">Timestamp</th>
+        <th scope="col">Name</th>
+        <th scope="col">Owner</th>
+        <th scope="col" >Model</th>
+        <th scope="col" id="selected_column">Selected</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for document in documents %}
+        <tr data-document="{{ document.id }}">
+            <td data-sort="{{loop.index}}">
+                <div class="image-preview-cont">
+                    <img data-src="{{url_for('layout_analysis.get_result_preview', image_id=previews[document.id].id)}}" class="lazy-img image-preview" src="" onerror="this.src='/static/img/missing_page.png'"/>
+                </div>
+            </td>
+            {% if document.requests_lazy %}
+                <td class="utc-time" data-sort="{{document.requests_lazy[-1].created_date.isoformat()}}">{{ document.requests_lazy[-1].created_date.isoformat() }}</td>
+            {% else %}
+                <td class="utc-time" data-sort="0">N/A</td>
+            {% endif %}
+
+            <td><a href="{{ url_for('ocr.show_results', document_id=document.id) }}">{{ document.name }}</a></td>
+            <td>{{ document.user.first_name }} {{ document.user.last_name }}</td>
+
+            {% if not document.requests_lazy or not document.requests_lazy[-1].ocr_id %}
+                <td>N/A</td>
+            {% else %}
+                <td>{{ engine_names[document.requests_lazy[-1].ocr_id] }}</td>
+            {% endif %}
+            <td data-sort="{{ document.id in selected_documents }}" id="{{document.id}}">
+                <input name="{{document.id}}" type="checkbox" {{"checked" if document.id in selected_documents}} data-toggle="toggle" />
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+
+    <script src="/static/js/select.js?version=1.1"></script>
+    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script>
+    <script src="{{ url_for('static', filename='js/lazy_image.js') + '?version=0.0.1' }}"></script>
+    <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+    <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+
+    <script>
+        for(var elem of document.getElementsByClassName("utc-time")){
+            const date = new Date(elem.textContent + 'Z');
+            elem.innerHTML = date.toLocaleString();
+        }
+
+        document.addEventListener("DOMContentLoaded",
+            function () {
+                manage_lazy_images(template_set_url_callback)
+            });
+        $(document).ready(function () {
+            // Setup table - add a text input to each footer cell
+            $('#training_doc_table thead tr').clone(true).appendTo('#training_doc_table thead');
+            let table = $('#training_doc_table').DataTable({
+                stateSave: true,
+                orderCellsTop: true,
+                fixedHeader: true
+            });
+
+            let state = table.state.loaded();
+            $('#training_doc_table thead tr:eq(1) th').each(function (i) {
+                let title = $(this).text();
+                let input_value = '';
+                try {
+                    input_value = state.columns[i].search.search;
+                } catch(err){
+                    console.log('ERROR')
+                }
+                if (title != 'Actions' && title != 'Page') {
+                    $(this).html('<input type="text" placeholder="Search"  value="' + input_value + '"/>');
+                    $('input', this).on('keyup change', function () {
+                        if (table.column(i).search() !== this.value) {
+                            table.column(i).search(this.value).draw();
+                        }
+                    });
+                } else {
+                    $(this).html('');
+                }
+            });
+            $('input:checkbox').change(function() {
+                let url = Flask.url_for('ocr.ocr_training_documents_post', {document_id: this.name, ocr_id: "{{ocr_id}}", state: $(this).prop('checked')});
+                fetch(url).then(data => { if(data.status > 400){alert('ERROR: Failed to set training document. ' + data.status);}}, error => alert('ERROR: Failed to set training document. ' + error));
+                if($(this).prop('checked')) {
+                    this.parentElement.parentElement.dataset.sort = 'True';
+                } else{
+                    this.parentElement.parentElement.dataset.sort = 'False';
+                }
+                table.cell("#" + this.name).invalidate();
+            });
+        });
+    </script>
+{% endblock %}

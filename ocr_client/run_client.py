@@ -6,6 +6,7 @@ import time
 import requests
 import configparser
 import subprocess
+import traceback
 
 from client_helper import join_url
 from client_helper import unzip_response_to_dir
@@ -15,148 +16,141 @@ from client_helper import log_in
 from client_helper import add_log_to_request
 
 
-def check_and_process_ocr_request(config):
-    with requests.Session() as session:
-        if not log_in(session, config['SETTINGS']['login'], config['SETTINGS']['password'], config['SERVER']['base_url'],
-                      config['SERVER']['authentification'], config['SERVER']['login_page']):
-            return False
+def check_and_process_ocr_request(config, session):
+    base_url = config['SERVER']['base_url']
+    ocr_get_request_route = config['SERVER']['ocr_get_request_route']
 
-        base_url = config['SERVER']['base_url']
-        ocr_get_request_route = config['SERVER']['ocr_get_request_route']
+    r = session.get(join_url(base_url, ocr_get_request_route))
 
-        try:
-            r = session.get(join_url(base_url, ocr_get_request_route))
-        except:
-            return False
+    request_json = r.json()
 
-        request_json = r.json()
-
-        if 'document' in request_json.keys():
-            ocr_get_config_route = config['SERVER']['ocr_get_config_route']
-            ocr_get_baseline_route = config['SERVER']['ocr_get_baseline_route']
-            ocr_get_ocr_route = config['SERVER']['ocr_get_ocr_route']
-            ocr_get_language_model_route = config['SERVER']['ocr_get_language_model_route']
-            document_get_image_route = config['SERVER']['document_get_image_route']
-            document_get_xml_regions_route = config['SERVER']['document_get_xml_regions_route']
-            document_get_xml_lines_route = config['SERVER']['document_get_xml_lines_route']
-            main_add_log_to_request_route = config['SERVER']['main_add_log_to_request_route']
-            ocr_post_result_route = config['SERVER']['ocr_post_result_route']
-            ocr_change_ocr_request_and_document_state_on_success_route = config['SERVER']['ocr_change_ocr_request_and_document_state_on_success_route']
-            ocr_change_ocr_request_to_fail_and_document_state_to_success_route = config['SERVER']['ocr_change_ocr_request_to_fail_and_document_state_to_success_route']
-            ocr_change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis_route = config['SERVER']['ocr_change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis_route']
-
-            request_id = request_json['id']
-            baseline_id = request_json['baseline_id']
-            ocr_id = request_json['ocr_id']
-            language_model_id = request_json['language_model_id']
-            document = request_json['document']
-            image_ids = document['images']
-
-            print()
-            print("REQUEST")
-            print("##############################################################")
-            print("REQUEST ID:", request_id)
-            print("BASELINE ID:", baseline_id)
-            print("OCR ID:", ocr_id)
-            print("LANGUAGE MODEL ID:", language_model_id)
-            print("IMAGES IDS:")
-            print("\n".join(image_ids))
-            print("##############################################################")
-
-            working_dir = os.path.join(config['SETTINGS']['working_directory'], request_id)
-            parse_folder_path = config['SETTINGS']['parse_folder_path']
-
-            models_folder = os.path.join(working_dir, "models")
-            images_folder = os.path.join(working_dir, "images")
-            xmls_folder = os.path.join(working_dir, "xmls")
-            output_folder = os.path.join(working_dir, "output")
-
-            if os.path.exists(working_dir):
-                shutil.rmtree(working_dir)
-            os.makedirs(working_dir)
-            os.makedirs(images_folder)
-            os.makedirs(xmls_folder)
-            os.makedirs(output_folder)
-            os.makedirs(os.path.join(output_folder, "page"))
-            os.makedirs(models_folder)
-
-            print()
-            print("GETTING CONFIG AND MODELS")
-            print("##############################################################")
-            get_config_and_models(session, base_url, ocr_get_config_route, ocr_get_baseline_route, ocr_get_ocr_route,
-                                  ocr_get_language_model_route, baseline_id, ocr_id, language_model_id, models_folder)
-            print("##############################################################")
-
-            print()
-            print("GETTING IMAGES")
-            print("##############################################################")
-            get_images(session, base_url, document_get_image_route, image_ids, images_folder)
-            number_of_images = len(os.listdir(images_folder))
-            print("##############################################################")
-
-            print()
-            if baseline_id is None:
-                print("GETTING XMLS WITH DETECTED LINES")
-                print("##############################################################")
-                get_xmls(session, base_url, document_get_xml_lines_route, image_ids, xmls_folder)
-            else:
-                print("GETTING XMLS WITH DETECTED LAYOUT")
-                print("##############################################################")
-                get_xmls(session, base_url, document_get_xml_regions_route, image_ids, xmls_folder)
-            print("##############################################################")
-
-            print()
-            print("STARTING PARSE FOLDER:", parse_folder_path)
-            print("##############################################################")
-            parse_folder_process = subprocess.Popen(['python', parse_folder_path, '-c', "./models/config.ini"],
-                                                    cwd=working_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            log = []
-            while True:
-                line = parse_folder_process.stdout.readline()
-                if not line:
-                    break
-                line = line.decode("utf-8")
-                log.append(line)
-                print(line, end='')
-            parse_folder_process.wait()
-            print("##############################################################")
-
-            output_xmls_folder = os.path.join(output_folder, "page")
-            output_logits_folder = os.path.join(output_folder, "logits")
-            no_output = False
-            if os.path.isdir(output_xmls_folder) and os.path.isdir(output_logits_folder):
-                number_of_xmls = len(os.listdir(output_xmls_folder))
-                number_of_logits = len(os.listdir(output_logits_folder))
-            else:
-                no_output = True
-
-            add_log_to_request(session, base_url, main_add_log_to_request_route, request_id, log)
-
-            if not no_output and parse_folder_process.returncode == 0 and number_of_images == number_of_xmls and number_of_images == number_of_logits:
-                data_folders = [output_xmls_folder, output_logits_folder]
-                data_types = ["xml", "logits"]
-                print()
-                print("POSTING RESULT TO SERVER")
-                print("##############################################################")
-                print("XMLS")
-                print("\n".join(os.listdir(output_xmls_folder)))
-                print()
-                print("LOGITS")
-                print("\n".join(os.listdir(output_logits_folder)))
-                post_result(session, base_url, ocr_post_result_route,
-                            ocr_change_ocr_request_and_document_state_on_success_route, request_id, image_ids, data_folders,
-                            data_types)
-                print("##############################################################")
-                print()
-            else:
-                print("PARSE FOLDER FAILED, SETTING REQUEST TO FAILED")
-                if baseline_id is None:
-                    session.post(join_url(base_url, ocr_change_ocr_request_to_fail_and_document_state_to_success_route, request_id))
-                else:
-                    session.post(join_url(base_url, ocr_change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis_route, request_id))
-            return True
-
+    # Nothing to process
+    if 'document' not in request_json.keys():
         return False
+
+    ocr_get_config_route = config['SERVER']['ocr_get_config_route']
+    ocr_get_baseline_route = config['SERVER']['ocr_get_baseline_route']
+    ocr_get_ocr_route = config['SERVER']['ocr_get_ocr_route']
+    ocr_get_language_model_route = config['SERVER']['ocr_get_language_model_route']
+    document_get_image_route = config['SERVER']['document_get_image_route']
+    document_get_xml_regions_route = config['SERVER']['document_get_xml_regions_route']
+    document_get_xml_lines_route = config['SERVER']['document_get_xml_lines_route']
+    main_add_log_to_request_route = config['SERVER']['main_add_log_to_request_route']
+    ocr_post_result_route = config['SERVER']['ocr_post_result_route']
+    ocr_change_ocr_request_and_document_state_on_success_route = config['SERVER']['ocr_change_ocr_request_and_document_state_on_success_route']
+    ocr_change_ocr_request_to_fail_and_document_state_to_success_route = config['SERVER']['ocr_change_ocr_request_to_fail_and_document_state_to_success_route']
+    ocr_change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis_route = config['SERVER']['ocr_change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis_route']
+
+    request_id = request_json['id']
+    baseline_id = request_json['baseline_id']
+    ocr_id = request_json['ocr_id']
+    language_model_id = request_json['language_model_id']
+    document = request_json['document']
+    image_ids = document['images']
+
+    print()
+    print("REQUEST")
+    print("##############################################################")
+    print("REQUEST ID:", request_id)
+    print("BASELINE ID:", baseline_id)
+    print("OCR ID:", ocr_id)
+    print("LANGUAGE MODEL ID:", language_model_id)
+    print("IMAGES IDS:")
+    print("\n".join(image_ids))
+    print("##############################################################")
+
+    working_dir = os.path.join(config['SETTINGS']['working_directory'], request_id)
+    parse_folder_path = config['SETTINGS']['parse_folder_path']
+
+    models_folder = os.path.join(working_dir, "models")
+    images_folder = os.path.join(working_dir, "images")
+    xmls_folder = os.path.join(working_dir, "xmls")
+    output_folder = os.path.join(working_dir, "output")
+
+    if os.path.exists(working_dir):
+        shutil.rmtree(working_dir)
+    os.makedirs(working_dir)
+    os.makedirs(images_folder)
+    os.makedirs(xmls_folder)
+    os.makedirs(output_folder)
+    os.makedirs(os.path.join(output_folder, "page"))
+    os.makedirs(models_folder)
+
+    print()
+    print("GETTING CONFIG AND MODELS")
+    print("##############################################################")
+    get_config_and_models(session, base_url, ocr_get_config_route, ocr_get_baseline_route, ocr_get_ocr_route,
+                          ocr_get_language_model_route, baseline_id, ocr_id, language_model_id, models_folder)
+    print("##############################################################")
+
+    print()
+    print("GETTING IMAGES")
+    print("##############################################################")
+    get_images(session, base_url, document_get_image_route, image_ids, images_folder)
+    number_of_images = len(os.listdir(images_folder))
+    print("##############################################################")
+
+    print()
+    if baseline_id is None:
+        print("GETTING XMLS WITH DETECTED LINES")
+        print("##############################################################")
+        get_xmls(session, base_url, document_get_xml_lines_route, image_ids, xmls_folder)
+    else:
+        print("GETTING XMLS WITH DETECTED LAYOUT")
+        print("##############################################################")
+        get_xmls(session, base_url, document_get_xml_regions_route, image_ids, xmls_folder)
+    print("##############################################################")
+
+    print()
+    print("STARTING PARSE FOLDER:", parse_folder_path)
+    print("##############################################################")
+    parse_folder_process = subprocess.Popen(['python', parse_folder_path, '-c', "./models/config.ini"],
+                                            cwd=working_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    log = []
+    while True:
+        line = parse_folder_process.stdout.readline()
+        if not line:
+            break
+        line = line.decode("utf-8")
+        log.append(line)
+        print(line, end='')
+    parse_folder_process.wait()
+    print("##############################################################")
+
+    output_xmls_folder = os.path.join(output_folder, "page")
+    output_logits_folder = os.path.join(output_folder, "logits")
+    no_output = False
+    if os.path.isdir(output_xmls_folder) and os.path.isdir(output_logits_folder):
+        number_of_xmls = len(os.listdir(output_xmls_folder))
+        number_of_logits = len(os.listdir(output_logits_folder))
+    else:
+        no_output = True
+
+    add_log_to_request(session, base_url, main_add_log_to_request_route, request_id, log)
+
+    if not no_output and parse_folder_process.returncode == 0 and number_of_images == number_of_xmls and number_of_images == number_of_logits:
+        data_folders = [output_xmls_folder, output_logits_folder]
+        data_types = ["xml", "logits"]
+        print()
+        print("POSTING RESULT TO SERVER")
+        print("##############################################################")
+        print("XMLS")
+        print("\n".join(os.listdir(output_xmls_folder)))
+        print()
+        print("LOGITS")
+        print("\n".join(os.listdir(output_logits_folder)))
+        post_result(session, base_url, ocr_post_result_route,
+                    ocr_change_ocr_request_and_document_state_on_success_route, request_id, image_ids, data_folders,
+                    data_types)
+        print("##############################################################")
+        print()
+    else:
+        print("PARSE FOLDER FAILED, SETTING REQUEST TO FAILED")
+        if baseline_id is None:
+            session.post(join_url(base_url, ocr_change_ocr_request_to_fail_and_document_state_to_success_route, request_id))
+        else:
+            session.post(join_url(base_url, ocr_change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis_route, request_id))
+    return True
 
 
 def get_config_and_models(session, base_url, ocr_get_config_route, ocr_get_baseline_route, ocr_get_ocr_route,
@@ -206,13 +200,27 @@ def unzip_model_response(response, models_folder):
 def main():
     config = configparser.ConfigParser()
     config.read("config.ini")
+    timeout = 4
     while True:
-        print("CHECK REQUEST")
-        if check_and_process_ocr_request(config):
-            print("REQUEST COMPLETED")
-        else:
-            print("NO REQUEST")
-            time.sleep(2)
+        try:
+            with requests.Session() as session:
+                if not log_in(session, config['SETTINGS']['login'], config['SETTINGS']['password'],
+                              config['SERVER']['base_url'],
+                              config['SERVER']['authentification'], config['SERVER']['login_page']):
+                    print('Unable to log into server')
+                    time.sleep(timeout)
+
+                while True:
+                    print("CHECK REQUEST")
+                    if check_and_process_ocr_request(config):
+                        print("REQUEST COMPLETED")
+                    else:
+                        print("NO REQUEST")
+                        time.sleep(timeout)
+        except:
+            print('ERROR exception')
+            traceback.print_exc()
+            time.sleep(timeout)
 
 
 if __name__ == '__main__':

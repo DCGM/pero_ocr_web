@@ -1,3 +1,5 @@
+from typing import re
+
 import os
 import shutil
 import json
@@ -5,22 +7,24 @@ import uuid
 import sqlalchemy
 import unicodedata
 from pero_ocr.document_ocr.arabic_helper import ArabicHelper
-from natsort import natsorted
 from flask import render_template, request, current_app, send_file
 from flask import url_for, redirect, flash, jsonify
 from flask_login import login_required, current_user
 from app.ocr import bp
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_baseline_by_id, get_ocr_by_id, \
-                           get_language_model_by_id, get_text_line_by_id, get_image_annotation_statistics_db
-from app.db import DocumentState, OCR, Document, Image, TextRegion, Baseline, LanguageModel, User
+                           get_language_model_by_id, get_text_line_by_id, get_image_annotation_statistics_db, \
+                           get_previews_for_documents
+from app.db import DocumentState, OCR, Document, Image, TextRegion, Baseline, LanguageModel, User, OCRTrainingDocuments
 from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
                             insert_lines_to_db, change_ocr_request_and_document_state_on_success, insert_annotations_to_db, \
                             update_text_lines, get_page_annotated_lines, change_ocr_request_and_document_state_in_progress, \
                             post_files_to_folder, change_ocr_request_to_fail_and_document_state_to_success, \
                             change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis
+
 from app.document.general import get_document_images
-from app import db_session
+from app import db_session, engine
+from app.db import Image
 from app.document.general import is_user_owner_or_collaborator, is_user_trusted, is_granted_acces_for_page, \
                                  is_granted_acces_for_document, is_score_computed, document_exists, \
                                  document_in_allowed_state
@@ -39,18 +43,21 @@ def show_results(document_id):
     if not document_exists(document_id):
         flash(u'Document with this id does not exist!', 'danger')
         return redirect(url_for('main.index'))
-    if not document_in_allowed_state(document_id, DocumentState.COMPLETED_OCR):
-        flash(u'Document is in the state prohibiting this action!', 'danger')
-        return redirect(url_for('main.index'))
     if not is_user_owner_or_collaborator(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
-    document = get_document_by_id(document_id)
-    if document.state != DocumentState.COMPLETED_OCR:
-        return  # Bad Request or something like that
-    images = get_document_images(document)
 
-    return render_template('ocr/ocr_results.html', document=document, images=natsorted(list(images), key=lambda x: x.filename),
+    document = get_document_by_id(document_id)
+    if document.state == DocumentState.NEW:
+        return redirect(url_for('document.upload_document_get', document_id=document.id))
+    elif document.state == DocumentState.COMPLETED_LAYOUT_ANALYSIS:
+        return redirect(url_for('layout_analysis.show_results', document_id=document.id))
+    elif document.state != DocumentState.COMPLETED_OCR:
+        flash(u'Document can not be edited int its current state.', 'danger')
+        return redirect(url_for('main.index'))
+
+    images = get_document_images(document).order_by(Image.filename).all()
+    return render_template('ocr/ocr_results.html', document=document, images=images,
                            trusted_user=is_user_trusted(current_user), computed_scores=True)
 
 
@@ -60,10 +67,15 @@ def revert_ocr(document_id):
     if not is_user_owner_or_collaborator(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
+
+    document = get_document_by_id(document_id)
+    if document.state != DocumentState.COMPLETED_OCR:
+        flash(u'Document is in the state prohibiting OCR revert!', 'danger')
+        return redirect(url_for('main.index'))
+
     print()
     print("REVERT OCR")
     print("##################################################################")
-    document = Document.query.filter_by(id=document_id, deleted=False).first()
     delete_user = db_session.query(User).filter(User.first_name == "#revert_OCR_backup#").first()
     backup_document = Document(name="revert_backup_" + document.name, state=DocumentState.COMPLETED_OCR,
                                user_id=delete_user.id)
@@ -90,6 +102,57 @@ def revert_ocr(document_id):
 
 # SELECT PAGE
 ########################################################################################################################
+
+@bp.route('/ocr_training_documents', methods=['GET'])
+@login_required
+def ocr_training_documents():
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights!', 'danger')
+        return redirect(url_for('main.index'))
+
+    db_ocr_engines = db_session.query(OCR).filter(OCR.active).all()
+    ocr_id = request.args.get('ocr_id', default=db_ocr_engines[0].id)
+
+    db_documents = db_session.query(Document).filter(Document.state == DocumentState.COMPLETED_OCR)\
+        .options(sqlalchemy.orm.joinedload(Document.requests_lazy)).filter(Document.name.notlike('revert_backup_%')).all()
+
+    engine_names = {o.id: o.name for o in db_session.query(OCR)}
+
+    document_ids = [d.id for d in db_documents]
+    previews = dict([(im.document_id, im) for im in get_previews_for_documents(document_ids)])
+
+    selected_documents = db_session.query(OCRTrainingDocuments.document_id).filter(OCRTrainingDocuments.ocr_id == ocr_id).all()
+    selected_documents = set([i[0] for i in selected_documents])
+
+    return render_template('ocr/ocr_training_documents.html',
+                           documents=db_documents, ocr_engines=db_ocr_engines, ocr_id=ocr_id, previews=previews,
+                           engine_names=engine_names, selected_documents=selected_documents)
+
+@bp.route('/set_ocr_training_document/<string:document_id>/<string:ocr_id>/<string:state>', methods=['GET'])
+@login_required
+def ocr_training_documents_post(document_id, ocr_id, state):
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights!', 'danger')
+        return redirect(url_for('main.index'))
+
+    db_training_document = db_session.query(OCRTrainingDocuments)\
+        .filter(OCRTrainingDocuments.ocr_id == ocr_id)\
+        .filter(OCRTrainingDocuments.document_id == document_id).all()
+
+    if len(db_training_document) == 1:
+        db_training_document = db_training_document[0]
+    else:
+        db_training_document = None
+
+    if state == 'false' and db_training_document:
+        db_session.delete(db_training_document)
+        db_session.commit()
+    elif state == 'true' and not db_training_document:
+        db_session.add(OCRTrainingDocuments(document_id=document_id, ocr_id=ocr_id))
+        db_session.commit()
+
+    return '', 204
+
 
 @bp.route('/select_ocr/<string:document_id>', methods=['GET'])
 @login_required
@@ -203,7 +266,6 @@ def get_lines(image_id):
                         ligatures_mapping.append([i])
 
             new_confidences = []
-            print(ligatures_mapping)
             if ligatures_mapping and ligatures_mapping[-1][-1] == len(confidences) - 1:
                 for index_visual, ligature_mapping in enumerate(ligatures_mapping):
                     ligature_confidence = 1
@@ -263,16 +325,16 @@ def save_annotations():
 @bp.route('/post_result/<string:image_id>', methods=['POST'])
 @login_required
 def post_result(image_id):
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights!', 'danger')
+        return redirect(url_for('main.index'))
+
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
         pass
     if db_image is None:
         return "Image does not exist.", 404
-
-    if not is_user_trusted(current_user):
-        flash(u'You do not have sufficient rights!', 'danger')
-        return redirect(url_for('main.index'))
 
     if db_image.document.state != DocumentState.COMPLETED_OCR:
         print()

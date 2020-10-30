@@ -4,13 +4,15 @@ import _thread
 import sqlalchemy
 from app.document import bp
 from flask_login import login_required, current_user
-from flask import render_template, redirect, url_for, request, send_file, flash, jsonify, current_app, make_response
+from flask import render_template, redirect, url_for, request, send_file, flash, jsonify, current_app, send_from_directory
 from app.document.general import create_document, check_and_remove_document, save_image, get_image_by_id,\
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
     remove_image, get_document_images, get_page_layout, get_page_layout_text, update_confidences, is_user_trusted,\
     is_granted_acces_for_page, is_granted_acces_for_document, get_line_image_by_id, get_sucpect_lines_ids, \
     compute_scores_of_doc, skip_textline, get_line, is_granted_acces_for_line, create_string_response, \
     update_baselines
+
+from werkzeug.exceptions import NotFound
 
 from app.db.general import get_requests
 
@@ -293,6 +295,9 @@ def get_image(image_id):
     if not is_granted_acces_for_page(image_id, current_user):
         flash(u'You do not have sufficient rights to download image!', 'danger')
         return redirect(url_for('main.index'))
+
+    if not os.path.isfile(db_image.path):
+        raise NotFound()
 
     return send_file(db_image.path, as_attachment=True, attachment_filename=db_image.filename)
 
