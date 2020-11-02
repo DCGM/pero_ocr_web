@@ -16,7 +16,7 @@ def get_user_by_email(email):
 
 
 def get_document_by_id(document_id):
-    return Document.query.filter_by(id=document_id, deleted=False).first()
+    return Document.query.filter_by(id=document_id).first()
 
 
 def get_image_annotation_statistics_db(image_id):

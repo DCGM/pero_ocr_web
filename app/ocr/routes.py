@@ -4,6 +4,7 @@ import os
 import shutil
 import json
 import uuid
+from collections import defaultdict
 import sqlalchemy
 import unicodedata
 from pero_ocr.document_ocr.arabic_helper import ArabicHelper
@@ -121,11 +122,12 @@ def ocr_training_documents():
     document_ids = [d.id for d in db_documents]
     previews = dict([(im.document_id, im) for im in get_previews_for_documents(document_ids)])
 
-    selected_documents = db_session.query(OCRTrainingDocuments.document_id).filter(OCRTrainingDocuments.ocr_id == ocr_id).all()
-    selected_documents = set([i[0] for i in selected_documents])
+    selected_documents = defaultdict(set)
+    for ocr_document in db_session.query(OCRTrainingDocuments):
+        selected_documents[ocr_document.ocr_id].add(ocr_document.document_id)
 
     return render_template('ocr/ocr_training_documents.html',
-                           documents=db_documents, ocr_engines=db_ocr_engines, ocr_id=ocr_id, previews=previews,
+                           documents=db_documents, ocr_engines=db_ocr_engines, previews=previews,
                            engine_names=engine_names, selected_documents=selected_documents)
 
 @bp.route('/set_ocr_training_document/<string:document_id>/<string:ocr_id>/<string:state>', methods=['GET'])
@@ -152,6 +154,16 @@ def ocr_training_documents_post(document_id, ocr_id, state):
         db_session.commit()
 
     return '', 204
+
+
+@bp.route('/get_ocr_training_documents/<string:ocr_id>', methods=['GET'])
+def get_ocr_training_documents(ocr_id):
+    db_training_document = db_session.query(OCRTrainingDocuments)\
+        .filter(OCRTrainingDocuments.ocr_id == ocr_id).all()
+
+    document_ids = [d.document_id for d in db_training_document]
+
+    return ','.join(document_ids), 200
 
 
 @bp.route('/select_ocr/<string:document_id>', methods=['GET'])

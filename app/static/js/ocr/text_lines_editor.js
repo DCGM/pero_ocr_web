@@ -117,6 +117,7 @@ class TextLinesEditor
         {
             let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic)
             line.np_points = l.np_points;
+            line.np_heights = l.np_heights;
             this.add_line_to_map(i, line);
             this.lines.push(line);
             i += 1;
@@ -267,7 +268,7 @@ function get_focus_line_points(line)
     let end_x = width_boundary[1];
     let start_y = height_boundary[0];
     let end_y = height_boundary[1];
-    let line_height = end_y - start_y;
+    let line_height = line.np_heights[0] + line.np_heights[1];
     let y = start_y + line_height;
     let line_width = end_x - start_x;
     let container = $('.editor-map');

@@ -5,16 +5,26 @@ class ImageList
     {
         this.objects_to_change = objects_to_change;
 
-        this.image_index = 0;
+        this.image_index = 1;
+        if (typeof URLSearchParams != "undefined") {
+            let params = new URLSearchParams(location.search);
+            const page = params.get('page');
+            if(page != null && ! Number.isNaN(parseInt(page))){
+                this.image_index = parseInt(page);
+            }
+        }
+
         this.images = $('.scrolling-wrapper .figure');
         for (let i of this.images)
         {
             i.addEventListener('click', this.change.bind(this, i));
         }
         this.number_of_images = this.images.length;
+        this.image_index = Math.max(1, this.image_index);
+        this.image_index = Math.min(this.number_of_images, this.image_index);
         if (this.number_of_images)
         {
-            let first_image = this.images[0];
+            let first_image = this.images[this.image_index - 1];
             $(first_image).click();
         }
         let back_btn = document.getElementById('back-btn');
@@ -28,6 +38,11 @@ class ImageList
     {
         let image_id = $(image).data('image');
         this.image_index = $(image).data('index');
+        if (typeof URLSearchParams != "undefined") {
+            const params = new URLSearchParams(location.search);
+            params.set('page', this.image_index);
+            window.history.replaceState({}, '', `${location.pathname}?${params}`);
+        }
 
         let previous_active_figure = $('.scrolling-wrapper .figure.active');
         if (previous_active_figure.length)
