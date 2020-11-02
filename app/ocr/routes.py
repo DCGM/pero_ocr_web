@@ -295,24 +295,26 @@ def get_lines(image_id):
 def save_annotations():
     annotations = json.loads(request.form['annotations'])
     if not annotations:
-        return
+        return jsonify({'status': 'success'})
+
     document_completed_ocr = True
     for annotation in annotations:
         text_line = get_text_line_by_id(annotation['id'])
         document = text_line.region.image.document
         if not is_user_owner_or_collaborator(document.id, current_user):
-            flash(u'You do not have sufficient rights to add some annotations!', 'danger')
-            return redirect(url_for('main.index'))
+            flash(u'You do not have sufficient rights to add annotations to the document!', 'danger')
+            return jsonify({'status': 'redirect', 'href': url_for('document.documents')})
         if document.state != DocumentState.COMPLETED_OCR:
             document_completed_ocr = False
-    if document_completed_ocr:
-        insert_annotations_to_db(current_user, json.loads(request.form['annotations']))
-        update_text_lines(json.loads(request.form['annotations']))
-        print(json.loads(request.form['annotations']))
-        return jsonify({'status': 'success'})
-    else:
+    if not document_completed_ocr:
         flash(u'You cannot add annotations to unprocessed document!', 'danger')
         return jsonify({'status': 'redirect', 'href': url_for('document.documents')})
+
+    insert_annotations_to_db(current_user, annotations)
+    update_text_lines(annotations)
+    print(annotations)
+    return jsonify({'status': 'success'})
+
 
 
 ########################################################################################################################

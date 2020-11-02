@@ -2,7 +2,7 @@
 
 class TextLine
 {
-    constructor(id, text, confidences, ligatures_mapping, arabic)
+    constructor(id, annotated, text, confidences, ligatures_mapping, arabic)
     {
         this.id = id;
         this.text = text;
@@ -10,7 +10,7 @@ class TextLine
         this.ligatures_mapping = ligatures_mapping;
         this.arabic = arabic;
         this.edited = false;
-        this.saved = false;
+        this.annotated = annotated;
 
         this.container = document.createElement("div");
         this.container.setAttribute("class", "text-line");
@@ -31,8 +31,9 @@ class TextLine
         this.set_line_confidences_to_text_line_element();
 
         this.observer = new MutationObserver(this.mutate.bind(this));
-        let config = { attributes: false, childList: true, characterData: true };
+        let config = { attributes: false, childList: true, characterData: true , subtree: true};
         this.observer.observe(this.container, config);
+        this.mutate();
     }
 
     set_line_confidences_to_text_line_element()
@@ -54,14 +55,8 @@ class TextLine
         }
     }
 
-    set_background_to_annotated()
+    clear_confidence_colors()
     {
-        this.container.style.backgroundColor = "#d0ffcf";
-    }
-
-    set_background_to_save()
-    {
-        this.set_background_to_annotated();
         let descendants = this.container.getElementsByTagName('*');
         for (let child of descendants)
         {
@@ -71,8 +66,6 @@ class TextLine
 
     press(e)
     {
-
-
         if (e.keyCode == 13)
         {
             e.preventDefault();
@@ -184,15 +177,20 @@ class TextLine
     {
         e.preventDefault();
         var text = (e.originalEvent || e).clipboardData.getData('text/plain');
-        //this.remove_selection_and_prepare_line_for_insertion();
+        this.remove_selection_and_prepare_line_for_insertion();
         document.execCommand("insertText", false, text);
     }
 
     mutate()
     {
-        this.edited = true;
-        this.saved = false;
-        this.container.style.backgroundColor = "#ffcc54";
+        this.edited = this.text != this.get_text_content();
+        if(this.edited){
+            this.container.style.backgroundColor = "#ffcc54";
+        } else if(this.annotated){
+            this.container.style.backgroundColor = "#d0ffcf";
+        } else {
+            this.container.style.backgroundColor = "#ffffff";
+        }
     }
 
     remove_selection_and_prepare_line_for_insertion()
@@ -528,13 +526,14 @@ class TextLine
             data: {annotations: JSON.stringify(annotations)},
             dataType: "json",
             success: function(data, textStatus) {
-                self.edited = false;
-                self.saved = true;
-                this_text_line.text = new_text;
-                self.set_background_to_save();
                 if (data.status == 'redirect') {
                     // data.redirect contains the string URL to redirect to
                     window.location.href = data.href;
+                } else {
+                    this_text_line.text = new_text;
+                    self.annotated = true;
+                    self.clear_confidence_colors();
+                    self.mutate();
                 }
             },
             error: function(xhr, ajaxOptions, ThrownError){

@@ -115,9 +115,8 @@ class TextLinesEditor
         let i = 0;
         for (let l of data['lines'])
         {
-            let line = new TextLine(l.id, l.text, l.np_confidences, l.ligatures_mapping, l.arabic)
+            let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic)
             line.np_points = l.np_points;
-            line.annotated = l.annotated;
             this.add_line_to_map(i, line);
             this.lines.push(line);
             i += 1;
@@ -149,11 +148,6 @@ class TextLinesEditor
         line.container.addEventListener('focusout', this.line_focus_out.bind(this));
 
         this.text_container.appendChild(line.container);
-
-        if (line.annotated)
-        {
-            line.set_background_to_annotated();
-        }
     }
 
     press_text_container(e)
@@ -249,8 +243,6 @@ class TextLinesEditor
             if (l.edited)
             {
                 l.save();
-                l.edited = false;
-                l.saved = true;
             }
         }
     }
