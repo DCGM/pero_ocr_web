@@ -84,7 +84,12 @@ class TextLine
             e.keyCode != 25 &&
             e.keyCode != 26)
         {
-            this.remove_selection_and_prepare_line_for_insertion()
+            this.remove_selection_and_prepare_line_for_insertion();
+            // Chrome has a BUG. It inserts ' ' as a nested <font> tag.
+            if (e.keyCode == 32){
+                e.preventDefault();
+                document.execCommand("insertHTML", false, '&nbsp;');
+            }
         }
     }
 
@@ -205,7 +210,8 @@ class TextLine
     // Creates new user-input span if needed
     prepare_line_for_insertion()
     {
-        let empty_text_line_element = this.empty_text_line_element();
+        // We can detele line if it has no text - suprisingly, CTRL-Z still works.
+        let empty_text_line_element = this.container.textContent == "";
         let caret_span;
         if (empty_text_line_element)
         {
@@ -249,35 +255,7 @@ class TextLine
 
     remove_selection_and_set_caret()
     {
-        let range = this.get_range();
-        let selected_spans_length = range.cloneContents().children.length;
-        let current_span = range.startContainer.parentNode;
-        let first_span = current_span;
-        let first_span_text = current_span.innerHTML;
-        current_span.innerHTML = first_span_text.slice(0, range.startOffset);
-        if (range.startContainer != range.endContainer)
-        {
-            current_span = current_span.nextSibling;
-            for (let i = 1; i < selected_spans_length - 1; i++)
-            {
-                let previous_span = current_span;
-                current_span = current_span.nextSibling;
-                previous_span.remove();
-            }
-            let last_span = current_span;
-            let last_span_text = last_span.innerHTML;
-            last_span_text = last_span_text.slice(range.endOffset, last_span_text.length);
-            if (last_span_text == "")
-            {
-                last_span.remove();
-            }
-            else
-            {
-                last_span.innerHTML = last_span_text;
-            }
-        }
-        range.selectNodeContents(first_span);
-        range.collapse(false);
+        document.execCommand('delete', false, null);
     }
 
     move_caret_to_the_left()
@@ -344,7 +322,7 @@ class TextLine
         {
             return false;
         }
-        let previous_span = this.skip_invalid_previous_spans(caret_span);
+        let previous_span = this.skip_previous_invalid_spans(caret_span);
         if (previous_span == caret_span)
         {
             return true;
