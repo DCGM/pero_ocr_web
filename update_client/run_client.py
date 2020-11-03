@@ -8,6 +8,7 @@ import argparse
 import subprocess
 import configparser
 import numpy as np
+import traceback
 
 from client_helper import join_url, log_in, check_request
 from pero_ocr.document_ocr.layout import PageLayout
@@ -20,10 +21,12 @@ def get_args():
     """
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-c", "--config", action="store", dest="config", help="config path")
-    parser.add_argument("-d", "--document-id", action="store", dest="document_id", help="document id")
-    parser.add_argument("-l", "--login", action="store", dest="login", help="username")
-    parser.add_argument("-p", "--password", action="store", dest="password", help="password")
+    parser.add_argument("-c", "--config", required=True, help="Config path.")
+    parser.add_argument("--parse-folder-config", help="Config for parse_folder.py used when changing heights.")
+    parser.add_argument("-d", "--document-id", help="Process document with this ID.")
+    parser.add_argument("-l", "--login", help="Username of superuser on remote server.")
+    parser.add_argument("-p", "--password", help="Password of superuser on remote server.")
+    parser.add_argument("-u", "--upload-result", action='store_true', help="Upload results to server.")
 
     args = parser.parse_args()
 
@@ -449,52 +452,60 @@ def update_heights(config):
         return True
 
 
+def download_data(config):
+    pass
+
+def upload_data(config):
+    pass
+
+
 def main():
     args = get_args()
 
-    config = configparser.ConfigParser()
-    if args.config is not None:
-        config.read(args.config)
-    else:
-        config.read('config_baselines.ini')
+    if not args.parse_folder_config:
+        args.parse_folder_config = args.config
 
-    if args.document_id is not None:
+    if not os.path.isfile(args.config):
+        print(f'Error: Config file does not exist "{args.config}"')
+        exit(-1)
+    if not os.path.isfile(args.parse_folder_config):
+        print(f'Error: Config file does not exist "{args.parse_folder_config}"')
+        exit(-1)
+
+    config = configparser.ConfigParser()
+    config.read(args.config)
+
+    if args.document_id:
         config["SETTINGS"]['document_id'] = args.document_id
-    if args.login is not None:
+    if args.login:
         config["SETTINGS"]['login'] = args.login
-    if args.password is not None:
+    if args.password:
         config["SETTINGS"]['password'] = args.password
 
-    if config["SETTINGS"]['update_type'] == 'confidences':
-        if update_confidences(config):
-            print("REQUEST COMPLETED")
+
+    download_data(config)
+
+    update_type = config["SETTINGS"]['update_type']
+    print(f'STARTING PROCESSING "{update_type}"')
+    try:
+        if update_type == 'confidences':
+            update_confidences(config)
+        elif update_type == 'baselines_compute':
+            compute_baselines(config)
+        elif update_type == 'restore_baselines':
+            restore_baselines_from_xmls(config)
+        elif update_type == 'corrupt_baselines':
+            corrupt_baselines(config)
+        elif update_type == 'update_heights':
+            update_heights(config)
         else:
-            print("REQUEST FAILED")
-    elif config["SETTINGS"]['update_type'] == 'baselines_compute':
-        if compute_baselines(config):
-            print("REQUEST COMPLETED")
-        else:
-            print("REQUEST FAILED")
-    elif config["SETTINGS"]['update_type'] == 'baselines_upload':
-        if upload_baselines(config):
-            print("REQUEST COMPLETED")
-        else:
-            print("REQUEST FAILED")
-    elif config["SETTINGS"]['update_type'] == 'restore_baselines':
-        if restore_baselines_from_xmls(config):
-            print("REQUEST COMPLETED")
-        else:
-            print("REQUEST FAILED")
-    elif config["SETTINGS"]['update_type'] == 'corrupt_baselines':
-        if corrupt_baselines(config):
-            print("REQUEST COMPLETED")
-        else:
-            print("REQUEST FAILED")
-    elif config["SETTINGS"]['update_type'] == 'update_heights':
-        if update_heights(config):
-            print("REQUEST COMPLETED")
-        else:
-            print("REQUEST FAILED")
+            print(f'ERROR: Unknow update_type "{update_type}"')
+            exit(-1)
+    except:
+        print(f'ERROR: Processing failed with exception.')
+        raise
+
+    upload_data(config)
 
 
 if __name__ == '__main__':
