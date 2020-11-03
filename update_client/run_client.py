@@ -27,6 +27,7 @@ def get_args():
     parser.add_argument("-l", "--login", help="Username of superuser on remote server.")
     parser.add_argument("-p", "--password", help="Password of superuser on remote server.")
     parser.add_argument("--working-directory", help="Work in this directory. All downloded and resultsing files will be here.")
+    parser.add_argument("-r", "--render", default=True, type=bool, help="Render original page_xml and output page_xml as images.")
     parser.add_argument("-u", "--upload-results", action='store_true', help="Upload results to server. No processing is done in this case.")
 
     args = parser.parse_args()
@@ -287,6 +288,12 @@ def upload_baselines(config):
 
 
 def restore_baselines_from_xmls(config):
+    """
+    Move ./page_xml to ./page_xml_results.
+
+    :param config:
+    :return:
+    """
     with requests.Session() as session:
         print()
         print("LOGGING IN")
@@ -453,10 +460,31 @@ def update_heights(config):
         return True
 
 
+def render_pages(config):
+    """
+    Render from ./page_xml as *_orig.jpg and from ./page_xml_results as *_new.jpg.
+
+    :param config:
+    :return:
+    """
+
 def download_data(config):
+    """
+    Download data if woring directories do not exist. (./images ./page_xml ./page_xml_results)
+
+    :param config:
+    :return:
+    """
     pass
 
+
 def upload_data(config):
+    """
+    If ./page_xml_results exists, upload differences to server (with respect to ./page_xml)
+
+    :param config:
+    :return:
+    """
     pass
 
 
@@ -511,6 +539,9 @@ def main():
         except:
             print(f'ERROR: Processing failed with exception.')
             raise
+
+        if args.render:
+            render_pages(config)
 
 
 if __name__ == '__main__':
