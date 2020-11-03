@@ -175,7 +175,7 @@ def get_collaborators_select_data(document):
 def save_collaborators(document_id, collaborators_ids):
     document = get_document_by_id(document_id)
 
-    for old_collaborator in document.collaborators:
+    for old_collaborator in list(document.collaborators):
         if str(old_collaborator.id) not in collaborators_ids:
             document.collaborators.remove(old_collaborator)
 

@@ -25,7 +25,7 @@ import zipfile
 import time
 import os
 import json
-
+import re
 
 @bp.route('/documents')
 @login_required
@@ -376,8 +376,12 @@ def collaborators_get(document_id):
         return redirect(url_for('main.index'))
     else:
         document = get_document_by_id(document_id)
-        select_data = get_collaborators_select_data(document)
-        return render_template('document/edit_collaborators.html', document=document, select_items=select_data)
+        collaborators = get_collaborators_select_data(document)
+        reg = re.compile('@.*')
+        for collaborator in collaborators:
+            collaborator.email_an = re.sub(reg, '@...', collaborator.user.email)
+
+        return render_template('document/edit_collaborators.html', document=document, collaborators=collaborators)
 
 
 @bp.route('/collaborators/<string:document_id>', methods=['POST'])
