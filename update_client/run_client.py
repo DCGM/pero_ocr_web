@@ -26,6 +26,7 @@ def get_args():
     parser.add_argument("-d", "--document-id", help="Process document with this ID.")
     parser.add_argument("-l", "--login", help="Username of superuser on remote server.")
     parser.add_argument("-p", "--password", help="Password of superuser on remote server.")
+    parser.add_argument("--working-directory", help="Work in this directory. All downloded and resultsing files will be here.")
     parser.add_argument("-u", "--upload-results", action='store_true', help="Upload results to server. No processing is done in this case.")
 
     args = parser.parse_args()
@@ -481,6 +482,11 @@ def main():
         config["SETTINGS"]['login'] = args.login
     if args.password:
         config["SETTINGS"]['password'] = args.password
+    if args.working_directory:
+        config["SETTINGS"]['working_directory'] = args.working_directory
+    else:
+        config["SETTINGS"]['working_directory'] = \
+            os.path.join(config["SETTINGS"].get('working_directory', fallback=''), config["SETTINGS"]['document_id'])
 
     if args.upload_results:
         upload_data(config)
