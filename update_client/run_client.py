@@ -26,7 +26,7 @@ def get_args():
     parser.add_argument("-d", "--document-id", help="Process document with this ID.")
     parser.add_argument("-l", "--login", help="Username of superuser on remote server.")
     parser.add_argument("-p", "--password", help="Password of superuser on remote server.")
-    parser.add_argument("-u", "--upload-result", action='store_true', help="Upload results to server.")
+    parser.add_argument("-u", "--upload-results", action='store_true', help="Upload results to server. No processing is done in this case.")
 
     args = parser.parse_args()
 
@@ -482,30 +482,29 @@ def main():
     if args.password:
         config["SETTINGS"]['password'] = args.password
 
-
-    download_data(config)
-
-    update_type = config["SETTINGS"]['update_type']
-    print(f'STARTING PROCESSING "{update_type}"')
-    try:
-        if update_type == 'confidences':
-            update_confidences(config)
-        elif update_type == 'baselines_compute':
-            compute_baselines(config)
-        elif update_type == 'restore_baselines':
-            restore_baselines_from_xmls(config)
-        elif update_type == 'corrupt_baselines':
-            corrupt_baselines(config)
-        elif update_type == 'update_heights':
-            update_heights(config)
-        else:
-            print(f'ERROR: Unknow update_type "{update_type}"')
-            exit(-1)
-    except:
-        print(f'ERROR: Processing failed with exception.')
-        raise
-
-    upload_data(config)
+    if args.upload_results:
+        upload_data(config)
+    else:
+        download_data(config)
+        update_type = config["SETTINGS"]['update_type']
+        print(f'STARTING PROCESSING "{update_type}"')
+        try:
+            if update_type == 'confidences':
+                update_confidences(config)
+            elif update_type == 'baselines_compute':
+                compute_baselines(config)
+            elif update_type == 'restore_baselines':
+                restore_baselines_from_xmls(config)
+            elif update_type == 'corrupt_baselines':
+                corrupt_baselines(config)
+            elif update_type == 'update_heights':
+                update_heights(config)
+            else:
+                print(f'ERROR: Unknow update_type "{update_type}"')
+                exit(-1)
+        except:
+            print(f'ERROR: Processing failed with exception.')
+            raise
 
 
 if __name__ == '__main__':
