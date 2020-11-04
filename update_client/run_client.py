@@ -181,13 +181,13 @@ def render_pages(config):
         page_layout = PageLayout(file=os.path.join(config['SETTINGS']['working_directory'], "page_xml", xml))
         page_layout = page_parser.process_page(image, page_layout)
         page_layout.render_to_image(image)
-        cv2.imwrite(os.path.join(config["SETTINGS"]['working_directory'], 'render', image + '_orig.jpg'), image, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
+        cv2.imwrite(os.path.join(config["SETTINGS"]['working_directory'], 'render', xml[:-4] + '_orig.jpg'), image, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
         # page_xml_results
         image = cv2.imread(os.path.join(config['SETTINGS']['working_directory'], "images", xml[:-4] + '.jpg'))
         page_layout = PageLayout(file=os.path.join(config['SETTINGS']['working_directory'], "page_xml_results", xml))
         page_layout = page_parser.process_page(image, page_layout)
         page_layout.render_to_image(image)
-        cv2.imwrite(os.path.join(config["SETTINGS"]['working_directory'], 'render', image + '_new.jpg.jpg'), image, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
+        cv2.imwrite(os.path.join(config["SETTINGS"]['working_directory'], 'render', xml[:-4] + '_new.jpg.jpg'), image, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
 
 
 def download_data(config):
@@ -288,6 +288,7 @@ def upload_data(config):
                          update_all_confidences=config['SERVER']['update_path'],
                          file='data.json'):
             return False
+
     return True
 
 
