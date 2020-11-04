@@ -1,14 +1,16 @@
 import os
 import cv2
-import glob
 import json
 import shutil
 import requests
 import argparse
 import subprocess
-import configparser
 import numpy as np
-import traceback
+import configparser
+from os import listdir
+from pathlib import Path
+from shutil import copyfile
+from os.path import isfile, join
 
 from client_helper import join_url, log_in, check_request
 from pero_ocr.document_ocr.layout import PageLayout
@@ -35,43 +37,17 @@ def get_args():
     return args
 
 
-def remove_files(config, folder_name):
-    list_of_files = os.listdir(os.path.join(config['SETTINGS']['working_directory'], folder_name))
-    for _, file in enumerate(list_of_files):
-        os.remove(os.path.join(config['SETTINGS']['working_directory'], folder_name, file))
-
-
-def make_empty_folder(config, folder_name):
-    if not os.path.isdir(os.path.join(config['SETTINGS']['working_directory'], folder_name)):
-        os.mkdir(os.path.join(config['SETTINGS']['working_directory'], folder_name))
-    else:
-        remove_files(config, folder_name)
-
-
-def create_work_folders(config):
-    if not os.path.isdir(config['SETTINGS']['working_directory']):
-        os.mkdir(config['SETTINGS']['working_directory'])
-
-    make_empty_folder(config, "xml")
-    make_empty_folder(config, "img")
-    make_empty_folder(config, "other")
-
-    print("SUCCESFUL")
-
-
 def download_xmls(session, base_url, type, working_directory, page_uuids):
     for _, uuid in enumerate(page_uuids):
         r = session.get(join_url(base_url, type, uuid), stream=True)
         if r.status_code == 200:
-            with open(os.path.join(working_directory, "xml/{}.xml".format(uuid)),
-                      'wb') as f:
+            with open(os.path.join(working_directory, "page_xml/{}.xml".format(uuid)), 'wb') as f:
                 r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
         else:
             print("ERROR {} OCCURED DURING XML {} DOWNLOAD.".format(r.status_code, uuid))
             return False
 
-    print("SUCCESFUL")
     return True
 
 
@@ -79,15 +55,13 @@ def download_images(session, base_url, download_images, working_directory, page_
     for _, uuid in enumerate(page_uuids):
         r = session.get(join_url(base_url, download_images, uuid), stream=True)
         if r.status_code == 200:
-            with open(os.path.join(working_directory, "img/{}.jpg".format(uuid)),
-                      'wb') as f:
+            with open(os.path.join(working_directory, "images/{}.jpg".format(uuid)), 'wb') as f:
                 r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
         else:
             print("ERROR {} OCCURED DURING IMAGE {} DOWNLOAD.".format(r.status_code, uuid))
             return False
 
-    print("SUCCESFUL")
     return True
 
 
@@ -99,192 +73,66 @@ def send_data(session, working_directory, base_url, update_all_confidences, file
                      files={'data': ('data.json', data, 'text/plain')})
 
     if not check_request(r):
-        print("FAILED")
         return False
     else:
-        print("SUCCESFUL")
         return True
 
 
 def get_document_ids(session, base_url, document_ids, document_id):
     r = session.get(join_url(base_url, document_ids, document_id), stream=True)
     if r.status_code == 200:
-        print("SUCCESFUL")
         return True, json.loads(r.text)
     else:
-        print("FAILED")
         return False, None
 
 
 def update_confidences(config):
-    with requests.Session() as session:
-        print()
-        print("LOGGING IN")
-        print("##############################################################")
-        if not log_in(session, config['SETTINGS']['login'], config['SETTINGS']['password'], config['SERVER']['base_url'],
-                      config['SERVER']['authentification'], config['SERVER']['login_page']):
-            return False
-        print("##############################################################")
-
-        print()
-        print("CREATING WORK FOLDERS")
-        print("##############################################################")
-        create_work_folders(config)
-        print("##############################################################")
-
-        print()
-        print("GETTING PAGES IDS")
-        print("##############################################################")
-        done, page_uuids = get_document_ids(session, config['SERVER']['base_url'], config['SERVER']['document_ids'], config['SETTINGS']['document_id'])
-        if not done:
-            return False
-        print("##############################################################")
-
-        print()
-        print("DOWNLOADING XMLS")
-        print("##############################################################")
-        if not download_xmls(session, config['SERVER']['base_url'], config['SERVER'][config['SETTINGS']['type']], config['SETTINGS']['working_directory'], page_uuids):
-            return False
-        print("##############################################################")
-
-        print()
-        print("DOWNLOADING IMAGES")
-        print("##############################################################")
-        if not download_images(session, config['SERVER']['base_url'], config['SERVER']['download_images'], config['SETTINGS']['working_directory'], page_uuids):
-            return False
-        print("##############################################################")
-
-        print()
-        print("PARSE FOLDER PROCESS")
-        print("##############################################################")
-        parse_folder_process = subprocess.Popen(['python', config['SETTINGS']['parse_folder_path'],
-                                                 '-c', config['SETTINGS']['parse_folder_config_path']],
-                                                 cwd=config['SETTINGS']['working_directory'])
-
-        parse_folder_process.wait()
-        print("SUCCESFUL")
-        print("##############################################################")
-
-        print()
-        print("DATASET REPLACE PROCESS")
-        print("##############################################################")
-        replace_process = subprocess.Popen(['python', config['SETTINGS']['replace_script_path'],
-                                            '--substig', config['SETTINGS']['substitution_file_path'],
-                                            '--xml', os.path.join(config['SETTINGS']['working_directory'], "xml"),
-                                            '--logits', os.path.join(config['SETTINGS']['working_directory'], "output_logits"),
-                                            '--images', os.path.join(config['SETTINGS']['working_directory'], "img"),
-                                            '--output-img', os.path.join(config['SETTINGS']['working_directory'], "other"),
-                                            '--output-xml', os.path.join(config['SETTINGS']['working_directory'], "other"),
-                                            '--output-file', os.path.join(config['SETTINGS']['working_directory'], "changes.json"),
-                                            '--threshold', config['SETTINGS']['threshold'],
-                                            '--max-confidence', config['SETTINGS']['max_confidence'],
-                                            '--computation-type', config['SETTINGS']['computation_type']],
+    """
+    deprecated for now
+    """
+    parse_folder_process = subprocess.Popen(['python', config['SETTINGS']['parse_folder_path'],
+                                             '-c', config['SETTINGS']['parse_folder_config_path']],
                                             cwd=config['SETTINGS']['working_directory'])
 
-        replace_process.wait()
-        print("SUCCESFUL")
-        print("##############################################################")
+    parse_folder_process.wait()
 
-        print()
-        print("SENDING DATA TO SERVER")
-        print("##############################################################")
-        if not send_data(session, config['SETTINGS']['working_directory'], config['SERVER']['base_url'], config['SERVER']['update_path']):
-            return False
-        print("##############################################################")
+    replace_process = subprocess.Popen(['python', config['SETTINGS']['replace_script_path'],
+                                        '--substig', config['SETTINGS']['substitution_file_path'],
+                                        '--xml', os.path.join(config['SETTINGS']['working_directory'], "xml"),
+                                        '--logits',
+                                        os.path.join(config['SETTINGS']['working_directory'], "output_logits"),
+                                        '--images', os.path.join(config['SETTINGS']['working_directory'], "img"),
+                                        '--output-img', os.path.join(config['SETTINGS']['working_directory'], "other"),
+                                        '--output-xml', os.path.join(config['SETTINGS']['working_directory'], "other"),
+                                        '--output-file',
+                                        os.path.join(config['SETTINGS']['working_directory'], "changes.json"),
+                                        '--threshold', config['SETTINGS']['threshold'],
+                                        '--max-confidence', config['SETTINGS']['max_confidence'],
+                                        '--computation-type', config['SETTINGS']['computation_type']],
+                                       cwd=config['SETTINGS']['working_directory'])
 
-        return True
+    replace_process.wait()
+    # todo different upload path
+    if not send_data(session, config['SETTINGS']['working_directory'], config['SERVER']['base_url'],
+                     config['SERVER']['update_path']):
+        return False
+
+    return True
 
 
 def compute_baselines(config):
-    with requests.Session() as session:
-        print()
-        print("LOGGING IN")
-        print("##############################################################")
-        if not log_in(session, config['SETTINGS']['login'], config['SETTINGS']['password'], config['SERVER']['base_url'],
-                      config['SERVER']['authentification'], config['SERVER']['login_page']):
-            return False
-        print("##############################################################")
+    line_fixer_process = subprocess.Popen(['python', config['SETTINGS']['line_fixer_path'],
+                                           '-m', config['SETTINGS']['extension_mode'],
+                                           '-i', os.path.join(config['SETTINGS']['working_directory'], "images"),
+                                           '-x', os.path.join(config['SETTINGS']['working_directory'], "page_xml_results"),
+                                           '-o', config['SETTINGS']['ocr'],
+                                           '--output', os.path.join(config['SETTINGS']['working_directory'], "page_xml_results"),
+                                           '--extend-by', config['SETTINGS']['automatic_extension_by'],
+                                           '--ocr-start-offset', config['SETTINGS']['ocr_start_offset'],
+                                           '--ocr-end-offset', config['SETTINGS']['ocr_end_offset']],
+                                          cwd=config['SETTINGS']['working_directory'])
 
-        print()
-        print("CREATING WORK FOLDERS")
-        print("##############################################################")
-        create_work_folders(config)
-        print("##############################################################")
-
-        print()
-        print("GETTING PAGES IDS")
-        print("##############################################################")
-        done, page_uuids = get_document_ids(session, config['SERVER']['base_url'], config['SERVER']['document_ids'], config['SETTINGS']['document_id'])
-        if not done:
-            return False
-        print("##############################################################")
-
-        print()
-        print("DOWNLOADING XMLS")
-        print("##############################################################")
-        if not download_xmls(session, config['SERVER']['base_url'], config['SERVER'][config['SETTINGS']['type']], config['SETTINGS']['working_directory'], page_uuids):
-            return False
-        print("##############################################################")
-
-        print()
-        print("DOWNLOADING IMAGES")
-        print("##############################################################")
-        if not download_images(session, config['SERVER']['base_url'], config['SERVER']['download_images'], config['SETTINGS']['working_directory'], page_uuids):
-            return False
-        print("##############################################################")
-
-        print()
-        print("LINE FIXER PROCESS")
-        print("##############################################################")
-        line_fixer_process = subprocess.Popen(['python', config['SETTINGS']['line_fixer_path'],
-                                                 '-m', config['SETTINGS']['extension_mode'],
-                                                 '-i', os.path.join(config['SETTINGS']['working_directory'], "img"),
-                                                 '-x', os.path.join(config['SETTINGS']['working_directory'], "xml"),
-                                                 '-o', config['SETTINGS']['ocr'],
-                                                 '--output', os.path.join(config['SETTINGS']['working_directory'], "other"),
-                                                 '--output-file', os.path.join(config['SETTINGS']['working_directory'], "changes.json"),
-                                                 '--extend-by', config['SETTINGS']['automatic_extension_by'],
-                                                 '--ocr-start-offset', config['SETTINGS']['ocr_start_offset'],
-                                                 '--ocr-end-offset', config['SETTINGS']['ocr_end_offset']],
-                                                 cwd=config['SETTINGS']['working_directory'])
-
-        line_fixer_process.wait()
-        print("SUCCESFUL")
-        print("##############################################################")
-
-        print()
-        print("PARSE FOLDER PROCESS")
-        print("##############################################################")
-        parse_folder_process = subprocess.Popen(['python', config['SETTINGS']['parse_folder_path'],
-                                                 '-c', config['SETTINGS']['parse_folder_config_path']],
-                                                 cwd=config['SETTINGS']['working_directory'])
-
-        parse_folder_process.wait()
-        print("SUCCESFUL")
-        print("##############################################################")
-
-        return True
-
-
-def upload_baselines(config):
-    with requests.Session() as session:
-        print()
-        print("LOGGING IN")
-        print("##############################################################")
-        if not log_in(session, config['SETTINGS']['login'], config['SETTINGS']['password'],
-                        config['SERVER']['base_url'],
-                      config['SERVER']['authentification'], config['SERVER']['login_page']):
-            return False
-        print("##############################################################")
-
-        print()
-        print("SENDING DATA TO SERVER")
-        print("##############################################################")
-        if not send_data(session, config['SETTINGS']['working_directory'], config['SERVER']['base_url'], config['SERVER']['update_path']):
-            return False
-        print("##############################################################")
-
-        return True
+    line_fixer_process.wait()
 
 
 def restore_baselines_from_xmls(config):
@@ -294,170 +142,26 @@ def restore_baselines_from_xmls(config):
     :param config:
     :return:
     """
-    with requests.Session() as session:
-        print()
-        print("LOGGING IN")
-        print("##############################################################")
-        if not log_in(session, config['SETTINGS']['login'], config['SETTINGS']['password'], config['SERVER']['base_url'],
-                      config['SERVER']['authentification'], config['SERVER']['login_page']):
-            return False
-        print("##############################################################")
-
-        print()
-        print("RESTORING ORIGINAL BASELINES")
-        print("##############################################################")
-        xmls = os.listdir(os.path.join(config['SETTINGS']['working_directory'], "xml"))
-        correction = dict()
-        for xml in xmls:
-            page_layout = PageLayout(file=os.path.join(config['SETTINGS']['working_directory'], "xml", xml))
-            for line in page_layout.lines_iterator():
-                correction[line.id] = [np.int_(line.baseline).tolist(), np.int_(line.heights).tolist()]
-
-        with open(os.path.join(config['SETTINGS']['working_directory'], "correction.json"), 'w') as handle:
-            json.dump(correction, handle)
-        print("SUCCESFUL")
-        print("##############################################################")
-
-        print()
-        print("SENDING DATA TO SERVER")
-        print("##############################################################")
-        if not send_data(session, config['SETTINGS']['working_directory'], config['SERVER']['base_url'], config['SERVER']['update_path'], file='correction.json'):
-            return False
-        print("##############################################################")
-
-        return True
+    page_xml_path = os.path.join(config["SETTINGS"]['working_directory'], 'page_xml')
+    page_xml_files = [f for f in listdir(page_xml_path) if isfile(join(page_xml_path, f))]
+    for file in page_xml_files:
+        copyfile(os.path.join(config["SETTINGS"]['working_directory'], 'page_xml', file),
+                 os.path.join(config["SETTINGS"]['working_directory'], 'page_xml_results', file))
 
 
-def corrupt_baselines(config):
-    with requests.Session() as session:
-        print()
-        print("LOGGING IN")
-        print("##############################################################")
-        if not log_in(session, config['SETTINGS']['login'], config['SETTINGS']['password'], config['SERVER']['base_url'],
-                      config['SERVER']['authentification'], config['SERVER']['login_page']):
-            return False
-        print("##############################################################")
+def update_heights(config, parse_folder_config_path):
+    parse_folder_config = configparser.ConfigParser()
+    parse_folder_config.read(parse_folder_config_path)
 
-        print()
-        print("CREATING WORK FOLDERS")
-        print("##############################################################")
-        create_work_folders(config)
-        print("##############################################################")
+    page_parser = PageParser(parse_folder_config)
+    xmls = os.listdir(os.path.join(config['SETTINGS']['working_directory'], "page_xml_results"))
+    for xml in xmls:
+        page_layout = PageLayout(file=os.path.join(config['SETTINGS']['working_directory'], "page_xml_results", xml))
+        image = cv2.imread(os.path.join(config['SETTINGS']['working_directory'], "images", xml[:-4] + '.jpg'))
+        page_layout = page_parser.process_page(image, page_layout)
+        page_layout.to_pagexml(os.path.join(config['SETTINGS']['working_directory'], "page_xml_results", xml))
 
-        print()
-        print("GETTING PAGES IDS")
-        print("##############################################################")
-        done, page_uuids = get_document_ids(session, config['SERVER']['base_url'], config['SERVER']['document_ids'],
-                                            config['SETTINGS']['document_id'])
-        if not done:
-            return False
-        print("##############################################################")
-
-        print()
-        print("DOWNLOADING XMLS")
-        print("##############################################################")
-        if not download_xmls(session, config['SERVER']['base_url'], config['SERVER'][config['SETTINGS']['type']],
-                             config['SETTINGS']['working_directory'], page_uuids):
-            return False
-        print("##############################################################")
-
-        print()
-        print("CORRUPTING BASELINES")
-        print("##############################################################")
-        xmls = os.listdir(os.path.join(config['SETTINGS']['working_directory'], "xml"))
-        print(xmls)
-        corruption = dict()
-        for xml in xmls:
-            page_layout = PageLayout(file=os.path.join(config['SETTINGS']['working_directory'], "xml", xml))
-            for line in page_layout.lines_iterator():
-                if np.random.randint(2, size=1)[0]:
-                    remove = 2#np.random.randint(1, 4, size=1)[0]
-                    baseline = np.int_(line.baseline).tolist()
-                    if remove < len(baseline):
-                        if np.random.randint(2, size=1)[0]:
-                            corruption[line.id] = [baseline[remove:], np.int_(line.heights).tolist()]
-                        else:
-                            corruption[line.id] = [baseline[:-remove], np.int_(line.heights).tolist()]
-        with open(os.path.join(config['SETTINGS']['working_directory'], "corruption.json"), 'w') as handle:
-            json.dump(corruption, handle)
-        print("SUCCESFUL")
-        print("##############################################################")
-
-        print()
-        print("SENDING DATA TO SERVER")
-        print("##############################################################")
-        if not send_data(session, config['SETTINGS']['working_directory'], config['SERVER']['base_url'], config['SERVER']['update_path'], file='corruption.json'):
-            return False
-        print("##############################################################")
-
-        return True
-
-
-def update_heights(config):
-    with requests.Session() as session:
-        print()
-        print("LOGGING IN")
-        print("##############################################################")
-        if not log_in(session, config['SETTINGS']['login'], config['SETTINGS']['password'], config['SERVER']['base_url'],
-                      config['SERVER']['authentification'], config['SERVER']['login_page']):
-            return False
-        print("##############################################################")
-
-        print()
-        print("CREATING WORK FOLDERS")
-        print("##############################################################")
-        create_work_folders(config)
-        print("##############################################################")
-
-        print()
-        print("GETTING PAGES IDS")
-        print("##############################################################")
-        done, page_uuids = get_document_ids(session, config['SERVER']['base_url'], config['SERVER']['document_ids'], config['SETTINGS']['document_id'])
-        if not done:
-            return False
-        print("##############################################################")
-
-        print()
-        print("DOWNLOADING XMLS")
-        print("##############################################################")
-        if not download_xmls(session, config['SERVER']['base_url'], config['SERVER'][config['SETTINGS']['type']], config['SETTINGS']['working_directory'], page_uuids):
-            return False
-        print("##############################################################")
-
-        print()
-        print("DOWNLOADING IMAGES")
-        print("##############################################################")
-        if not download_images(session, config['SERVER']['base_url'], config['SERVER']['download_images'], config['SETTINGS']['working_directory'], page_uuids):
-            return False
-        print("##############################################################")
-
-        print()
-        print("FIXING HEIGHTS")
-        print("##############################################################")
-        page_parser = PageParser(config)
-        xmls = os.listdir(os.path.join(config['SETTINGS']['working_directory'], "xml"))
-        height_fix = dict()
-        for xml in xmls:
-            page_layout = PageLayout(file=os.path.join(config['SETTINGS']['working_directory'], "xml", xml))
-            image = cv2.imread(os.path.join(config['SETTINGS']['working_directory'], "img", xml[:-4]+'.jpg'))
-            page_layout = page_parser.process_page(image, page_layout)
-            for line in page_layout.lines_iterator():
-                baseline = np.int_(line.baseline).tolist()
-                height_fix[line.id] = [baseline, np.int_(line.heights).tolist()]
-
-        with open(os.path.join(config['SETTINGS']['working_directory'], "height_fix.json"), 'w') as handle:
-            json.dump(height_fix, handle)
-        print("SUCCESFUL")
-        print("##############################################################")
-
-        print()
-        print("SENDING DATA TO SERVER")
-        print("##############################################################")
-        if not send_data(session, config['SETTINGS']['working_directory'], config['SERVER']['base_url'], config['SERVER']['update_path'], file='height_fix.json'):
-            return False
-        print("##############################################################")
-
-        return True
+    return True
 
 
 def render_pages(config):
@@ -467,15 +171,72 @@ def render_pages(config):
     :param config:
     :return:
     """
+    page_parser = PageParser(config)
+    page_xml_path = os.path.join(config["SETTINGS"]['working_directory'], 'page_xml')
+    page_xml_files = [f for f in listdir(page_xml_path) if isfile(join(page_xml_path, f))]
+    for xml in page_xml_files:
+        # page_xml
+        image = cv2.imread(os.path.join(config['SETTINGS']['working_directory'], "images", xml[:-4] + '.jpg'))
+        page_layout = PageLayout(file=os.path.join(config['SETTINGS']['working_directory'], "page_xml", xml))
+        page_layout = page_parser.process_page(image, page_layout)
+        page_layout.render_to_image(image)
+        cv2.imwrite(os.path.join(config["SETTINGS"]['working_directory'], 'render', image + '_orig.jpg'), image, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
+        # page_xml_results
+        image = cv2.imread(os.path.join(config['SETTINGS']['working_directory'], "images", xml[:-4] + '.jpg'))
+        page_layout = PageLayout(file=os.path.join(config['SETTINGS']['working_directory'], "page_xml_results", xml))
+        page_layout = page_parser.process_page(image, page_layout)
+        page_layout.render_to_image(image)
+        cv2.imwrite(os.path.join(config["SETTINGS"]['working_directory'], 'render', image + '_new.jpg.jpg'), image, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
+
 
 def download_data(config):
     """
-    Download data if woring directories do not exist. (./images ./page_xml ./page_xml_results)
+    Download data if working directories do not exist. (./images ./page_xml ./page_xml_results)
 
     :param config:
     :return:
     """
-    pass
+    page_xml_path = os.path.join(config["SETTINGS"]['working_directory'], 'page_xml')
+    page_xml_files = [f for f in listdir(page_xml_path) if isfile(join(page_xml_path, f))]
+    if len(page_xml_files) == 0:
+        with requests.Session() as session:
+            if not log_in(session=session,
+                          login=config['SETTINGS']['login'],
+                          password=config['SETTINGS']['password'],
+                          base_usr=config['SERVER']['base_url'],
+                          authentification=config['SERVER']['authentification'],
+                          login_page=config['SERVER']['login_page']):
+                return False
+
+            done, page_uuids = get_document_ids(session=session,
+                                                base_url=config['SERVER']['base_url'],
+                                                document_ids=config['SERVER']['document_ids'],
+                                                document_id=config['SETTINGS']['document_id'])
+            if not done:
+                return False
+
+            if not download_xmls(session=session,
+                                 base_url=config['SERVER']['base_url'],
+                                 type=config['SERVER'][config['SETTINGS']['type']],
+                                 working_directory=config['SETTINGS']['working_directory'],
+                                 page_uuids=page_uuids):
+                return False
+
+            if not download_images(session=session,
+                                   base_url=config['SERVER']['base_url'],
+                                   download_images=config['SERVER']['download_images'],
+                                   working_directory=config['SETTINGS']['working_directory'],
+                                   page_uuids=page_uuids):
+                return False
+
+    page_xml_results_path = os.path.join(config["SETTINGS"]['working_directory'], 'page_xml_results')
+    page_xml_results_files = [f for f in listdir(page_xml_results_path) if isfile(join(page_xml_results_path, f))]
+    if len(page_xml_results_files) == 0:
+        for file in page_xml_files:
+            copyfile(os.path.join(config["SETTINGS"]['working_directory'], 'page_xml', file),
+                     os.path.join(config["SETTINGS"]['working_directory'], 'page_xml_results', file))
+
+    return True
 
 
 def upload_data(config):
@@ -485,7 +246,48 @@ def upload_data(config):
     :param config:
     :return:
     """
-    pass
+    page_xml_path = os.path.join(config["SETTINGS"]['working_directory'], 'page_xml')
+    page_xml_files = [f for f in listdir(page_xml_path) if isfile(join(page_xml_path, f))]
+
+    page_xml_results_path = os.path.join(config["SETTINGS"]['working_directory'], 'page_xml_results')
+    page_xml_results_files = [f for f in listdir(page_xml_results_path) if isfile(join(page_xml_results_path, f))]
+
+    if len(page_xml_files) != 0 and len(page_xml_files) != len(page_xml_results_files):
+        return False
+
+    update = dict()
+    for file in page_xml_files:
+        page_layout_orig = PageLayout(file=os.path.join(config['SETTINGS']['working_directory'], "page_xml", file))
+        page_layout_new = PageLayout(file=os.path.join(config['SETTINGS']['working_directory'], "page_xml_results", file))
+        for line_orig, line_new in zip(page_layout_orig.lines_iterator(), page_layout_new.lines_iterator()):
+            line_orig_baseline = np.int_(line_orig.baseline).tolist()
+            line_orig_heights = np.int_(line_orig.heights).tolist()
+
+            line_new_baseline = np.int_(line_new.baseline).tolist()
+            line_new_heights = np.int_(line_new.heights).tolist()
+
+            if line_orig_baseline != line_new_baseline or line_orig_heights != line_new_heights:
+                update[line_new.id] = [np.int_(line_new.baseline).tolist(), np.int_(line_new.heights).tolist()]
+
+    with open(os.path.join(config['SETTINGS']['working_directory'], "data.json"), 'w') as handle:
+        json.dump(update, handle)
+
+    with requests.Session() as session:
+        if not log_in(session=session,
+                      login=config['SETTINGS']['login'],
+                      password=config['SETTINGS']['password'],
+                      base_usr=config['SERVER']['base_url'],
+                      authentification=config['SERVER']['authentification'],
+                      login_page=config['SERVER']['login_page']):
+            return False
+
+        if not send_data(session=session,
+                         working_directory=config['SETTINGS']['working_directory'],
+                         base_url=config['SERVER']['base_url'],
+                         update_all_confidences=config['SERVER']['update_path'],
+                         file='data.json'):
+            return False
+    return True
 
 
 def main():
@@ -516,31 +318,42 @@ def main():
         config["SETTINGS"]['working_directory'] = \
             os.path.join(config["SETTINGS"].get('working_directory', fallback=''), config["SETTINGS"]['document_id'])
 
+    Path(config["SETTINGS"]['working_directory']).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(config["SETTINGS"]['working_directory'], 'images')).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(config["SETTINGS"]['working_directory'], 'page_xml')).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(config["SETTINGS"]['working_directory'], 'page_xml_results')).mkdir(parents=True, exist_ok=True)
+
     if args.upload_results:
-        upload_data(config)
+        if not upload_data(config):
+            print(f'ERROR: Error during uploading.')
+            exit(-1)
     else:
-        download_data(config)
+        if not download_data(config):
+            print(f'ERROR: Error during downloading.')
+            exit(-1)
+
         update_type = config["SETTINGS"]['update_type']
         print(f'STARTING PROCESSING "{update_type}"')
         try:
-            if update_type == 'confidences':
-                update_confidences(config)
-            elif update_type == 'baselines_compute':
+            if update_type == 'baselines_compute':
                 compute_baselines(config)
             elif update_type == 'restore_baselines':
                 restore_baselines_from_xmls(config)
-            elif update_type == 'corrupt_baselines':
-                corrupt_baselines(config)
             elif update_type == 'update_heights':
-                update_heights(config)
+                update_heights(config, args.parse_folder_config)
+            elif update_type == 'confidences':
+                #update_confidences(config)
+                print(f'ERROR: Deprecated method.')
+                exit(-1)
             else:
-                print(f'ERROR: Unknow update_type "{update_type}"')
+                print(f'ERROR: Unknown update_type "{update_type}"')
                 exit(-1)
         except:
             print(f'ERROR: Processing failed with exception.')
             raise
 
         if args.render:
+            Path(os.path.join(config["SETTINGS"]['working_directory'], 'render')).mkdir(parents=True, exist_ok=True)
             render_pages(config)
 
 
