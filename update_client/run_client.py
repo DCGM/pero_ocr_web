@@ -26,6 +26,7 @@ def get_args():
     parser.add_argument("-c", "--config", required=True, help="Config path.")
     parser.add_argument("--parse-folder-config", help="Config for parse_folder.py used when changing heights.")
     parser.add_argument("-d", "--document-id", help="Process document with this ID.")
+    parser.add_argument("--update-type", choices=["baselines_compute", "restore_baselines", "update_heights"], help="Update method.")
     parser.add_argument("-l", "--login", help="Username of superuser on remote server.")
     parser.add_argument("-p", "--password", help="Password of superuser on remote server.")
     parser.add_argument("--working-directory", help="Work in this directory. All downloded and resultsing files will be here.")
@@ -308,6 +309,8 @@ def main():
 
     if args.document_id:
         config["SETTINGS"]['document_id'] = args.document_id
+    if args.update_type:
+        config["SETTINGS"]['update_type'] = args.update_type
     if args.login:
         config["SETTINGS"]['login'] = args.login
     if args.password:
