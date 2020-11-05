@@ -87,7 +87,7 @@ def get_document_ids(session, base_url, document_ids, document_id):
         return False, None
 
 
-def compute_baselines(config):
+def update_baselines(config):
     line_fixer_process = subprocess.Popen(['python', config['SETTINGS']['line_fixer_path'],
                                            '-m', config['SETTINGS']['extension_mode'],
                                            '-i', os.path.join(config['SETTINGS']['working_directory'], "images"),
@@ -105,7 +105,7 @@ def compute_baselines(config):
         exit(-1)
 
 
-def restore_baselines_from_xmls(config):
+def restore_originals(config):
     """
     Move ./page_xml to ./page_xml_results.
 
@@ -311,10 +311,10 @@ def main():
         update_type = config["SETTINGS"]['update_type']
         print(f'STARTING PROCESSING "{update_type}"')
         try:
-            if update_type == 'baselines_compute':
-                compute_baselines(config)
+            if update_type == 'update_baselines':
+                update_baselines(config)
             elif update_type == 'restore_baselines':
-                restore_baselines_from_xmls(config)
+                restore_originals(config)
             elif update_type == 'update_heights':
                 update_heights(config, args.parse_folder_config)
             else:
