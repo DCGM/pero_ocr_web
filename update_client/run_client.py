@@ -87,40 +87,6 @@ def get_document_ids(session, base_url, document_ids, document_id):
         return False, None
 
 
-def update_confidences(config):
-    """
-    deprecated for now
-    """
-    parse_folder_process = subprocess.Popen(['python', config['SETTINGS']['parse_folder_path'],
-                                             '-c', config['SETTINGS']['parse_folder_config_path']],
-                                            cwd=config['SETTINGS']['working_directory'])
-
-    parse_folder_process.wait()
-
-    replace_process = subprocess.Popen(['python', config['SETTINGS']['replace_script_path'],
-                                        '--substig', config['SETTINGS']['substitution_file_path'],
-                                        '--xml', os.path.join(config['SETTINGS']['working_directory'], "xml"),
-                                        '--logits',
-                                        os.path.join(config['SETTINGS']['working_directory'], "output_logits"),
-                                        '--images', os.path.join(config['SETTINGS']['working_directory'], "img"),
-                                        '--output-img', os.path.join(config['SETTINGS']['working_directory'], "other"),
-                                        '--output-xml', os.path.join(config['SETTINGS']['working_directory'], "other"),
-                                        '--output-file',
-                                        os.path.join(config['SETTINGS']['working_directory'], "changes.json"),
-                                        '--threshold', config['SETTINGS']['threshold'],
-                                        '--max-confidence', config['SETTINGS']['max_confidence'],
-                                        '--computation-type', config['SETTINGS']['computation_type']],
-                                       cwd=config['SETTINGS']['working_directory'])
-
-    replace_process.wait()
-    # todo different upload path
-    if not send_data(session, config['SETTINGS']['working_directory'], config['SERVER']['base_url'],
-                     config['SERVER']['update_path']):
-        return False
-
-    return True
-
-
 def compute_baselines(config):
     line_fixer_process = subprocess.Popen(['python', config['SETTINGS']['line_fixer_path'],
                                            '-m', config['SETTINGS']['extension_mode'],
@@ -134,6 +100,9 @@ def compute_baselines(config):
                                           cwd=config['SETTINGS']['working_directory'])
 
     line_fixer_process.wait()
+    if line_fixer_process != 0:
+        print(f'ERROR: Error during line_fixer process.')
+        exit(-1)
 
 
 def restore_baselines_from_xmls(config):
@@ -207,28 +176,32 @@ def download_data(config):
                           base_usr=config['SERVER']['base_url'],
                           authentification=config['SERVER']['authentification'],
                           login_page=config['SERVER']['login_page']):
-                return False
+                print(f'ERROR: Error during logging in.')
+                exit(-1)
 
             done, page_uuids = get_document_ids(session=session,
                                                 base_url=config['SERVER']['base_url'],
                                                 document_ids=config['SERVER']['document_ids'],
                                                 document_id=config['SETTINGS']['document_id'])
             if not done:
-                return False
+                print(f'ERROR: Error during getting document ids.')
+                exit(-1)
 
             if not download_xmls(session=session,
                                  base_url=config['SERVER']['base_url'],
                                  type=config['SERVER'][config['SETTINGS']['type']],
                                  working_directory=config['SETTINGS']['working_directory'],
                                  page_uuids=page_uuids):
-                return False
+                print(f'ERROR: Error during downloading xmls.')
+                exit(-1)
 
             if not download_images(session=session,
                                    base_url=config['SERVER']['base_url'],
                                    download_images=config['SERVER']['download_images'],
                                    working_directory=config['SETTINGS']['working_directory'],
                                    page_uuids=page_uuids):
-                return False
+                print(f'ERROR: Error during downloading images.')
+                exit(-1)
 
     page_xml_results_path = os.path.join(config["SETTINGS"]['working_directory'], 'page_xml_results')
     page_xml_results_files = [f for f in listdir(page_xml_results_path) if isfile(join(page_xml_results_path, f))]
@@ -236,8 +209,6 @@ def download_data(config):
         for file in page_xml_files:
             copyfile(os.path.join(config["SETTINGS"]['working_directory'], 'page_xml', file),
                      os.path.join(config["SETTINGS"]['working_directory'], 'page_xml_results', file))
-
-    return True
 
 
 def upload_data(config):
@@ -254,7 +225,8 @@ def upload_data(config):
     page_xml_results_files = [f for f in listdir(page_xml_results_path) if isfile(join(page_xml_results_path, f))]
 
     if len(page_xml_files) != 0 and len(page_xml_files) != len(page_xml_results_files):
-        return False
+        print(f'ERROR: XML in folders ./page_xml_results and ./page_xml don\'t match.')
+        exit(-1)
 
     update = dict()
     for file in page_xml_files:
@@ -280,16 +252,16 @@ def upload_data(config):
                       base_usr=config['SERVER']['base_url'],
                       authentification=config['SERVER']['authentification'],
                       login_page=config['SERVER']['login_page']):
-            return False
+            print(f'ERROR: Error during logging in.')
+            exit(-1)
 
         if not send_data(session=session,
                          working_directory=config['SETTINGS']['working_directory'],
                          base_url=config['SERVER']['base_url'],
                          update_all_confidences=config['SERVER']['update_path'],
                          file='data.json'):
-            return False
-
-    return True
+            print(f'ERROR: Error during uploading.')
+            exit(-1)
 
 
 def main():
@@ -345,10 +317,6 @@ def main():
                 restore_baselines_from_xmls(config)
             elif update_type == 'update_heights':
                 update_heights(config, args.parse_folder_config)
-            elif update_type == 'confidences':
-                #update_confidences(config)
-                print(f'ERROR: Deprecated method.')
-                exit(-1)
             else:
                 print(f'ERROR: Unknown update_type "{update_type}"')
                 exit(-1)
