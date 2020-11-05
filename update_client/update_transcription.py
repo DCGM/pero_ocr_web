@@ -32,7 +32,7 @@ def update_confidences(config, config_path):
                                             cwd=config['SETTINGS']['working_directory'])
 
     parse_folder_process.wait()
-    if parse_folder_process != 0:
+    if parse_folder_process.returncode != 0:
         print(f'ERROR: Error during parse_folder_process process.')
         exit(-1)
 
@@ -52,7 +52,7 @@ def update_confidences(config, config_path):
                                        cwd=config['SETTINGS']['working_directory'])
 
     replace_process.wait()
-    if replace_process != 0:
+    if replace_process.returncode != 0:
         print(f'ERROR: Error during replace_process process.')
         exit(-1)
 

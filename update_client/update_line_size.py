@@ -100,7 +100,7 @@ def update_baselines(config):
                                           cwd=config['SETTINGS']['working_directory'])
 
     line_fixer_process.wait()
-    if line_fixer_process != 0:
+    if line_fixer_process.returncode != 0:
         print(f'ERROR: Error during line_fixer process.')
         exit(-1)
 
@@ -301,13 +301,9 @@ def main():
     Path(os.path.join(config["SETTINGS"]['working_directory'], 'page_xml_results')).mkdir(parents=True, exist_ok=True)
 
     if args.upload_results:
-        if not upload_data(config):
-            print(f'ERROR: Error during uploading.')
-            exit(-1)
+        upload_data(config)
     else:
-        if not download_data(config):
-            print(f'ERROR: Error during downloading.')
-            exit(-1)
+        download_data(config)
 
         update_type = config["SETTINGS"]['update_type']
         print(f'STARTING PROCESSING "{update_type}"')
