@@ -66,11 +66,11 @@ def download_images(session, base_url, download_images, working_directory, page_
     return True
 
 
-def send_data(session, working_directory, base_url, update_all_confidences, file="changes.json"):
+def send_data(session, working_directory, base_url, update_path, file="changes.json"):
     with open(os.path.join(working_directory, file), "rb") as f:
         data = f.read()
 
-    r = session.post(join_url(base_url, update_all_confidences),
+    r = session.post(join_url(base_url, update_path),
                      files={'data': ('data.json', data, 'text/plain')})
 
     if not check_request(r):
@@ -203,12 +203,13 @@ def download_data(config):
                 print(f'ERROR: Error during downloading images.')
                 exit(-1)
 
-    page_xml_results_path = os.path.join(config["SETTINGS"]['working_directory'], 'page_xml_results')
-    page_xml_results_files = [f for f in listdir(page_xml_results_path) if isfile(join(page_xml_results_path, f))]
-    if len(page_xml_results_files) == 0:
-        for file in page_xml_files:
-            copyfile(os.path.join(config["SETTINGS"]['working_directory'], 'page_xml', file),
-                     os.path.join(config["SETTINGS"]['working_directory'], 'page_xml_results', file))
+    if os.path.isdir(os.path.join(config["SETTINGS"]['working_directory'], 'page_xml_results')):
+        page_xml_results_path = os.path.join(config["SETTINGS"]['working_directory'], 'page_xml_results')
+        page_xml_results_files = [f for f in listdir(page_xml_results_path) if isfile(join(page_xml_results_path, f))]
+        if len(page_xml_results_files) == 0:
+            for file in page_xml_files:
+                copyfile(os.path.join(config["SETTINGS"]['working_directory'], 'page_xml', file),
+                         os.path.join(config["SETTINGS"]['working_directory'], 'page_xml_results', file))
 
 
 def upload_data(config):
@@ -258,7 +259,7 @@ def upload_data(config):
         if not send_data(session=session,
                          working_directory=config['SETTINGS']['working_directory'],
                          base_url=config['SERVER']['base_url'],
-                         update_all_confidences=config['SERVER']['update_path'],
+                         update_path=config['SERVER']['update_path'],
                          file='data.json'):
             print(f'ERROR: Error during uploading.')
             exit(-1)
@@ -313,10 +314,10 @@ def main():
         try:
             if update_type == 'update_baselines':
                 update_baselines(config)
-            elif update_type == 'restore_baselines':
-                restore_originals(config)
             elif update_type == 'update_heights':
                 update_heights(config, args.parse_folder_config)
+            elif update_type == 'restore_originals':
+                restore_originals(config)
             else:
                 print(f'ERROR: Unknown update_type "{update_type}"')
                 exit(-1)
