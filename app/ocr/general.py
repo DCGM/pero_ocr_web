@@ -57,8 +57,11 @@ def get_confidences(line):
     if line.transcription is not None and line.transcription != "":
         char_map = dict([(c, i) for i, c in enumerate(line.characters)])
         c_idx = np.asarray([char_map[c] for c in line.transcription])
-
-        confidences = get_line_confidence(line, c_idx)
+        try:
+            confidences = get_line_confidence(line, c_idx)
+        except ValueError:
+            print('ERROR: Known error in get_line_confidence() - Please, fix it. Logit slice has zero length.'
+            confidences = np.ones(len(line.transcription)) * 0.5
         return confidences
     return np.asarray([])
 
