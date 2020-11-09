@@ -60,7 +60,7 @@ def get_confidences(line):
         try:
             confidences = get_line_confidence(line, c_idx)
         except ValueError:
-            print('ERROR: Known error in get_line_confidence() - Please, fix it. Logit slice has zero length.'
+            print('ERROR: Known error in get_line_confidence() - Please, fix it. Logit slice has zero length.')
             confidences = np.ones(len(line.transcription)) * 0.5
         return confidences
     return np.asarray([])
