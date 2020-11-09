@@ -286,20 +286,21 @@ def get_lines(image_id):
                     new_confidences.append(ligature_confidence)
             confidences = new_confidences
 
-            lines_dict['lines'].append({
-                        'id': line.id,
-                        'np_points':  line.np_points.tolist(),
-                        'np_baseline':  line.np_baseline.tolist(),
-                        'np_heights':  line.np_heights.tolist(),
-                        'np_confidences': confidences,
-                        'ligatures_mapping': ligatures_mapping,
-                        'np_textregion_width':  [text_region.np_points[:, 0].min(), text_region.np_points[:, 0].max()],
-                        'annotated': line.id in annotated_lines,
-                        'text': text,
-                        'arabic': arabic,
-                        'valid': not line.deleted,
-                        'for_training': line.for_training
-                    })
+            if not line.deleted:
+                lines_dict['lines'].append({
+                            'id': line.id,
+                            'np_points':  line.np_points.tolist(),
+                            'np_baseline':  line.np_baseline.tolist(),
+                            'np_heights':  line.np_heights.tolist(),
+                            'np_confidences': confidences,
+                            'ligatures_mapping': ligatures_mapping,
+                            'np_textregion_width':  [text_region.np_points[:, 0].min(), text_region.np_points[:, 0].max()],
+                            'annotated': line.id in annotated_lines,
+                            'text': text,
+                            'arabic': arabic,
+                            'valid': not line.deleted,
+                            'for_training': line.for_training
+                        })
 
     return jsonify(lines_dict)
 
