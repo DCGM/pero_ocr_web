@@ -60,7 +60,7 @@ def get_confidences(line):
         try:
             confidences = get_line_confidence(line, c_idx)
         except ValueError:
-            print('ERROR: Known error in get_line_confidence() - Please, fix it. Logit slice has zero length.'
+            print('ERROR: Known error in get_line_confidence() - Please, fix it. Logit slice has zero length.')
             confidences = np.ones(len(line.transcription)) * 0.5
         return confidences
     return np.asarray([])
@@ -79,6 +79,8 @@ def update_text_lines(annotations):
         text_line = get_text_line_by_id(annotation['id'])
         text_line.text = annotation['text_edited']
         text_line.confidences = ' '.join([str(1) for _ in annotation['text_edited']])
+        text_line.deleted = not annotation['valid']
+        text_line.for_training = annotation['for_training']
     db_session.commit()
 
 

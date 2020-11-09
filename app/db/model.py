@@ -120,6 +120,7 @@ class TextLine(Base):
     heights = Column(String())
     confidences = Column(String())
     deleted = Column(Boolean())
+    for_training = Column(Boolean())
     text = Column(String())
     score = Column(Float(), index=True)
 

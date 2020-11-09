@@ -296,7 +296,9 @@ def get_lines(image_id):
                         'np_textregion_width':  [text_region.np_points[:, 0].min(), text_region.np_points[:, 0].max()],
                         'annotated': line.id in annotated_lines,
                         'text': text,
-                        'arabic': arabic
+                        'arabic': arabic,
+                        'valid': not line.deleted,
+                        'for_training': line.for_training
                     })
 
     return jsonify(lines_dict)

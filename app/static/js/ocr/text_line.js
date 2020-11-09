@@ -2,7 +2,7 @@
 
 class TextLine
 {
-    constructor(id, annotated, text, confidences, ligatures_mapping, arabic)
+    constructor(id, annotated, text, confidences, ligatures_mapping, arabic, valid, for_training)
     {
         this.id = id;
         this.text = text;
@@ -11,6 +11,10 @@ class TextLine
         this.arabic = arabic;
         this.edited = false;
         this.annotated = annotated;
+        this.valid = valid;
+        this.for_training = for_training;
+        this.valid_checkbox = null;
+        this.for_training_checkbox = null;
 
         this.container = document.createElement("div");
         this.container.setAttribute("class", "text-line");
@@ -29,11 +33,41 @@ class TextLine
         this.container.addEventListener('paste', this.paste.bind(this));
 
         this.set_line_confidences_to_text_line_element();
+        this.set_valid_and_training_checkboxes();
 
         this.observer = new MutationObserver(this.mutate.bind(this));
         let config = { attributes: false, childList: true, characterData: true , subtree: true};
         this.observer.observe(this.container, config);
         this.mutate();
+    }
+
+    set_valid_and_training_checkboxes(){
+        this.checkbox_div = document.createElement("div");
+        this.valid_checkbox = document.createElement("input");
+        this.for_training_checkbox = document.createElement("input");
+
+        this.checkbox_div.setAttribute("style", "float: right;");
+        this.checkbox_div.setAttribute("contenteditable", "false");
+        this.valid_checkbox.setAttribute("type", "checkbox");
+        this.for_training_checkbox.setAttribute("type", "checkbox");
+        this.valid_checkbox.setAttribute("title", "valid line");
+        this.for_training_checkbox.setAttribute("title", "training line");
+        this.valid_checkbox.setAttribute("style", "margin: 3px; filter: hue-rotate(240deg); vertical-align: middle;");
+        this.for_training_checkbox.setAttribute("style", "margin: 3px; margin-right: 6px; vertical-align: middle;");
+
+        this.valid_checkbox.checked = this.valid;
+        this.for_training_checkbox.checked = this.for_training;
+
+        this.append_checkboxes();
+
+        this.valid_checkbox.addEventListener('change', this.mutate.bind(this));
+        this.for_training_checkbox.addEventListener('change', this.mutate.bind(this));
+    }
+
+    append_checkboxes(){
+        this.container.appendChild(this.checkbox_div);
+        this.checkbox_div.appendChild(this.valid_checkbox);
+        this.checkbox_div.appendChild(this.for_training_checkbox);
     }
 
     set_line_confidences_to_text_line_element()
@@ -66,6 +100,9 @@ class TextLine
 
     press(e)
     {
+        if (this.container.lastChild.nodeName == 'DIV'){
+            this.container.removeChild(this.container.lastChild);
+        }
         if (e.keyCode == 13)
         {
             e.preventDefault();
@@ -91,10 +128,14 @@ class TextLine
                 document.execCommand("insertHTML", false, '&nbsp;');
             }
         }
+        this.append_checkboxes();
     }
 
     keydown(e)
     {
+        if (this.container.lastChild.nodeName == 'DIV'){
+            this.container.removeChild(this.container.lastChild);
+        }
         let empty_text_line_element = this.empty_text_line_element();
         let isFirefox = typeof InstallTrigger !== 'undefined';
 
@@ -176,6 +217,7 @@ class TextLine
             selection.removeAllRanges();
             selection.addRange(range);
         }
+        this.append_checkboxes();
     }
 
     paste(e)
@@ -188,7 +230,7 @@ class TextLine
 
     mutate()
     {
-        this.edited = this.text != this.get_text_content();
+        this.edited = this.text != this.get_text_content() || this.valid_checkbox.checked != this.valid || this.for_training_checkbox.checked != this.for_training;
         if(this.edited){
             this.container.style.backgroundColor = "#ffcc54";
         } else if(this.annotated){
@@ -251,6 +293,7 @@ class TextLine
             selection.removeAllRanges();
             selection.addRange(range);
         }
+        this.append_checkboxes();
     }
 
     remove_selection_and_set_caret()
@@ -345,11 +388,13 @@ class TextLine
         }
         let caret_span = this.get_caret_span();
         let next_span = this.skip_next_invalid_spans(caret_span.nextSibling);
-        if (caret_span != next_span)
-        {
-            let span_to_move = this.get_span_to_move(next_span.previousSibling);
-            selection.collapse(span_to_move, span_to_move.length);
-            return true;
+        if (next_span != null) {
+            if (caret_span != next_span)
+            {
+                let span_to_move = this.get_span_to_move(next_span.previousSibling);
+                selection.collapse(span_to_move, span_to_move.length);
+                return true;
+            }
         }
         return false;
     }
@@ -456,15 +501,18 @@ class TextLine
     text_selected()
     {
         let range = this.get_range();
-        if (range.startContainer != range.endContainer)
-        {
-            return true;
-        }
-        else
-        {
-            if (range.startOffset != range.endOffset)
+        //console.log(range.startContainer, range.endContainer, range.startOffset, range.endOffset);
+        if (range != null){
+            if (range.startContainer != range.endContainer)
             {
                 return true;
+            }
+            else
+            {
+                if (range.startOffset != range.endOffset)
+                {
+                    return true;
+                }
             }
         }
         return false;
@@ -479,9 +527,12 @@ class TextLine
         return false;
     }
 
-    get_range()
-    {
-        return document.getSelection().getRangeAt(0);
+    get_range() {
+        var sel = document.getSelection()
+        if (sel && sel.rangeCount > 0) {
+            return sel.getRangeAt(0);
+        }
+        return null;
     }
 
     save()
@@ -493,6 +544,8 @@ class TextLine
         annotation_dict["id"] = this.id;
         annotation_dict["text_original"] = this.text;
         annotation_dict["text_edited"] = new_text;
+        annotation_dict["valid"] = this.valid_checkbox.checked;
+        annotation_dict["for_training"] =  this.for_training_checkbox.checked;
         annotations.push(annotation_dict);
         console.log(annotations);
         console.log(JSON.stringify(annotations));

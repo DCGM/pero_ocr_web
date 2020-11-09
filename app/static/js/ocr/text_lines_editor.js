@@ -15,7 +15,7 @@ class TextLinesEditor
         this.abort_controller = new AbortController();
         this.container = container;
         this.container.innerHTML = "<div class='editor-map'></div><div class='status'></div>";
-        this.map_element = this.container.getElementsByClassName("editor-map")[0]
+        this.map_element = this.container.getElementsByClassName("editor-map")[0];
         this.active_line = false;
         this.focused_line = false;
         this.save_btn = document.getElementsByClassName('save-btn');
@@ -115,7 +115,7 @@ class TextLinesEditor
         let i = 0;
         for (let l of data['lines'])
         {
-            let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic)
+            let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic, l.valid, l.for_training);
             line.np_points = l.np_points;
             line.np_heights = l.np_heights;
             this.add_line_to_map(i, line);
