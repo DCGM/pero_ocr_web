@@ -40,13 +40,15 @@
     title="Run OCR">
     <i class="fas fa-forward fa-fw"></i>
 </a>
-<a  class="document-action-btn btn btn-secondary text-white revert-layout-button"
-    data-toggle="tooltip"
-    data-placement="right"
-    title="Revert layout analysis"
-    data-document="{{ document.id }}">
-    <i class="fas fa-backward"></i>
-</a>
+    {% if document.user.id == current_user.id or current_user.trusted == 1 %}
+    <a  class="document-action-btn btn btn-secondary text-white revert-layout-button"
+        data-toggle="tooltip"
+        data-placement="right"
+        title="Revert layout analysis"
+        data-document="{{ document.id }}">
+        <i class="fas fa-backward"></i>
+    </a>
+    {% endif %}
 {% endif %}
 
 {% if document.state.name == 'COMPLETED_OCR' %}
@@ -78,13 +80,16 @@
     title="Statistics">
     <i class="fas fa-chart-line fa-fw"></i>
 </a>
-<a  class="document-action-btn btn btn-secondary text-white revert-OCR-button"
-    data-toggle="tooltip"
-    data-placement="right"
-    title="Revert OCR"
-    data-document="{{ document.id }}">
-    <i class="fas fa-backward"></i>
-</a>
+    {% if document.user.id == current_user.id or current_user.trusted == 1 %}
+    <a  class="document-action-btn btn btn-secondary text-white revert-OCR-button"
+        data-toggle="tooltip"
+        data-placement="right"
+        title="Revert OCR"
+        data-document="{{ document.id }}">
+        <i class="fas fa-backward"></i>
+    </a>
+    {% endif %}
+
 {% endif %}
 
 
