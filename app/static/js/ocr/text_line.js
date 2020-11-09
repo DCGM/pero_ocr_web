@@ -42,18 +42,24 @@ class TextLine
     }
 
     set_valid_and_training_checkboxes(){
+        this.editable_element = document.createElement("span");
+        this.editable_element.setAttribute("contenteditable", "true");
+        this.editable_element.setAttribute("style", "display: contents;");
+
         this.checkbox_div = document.createElement("div");
         this.valid_checkbox = document.createElement("input");
         this.for_training_checkbox = document.createElement("input");
 
         this.checkbox_div.setAttribute("style", "float: right;");
-        this.checkbox_div.setAttribute("contenteditable", "false");
         this.valid_checkbox.setAttribute("type", "checkbox");
         this.for_training_checkbox.setAttribute("type", "checkbox");
         this.valid_checkbox.setAttribute("title", "valid line");
         this.for_training_checkbox.setAttribute("title", "training line");
         this.valid_checkbox.setAttribute("style", "margin: 3px; filter: hue-rotate(240deg); vertical-align: middle;");
         this.for_training_checkbox.setAttribute("style", "margin: 3px; margin-right: 6px; vertical-align: middle;");
+
+        this.valid_checkbox.setAttribute("contenteditable", "false");
+        this.for_training_checkbox.setAttribute("contenteditable", "false");
 
         this.valid_checkbox.checked = this.valid;
         this.for_training_checkbox.checked = this.for_training;
@@ -65,6 +71,7 @@ class TextLine
     }
 
     append_checkboxes(){
+        this.container.appendChild(this.editable_element);
         this.container.appendChild(this.checkbox_div);
         this.checkbox_div.appendChild(this.valid_checkbox);
         this.checkbox_div.appendChild(this.for_training_checkbox);
@@ -94,7 +101,9 @@ class TextLine
         let descendants = this.container.getElementsByTagName('*');
         for (let child of descendants)
         {
-            child.style.backgroundColor = "#ffffff";
+            if (child.nodeName != 'DIV'){
+                child.style.backgroundColor = "#ffffff";
+            }
         }
     }
 
@@ -253,7 +262,7 @@ class TextLine
     prepare_line_for_insertion()
     {
         // We can detele line if it has no text - suprisingly, CTRL-Z still works.
-        let empty_text_line_element = this.container.textContent == "";
+        let empty_text_line_element = this.container.textContent === "";
         let caret_span;
         if (empty_text_line_element)
         {
@@ -545,7 +554,7 @@ class TextLine
         annotation_dict["text_original"] = this.text;
         annotation_dict["text_edited"] = new_text;
         annotation_dict["valid"] = this.valid_checkbox.checked;
-        annotation_dict["for_training"] =  this.for_training_checkbox.checked;
+        annotation_dict["for_training"] = this.for_training_checkbox.checked;
         annotations.push(annotation_dict);
         console.log(annotations);
         console.log(JSON.stringify(annotations));
@@ -563,6 +572,8 @@ class TextLine
                 } else {
                     this_text_line.text = new_text;
                     self.annotated = true;
+                    self.valid = self.valid_checkbox.checked;
+                    self.for_training = self.for_training_checkbox.checked;
                     self.clear_confidence_colors();
                     self.mutate();
                 }
