@@ -79,8 +79,16 @@ def update_text_lines(annotations):
         text_line = get_text_line_by_id(annotation['id'])
         text_line.text = annotation['text_edited']
         text_line.confidences = ' '.join([str(1) for _ in annotation['text_edited']])
-        text_line.deleted = not annotation['valid']
-        text_line.for_training = annotation['for_training']
+    db_session.commit()
+
+
+def set_delete_flag(text_line, delete_flag):
+    text_line.deleted = delete_flag
+    db_session.commit()
+
+
+def set_training_flag(text_line, training_flag):
+    text_line.for_training = training_flag
     db_session.commit()
 
 

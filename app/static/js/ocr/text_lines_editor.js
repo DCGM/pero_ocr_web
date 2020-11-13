@@ -19,6 +19,7 @@ class TextLinesEditor
         this.active_line = false;
         this.focused_line = false;
         this.save_btn = document.getElementsByClassName('save-btn');
+        this.delete_btn = document.getElementById('deletebutton');
         this.next_suspect_btn = document.getElementById('nextsucpectline');
         this.compute_scores_btn = document.getElementById('btn-compute-scores');
         this.show_line_height = document.getElementById('show-line-height');
@@ -28,6 +29,7 @@ class TextLinesEditor
             btn.addEventListener('click', this.save_annotations.bind(this));
         }
         this.next_suspect_btn.addEventListener('click', this.show_next_line.bind(this));
+        this.delete_btn.addEventListener('click', this.delete_line.bind(this));
         this.show_line_height.addEventListener('input', this.show_line_change.bind(this));
         this.show_bottom_pad.addEventListener('input', this.show_line_change.bind(this));
         this.text_container = document.getElementById('text-container');
@@ -35,6 +37,37 @@ class TextLinesEditor
         if (this.compute_scores_btn != null){
             this.compute_scores_btn.addEventListener('click', this.compute_scores.bind(this));
         }
+    }
+
+    delete_line(){
+        if (this.active_line.valid){
+            this.active_line.valid = false;
+        }
+        else{
+            this.active_line.valid = true;
+        }
+
+        this.active_line.mutate();
+
+        if (this.active_line.valid){
+            this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
+            this.delete_btn.className  = 'btn btn-danger';
+        }
+        else{
+            this.delete_btn.innerHTML  = '<i class="fas fa-undo"></i> Restore line';
+            this.delete_btn.className  = 'btn btn-primary';
+        }
+
+        let delete_flag;
+        if (this.active_line.valid){
+            delete_flag = 0;
+        }
+        else{
+            delete_flag = 1;
+        }
+
+        let route = Flask.url_for('ocr.delete_line', {'line_id': this.active_line.id, 'delete_flag': delete_flag});
+        $.post(route);
     }
 
     change_image(image_id)
@@ -58,6 +91,8 @@ class TextLinesEditor
             }
         }
         this.get_image(image_id)
+        this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
+        this.delete_btn.className  = 'btn btn-danger';
     }
 
     async get_image(image_id)
@@ -179,6 +214,15 @@ class TextLinesEditor
                              {animate: true, duration: 0.5});
         this.active_line = line;
         line.polygon.setStyle({ color: "#028700", opacity: 1, fillColor: "#028700", fillOpacity: 0.1, weight: 2});
+
+        if (this.active_line.valid){
+            this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
+            this.delete_btn.className  = 'btn btn-danger';
+        }
+        else{
+            this.delete_btn.innerHTML  = '<i class="fas fa-undo"></i> Restore line';
+            this.delete_btn.className  = 'btn btn-primary';
+        }
     }
 
     line_focus_out()

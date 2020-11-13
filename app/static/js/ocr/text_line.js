@@ -13,7 +13,6 @@ class TextLine
         this.annotated = annotated;
         this.valid = valid;
         this.for_training = for_training;
-        this.valid_checkbox = null;
         this.for_training_checkbox = null;
 
         this.container = document.createElement("div");
@@ -47,34 +46,37 @@ class TextLine
         this.editable_element.setAttribute("style", "display: contents;");
 
         this.checkbox_div = document.createElement("div");
-        this.valid_checkbox = document.createElement("input");
         this.for_training_checkbox = document.createElement("input");
 
         this.checkbox_div.setAttribute("style", "float: right;");
-        this.valid_checkbox.setAttribute("type", "checkbox");
+
         this.for_training_checkbox.setAttribute("type", "checkbox");
-        this.valid_checkbox.setAttribute("title", "valid line");
         this.for_training_checkbox.setAttribute("title", "training line");
-        this.valid_checkbox.setAttribute("style", "margin: 3px; filter: hue-rotate(240deg); vertical-align: middle;");
         this.for_training_checkbox.setAttribute("style", "margin: 3px; margin-right: 6px; vertical-align: middle;");
-
-        this.valid_checkbox.setAttribute("contenteditable", "false");
         this.for_training_checkbox.setAttribute("contenteditable", "false");
-
-        this.valid_checkbox.checked = this.valid;
         this.for_training_checkbox.checked = this.for_training;
 
         this.append_checkboxes();
 
-        this.valid_checkbox.addEventListener('change', this.mutate.bind(this));
-        this.for_training_checkbox.addEventListener('change', this.mutate.bind(this));
+        this.for_training_checkbox.addEventListener('change', this.set_training_flag.bind(this));
     }
 
     append_checkboxes(){
         this.container.appendChild(this.editable_element);
         this.container.appendChild(this.checkbox_div);
-        this.checkbox_div.appendChild(this.valid_checkbox);
         this.checkbox_div.appendChild(this.for_training_checkbox);
+    }
+
+    set_training_flag(){
+        let training_flag;
+        if (this.for_training_checkbox.checked){
+            training_flag = 1;
+        }
+        else{
+            training_flag = 0;
+        }
+        let route = Flask.url_for('ocr.training_line', {'line_id': this.id, 'training_flag': training_flag});
+        $.post(route);
     }
 
     set_line_confidences_to_text_line_element()
@@ -239,13 +241,16 @@ class TextLine
 
     mutate()
     {
-        this.edited = this.text != this.get_text_content() || this.valid_checkbox.checked != this.valid || this.for_training_checkbox.checked != this.for_training;
+        this.edited = this.text != this.get_text_content();
         if(this.edited){
             this.container.style.backgroundColor = "#ffcc54";
         } else if(this.annotated){
             this.container.style.backgroundColor = "#d0ffcf";
         } else {
             this.container.style.backgroundColor = "#ffffff";
+        }
+        if (this.valid == false){
+            this.container.style.backgroundColor = "#dc7f88";
         }
     }
 
@@ -553,8 +558,6 @@ class TextLine
         annotation_dict["id"] = this.id;
         annotation_dict["text_original"] = this.text;
         annotation_dict["text_edited"] = new_text;
-        annotation_dict["valid"] = this.valid_checkbox.checked;
-        annotation_dict["for_training"] = this.for_training_checkbox.checked;
         annotations.push(annotation_dict);
         console.log(annotations);
         console.log(JSON.stringify(annotations));
