@@ -14,6 +14,8 @@ class ImageList
             }
         }
 
+        this.last_opened_page_cookie_handle(true);
+
         this.images = $('.scrolling-wrapper .figure');
         for (let i of this.images)
         {
@@ -38,6 +40,7 @@ class ImageList
     {
         let image_id = $(image).data('image');
         this.image_index = $(image).data('index');
+        this.last_opened_page_cookie_handle();
         if (typeof URLSearchParams != "undefined") {
             const params = new URLSearchParams(location.search);
             params.set('page', this.image_index);
@@ -69,6 +72,7 @@ class ImageList
         {
             this.image_index -= 1;
             $('.scrolling-wrapper .figure[data-index=' + this.image_index + ']').click();
+            this.last_opened_page_cookie_handle();
         }
     }
 
@@ -78,6 +82,7 @@ class ImageList
         {
             this.image_index += 1;
             $('.scrolling-wrapper .figure[data-index=' + this.image_index + ']').click();
+            this.last_opened_page_cookie_handle();
         }
     }
 
@@ -97,4 +102,51 @@ class ImageList
             this.next_image();
         }
     }
+
+    last_opened_page_cookie_handle(initialization=false){
+        var cookie = getCookie("last_opened_page");
+        var document_id = window.location.href.split("/").slice(-1)[0].split("?")[0];
+
+        if (cookie != null && cookie != ''){
+            var json_dict = JSON.parse(cookie);
+        }
+        else {
+            var json_dict = {};
+        }
+
+        if (initialization){
+            if (json_dict.hasOwnProperty(document_id)){
+                this.image_index = json_dict[document_id];
+            }
+            else {
+                json_dict[document_id] = this.image_index;
+            }
+        }
+        else {
+            json_dict[document_id] = this.image_index;
+        }
+
+        setCookie('last_opened_page', JSON.stringify(json_dict),30);
+    }
+}
+
+function setCookie(name,value,days) {
+    var expires = "";
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days*24*60*60*1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+}
+
+function getCookie(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for(var i=0;i < ca.length;i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+    }
+    return null;
 }
