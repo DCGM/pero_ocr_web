@@ -75,8 +75,18 @@ class TextLine
         else{
             training_flag = 0;
         }
+        let this_text_line = this;
         let route = Flask.url_for('ocr.training_line', {'line_id': this.id, 'training_flag': training_flag});
-        $.post(route);
+        $.ajax({
+            type: "POST",
+            url: route,
+            data: {'line_id': this.id, 'training_flag': training_flag},
+            dataType: "json",
+            error: function(xhr, ajaxOptions, ThrownError){
+                this_text_line.for_training_checkbox.checked = ! this_text_line.for_training_checkbox.checked;
+                alert('Unable to set training flag. Check your remote connection.');
+            }
+        });
     }
 
     set_line_confidences_to_text_line_element()
@@ -562,7 +572,7 @@ class TextLine
         console.log(annotations);
         console.log(JSON.stringify(annotations));
         let route = Flask.url_for('ocr.save_annotations');
-        let self = this
+        let self = this;
         $.ajax({
             type: "POST",
             url: route,

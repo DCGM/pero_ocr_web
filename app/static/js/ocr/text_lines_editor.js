@@ -81,8 +81,28 @@ class TextLinesEditor
             delete_flag = 1;
         }
 
+        let text_lines_editor = this;
         let route = Flask.url_for('ocr.delete_line', {'line_id': this.active_line.id, 'delete_flag': delete_flag});
         $.post(route);
+        $.ajax({
+            type: "POST",
+            url: route,
+            data: {'line_id': this.active_line.id, 'delete_flag': delete_flag},
+            dataType: "json",
+            error: function(xhr, ajaxOptions, ThrownError){
+                text_lines_editor.active_line.valid = ! text_lines_editor.active_line.valid;
+                text_lines_editor.active_line.mutate();
+                if (text_lines_editor.active_line.valid){
+                    text_lines_editor.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
+                    text_lines_editor.delete_btn.className  = 'btn btn-danger';
+                }
+                else{
+                    text_lines_editor.delete_btn.innerHTML  = '<i class="fas fa-undo"></i> Restore line';
+                    text_lines_editor.delete_btn.className  = 'btn btn-primary';
+                }
+                alert('Unable to set delete flag. Check your remote connection.');
+            }
+        });
     }
 
     change_image(image_id)
