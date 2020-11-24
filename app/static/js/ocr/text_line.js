@@ -52,7 +52,7 @@ class TextLine
 
         this.for_training_checkbox.setAttribute("type", "checkbox");
         this.for_training_checkbox.setAttribute("title", "training line");
-        this.for_training_checkbox.setAttribute("style", "margin: 3px; margin-right: 6px; vertical-align: middle;");
+        this.for_training_checkbox.setAttribute("style", "margin: 3px; margin-right: 6px; vertical-align: middle; filter: hue-rotate(-30deg)");
         this.for_training_checkbox.setAttribute("contenteditable", "false");
         this.for_training_checkbox.checked = this.for_training;
 
@@ -575,8 +575,6 @@ class TextLine
                 } else {
                     this_text_line.text = new_text;
                     self.annotated = true;
-                    self.valid = self.valid_checkbox.checked;
-                    self.for_training = self.for_training_checkbox.checked;
                     self.clear_confidence_colors();
                     self.mutate();
                 }

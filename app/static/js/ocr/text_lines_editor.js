@@ -20,6 +20,7 @@ class TextLinesEditor
         this.focused_line = false;
         this.save_btn = document.getElementsByClassName('save-btn');
         this.delete_btn = document.getElementById('deletebutton');
+        this.ignore_btn = document.getElementById('ignorebutton');
         this.next_suspect_btn = document.getElementById('nextsucpectline');
         this.compute_scores_btn = document.getElementById('btn-compute-scores');
         this.show_line_height = document.getElementById('show-line-height');
@@ -30,12 +31,26 @@ class TextLinesEditor
         }
         this.next_suspect_btn.addEventListener('click', this.show_next_line.bind(this));
         this.delete_btn.addEventListener('click', this.delete_line.bind(this));
+        this.ignore_btn.addEventListener('click', this.ignore_line.bind(this));
         this.show_line_height.addEventListener('input', this.show_line_change.bind(this));
         this.show_bottom_pad.addEventListener('input', this.show_line_change.bind(this));
         this.text_container = document.getElementById('text-container');
         this.text_container.addEventListener('keypress', this.press_text_container.bind(this));
         if (this.compute_scores_btn != null){
             this.compute_scores_btn.addEventListener('click', this.compute_scores.bind(this));
+        }
+    }
+
+    ignore_line(){
+        if (this.active_line != false){
+            this.active_line.for_training_checkbox.checked = ! this.active_line.for_training_checkbox.checked;
+            this.active_line.set_training_flag();
+            if (this.active_line.for_training_checkbox.checked){
+                this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Ignore line';
+            }
+            else {
+                this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Unignore line';
+            }
         }
     }
 
@@ -93,6 +108,7 @@ class TextLinesEditor
         this.get_image(image_id)
         this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
         this.delete_btn.className  = 'btn btn-danger';
+        this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Ignore line';
     }
 
     async get_image(image_id)
@@ -222,6 +238,12 @@ class TextLinesEditor
         else{
             this.delete_btn.innerHTML  = '<i class="fas fa-undo"></i> Restore line';
             this.delete_btn.className  = 'btn btn-primary';
+        }
+        if (this.active_line.for_training_checkbox.checked){
+            this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Ignore line';
+        }
+        else {
+            this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Unignore line';
         }
     }
 
