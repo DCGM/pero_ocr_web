@@ -104,11 +104,11 @@ class ImageList
     }
 
     last_opened_page_cookie_handle(initialization=false){
-        var cookie = getCookie("last_opened_page");
+        var last_opened_page = window.localStorage.getItem('last_opened_page');
         var document_id = window.location.href.split("/").slice(-1)[0].split("?")[0];
 
-        if (cookie != null && cookie != ''){
-            var json_dict = JSON.parse(cookie);
+        if (last_opened_page != null && last_opened_page != ''){
+            var json_dict = JSON.parse(last_opened_page);
         }
         else {
             var json_dict = {};
@@ -126,27 +126,6 @@ class ImageList
             json_dict[document_id] = this.image_index;
         }
 
-        setCookie('last_opened_page', JSON.stringify(json_dict),30);
+        window.localStorage.setItem('last_opened_page', JSON.stringify(json_dict));
     }
-}
-
-function setCookie(name,value,days) {
-    var expires = "";
-    if (days) {
-        var date = new Date();
-        date.setTime(date.getTime() + (days*24*60*60*1000));
-        expires = "; expires=" + date.toUTCString();
-    }
-    document.cookie = name + "=" + (value || "")  + expires + "; path=/";
-}
-
-function getCookie(name) {
-    var nameEQ = name + "=";
-    var ca = document.cookie.split(';');
-    for(var i=0;i < ca.length;i++) {
-        var c = ca[i];
-        while (c.charAt(0)==' ') c = c.substring(1,c.length);
-        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
-    }
-    return null;
 }
