@@ -149,7 +149,12 @@ class TextLine
             let span_text = ""
             for (let letter_index of span_letter_indexes['indexes'])
             {
-                span_text += visual_text.charAt(letter_index);
+                let char = visual_text.charAt(letter_index);
+                if (char == ' ')
+                {
+                    char = '&nbsp;';
+                }
+                span_text += char;
             }
             span.innerHTML = span_text;
             this.container.appendChild(span);
@@ -798,7 +803,7 @@ class TextLine
 
         if (this.arabic)
         {
-            let route = Flask.url_for('ocr.get_arabic_label_form', {"text": text});
+            let route = Flask.url_for('ocr.get_arabic_label_form', {"text": encodeURIComponent(text)});
             $.ajax({
             type: "GET",
             url: route,
