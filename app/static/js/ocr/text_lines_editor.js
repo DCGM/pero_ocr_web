@@ -113,9 +113,19 @@ class TextLinesEditor
         if( abort_signal.aborted){ return;}
 
         let i = 0;
+        let arabic = false;
+        let debug_container = document.getElementById('debug-container');
+        let debug_line_container = document.getElementById('debug-line-container');
+        let debug_container_2 = document.getElementById('debug-container-2');
+        let debug_line_container_2 = document.getElementById('debug-line-container-2');
         for (let l of data['lines'])
         {
-            let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic)
+            let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic,
+                                    debug_line_container, debug_line_container_2)
+            if (l.arabic)
+            {
+                arabic = true;
+            }
             line.np_points = l.np_points;
             line.np_heights = l.np_heights;
             this.add_line_to_map(i, line);
@@ -125,6 +135,19 @@ class TextLinesEditor
                 await new Promise(resolve => setTimeout(resolve, 0));
                 if( abort_signal.aborted){return;}
             }
+        }
+        if (arabic)
+        {
+            debug_container.style.removeProperty('display');
+            debug_line_container.setAttribute("contentEditable", "true");
+            debug_line_container.style.lineHeight = "220%";
+            debug_line_container.style.direction = "rtl";
+            debug_line_container.style.fontSize = "150%";
+            debug_container_2.style.removeProperty('display');
+            debug_line_container_2.setAttribute("contentEditable", "true");
+            debug_line_container_2.style.lineHeight = "220%";
+            debug_line_container_2.style.direction = "rtl";
+            debug_line_container_2.style.fontSize = "150%";
         }
         this.map_element.focus();
     }

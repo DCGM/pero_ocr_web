@@ -47,7 +47,7 @@ def show_results(document_id):
         flash(u'Document can not be edited in its current state.', 'danger')
         return redirect(url_for('main.index'))
 
-    images = get_document_images(document).order_by(Image.filename).all()
+    images = natsorted(get_document_images(document).all(), key=lambda x: x.filename)
     return render_template('layout_analysis/layout_results.html', document=document, images=images)
 
 

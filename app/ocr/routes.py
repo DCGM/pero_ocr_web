@@ -1,10 +1,10 @@
-from typing import re
-
 import os
 import shutil
 import json
 import uuid
 from collections import defaultdict
+from natsort import natsorted
+import copy
 import sqlalchemy
 import unicodedata
 from pero_ocr.document_ocr.arabic_helper import ArabicHelper
@@ -57,7 +57,7 @@ def show_results(document_id):
         flash(u'Document can not be edited int its current state.', 'danger')
         return redirect(url_for('main.index'))
 
-    images = get_document_images(document).order_by(Image.filename).all()
+    images = natsorted(get_document_images(document).all(), key=lambda x: x.filename)
     return render_template('ocr/ocr_results.html', document=document, images=images,
                            trusted_user=is_user_trusted(current_user), computed_scores=True)
 
@@ -256,35 +256,43 @@ def get_lines(image_id):
     annotated_lines = set(get_page_annotated_lines(image_id))
 
     arabic_helper = ArabicHelper()
+    arabic = False
 
     for text_region in text_regions:
         text_lines = sorted(list(text_region.textlines), key=lambda x: x.order)
 
         for line in text_lines:
             text = line.text if line.text is not None else ""
+            #leading_spaces = len(text) - len(text.lstrip())
+            #ending_spaces = len(text) - len(text.rstrip())
+            #ending_spaces = None if ending_spaces == 0 else -ending_spaces
+            #text = text[leading_spaces:ending_spaces]
+            #confidences = line.np_confidences.tolist()[leading_spaces:ending_spaces]
             confidences = line.np_confidences.tolist()
-            arabic = arabic_helper.is_arabic_line(line.text)
+            if len(text) != len(confidences):
+                confidences = []
+            if arabic_helper.is_arabic_line(line.text):
+                arabic = True
+                text_to_detect_ligatures = arabic_helper._reverse_transcription(copy.deepcopy(text))
+            else:
+                text_to_detect_ligatures = text
 
             ligatures_mapping = []
-            if arabic:
-                text = arabic_helper.string_to_label_form(text)
-                text_visual = arabic_helper.label_form_to_visual_form(text, reverse_before=False, reverse_after=False)
-                ligatures_mapping = arabic_helper.ligatures_mapping(text_visual)
-            else:
-                for i, c in enumerate(text):
-                    if unicodedata.combining(c) and i:
-                        ligatures_mapping[-1].append(i)
-                    else:
-                        ligatures_mapping.append([i])
 
-            new_confidences = []
-            if ligatures_mapping and ligatures_mapping[-1][-1] == len(confidences) - 1:
-                for index_visual, ligature_mapping in enumerate(ligatures_mapping):
-                    ligature_confidence = 1
-                    for confidence_index in ligature_mapping:
-                        ligature_confidence = min(ligature_confidence, confidences[confidence_index])
-                    new_confidences.append(ligature_confidence)
-            confidences = new_confidences
+            for i, c in enumerate(text_to_detect_ligatures):
+                if unicodedata.combining(c) and i:
+                    ligatures_mapping[-1].append(i)
+                else:
+                    ligatures_mapping.append([i])
+
+            #new_confidences = []
+            #if ligatures_mapping and ligatures_mapping[-1][-1] == len(confidences) - 1:
+            #    for index_visual, ligature_mapping in enumerate(ligatures_mapping):
+            #        ligature_confidence = 1
+            #        for confidence_index in ligature_mapping:
+            #            ligature_confidence = min(ligature_confidence, confidences[confidence_index])
+            #        new_confidences.append(ligature_confidence)
+            #confidences = new_confidences
 
             lines_dict['lines'].append({
                         'id': line.id,
@@ -295,11 +303,31 @@ def get_lines(image_id):
                         'ligatures_mapping': ligatures_mapping,
                         'np_textregion_width':  [text_region.np_points[:, 0].min(), text_region.np_points[:, 0].max()],
                         'annotated': line.id in annotated_lines,
-                        'text': text,
-                        'arabic': arabic
+                        'text': text
                     })
 
+    for l in lines_dict['lines']:
+        if arabic:
+            l['arabic'] = True
+        else:
+            l['arabic'] = False
+
     return jsonify(lines_dict)
+
+
+@bp.route('/get_arabic_label_form/<string:text>', methods=['GET'])
+@login_required
+def get_arabic_label_form(text):
+    arabic_helper = ArabicHelper()
+    return arabic_helper.visual_form_to_label_form(text)
+
+
+@bp.route('/get_arabic_visual_form', methods=['GET'])
+@login_required
+def get_arabic_visual_form():
+    text = request.get_json()
+    arabic_helper = ArabicHelper()
+    return arabic_helper.label_form_to_visual_form(text, reverse_before=False, reverse_after=False)
 
 
 @bp.route('/save_annotations', methods=['POST'])
