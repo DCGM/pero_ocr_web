@@ -32,7 +32,7 @@ class TextLine
         this.container.addEventListener('paste', this.paste.bind(this));
 
         this.set_line_confidences_to_text_line_element();
-        this.set_valid_and_training_checkboxes();
+        this.set_training_checkbox();
 
         this.observer = new MutationObserver(this.mutate.bind(this));
         let config = { attributes: false, childList: true, characterData: true , subtree: true};
@@ -40,7 +40,7 @@ class TextLine
         this.mutate();
     }
 
-    set_valid_and_training_checkboxes(){
+    set_training_checkbox(){
         this.editable_element = document.createElement("span");
         this.editable_element.setAttribute("contenteditable", "true");
         this.editable_element.setAttribute("style", "display: contents;");
