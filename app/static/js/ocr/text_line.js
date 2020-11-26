@@ -24,7 +24,6 @@ class TextLine
         let confidences_to_show = [];
         if (this.arabic)
         {
-            //console.log(this.text);
             this.container.style.direction = "rtl";
             this.arabic_reshaper = new ArabicReshaper();
             let values = this.arabic_reshaper.reverse(this.text, this.confidences);
@@ -769,16 +768,18 @@ class TextLine
         if (this.arabic)
         {
             filtered_text = this.arabic_reshaper.visual_to_label_form(filtered_text);
-            //console.log(filtered_text);
             filtered_text = this.arabic_reshaper.reverse(filtered_text, []);
             filtered_text = filtered_text[0];
-            //console.log(filtered_text);
         }
         return filtered_text;
     }
 
     show_line_in_debug_line_container()
     {
+        if (!(this.debug_line_container && this.debug_line_container_2))
+        {
+            return;
+        }
         let text = this.container.textContent;
         let filtered_text = "";
         for (let i = 0; i < text.length; i++)

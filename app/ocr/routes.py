@@ -263,11 +263,6 @@ def get_lines(image_id):
 
         for line in text_lines:
             text = line.text if line.text is not None else ""
-            #leading_spaces = len(text) - len(text.lstrip())
-            #ending_spaces = len(text) - len(text.rstrip())
-            #ending_spaces = None if ending_spaces == 0 else -ending_spaces
-            #text = text[leading_spaces:ending_spaces]
-            #confidences = line.np_confidences.tolist()[leading_spaces:ending_spaces]
             confidences = line.np_confidences.tolist()
             if len(text) != len(confidences):
                 confidences = []
@@ -284,15 +279,6 @@ def get_lines(image_id):
                     ligatures_mapping[-1].append(i)
                 else:
                     ligatures_mapping.append([i])
-
-            #new_confidences = []
-            #if ligatures_mapping and ligatures_mapping[-1][-1] == len(confidences) - 1:
-            #    for index_visual, ligature_mapping in enumerate(ligatures_mapping):
-            #        ligature_confidence = 1
-            #        for confidence_index in ligature_mapping:
-            #            ligature_confidence = min(ligature_confidence, confidences[confidence_index])
-            #        new_confidences.append(ligature_confidence)
-            #confidences = new_confidences
 
             lines_dict['lines'].append({
                         'id': line.id,
@@ -320,14 +306,6 @@ def get_lines(image_id):
 def get_arabic_label_form(text):
     arabic_helper = ArabicHelper()
     return arabic_helper.visual_form_to_label_form(text)
-
-
-@bp.route('/get_arabic_visual_form', methods=['GET'])
-@login_required
-def get_arabic_visual_form():
-    text = request.get_json()
-    arabic_helper = ArabicHelper()
-    return arabic_helper.label_form_to_visual_form(text, reverse_before=False, reverse_after=False)
 
 
 @bp.route('/save_annotations', methods=['POST'])
