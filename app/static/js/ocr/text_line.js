@@ -2,16 +2,19 @@
 
 class TextLine
 {
-    constructor(id, annotated, text, confidences, ligatures_mapping, arabic, valid, for_training)
+    constructor(id, annotated, text, confidences, ligatures_mapping, arabic, for_training, debug_line_container,
+                debug_line_container_2)
     {
         this.id = id;
         this.text = text;
         this.confidences = confidences;
         this.ligatures_mapping = ligatures_mapping;
         this.arabic = arabic;
+        this.debug_line_container = debug_line_container;
+        this.debug_line_container_2 = debug_line_container_2;
         this.edited = false;
         this.annotated = annotated;
-        this.valid = valid;
+        this.valid = true;
         this.for_training = for_training;
         this.for_training_checkbox = null;
 
@@ -20,18 +23,32 @@ class TextLine
         this.container.setAttribute("contentEditable", "true");
         this.container.style.lineHeight = "220%";
 
+        let text_to_show = "";
+        let confidences_to_show = [];
         if (this.arabic)
         {
             this.container.style.direction = "rtl";
-            this.arabic_resharper = new ArabicReshaper();
-            this.text = this.arabic_resharper.reshape(this.text);
+            this.arabic_reshaper = new ArabicReshaper();
+            let values = this.arabic_reshaper.reverse(this.text, this.confidences);
+            text_to_show = values[0];
+            confidences_to_show = values[1];
+            text_to_show = this.arabic_reshaper.label_to_visual_form(text_to_show);
+            this.current_text = "";
+        }
+        else
+        {
+            text_to_show = this.text;
+            confidences_to_show = this.confidences;
         }
 
+        this.container.addEventListener('focus', this.focus.bind(this));
         this.container.addEventListener('keypress', this.press.bind(this));
         this.container.addEventListener('keydown', this.keydown.bind(this));
         this.container.addEventListener('paste', this.paste.bind(this));
 
-        this.set_line_confidences_to_text_line_element();
+        this.set_line_confidences_to_text_line_element(text_to_show, confidences_to_show);
+
+        this.text = this.get_text_content();
         this.set_training_checkbox();
 
         this.observer = new MutationObserver(this.mutate.bind(this));
@@ -89,23 +106,40 @@ class TextLine
         });
     }
 
-    set_line_confidences_to_text_line_element()
+    set_line_confidences_to_text_line_element(text_to_show, confidences_to_show)
     {
-        let chars = this.text.split("");
-        if (this.confidences.length)
+        let chars = text_to_show.split("");
+        this.ligatures_mapping.forEach((ligature_mapping, index) =>
         {
-            this.confidences.forEach((confidence, index) =>
+            let char_span = document.createElement('span');
+            char_span.style.fontSize = "150%";
+            let ligature_confidences = [];
+            for (let char_index of ligature_mapping)
             {
-                let char_span = document.createElement('span');
-                char_span.setAttribute("style", "font-size: 150%; background: " + rgbToHex(255, Math.floor(confidence * 255),
-                                                                                                Math.floor(confidence * 255)));
-                for (let char_index of this.ligatures_mapping[index])
+                if (confidences_to_show.length)
                 {
-                    char_span.innerHTML += chars[char_index];
+                    ligature_confidences.push(confidences_to_show[index])
                 }
-                this.container.appendChild(char_span);
-            });
-        }
+                char_span.innerHTML += chars[char_index];
+            }
+            if (ligature_confidences.length)
+            {
+                let span_confidence = Math.min(ligature_confidences);
+                char_span.style.backgroundColor = rgbToHex(255, Math.floor(span_confidence * 255),
+                                                                Math.floor(span_confidence * 255));
+            }
+            else
+            {
+                char_span.style.backgroundColor = "#ffffff";
+            }
+            /*
+            if (ligature_mapping.length > 1)
+            {
+                char_span.style.backgroundColor = "#d9f5ff";
+            }
+            */
+            this.container.appendChild(char_span);
+        });
     }
 
     clear_confidence_colors()
@@ -117,6 +151,181 @@ class TextLine
                 child.style.backgroundColor = "#ffffff";
             }
         }
+    }
+
+    convert_to_visual_form()
+    {
+        let text = this.get_text_content();
+        if (text == this.current_text)
+        {
+            return;
+        }
+        else
+        {
+            this.current_text = JSON.parse(JSON.stringify(text));
+        }
+        if ((!text || 0 === text.length))
+        {
+            return;
+        }
+
+        let letter_indexes_to_spans_mapping = this.get_letter_indexes_to_spans_mapping();
+
+        let label_text = this.arabic_reshaper.reverse(text, []);
+        label_text = label_text[0];
+        let letter_indexes_to_ligatures_mapping = this.arabic_reshaper.get_letter_indexes_to_ligatures_mapping(label_text);
+        letter_indexes_to_spans_mapping = this.get_merged_letter_indexes_to_spans_and_ligatures_mapping(letter_indexes_to_spans_mapping, letter_indexes_to_ligatures_mapping);
+
+        let visual_text = this.arabic_reshaper.label_to_visual_form(label_text);
+
+        this.container.innerHTML = "";
+
+        for (let span_letter_indexes of letter_indexes_to_spans_mapping)
+        {
+            let span = document.createElement('span');
+            span.style.fontSize = "150%";
+            if ('user_input' in span_letter_indexes)
+            {
+                span.setAttribute("class", "user-input");
+                span.style.backgroundColor = "#ffffff";
+                span.style.color = "#028700";
+            }
+            else
+            {
+                span.style.backgroundColor = rgbToHex(255, span_letter_indexes['color'], span_letter_indexes['color']);
+                /*
+                if (span_letter_indexes['indexes'].length > 1)
+                {
+                    span.style.backgroundColor = "#d9f5ff";
+                }
+                */
+            }
+            let span_text = ""
+            for (let letter_index of span_letter_indexes['indexes'])
+            {
+                let char = visual_text.charAt(letter_index);
+                if (char == ' ')
+                {
+                    char = '&nbsp;';
+                }
+                span_text += char;
+            }
+            span.innerHTML = span_text;
+            this.container.appendChild(span);
+            if ('caret_offset' in span_letter_indexes)
+            {
+                let selection = document.getSelection();
+                selection.collapse(span.childNodes[0], span_letter_indexes['caret_offset']);
+            }
+        }
+    }
+
+    get_letter_indexes_to_spans_mapping()
+    {
+        let caret_span = this.get_caret_span();
+        let letter_indexes_to_spans_mapping = [];
+        let letter_index = 0;
+        for (let i = 0; i < this.container.children.length; ++i)
+        {
+            let span = this.container.children[i];
+            let span_text_length = span.textContent.length;
+            if (span_text_length > 0)
+            {
+                let rgb = span.style.backgroundColor;
+                let color = 255;
+                if (rgb != "")
+                {
+                    rgb = rgb.substring(4, rgb.length-1).replace(/ /g, '').split(',');
+                    color = parseInt(rgb[1]);
+                }
+                let span_letter_indexes = {'indexes':[], 'color': color}
+                if ($(span).hasClass('user-input'))
+                {
+                    span_letter_indexes['user_input'] = true;
+                }
+                if (span == caret_span)
+                {
+                    span_letter_indexes['caret_offset'] = this.get_range().startOffset;
+                }
+                for (let j = 0; j < span_text_length; ++j)
+                {
+                    span_letter_indexes['indexes'].push(letter_index);
+                    letter_index += 1;
+                }
+                letter_indexes_to_spans_mapping.push(span_letter_indexes);
+            }
+        }
+        return letter_indexes_to_spans_mapping;
+    }
+
+    get_merged_letter_indexes_to_spans_and_ligatures_mapping(letter_indexes_to_spans_mapping, letter_indexes_to_ligatures_mapping)
+    {
+        let current_letter_indexes_to_spans_mapping = JSON.parse(JSON.stringify(letter_indexes_to_spans_mapping));
+        let new_letter_indexes_to_spans_mapping = [];
+        for (let ligature_indexes of letter_indexes_to_ligatures_mapping)
+        {
+            new_letter_indexes_to_spans_mapping = [];
+            let start_ligature_index = ligature_indexes[0];
+            let end_ligature_index = ligature_indexes[1];
+            let inside_ligature = false;
+            let caret_in_span = false;
+            let caret_offset = 0;
+            let new_span_letter_indexes = {'indexes':[], 'color': 255}
+            for (let span_letter_indexes of current_letter_indexes_to_spans_mapping)
+            {
+                if ('user_input' in span_letter_indexes)
+                {
+                    new_span_letter_indexes['user_input'] = true;
+                    new_span_letter_indexes['color'] = 255;
+                }
+                if ('caret_offset' in span_letter_indexes)
+                {
+                    caret_in_span = true;
+                    caret_offset += span_letter_indexes['caret_offset'];
+                }
+                if (!new_span_letter_indexes['user_input'])
+                {
+                    if (new_span_letter_indexes['color'] > span_letter_indexes['color'])
+                    {
+                        new_span_letter_indexes['color'] = span_letter_indexes['color'];
+                    }
+                }
+                for (let letter_index of span_letter_indexes['indexes'])
+                {
+                    if (letter_index == start_ligature_index)
+                    {
+                        inside_ligature = true;
+                    }
+                    if (letter_index == end_ligature_index)
+                    {
+                        inside_ligature = false;
+                    }
+                    new_span_letter_indexes['indexes'].push(letter_index);
+                    if (!caret_in_span)
+                    {
+                        caret_offset += 1;
+                    }
+                }
+                if (!inside_ligature)
+                {
+                    if (caret_in_span)
+                    {
+                        new_span_letter_indexes['caret_offset'] = caret_offset;
+                        caret_in_span = false;
+                    }
+                    new_letter_indexes_to_spans_mapping.push(new_span_letter_indexes);
+                    new_span_letter_indexes = {'indexes':[], 'color': 255};
+                    caret_offset = 0;
+                }
+            }
+            current_letter_indexes_to_spans_mapping = JSON.parse(JSON.stringify(new_letter_indexes_to_spans_mapping));
+        }
+        return current_letter_indexes_to_spans_mapping;
+    }
+
+    focus(e)
+    {
+        this.show_line_in_debug_line_container();
     }
 
     press(e)
@@ -251,12 +460,22 @@ class TextLine
 
     mutate()
     {
+        if (this.arabic)
+        {
+            this.convert_to_visual_form();
+        }
         this.edited = this.text != this.get_text_content();
-        if(this.edited){
+        if (this.edited)
+        {
             this.container.style.backgroundColor = "#ffcc54";
-        } else if(this.annotated){
+            this.show_line_in_debug_line_container();
+        }
+        else if (this.annotated)
+        {
             this.container.style.backgroundColor = "#d0ffcf";
-        } else {
+        }
+        else
+        {
             this.container.style.backgroundColor = "#ffffff";
         }
         if (this.valid == false){
@@ -492,12 +711,16 @@ class TextLine
         //let caret_span = range.endContainer;
         let selection = document.getSelection();
         let caret_span = selection.anchorNode;
+        if (!caret_span)
+        {
+            return false;
+        }
         //Firefox bug, doesn't delete span after pressing backspace
         if (caret_span.tagName != "SPAN")
         {
             caret_span = caret_span.parentNode;
         }
-        // Anchor offset should be always 1 apart from caret on first position
+        // Anchor offset should be always higher than one apart from caret on the first position
         if (selection.anchorOffset == 0 && selection.anchorNode.length > 0)
         {
             // Firefox bug, anchor offset is 0 but caret element is not the first element
@@ -603,22 +826,89 @@ class TextLine
 
     get_text_content()
     {
-      let text = this.container.textContent;
-      let filtered_text = "";
-      for (let i = 0; i < text.length; i++)
-      {
-          let charCode = text.charCodeAt(i);
-          if (charCode == 160)
-          {
-            filtered_text += " ";
-          }
-          if (charCode != 160 && charCode != 8203)
-          {
-            filtered_text += text.charAt(i);
-          }
-      }
-      return filtered_text;
+        let text = this.container.textContent;
+        let filtered_text = "";
+        for (let i = 0; i < text.length; i++)
+        {
+            let charCode = text.charCodeAt(i);
+            if (charCode == 160)
+            {
+              filtered_text += " ";
+            }
+            if (charCode != 160 && charCode != 8203)
+            {
+              filtered_text += text.charAt(i);
+            }
+        }
+        if (this.arabic)
+        {
+            filtered_text = this.arabic_reshaper.visual_to_label_form(filtered_text);
+            filtered_text = this.arabic_reshaper.reverse(filtered_text, []);
+            filtered_text = filtered_text[0];
+        }
+        return filtered_text;
     }
 
+    show_line_in_debug_line_container()
+    {
+        if (!(this.debug_line_container && this.debug_line_container_2))
+        {
+            return;
+        }
+        let text = this.container.textContent;
+        let filtered_text = "";
+        for (let i = 0; i < text.length; i++)
+        {
+            let charCode = text.charCodeAt(i);
+            if (charCode == 160)
+            {
+              filtered_text += " ";
+            }
+            if (charCode != 160 && charCode != 8203)
+            {
+              filtered_text += text.charAt(i);
+            }
+        }
+        text = filtered_text;
+        if ((!text || 0 === text.length))
+        {
+            return;
+        }
+        let this_debug_line_container = this.debug_line_container;
+        let this_debug_line_container_2 = this.debug_line_container_2;
 
+        if (this.arabic)
+        {
+            let route = Flask.url_for('ocr.get_arabic_label_form', {"text": encodeURIComponent(text)});
+            $.ajax({
+            type: "GET",
+            url: route,
+            success: function(data, textStatus) {
+                this_debug_line_container.innerHTML = data;
+            },
+            error: function(xhr, ajaxOptions, ThrownError){
+                alert('Error in callback for show_line_in_debug_line_container().');
+                }
+            });
+            let values = this.get_text_content();
+            this_debug_line_container_2.innerHTML = this.arabic_reshaper.visual_to_label_form(text);
+            //let l = this.arabic_reshaper.reverse(this.arabic_reshaper.visual_to_label_form(this.text));
+            //for (let c of l)
+            //{
+            //    let span = document.createElement('span');
+            //    span.innerHTML = c;
+            //    this_debug_line_container_2.appendChild(span);
+            //}
+        }
+        return;
+    }
+
+    hexToRgb(hex) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+            } : null;
+    }
 }

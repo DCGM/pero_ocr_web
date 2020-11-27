@@ -184,9 +184,12 @@ class TextLinesEditor
         if( abort_signal.aborted){ return;}
 
         let i = 0;
+        let debug_line_container = document.getElementById('debug-line-container');
+        let debug_line_container_2 = document.getElementById('debug-line-container-2');
         for (let l of data['lines'])
         {
-            let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic, l.valid, l.for_training);
+            let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic, l.for_training,
+                                    debug_line_container, debug_line_container_2)
             line.np_points = l.np_points;
             line.np_heights = l.np_heights;
             this.add_line_to_map(i, line);

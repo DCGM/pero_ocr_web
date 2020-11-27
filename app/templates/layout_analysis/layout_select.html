@@ -19,7 +19,8 @@
                 <select class="form-control" name="layout_detector_id" style="width:100%">
                     {% for layout_detector in layout_engines %}
                     <option value="{{ layout_detector.id }}" model-type-description="layout-detector-description"
-                            data-description="{{ layout_detector.description }}">{{layout_detector.name}}</option>
+                            data-description="{{ layout_detector.description }}" {{ "selected" if layout_detector.id == "387784dc-d476-4c6f-9f95-7bf1081d5600" }}>
+                        {{layout_detector.name}}</option>
                     {% endfor %}
                 </select>
                 </div>
