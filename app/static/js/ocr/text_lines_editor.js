@@ -222,7 +222,15 @@ class TextLinesEditor
         line.container.addEventListener('focus', this.line_focus.bind(this, line));
         line.container.addEventListener('focusout', this.line_focus_out.bind(this));
 
+        line.checkbox_span.addEventListener('click', this.line_focus_from_checkbox.bind(this, line));
+
+        this.text_container.appendChild(line.checkbox_span);
         this.text_container.appendChild(line.container);
+    }
+
+    line_focus_from_checkbox(line) {
+        this.line_focus(line);
+        line.container.focus();
     }
 
     press_text_container(e)

@@ -18,9 +18,10 @@ class TextLine
         this.for_training = for_training;
         this.for_training_checkbox = null;
 
-        this.container = document.createElement("div");
+        this.container = document.createElement("span");
         this.container.setAttribute("class", "text-line");
         this.container.setAttribute("contentEditable", "true");
+        this.container.style.display = "block";
         this.container.style.lineHeight = "220%";
 
         let text_to_show = "";
@@ -58,30 +59,20 @@ class TextLine
     }
 
     set_training_checkbox(){
-        this.editable_element = document.createElement("span");
-        this.editable_element.setAttribute("contenteditable", "true");
-        this.editable_element.setAttribute("style", "display: contents;");
-
-        this.checkbox_div = document.createElement("div");
+        this.checkbox_span = document.createElement("span");
         this.for_training_checkbox = document.createElement("input");
 
-        this.checkbox_div.setAttribute("style", "float: right;");
+        this.checkbox_span.setAttribute("style", "float: right;");
 
         this.for_training_checkbox.setAttribute("type", "checkbox");
         this.for_training_checkbox.setAttribute("title", "training line");
-        this.for_training_checkbox.setAttribute("style", "margin: 3px; margin-right: 6px; vertical-align: middle; filter: hue-rotate(-30deg)");
+        this.for_training_checkbox.setAttribute("style", "margin-right: 10px; vertical-align: -webkit-baseline-middle; filter: hue-rotate(-30deg)");
         this.for_training_checkbox.setAttribute("contenteditable", "false");
         this.for_training_checkbox.checked = this.for_training;
 
-        this.append_checkboxes();
+        this.checkbox_span.appendChild(this.for_training_checkbox);
 
         this.for_training_checkbox.addEventListener('change', this.set_training_flag.bind(this));
-    }
-
-    append_checkboxes(){
-        this.container.appendChild(this.editable_element);
-        this.container.appendChild(this.checkbox_div);
-        this.checkbox_div.appendChild(this.for_training_checkbox);
     }
 
     set_training_flag(){
@@ -330,9 +321,6 @@ class TextLine
 
     press(e)
     {
-        if (this.container.lastChild.nodeName == 'DIV'){
-            this.container.removeChild(this.container.lastChild);
-        }
         if (e.keyCode == 13)
         {
             e.preventDefault();
@@ -358,14 +346,10 @@ class TextLine
                 document.execCommand("insertHTML", false, '&nbsp;');
             }
         }
-        this.append_checkboxes();
     }
 
     keydown(e)
     {
-        if (this.container.lastChild.nodeName == 'DIV'){
-            this.container.removeChild(this.container.lastChild);
-        }
         let empty_text_line_element = this.empty_text_line_element();
         let isFirefox = typeof InstallTrigger !== 'undefined';
 
@@ -447,7 +431,6 @@ class TextLine
             selection.removeAllRanges();
             selection.addRange(range);
         }
-        this.append_checkboxes();
     }
 
     paste(e)
@@ -536,7 +519,6 @@ class TextLine
             selection.removeAllRanges();
             selection.addRange(range);
         }
-        this.append_checkboxes();
     }
 
     remove_selection_and_set_caret()
