@@ -2,7 +2,7 @@
 
 class TextLine
 {
-    constructor(id, annotated, text, confidences, ligatures_mapping, arabic, debug_line_container,
+    constructor(id, annotated, text, confidences, ligatures_mapping, arabic, for_training, debug_line_container,
                 debug_line_container_2)
     {
         this.id = id;
@@ -14,6 +14,9 @@ class TextLine
         this.debug_line_container_2 = debug_line_container_2;
         this.edited = false;
         this.annotated = annotated;
+        this.valid = true;
+        this.for_training = for_training;
+        this.for_training_checkbox = null;
 
         this.container = document.createElement("div");
         this.container.setAttribute("class", "text-line");
@@ -46,11 +49,61 @@ class TextLine
         this.set_line_confidences_to_text_line_element(text_to_show, confidences_to_show);
 
         this.text = this.get_text_content();
+        this.set_training_checkbox();
 
         this.observer = new MutationObserver(this.mutate.bind(this));
         let config = { attributes: false, childList: true, characterData: true , subtree: true};
         this.observer.observe(this.container, config);
         this.mutate();
+    }
+
+    set_training_checkbox(){
+        this.editable_element = document.createElement("span");
+        this.editable_element.setAttribute("contenteditable", "true");
+        this.editable_element.setAttribute("style", "display: contents;");
+
+        this.checkbox_div = document.createElement("div");
+        this.for_training_checkbox = document.createElement("input");
+
+        this.checkbox_div.setAttribute("style", "float: right;");
+
+        this.for_training_checkbox.setAttribute("type", "checkbox");
+        this.for_training_checkbox.setAttribute("title", "training line");
+        this.for_training_checkbox.setAttribute("style", "margin: 3px; margin-right: 6px; vertical-align: middle; filter: hue-rotate(-30deg)");
+        this.for_training_checkbox.setAttribute("contenteditable", "false");
+        this.for_training_checkbox.checked = this.for_training;
+
+        this.append_checkboxes();
+
+        this.for_training_checkbox.addEventListener('change', this.set_training_flag.bind(this));
+    }
+
+    append_checkboxes(){
+        this.container.appendChild(this.editable_element);
+        this.container.appendChild(this.checkbox_div);
+        this.checkbox_div.appendChild(this.for_training_checkbox);
+    }
+
+    set_training_flag(){
+        let training_flag;
+        if (this.for_training_checkbox.checked){
+            training_flag = 1;
+        }
+        else{
+            training_flag = 0;
+        }
+        let this_text_line = this;
+        let route = Flask.url_for('ocr.training_line', {'line_id': this.id, 'training_flag': training_flag});
+        $.ajax({
+            type: "POST",
+            url: route,
+            data: {'line_id': this.id, 'training_flag': training_flag},
+            dataType: "json",
+            error: function(xhr, ajaxOptions, ThrownError){
+                this_text_line.for_training_checkbox.checked = ! this_text_line.for_training_checkbox.checked;
+                alert('Unable to set training flag. Check your remote connection.');
+            }
+        });
     }
 
     set_line_confidences_to_text_line_element(text_to_show, confidences_to_show)
@@ -94,7 +147,9 @@ class TextLine
         let descendants = this.container.getElementsByTagName('*');
         for (let child of descendants)
         {
-            child.style.backgroundColor = "#ffffff";
+            if (child.nodeName != 'DIV'){
+                child.style.backgroundColor = "#ffffff";
+            }
         }
     }
 
@@ -275,6 +330,9 @@ class TextLine
 
     press(e)
     {
+        if (this.container.lastChild.nodeName == 'DIV'){
+            this.container.removeChild(this.container.lastChild);
+        }
         if (e.keyCode == 13)
         {
             e.preventDefault();
@@ -300,10 +358,14 @@ class TextLine
                 document.execCommand("insertHTML", false, '&nbsp;');
             }
         }
+        this.append_checkboxes();
     }
 
     keydown(e)
     {
+        if (this.container.lastChild.nodeName == 'DIV'){
+            this.container.removeChild(this.container.lastChild);
+        }
         let empty_text_line_element = this.empty_text_line_element();
         let isFirefox = typeof InstallTrigger !== 'undefined';
 
@@ -385,6 +447,7 @@ class TextLine
             selection.removeAllRanges();
             selection.addRange(range);
         }
+        this.append_checkboxes();
     }
 
     paste(e)
@@ -415,6 +478,9 @@ class TextLine
         {
             this.container.style.backgroundColor = "#ffffff";
         }
+        if (this.valid == false){
+            this.container.style.backgroundColor = "#dc7f88";
+        }
     }
 
     remove_selection_and_prepare_line_for_insertion()
@@ -430,7 +496,7 @@ class TextLine
     prepare_line_for_insertion()
     {
         // We can detele line if it has no text - suprisingly, CTRL-Z still works.
-        let empty_text_line_element = this.container.textContent == "";
+        let empty_text_line_element = this.container.textContent === "";
         let caret_span;
         if (empty_text_line_element)
         {
@@ -470,6 +536,7 @@ class TextLine
             selection.removeAllRanges();
             selection.addRange(range);
         }
+        this.append_checkboxes();
     }
 
     remove_selection_and_set_caret()
@@ -564,11 +631,13 @@ class TextLine
         }
         let caret_span = this.get_caret_span();
         let next_span = this.skip_next_invalid_spans(caret_span.nextSibling);
-        if (caret_span != next_span)
-        {
-            let span_to_move = this.get_span_to_move(next_span.previousSibling);
-            selection.collapse(span_to_move, span_to_move.length);
-            return true;
+        if (next_span != null) {
+            if (caret_span != next_span)
+            {
+                let span_to_move = this.get_span_to_move(next_span.previousSibling);
+                selection.collapse(span_to_move, span_to_move.length);
+                return true;
+            }
         }
         return false;
     }
@@ -679,15 +748,18 @@ class TextLine
     text_selected()
     {
         let range = this.get_range();
-        if (range.startContainer != range.endContainer)
-        {
-            return true;
-        }
-        else
-        {
-            if (range.startOffset != range.endOffset)
+        //console.log(range.startContainer, range.endContainer, range.startOffset, range.endOffset);
+        if (range != null){
+            if (range.startContainer != range.endContainer)
             {
                 return true;
+            }
+            else
+            {
+                if (range.startOffset != range.endOffset)
+                {
+                    return true;
+                }
             }
         }
         return false;
@@ -702,9 +774,12 @@ class TextLine
         return false;
     }
 
-    get_range()
-    {
-        return document.getSelection().getRangeAt(0);
+    get_range() {
+        var sel = document.getSelection()
+        if (sel && sel.rangeCount > 0) {
+            return sel.getRangeAt(0);
+        }
+        return null;
     }
 
     save()
@@ -720,7 +795,7 @@ class TextLine
         console.log(annotations);
         console.log(JSON.stringify(annotations));
         let route = Flask.url_for('ocr.save_annotations');
-        let self = this
+        let self = this;
         $.ajax({
             type: "POST",
             url: route,

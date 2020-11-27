@@ -21,7 +21,8 @@ from app.ocr.general import create_json_from_request, create_ocr_request, \
                             insert_lines_to_db, change_ocr_request_and_document_state_on_success, insert_annotations_to_db, \
                             update_text_lines, get_page_annotated_lines, change_ocr_request_and_document_state_in_progress, \
                             post_files_to_folder, change_ocr_request_to_fail_and_document_state_to_success, \
-                            change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis
+                            change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis, set_delete_flag, \
+                            set_training_flag
 
 from app.document.general import get_document_images
 from app import db_session, engine
@@ -262,6 +263,8 @@ def get_lines(image_id):
         text_lines = sorted(list(text_region.textlines), key=lambda x: x.order)
 
         for line in text_lines:
+            if line.deleted:
+                continue
             text = line.text if line.text is not None else ""
             confidences = line.np_confidences.tolist()
             if len(text) != len(confidences):
@@ -281,16 +284,18 @@ def get_lines(image_id):
                     ligatures_mapping.append([i])
 
             lines_dict['lines'].append({
-                        'id': line.id,
-                        'np_points':  line.np_points.tolist(),
-                        'np_baseline':  line.np_baseline.tolist(),
-                        'np_heights':  line.np_heights.tolist(),
-                        'np_confidences': confidences,
-                        'ligatures_mapping': ligatures_mapping,
-                        'np_textregion_width':  [text_region.np_points[:, 0].min(), text_region.np_points[:, 0].max()],
-                        'annotated': line.id in annotated_lines,
-                        'text': text
-                    })
+                            'id': line.id,
+                            'np_points':  line.np_points.tolist(),
+                            'np_baseline':  line.np_baseline.tolist(),
+                            'np_heights':  line.np_heights.tolist(),
+                            'np_confidences': confidences,
+                            'ligatures_mapping': ligatures_mapping,
+                            'np_textregion_width':  [text_region.np_points[:, 0].min(), text_region.np_points[:, 0].max()],
+                            'annotated': line.id in annotated_lines,
+                            'text': text,
+                            'for_training': line.for_training
+                        })
+
 
     for l in lines_dict['lines']:
         if arabic:
@@ -333,6 +338,39 @@ def save_annotations():
     print(annotations)
     return jsonify({'status': 'success'})
 
+
+@bp.route('/delete_line/<string:line_id>/<int:delete_flag>', methods=['POST'])
+@login_required
+def delete_line(line_id, delete_flag):
+    text_line = get_text_line_by_id(line_id)
+    document = text_line.region.image.document
+    if not is_user_owner_or_collaborator(document.id, current_user):
+        flash(u'You do not have sufficient rights to add annotations to the document!', 'danger')
+        return jsonify({'status': 'redirect', 'href': url_for('document.documents')})
+    if document.state != DocumentState.COMPLETED_OCR:
+        flash(u'You cannot add annotations to unprocessed document!', 'danger')
+        return jsonify({'status': 'redirect', 'href': url_for('document.documents')})
+
+    set_delete_flag(text_line, delete_flag)
+
+    return jsonify({'status': 'success'})
+
+
+@bp.route('/training_line/<string:line_id>/<int:training_flag>', methods=['POST'])
+@login_required
+def training_line(line_id, training_flag):
+    text_line = get_text_line_by_id(line_id)
+    document = text_line.region.image.document
+    if not is_user_owner_or_collaborator(document.id, current_user):
+        flash(u'You do not have sufficient rights to add annotations to the document!', 'danger')
+        return jsonify({'status': 'redirect', 'href': url_for('document.documents')})
+    if document.state != DocumentState.COMPLETED_OCR:
+        flash(u'You cannot add annotations to unprocessed document!', 'danger')
+        return jsonify({'status': 'redirect', 'href': url_for('document.documents')})
+
+    set_training_flag(text_line, training_flag)
+
+    return jsonify({'status': 'success'})
 
 
 ########################################################################################################################

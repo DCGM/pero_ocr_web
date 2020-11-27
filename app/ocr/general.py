@@ -82,6 +82,16 @@ def update_text_lines(annotations):
     db_session.commit()
 
 
+def set_delete_flag(text_line, delete_flag):
+    text_line.deleted = delete_flag
+    db_session.commit()
+
+
+def set_training_flag(text_line, training_flag):
+    text_line.for_training = training_flag
+    db_session.commit()
+
+
 def check_document_processed(document):
     for image in document.images:
         for textregion in image.textregions:

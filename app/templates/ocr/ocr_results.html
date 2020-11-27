@@ -100,12 +100,14 @@
                 </div>
             </div>
             <div class="col-xl-4 d-none d-xl-block text-center">
-                <button type="button" class="save-btn btn btn-success"><i class="far fa-save fa-lg"></i>&nbsp;&nbsp;Save</button>
-                <button type="button" id="nextsucpectline" class="btn btn-secondary">Next suspect line&nbsp;&nbsp;<i class="fas fa-arrow-right"></i></button>
+                <button type="button" data-toggle="tooltip" data-placement="top" title="ALT + V" class="save-btn btn btn-success"><i class="far fa-save fa-lg"></i>&nbsp;&nbsp;Save</button>
+                <button type="button" data-toggle="tooltip" data-placement="top" title="ALT + B" id="deletebutton" class="btn btn-danger"><i class="far fa-trash-alt"></i> Delete line</button>
+                <button type="button" data-toggle="tooltip" data-placement="top" title="ALT + N" id="ignorebutton" class="btn btn-info"><i class="fas fa-minus-circle"></i> Ignore line</button>
+                <button type="button" data-toggle="tooltip" data-placement="top" title="ALT + M" id="nextsucpectline" class="btn btn-secondary">Next suspect line&nbsp;&nbsp;<i class="fas fa-arrow-right"></i></button>
             </div>
             <div class="col-xl-4 d-none d-xl-block text-right">
                 <button type="button" class="keyboard-btn btn btn-secondary" data-toggle="tooltip"
-                        data-placement="top" title="ALT + K"><i class="far fa-keyboard fa-lg"></i></i></button>
+                        data-placement="top" title="ALT + K"><i class="far fa-keyboard fa-lg"></i></button>
             </div>
         </div>
 
@@ -139,6 +141,11 @@
 {% block styles %}
     <link rel="stylesheet" href="/static/leaflet/leaflet.css">
     <link rel="stylesheet" href="/static/css/ocr_results.css">
+    <style>
+    br {
+        display: none;
+    }
+    </style>
 {% endblock %}
 
 {% block scripts %}
@@ -187,5 +194,37 @@
         let text_lines_editor = new TextLinesEditor(document.getElementById('map-container'));
         let keyboard = new Keyboard(document.getElementById('keyboard'), text_lines_editor);
         let image_list = new ImageList([ocr_export_buttons, text_lines_editor]);
+
+        document.querySelector('body').addEventListener('keydown', shortcut);
+        function shortcut(e) {
+            // ALT + V
+            if (e.keyCode == 86 && !e.ctrlKey && !e.shiftKey && e.altKey)
+            {
+                e.preventDefault();
+                text_lines_editor.save_annotations();
+            }
+
+            // ALT + B
+            if (e.keyCode == 66 && !e.ctrlKey && !e.shiftKey && e.altKey)
+            {
+                e.preventDefault();
+                text_lines_editor.delete_line();
+            }
+
+            // ALT + N
+            if (e.keyCode == 78 && !e.ctrlKey && !e.shiftKey && e.altKey)
+            {
+                e.preventDefault();
+                text_lines_editor.ignore_line();
+                console.log("ALT + N");
+            }
+
+            // ALT + M
+            if (e.keyCode == 77 && !e.ctrlKey && !e.shiftKey && e.altKey)
+            {
+                e.preventDefault();
+                text_lines_editor.show_next_line();
+            }
+        }
     </script>
 {% endblock %}

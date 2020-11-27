@@ -15,10 +15,12 @@ class TextLinesEditor
         this.abort_controller = new AbortController();
         this.container = container;
         this.container.innerHTML = "<div class='editor-map'></div><div class='status'></div>";
-        this.map_element = this.container.getElementsByClassName("editor-map")[0]
+        this.map_element = this.container.getElementsByClassName("editor-map")[0];
         this.active_line = false;
         this.focused_line = false;
         this.save_btn = document.getElementsByClassName('save-btn');
+        this.delete_btn = document.getElementById('deletebutton');
+        this.ignore_btn = document.getElementById('ignorebutton');
         this.next_suspect_btn = document.getElementById('nextsucpectline');
         this.compute_scores_btn = document.getElementById('btn-compute-scores');
         this.show_line_height = document.getElementById('show-line-height');
@@ -28,6 +30,8 @@ class TextLinesEditor
             btn.addEventListener('click', this.save_annotations.bind(this));
         }
         this.next_suspect_btn.addEventListener('click', this.show_next_line.bind(this));
+        this.delete_btn.addEventListener('click', this.delete_line.bind(this));
+        this.ignore_btn.addEventListener('click', this.ignore_line.bind(this));
         this.show_line_height.addEventListener('input', this.show_line_change.bind(this));
         this.show_bottom_pad.addEventListener('input', this.show_line_change.bind(this));
         this.text_container = document.getElementById('text-container');
@@ -35,6 +39,70 @@ class TextLinesEditor
         if (this.compute_scores_btn != null){
             this.compute_scores_btn.addEventListener('click', this.compute_scores.bind(this));
         }
+    }
+
+    ignore_line(){
+        if (this.active_line != false){
+            this.active_line.for_training_checkbox.checked = ! this.active_line.for_training_checkbox.checked;
+            this.active_line.set_training_flag();
+            if (this.active_line.for_training_checkbox.checked){
+                this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Ignore line';
+            }
+            else {
+                this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Unignore line';
+            }
+        }
+    }
+
+    delete_line(){
+        if (this.active_line.valid){
+            this.active_line.valid = false;
+        }
+        else{
+            this.active_line.valid = true;
+        }
+
+        this.active_line.mutate();
+
+        if (this.active_line.valid){
+            this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
+            this.delete_btn.className  = 'btn btn-danger';
+        }
+        else{
+            this.delete_btn.innerHTML  = '<i class="fas fa-undo"></i> Restore line';
+            this.delete_btn.className  = 'btn btn-primary';
+        }
+
+        let delete_flag;
+        if (this.active_line.valid){
+            delete_flag = 0;
+        }
+        else{
+            delete_flag = 1;
+        }
+
+        let text_lines_editor = this;
+        let route = Flask.url_for('ocr.delete_line', {'line_id': this.active_line.id, 'delete_flag': delete_flag});
+        $.post(route);
+        $.ajax({
+            type: "POST",
+            url: route,
+            data: {'line_id': this.active_line.id, 'delete_flag': delete_flag},
+            dataType: "json",
+            error: function(xhr, ajaxOptions, ThrownError){
+                text_lines_editor.active_line.valid = ! text_lines_editor.active_line.valid;
+                text_lines_editor.active_line.mutate();
+                if (text_lines_editor.active_line.valid){
+                    text_lines_editor.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
+                    text_lines_editor.delete_btn.className  = 'btn btn-danger';
+                }
+                else{
+                    text_lines_editor.delete_btn.innerHTML  = '<i class="fas fa-undo"></i> Restore line';
+                    text_lines_editor.delete_btn.className  = 'btn btn-primary';
+                }
+                alert('Unable to set delete flag. Check your remote connection.');
+            }
+        });
     }
 
     change_image(image_id)
@@ -58,6 +126,9 @@ class TextLinesEditor
             }
         }
         this.get_image(image_id)
+        this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
+        this.delete_btn.className  = 'btn btn-danger';
+        this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Ignore line';
     }
 
     async get_image(image_id)
@@ -117,7 +188,7 @@ class TextLinesEditor
         let debug_line_container_2 = document.getElementById('debug-line-container-2');
         for (let l of data['lines'])
         {
-            let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic,
+            let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic, l.for_training,
                                     debug_line_container, debug_line_container_2)
             line.np_points = l.np_points;
             line.np_heights = l.np_heights;
@@ -182,6 +253,21 @@ class TextLinesEditor
                              {animate: true, duration: 0.5});
         this.active_line = line;
         line.polygon.setStyle({ color: "#028700", opacity: 1, fillColor: "#028700", fillOpacity: 0.1, weight: 2});
+
+        if (this.active_line.valid){
+            this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
+            this.delete_btn.className  = 'btn btn-danger';
+        }
+        else{
+            this.delete_btn.innerHTML  = '<i class="fas fa-undo"></i> Restore line';
+            this.delete_btn.className  = 'btn btn-primary';
+        }
+        if (this.active_line.for_training_checkbox.checked){
+            this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Ignore line';
+        }
+        else {
+            this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Unignore line';
+        }
     }
 
     line_focus_out()
