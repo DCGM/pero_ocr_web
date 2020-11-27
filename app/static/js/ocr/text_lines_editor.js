@@ -51,6 +51,7 @@ class TextLinesEditor
             else {
                 this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Unignore line';
             }
+            this.active_line.container.focus();
         }
     }
 
@@ -103,6 +104,7 @@ class TextLinesEditor
                 alert('Unable to set delete flag. Check your remote connection.');
             }
         });
+        this.active_line.container.focus();
     }
 
     change_image(image_id)
