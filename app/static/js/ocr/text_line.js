@@ -427,7 +427,7 @@ class TextLine
             let first_span = this.container.childNodes[0];
             range.setStart(first_span, 0);
             let last_span = this.container.childNodes[this.container.childNodes.length - 1];
-            range.setEnd(last_span, last_span.innerHTML.length);
+            range.setEnd(last_span, 1);
             selection.removeAllRanges();
             selection.addRange(range);
         }
@@ -437,8 +437,20 @@ class TextLine
     {
         e.preventDefault();
         var text = (e.originalEvent || e).clipboardData.getData('text/plain');
+        let nbsp_text = "";
+        for (let c of text)
+        {
+            if (c == ' ')
+            {
+                nbsp_text += '&nbsp;';
+            }
+            else
+            {
+                nbsp_text += c
+            }
+        }
         this.remove_selection_and_prepare_line_for_insertion();
-        document.execCommand("insertText", false, text);
+        document.execCommand("insertHTML", false, nbsp_text);
     }
 
     mutate()
@@ -492,6 +504,7 @@ class TextLine
         }
         if (caret_span.getAttribute("class") != "user-input")
         {
+            console.log("huhuhuh");
             // Create new span for new char
             // Set it's content to &#8203; special empty char so caret can be set inside
             let new_span = document.createElement('span');
@@ -510,6 +523,7 @@ class TextLine
                 }
                 else
                 {
+                    console.log("new span");
                     caret_span.parentNode.insertBefore(new_span, caret_span.nextSibling);
                 }
             }
