@@ -6,7 +6,7 @@ from app.db.general import get_document_by_id, get_request_by_id, get_image_by_i
 from app.layout_analysis.general import create_layout_analysis_request, can_start_layout_analysis, \
     add_layout_request_and_change_document_state, get_first_layout_request, change_layout_request_and_document_state_in_progress, \
     create_json_from_request, change_layout_request_and_document_state_on_success, \
-    make_image_result_preview, change_document_state_on_complete_layout_analysis, post_files_to_folder, insert_regions_to_db, \
+    change_document_state_on_complete_layout_analysis, post_files_to_folder, insert_regions_to_db, \
     set_whole_page_region_layout_to_document, change_layout_request_to_fail_and_document_state_to_new, \
     not_deleted_images_in_document
 import os
@@ -14,7 +14,7 @@ import sys
 import sqlalchemy
 from app.db.model import DocumentState, TextRegion, LayoutDetector, Document
 from app.document.general import is_user_owner_or_collaborator, is_granted_acces_for_document, is_user_trusted, \
-                                 document_exists, get_document_images, document_in_allowed_state
+                                 document_exists, get_document_images
 from app import db_session
 from app.db import Image
 from flask import jsonify
@@ -40,7 +40,7 @@ def show_results(document_id):
 
     document = get_document_by_id(document_id)
     if document.state == DocumentState.NEW:
-        return redirect(url_for('document.upload_document_get', document_id=document.id))
+        return redirect(url_for('document.upload_images_to_document', document_id=document.id))
     elif document.state == DocumentState.COMPLETED_OCR:
         return redirect(url_for('ocr.show_results', document_id=document.id))
     elif document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
@@ -74,6 +74,7 @@ def revert_layout(document_id):
 
 # SELECT PAGE
 ########################################################################################################################
+
 
 @bp.route('/select_layout/<string:document_id>', methods=['GET'])
 @login_required
@@ -226,32 +227,6 @@ def get_image_result(image_id):
         textregions.append({'uuid': textregion.id, 'deleted': textregion.deleted, 'points': textregion_points,
                             'order': textregion.order})
     return jsonify({"uuid": image_id, 'width': db_image.width, 'height': db_image.height, 'objects': textregions})
-
-
-@bp.route('/get_result_preview/<string:image_id>')
-@bp.route('/get_result_preview/')
-@login_required
-def get_result_preview(image_id=None):
-    if not image_id:
-        return send_file('static/img/missing_page.png', cache_timeout=10000000)
-
-    try:
-        db_image = get_image_by_id(image_id)
-    except sqlalchemy.exc.StatementError:
-        pass
-
-    if db_image is None:
-        return "Image does not exist.", 404
-
-    document_id = db_image.document_id
-    if not is_granted_acces_for_document(document_id, current_user):
-        flash(u'You do not have sufficient rights to this document!', 'danger')
-        return redirect(url_for('main.index'))
-
-    image_path = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(document_id), str(image_id) + '.jpg')
-    if not os.path.isfile(image_path):
-        make_image_result_preview(db_image)
-    return send_file(image_path, cache_timeout=0)
 
 
 # GET LAYOUT DETECTOR FOR PARSE FOLDER

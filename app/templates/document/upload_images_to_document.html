@@ -50,7 +50,7 @@
 
         <div class="row mb-4">
             <div class="offset-xl-2 col-xl-8">
-                {{ dropzone.create(action= url_for('document.upload_document_post', document_id=document.id) ) }}
+                {{ dropzone.create(action= url_for('document.upload_image_to_document', document_id=document.id) ) }}
                 {{ dropzone.load_js() }}
                 {{ dropzone.config(custom_init='this.on("error", function (file, response) {import_error(file.name, response)});
                 this.on("queuecomplete",function (file, response){import_complete()});
@@ -64,7 +64,7 @@
                     <div class="card d-inline-block m-3">
                         <div class="card-image-container pt-3">
                             <img
-                                src="{{url_for('layout_analysis.get_result_preview', image_id=image.id)}}"
+                                src="{{url_for('document.get_image_preview', image_id=image.id)}}"
                                 alt="{{ image.filename }}"
                                 class="uploaded_image card-img-top"
                             />

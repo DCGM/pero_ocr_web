@@ -1,12 +1,9 @@
 from app.db.model import RequestState, RequestType, Request, DocumentState, TextRegion
 from app import db_session
-from flask import jsonify, current_app
+from flask import jsonify
 import numpy as np
-import cv2
 import os
-import shutil
-
-from app.document.general import get_image_by_id
+from app.db.general import get_image_by_id
 from pero_ocr.document_ocr.layout import PageLayout
 
 
@@ -32,32 +29,6 @@ def insert_regions_to_db(results_folder, file_names):
     db_session.commit()
 
 
-def make_image_result_preview(image_db):
-    if image_db is not None:
-        image_path = image_db.path
-        image_id = str(image_db.id)
-        image = cv2.imread(image_path, 1)
-        if image is None:
-            image = np.zeros([image_db.height, image_db.width, 3], dtype=np.uint8)
-
-        # Fix historicaly swapped image width and height
-        if image.shape[0] != image_db.height or image.shape[1] != image_db.width:
-            image_db.height = image.shape[0]
-            image_db.width = image.shape[1]
-            db_session.commit()
-
-        scale = (100000.0 / (image.shape[0] * image.shape[1]))**0.5
-        image = cv2.resize(image, (0,0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
-        if image_db.textregions:
-            regions = [(region.np_points * scale).astype(np.int32) for region in image_db.textregions if not region.deleted]
-            cv2.polylines(image, regions, isClosed=True, thickness=4, color=(0,255,0))
-
-        new_dir = os.path.join(current_app.config['LAYOUT_RESULTS_FOLDER'], str(image_db.document_id))
-        if not os.path.exists(new_dir):
-            os.makedirs(new_dir)
-        cv2.imwrite(os.path.join(new_dir, str(image_id) + '.jpg'), image)
-
-
 def post_files_to_folder(request, folder):
     files = request.files
     file_names = []
@@ -67,7 +38,6 @@ def post_files_to_folder(request, folder):
         file.save(path)
         file_names.append(file.filename)
     return file_names
-
 
 
 def create_json_from_request(request):

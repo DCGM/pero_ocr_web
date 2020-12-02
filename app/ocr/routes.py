@@ -51,7 +51,7 @@ def show_results(document_id):
 
     document = get_document_by_id(document_id)
     if document.state == DocumentState.NEW:
-        return redirect(url_for('document.upload_document_get', document_id=document.id))
+        return redirect(url_for('document.upload_images_to_document', document_id=document.id))
     elif document.state == DocumentState.COMPLETED_LAYOUT_ANALYSIS:
         return redirect(url_for('layout_analysis.show_results', document_id=document.id))
     elif document.state != DocumentState.COMPLETED_OCR:

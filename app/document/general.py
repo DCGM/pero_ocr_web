@@ -1,15 +1,13 @@
 import cv2
 import numpy as np
 import hashlib
-import io
-import exifread
 import sqlalchemy
-from sqlalchemy import and_, or_
-from app.db.model import Document, DocumentState, Image
+from sqlalchemy import and_
+from app.db.model import DocumentState
 from app.db.general import get_document_by_id, remove_document_by_id, save_document, save_image_to_document,\
-    get_all_users, get_user_by_id, get_image_by_id, is_image_duplicate
+                           get_user_by_id, is_image_duplicate
 import os
-from flask import current_app as app
+from flask import current_app
 from flask import Response
 from app import db_session
 import uuid
@@ -109,10 +107,11 @@ def save_image(file, document_id):
     image_db = Image(id=uuid.uuid4(), filename=original_file_name + extension)
     image_id = str(image_db.id)
 
-    file_path = os.path.join(directory_path, "{}{}".format(image_id, extension))
+    image_name = "{}{}".format(image_id, extension)
+    file_path = os.path.join(directory_path, image_name)
     with open(file_path, 'wb') as f:
         f.write(file_data)
-        image_db.path = file_path
+        image_db.path = image_name
         image_db.width = image.shape[1]
         image_db.height = image.shape[0]
         image_db.imagehash = img_hash
@@ -121,14 +120,40 @@ def save_image(file, document_id):
     return ''
 
 
+def make_image_preview(image_db):
+    if image_db is not None:
+        image_path = os.path.join(current_app.config['UPLOADED_IMAGES_FOLDER'], str(image_db.document_id), image_db.path)
+        image_id = str(image_db.id)
+        image = cv2.imread(image_path, 1)
+        if image is None:
+            image = np.zeros([image_db.height, image_db.width, 3], dtype=np.uint8)
+
+        # Fix historicaly swapped image width and height
+        if image.shape[0] != image_db.height or image.shape[1] != image_db.width:
+            image_db.height = image.shape[0]
+            image_db.width = image.shape[1]
+            db_session.commit()
+
+        scale = (100000.0 / (image.shape[0] * image.shape[1]))**0.5
+        image = cv2.resize(image, (0,0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+        if image_db.textregions:
+            regions = [(region.np_points * scale).astype(np.int32) for region in image_db.textregions if not region.deleted]
+            cv2.polylines(image, regions, isClosed=True, thickness=4, color=(0,255,0))
+
+        new_dir = os.path.join(current_app.config['PREVIEW_IMAGES_FOLDER'], str(image_db.document_id))
+        if not os.path.exists(new_dir):
+            os.makedirs(new_dir)
+        cv2.imwrite(os.path.join(new_dir, str(image_id) + '.jpg'), image)
+
+
 def get_and_create_document_image_directory(document_id):
-    directory_path = os.path.join(app.config['UPLOAD_IMAGE_FOLDER'], document_id)
+    directory_path = os.path.join(current_app.config['UPLOADED_IMAGES_FOLDER'], str(document_id))
     create_dirs(directory_path)
     return directory_path
 
 
 def is_allowed_file(file):
-    if file.filename != '' and is_allowed_extension(file, app.config['EXTENSIONS']):
+    if file.filename != '' and is_allowed_extension(file, current_app.config['EXTENSIONS']):
         return True
     return False
 
@@ -227,7 +252,7 @@ def get_page_layout(image, only_regions=False, only_annotated=False, alto=False,
                                                                    heights=text_line.np_heights,
                                                                    transcription=text_line.text))
     if alto:
-        logits_path = os.path.join(app.config['OCR_RESULTS_FOLDER'], str(image.document.id), "{}.logits".format(image.id))
+        logits_path = os.path.join(current_app.config['OCR_RESULTS_FOLDER'], str(image.document.id), "{}.logits".format(image.id))
         page_layout.load_logits(logits_path)
 
     return page_layout

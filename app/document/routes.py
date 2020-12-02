@@ -1,22 +1,22 @@
-import json
-import io
 import _thread
 import sqlalchemy
 from app.document import bp
 from flask_login import login_required, current_user
-from flask import render_template, redirect, url_for, request, send_file, flash, jsonify, current_app, send_from_directory
-from app.document.general import create_document, check_and_remove_document, save_image, get_image_by_id,\
+from flask import render_template, redirect, url_for, request, send_file, flash, jsonify
+from flask import current_app
+from app.document.general import create_document, check_and_remove_document, save_image, \
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
     remove_image, get_document_images, get_page_layout, get_page_layout_text, update_confidences, is_user_trusted,\
     is_granted_acces_for_page, is_granted_acces_for_document, get_line_image_by_id, get_sucpect_lines_ids, \
     compute_scores_of_doc, skip_textline, get_line, is_granted_acces_for_line, create_string_response, \
-    update_baselines
+    update_baselines, make_image_preview
 
 from werkzeug.exceptions import NotFound
 
 from app.db.general import get_requests
 
-from app.db.general import get_user_documents, get_document_by_id, get_user_by_email, get_all_documents, get_previews_for_documents
+from app.db.general import get_user_documents, get_document_by_id, get_user_by_email, get_all_documents,\
+                           get_previews_for_documents, get_image_by_id
 from app.document.forms import CreateDocumentForm
 from app.document.annotation_statistics import get_document_annotation_statistics, get_user_annotation_statistics
 from io import BytesIO
@@ -126,7 +126,7 @@ def new_document():
     if form.validate_on_submit():
         document = create_document(form.document_name.data, current_user)
         flash(u'Document successfully created!', 'success')
-        return redirect(url_for('document.upload_document_get', document_id=document.id))
+        return redirect(url_for('document.upload_images_to_document', document_id=document.id))
     else:
         return render_template('document/new_document.html', form=form)
 
@@ -142,21 +142,21 @@ def delete_document(document_id):
         return None
 
 
-@bp.route('/upload_document/<string:document_id>', methods=['GET'])
+@bp.route('/upload_images_to_document/<string:document_id>', methods=['GET'])
 @login_required
-def upload_document_get(document_id):
+def upload_images_to_document(document_id):
     if not is_user_owner_or_collaborator(document_id, current_user):
         flash(u'You do not have sufficient rights to upload images!', 'danger')
         return redirect(url_for('main.index'))
 
     document = get_document_by_id(document_id)
     images = get_document_images(document)
-    return render_template('document/upload_images.html', document=document, images=images)
+    return render_template('document/upload_images_to_document.html', document=document, images=images)
 
 
-@bp.route('/upload_document/<string:document_id>', methods=['POST'])
+@bp.route('/upload_image_to_document/<string:document_id>', methods=['POST'])
 @login_required
-def upload_document_post(document_id):
+def upload_image_to_document(document_id):
     if not is_user_owner_or_collaborator(document_id, current_user):
         flash(u'You do not have sufficient rights to upload images!', 'danger')
         return '', 404
@@ -167,6 +167,32 @@ def upload_document_post(document_id):
         if status == '':
             return '', 200
         return status, 409
+
+
+@bp.route('/get_image_preview/<string:image_id>')
+@bp.route('/get_image_preview/')
+@login_required
+def get_image_preview(image_id=None):
+    if image_id is None:
+        return send_file('static/img/missing_page.png', cache_timeout=10000000)
+
+    try:
+        db_image = get_image_by_id(image_id)
+    except sqlalchemy.exc.StatementError:
+        pass
+
+    if db_image is None:
+        return "Image does not exist.", 404
+
+    document_id = db_image.document_id
+    if not is_granted_acces_for_document(document_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
+
+    image_preview_path = os.path.join(current_app.config['PREVIEW_IMAGES_FOLDER'], str(document_id), str(image_id) + '.jpg')
+    if not os.path.isfile(image_preview_path):
+        make_image_preview(db_image)
+    return send_file(image_preview_path, cache_timeout=0)
 
 
 @bp.route('/get_document_image_ids/<string:document_id>')
@@ -286,20 +312,21 @@ def get_text(image_id):
 @login_required
 def get_image(image_id):
     try:
-        db_image = get_image_by_id(image_id)
+        image_db = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
         pass
-    if db_image is None:
+    if image_db is None:
         return "Image does not exist.", 404
 
     if not is_granted_acces_for_page(image_id, current_user):
         flash(u'You do not have sufficient rights to download image!', 'danger')
         return redirect(url_for('main.index'))
 
-    if not os.path.isfile(db_image.path):
+    image_path = os.path.join(current_app.config['UPLOADED_IMAGES_FOLDER'], str(image_db.document_id), image_db.path)
+    if not os.path.isfile(image_path):
         raise NotFound()
 
-    return send_file(db_image.path, as_attachment=True, attachment_filename=db_image.filename)
+    return send_file(image_path, as_attachment=True, attachment_filename=image_db.filename)
 
 
 @bp.route('/download_document_pages/<string:document_id>')
@@ -365,7 +392,7 @@ def remove_image_get(document_id, image_id):
         return redirect(url_for('main.index'))
     if remove_image(document_id, image_id):
         flash(u'Image successfully removed!', 'success')
-    return redirect(url_for('document.upload_document_get', document_id=document_id))
+    return redirect(url_for('document.upload_images_to_document', document_id=document_id))
 
 
 @bp.route('/collaborators/<string:document_id>', methods=['GET'])

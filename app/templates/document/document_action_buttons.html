@@ -10,7 +10,7 @@
 
 {% if document.state.name == 'NEW' %}
 <a  class="document-action-btn btn btn-secondary"
-    href="{{ url_for('document.upload_document_get', document_id=document.id) }}"
+    href="{{ url_for('document.upload_images_to_document', document_id=document.id) }}"
     data-toggle="tooltip"
     data-placement="right"
     title="Upload Images">
