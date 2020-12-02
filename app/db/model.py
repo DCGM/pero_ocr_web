@@ -119,8 +119,8 @@ class TextLine(Base):
     baseline = Column(String())
     heights = Column(String())
     confidences = Column(String())
-    deleted = Column(Boolean())
-    for_training = Column(Boolean())
+    deleted = Column(Boolean(), default=False)
+    for_training = Column(Boolean(), default=True)
     text = Column(String())
     score = Column(Float(), index=True)
 
