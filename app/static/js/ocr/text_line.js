@@ -65,12 +65,14 @@ class TextLine
         this.checkbox_span.setAttribute("style", "float: right;");
 
         this.for_training_checkbox.setAttribute("type", "checkbox");
+        this.for_training_checkbox.setAttribute("tabindex", "-1");
         this.for_training_checkbox.setAttribute("title", "training line");
         this.for_training_checkbox.setAttribute("style", "margin-right: 10px; vertical-align: -webkit-baseline-middle; filter: hue-rotate(-30deg)");
         this.for_training_checkbox.setAttribute("contenteditable", "false");
         this.for_training_checkbox.checked = this.for_training;
 
         this.checkbox_span.appendChild(this.for_training_checkbox);
+        this.checkbox_span.setAttribute("tabindex", "-1");
 
         this.for_training_checkbox.addEventListener('change', this.set_training_flag.bind(this));
     }
