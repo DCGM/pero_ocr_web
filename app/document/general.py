@@ -86,6 +86,10 @@ def save_image(file, document_id):
     if db_image:
         return f'Image is already uploaded as {db_image.filename}.'
 
+    db_image = db_session.query(Image).filter(Image.document_id == document_id).filter(Image.filename == file.filename).first()
+    if db_image != None:
+        return f'Image with filename {file.filename} is already uploaded.'
+
     image = cv2.imdecode(np.frombuffer(file_data, np.uint8), 1)
     if image is None:
         return f'Unable to decode the image. It is corrupted or the type is not supported.'
