@@ -146,7 +146,7 @@ def make_image_preview(image_db):
 
         new_dir = os.path.join(current_app.config['PREVIEW_IMAGES_FOLDER'], str(image_db.document_id))
         if not os.path.exists(new_dir):
-            os.makedirs(new_dir)
+            os.makedirs(new_dir, exist_ok=True) # exist_ok=True is needed due to multi-processing
         cv2.imwrite(os.path.join(new_dir, str(image_id) + '.jpg'), image)
 
 
@@ -170,7 +170,7 @@ def is_allowed_extension(file, allowed_extensions):
 
 def create_dirs(path):
     if not os.path.exists(path):
-        os.makedirs(path)
+        os.makedirs(path, exist_ok=True)  # exist_ok=True is needed due to multi-processing
 
 
 def remove_image(document_id, image_id):

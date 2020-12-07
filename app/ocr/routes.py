@@ -400,7 +400,7 @@ def post_result(image_id):
         print("##################################################################")
         result_folder = os.path.join(current_app.config['OCR_RESULTS_FOLDER'], str(db_image.document_id))
         if not os.path.exists(result_folder):
-            os.makedirs(result_folder)
+            os.makedirs(result_folder, exist_ok=True)  # exist_ok=True is needed due to multi-processing
         file_names = post_files_to_folder(request, result_folder)
         insert_lines_to_db(result_folder, file_names)
         print("##################################################################")
