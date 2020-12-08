@@ -510,7 +510,7 @@ class LayoutEditor{
 
     reload_layout_preview(uuid){
         document.querySelector('figure[data-image="'+ uuid +'"]').children[0].attributes['src'].nodeValue = Flask.url_for(
-                'layout_analysis.get_result_preview', {'image_id': uuid}) + '?a=' + String(Math.random()).substr(2);
+                'document.get_image_preview', {'image_id': uuid}) + '?a=' + String(Math.random()).substr(2);
     }
 
     save_image(){

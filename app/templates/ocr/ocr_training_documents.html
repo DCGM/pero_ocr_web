@@ -34,7 +34,7 @@ input[type=checkbox] {
         <tr data-document="{{ document.id }}">
             <td data-sort="{{loop.index}}">
                 <div class="image-preview-cont">
-                    <img data-src="{{url_for('layout_analysis.get_result_preview', image_id=previews[document.id].id)}}" class="lazy-img image-preview" src="" onerror="this.src='/static/img/missing_page.png'"/>
+                    <img data-src="{{url_for('document.get_image_preview', image_id=previews[document.id].id)}}" class="lazy-img image-preview" src="" onerror="this.src='/static/img/missing_page.png'"/>
                 </div>
             </td>
             {% if document.requests_lazy %}
