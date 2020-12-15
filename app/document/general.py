@@ -476,3 +476,34 @@ def document_in_allowed_state(document_id, state):
         return True
     else:
         return False
+
+
+def get_line_page_doc_address(line):
+    document_id, image_id = db_session.query(Document.id, Image.id).join(Image).join(TextRegion)\
+                                                                   .filter(TextRegion.id == line.region_id).first()
+    return document_id, image_id
+
+
+def find_textlines(query, user_id):
+    document_ids = db_session.query(UserDocument.document_id)\
+                             .filter(UserDocument.user_id == user_id)\
+                             .all()
+    document_ids = list(np.array(document_ids).flatten())
+
+    query_words = query.split(' ')
+
+    db_query = db_session.query(Document.id, Image.id, TextLine).filter(Document.id.in_(document_ids)) \
+                         .outerjoin(Image, Image.document_id == Document.id)\
+                         .outerjoin(TextRegion, TextRegion.image_id == Image.id)\
+                         .outerjoin(TextLine, TextLine.region_id == TextRegion.id)
+
+    for word in query_words:
+        db_query = db_query.filter(TextLine.text.like('%{}%' .format(word)))
+
+    text_lines = db_query.all()
+
+    lines = []
+    for line in text_lines:
+         lines.append({"id": line[2].id, "document_id": line[0], "image_id": line[1], "text": line[2].text})
+
+    return lines

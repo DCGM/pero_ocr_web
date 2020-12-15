@@ -18,6 +18,7 @@ class TextLinesEditor
         this.map_element = this.container.getElementsByClassName("editor-map")[0];
         this.active_line = false;
         this.focused_line = false;
+        this.focus_to = null;
         this.save_btn = document.getElementsByClassName('save-btn');
         this.delete_btn = document.getElementById('deletebutton');
         this.ignore_btn = document.getElementById('ignorebutton');
@@ -127,7 +128,7 @@ class TextLinesEditor
                 }
             }
         }
-        this.get_image(image_id)
+        this.get_image(image_id);
         this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
         this.delete_btn.className  = 'btn btn-danger';
         this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Ignore line';
@@ -135,6 +136,7 @@ class TextLinesEditor
 
     async get_image(image_id)
     {
+        console.log(this.focus_to);
         this.abort_controller.abort();
         this.abort_controller = new AbortController();
         let abort_signal = this.abort_controller.signal;
@@ -188,6 +190,7 @@ class TextLinesEditor
         let i = 0;
         let debug_line_container = document.getElementById('debug-line-container');
         let debug_line_container_2 = document.getElementById('debug-line-container-2');
+        let focused = false;
         for (let l of data['lines'])
         {
             let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic, l.for_training,
@@ -196,13 +199,23 @@ class TextLinesEditor
             line.np_heights = l.np_heights;
             this.add_line_to_map(i, line);
             this.lines.push(line);
+            if (l.id == this.focus_to){
+                this.line_focus(line);
+                this.polygon_click(line);
+                focused = true;
+            }
             i += 1;
             if(i % 50 == 49){
                 await new Promise(resolve => setTimeout(resolve, 0));
                 if( abort_signal.aborted){return;}
             }
         }
-        this.map_element.focus();
+        if (this.focus_to != null){
+            this.focus_to = null;
+        }
+        else{
+            this.map_element.focus();
+        }
     }
 
     add_line_to_map(i, line)
