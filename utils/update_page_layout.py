@@ -1,13 +1,15 @@
 import uuid
-
+import numpy as np
 from app.db import Image, TextRegion, TextLine
 
 from app.ocr.general import get_confidences
 
 
 def update_page_layout(db_session, db_document, page_layout, image_id, path):
-    db_image = db_session.query(Image).filter(Image.id == image_id).first()
-    if db_image is None:
+    try:
+        image_id = uuid.UUID(image_id, version=4)
+        db_image = db_session.query(Image).filter(Image.id == image_id).first()
+    except ValueError:
         db_image = create_image(page_layout, image_id, path)
         db_document.images.append(db_image)
 
@@ -27,7 +29,8 @@ def update_page_layout(db_session, db_document, page_layout, image_id, path):
                 text = db_line.text
                 if len(db_line.annotations) == 0:
                     db_line.text = line.transcription
-                    db_line.np_confidences = get_confidences(line)
+                    if line.logits is not None:
+                        db_line.np_confidences = get_confidences(line)
                     if text != db_line.text:
                         print(str(db_line.id), text, db_line.text)
                     else:
@@ -50,12 +53,16 @@ def create_text_line(line, order):
         line_id = uuid.UUID(line.id, version=4)
     except ValueError:
         line_id = uuid.uuid4()
+    if line.logits is not None:
+        confidences = get_confidences(line)
+    else:
+        confidences = np.ones(len(line.transcription))
     text_line = TextLine(id=line_id,
                          order=order,
                          np_points=line.polygon,
                          np_baseline=line.baseline,
                          np_heights=line.heights,
-                         np_confidences=get_confidences(line),
+                         np_confidences=confidences,
                          text=line.transcription,
                          deleted=False)
     return text_line

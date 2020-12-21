@@ -17,6 +17,7 @@ def parseargs():
     parser.add_argument('-n', '--document-name', type=str, help="Document name (will be used if document is not in the database)")
     parser.add_argument('-u', '--uploaded-images-dir', type=str, help="Path to uploaded images")
     parser.add_argument('-l', '--only-layout', action='store_true')
+    parser.add_argument('--logits', action='store_true')
     args = parser.parse_args()
     return args
 
@@ -24,26 +25,30 @@ def parseargs():
 def main():
     args = parseargs()
 
-    database_url = 'sqlite:///' + args.database
-    engine = create_engine(database_url, convert_unicode=True, connect_args={'check_same_thread': False})
+    database_url = 'postgres://postgres:pero@localhost:5432/' + args.database
+    engine = create_engine(database_url, convert_unicode=True)
     db_session = scoped_session(sessionmaker(autocommit=False,
                                              autoflush=False,
                                              bind=engine))
 
     db_document = None
-    for image in os.listdir(os.path.join(args.document_folder, 'output', 'page')):
+    for image in os.listdir(os.path.join(args.document_folder, 'images')):
         image_id = image.split('.')[0]
-        db_image = db_session.query(Image).filter(Image.id == image_id).first()
-        if db_image is not None:
-            db_document = db_image.document
-            if db_document.deleted:
-                print("DELETED DOCUMENT")
-                sys.exit(0)
-            else:
-                if args.only_layout:
-                    db_document.state = DocumentState.COMPLETED_LAYOUT_ANALYSIS
+        try:
+            image_id = uuid.UUID(image_id, version=4)
+            db_image = db_session.query(Image).filter(Image.id == image_id).first()
+            if db_image is not None:
+                db_document = db_image.document
+                if db_document.deleted:
+                    print("DELETED DOCUMENT")
+                    sys.exit(0)
                 else:
-                    db_document.state = DocumentState.COMPLETED_OCR
+                    if args.only_layout:
+                        db_document.state = DocumentState.COMPLETED_LAYOUT_ANALYSIS
+                    else:
+                        db_document.state = DocumentState.COMPLETED_OCR
+        except ValueError:
+            break
         break
 
     if db_document is None:
@@ -70,15 +75,15 @@ def main():
         image_ext = image.split('.')[1]
         break
 
-    for image in os.listdir(os.path.join(args.document_folder, 'output', 'page')):
+    for image in os.listdir(os.path.join(args.document_folder, 'xmls')):
         image_id = image.split('.')[0]
 
         page_layout = PageLayout()
 
-        xml_path = os.path.join(args.document_folder, 'output', 'page', image)
+        xml_path = os.path.join(args.document_folder, 'xmls', image)
         page_layout.from_pagexml(xml_path)
 
-        if not args.only_layout:
+        if not args.only_layout and args.logits:
             logits_path = os.path.join(args.document_folder, 'output', 'logits', "{}.logits".format(image_id))
             page_layout.load_logits(logits_path)
 
@@ -86,8 +91,8 @@ def main():
         copy_image_from_path = os.path.join(args.document_folder, 'images', image_name)
         copy_image_to_path = os.path.join(uploaded_images_dir, image_name)
 
-        db_image = update_page_layout(db_session=db_session, db_document=db_document, page_layout=page_layout, image_id=image_id,
-                                      path=copy_image_to_path)
+        db_image = update_page_layout(db_session=db_session, db_document=db_document, page_layout=page_layout,
+                                      image_id=image_id, path=copy_image_to_path)
 
         if not os.path.exists(db_image.path):
             copyfile(copy_image_from_path, db_image.path)
