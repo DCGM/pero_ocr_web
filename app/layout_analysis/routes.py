@@ -14,9 +14,8 @@ import sys
 import sqlalchemy
 from app.db.model import DocumentState, TextRegion, LayoutDetector, Document
 from app.document.general import is_user_owner_or_collaborator, is_granted_acces_for_document, is_user_trusted, \
-                                 document_exists, get_document_images
+                                 document_exists, get_document_images, make_image_preview
 from app import db_session
-from app.db import Image
 from flask import jsonify
 import shutil
 
@@ -148,7 +147,7 @@ def edit_layout(image_id):
             db_region.order = region['order']
     try:
         db_session.commit()
-        make_image_result_preview(db_image)
+        make_image_preview(db_image)
     except sqlalchemy.exc.IntegrityError as err:
         print('ERROR: Unable to save text regions.', err, file=sys.stderr)
         db_session.rollback()
