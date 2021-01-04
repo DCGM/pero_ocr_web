@@ -229,7 +229,8 @@ def get_document_images(document):
     return document.images.filter_by(deleted=False)
 
 
-def get_page_layout(image, only_regions=False, only_annotated=False, alto=False, from_time: datetime.datetime=None):
+def get_page_layout(image, only_regions=False, only_annotated=False, alto=False, from_time: datetime.datetime=None,
+                    active_ignoring=False):
     page_layout = layout.PageLayout()
     page_layout.id = image.filename
     page_layout.page_size = (image.height, image.width)
@@ -252,11 +253,12 @@ def get_page_layout(image, only_regions=False, only_annotated=False, alto=False,
 
                 for text_line in text_lines:
                     if not text_line.deleted:
-                        region_layout.lines.append(layout.TextLine(id=str(text_line.id),
-                                                                   baseline=text_line.np_baseline,
-                                                                   polygon=text_line.np_points,
-                                                                   heights=text_line.np_heights,
-                                                                   transcription=text_line.text))
+                        if not active_ignoring or (active_ignoring and text_line.for_training):
+                            region_layout.lines.append(layout.TextLine(id=str(text_line.id),
+                                                                       baseline=text_line.np_baseline,
+                                                                       polygon=text_line.np_points,
+                                                                       heights=text_line.np_heights,
+                                                                       transcription=text_line.text))
     if alto:
         logits_path = os.path.join(current_app.config['OCR_RESULTS_FOLDER'], str(image.document.id), "{}.logits".format(image.id))
         page_layout.load_logits(logits_path)
