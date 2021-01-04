@@ -426,10 +426,12 @@ def get_sucpect_lines_ids(document_id, type, threshold=0.95):
         text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id == document_id, ~TextLine.annotations.any()).order_by(TextLine.score.asc())[:2000]
 
     lines_dict = {'document_id': document_id, 'lines': []}
-    lines_dict['lines'] += [{
-        'id': line.id,
-        'annotated': True if len(line.annotations) > 0 else False
-    } for line in text_lines]
+    for line in text_lines:
+        if not line.deleted:
+            lines_dict['lines'].append({
+            'id': line.id,
+            'annotated': True if len(line.annotations) > 0 else False
+        })
 
     return lines_dict
 
