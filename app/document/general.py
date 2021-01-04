@@ -1,4 +1,5 @@
 import cv2
+import copy
 import numpy as np
 import hashlib
 import sqlalchemy
@@ -17,6 +18,7 @@ import pero_ocr.document_ocr.layout as layout
 import unicodedata
 from werkzeug.urls import url_quote
 from pero_ocr.layout_engines.layout_helpers import baseline_to_textline
+from pero_ocr.document_ocr.arabic_helper import ArabicHelper
 
 
 def dhash(image, hash_size=8):
@@ -436,7 +438,34 @@ def get_line(line_id):
     text_line = TextLine.query.filter_by(id=line_id).first()
 
     line_dict = dict()
+
     line_dict['id'] = text_line.id
+    text = text_line.text if text_line.text is not None else ""
+
+    if len(text_line.annotations) > 0:
+        line_dict['annotated'] = True
+    else:
+        line_dict['annotated'] = False
+
+    arabic_helper = ArabicHelper()
+    arabic = False
+    if arabic_helper.is_arabic_line(text_line.text):
+        arabic = True
+        text_to_detect_ligatures = arabic_helper._reverse_transcription(copy.deepcopy(text))
+    else:
+        text_to_detect_ligatures = text
+
+    ligatures_mapping = []
+
+    for i, c in enumerate(text_to_detect_ligatures):
+        if unicodedata.combining(c) and i:
+            ligatures_mapping[-1].append(i)
+        else:
+            ligatures_mapping.append([i])
+
+    line_dict['arabic'] = arabic
+    line_dict['for_training'] = text_line.for_training
+    line_dict['ligatures_mapping'] = ligatures_mapping
     line_dict['np_confidences'] = text_line.np_confidences.tolist()
     line_dict['text'] = text_line.text if text_line.text is not None else ""
 

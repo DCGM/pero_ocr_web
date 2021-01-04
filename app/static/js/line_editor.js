@@ -66,7 +66,8 @@ class LineEditor {
 
     get_line(data){
         let line_json = data;
-        this.active_line = new TextLine(line_json['id'], line_json['text'], line_json['np_confidences']);
+        this.active_line = new TextLine(line_json['id'], line_json['annotated'], line_json['text'], line_json['np_confidences'],
+                                        line_json['ligatures_mapping'], line_json['arabic'], line_json['for_training']);
         while (this.text_container.firstChild) {
                 this.text_container.firstChild.remove();
         }
