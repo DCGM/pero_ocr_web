@@ -5,7 +5,7 @@ import sqlalchemy
 from sqlalchemy import and_
 from app.db.model import DocumentState
 from app.db.general import get_document_by_id, remove_document_by_id, save_document, save_image_to_document,\
-                           get_user_by_id, is_image_duplicate
+                           get_user_by_id, is_image_duplicate, get_user_documents
 import os
 from flask import current_app
 from flask import Response
@@ -484,11 +484,10 @@ def get_line_page_doc_address(line):
     return document_id, image_id
 
 
-def find_textlines(query, user_id):
-    document_ids = db_session.query(UserDocument.document_id)\
-                             .filter(UserDocument.user_id == user_id)\
-                             .all()
-    document_ids = list(np.array(document_ids).flatten())
+def find_textlines(query, user, document_ids):
+    if document_ids == []:
+        documents = get_user_documents(user)
+        document_ids = [document.id for document in documents]
 
     query_words = query.split(' ')
 

@@ -570,8 +570,25 @@ def get_line_info(line_id):
 def search_bar():
     query = ""
     lines = []
+    if is_user_trusted(current_user):
+       user_documents = get_all_documents()
+    else:
+       user_documents = get_user_documents(current_user)
+
+    selected = [False for _ in user_documents]
+
     if request.method == 'POST':
         query = request.form['query']
-        lines = find_textlines(query, current_user.id)
+        document_ids = request.form.getlist('documents')
+        user_document_ids = []
+        for i, document in enumerate(user_documents):
+            if document_ids != []:
+                if str(document.id) in document_ids:
+                    selected[i] = True
+                    user_document_ids.append(str(document.id))
+            else:
+                user_document_ids.append(str(document.id))
 
-    return render_template('document/search_lines.html', query=query, lines=lines)
+        lines = find_textlines(query, current_user, user_document_ids)
+
+    return render_template('document/search_lines.html', query=query, lines=lines, documents=enumerate(user_documents), selected=selected)
