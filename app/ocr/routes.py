@@ -40,6 +40,7 @@ from app.document.general import is_user_owner_or_collaborator, is_user_trusted,
 ########################################################################################################################
 
 @bp.route('/show_results/<string:document_id>', methods=['GET'])
+@bp.route('/show_results/<string:document_id>/<string:image_id>', methods=['GET'])
 @bp.route('/show_results/<string:document_id>/<string:image_id>/<string:line_id>', methods=['GET'])
 @login_required
 def show_results(document_id, image_id=None, line_id=None):

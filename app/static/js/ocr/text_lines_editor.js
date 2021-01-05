@@ -136,7 +136,6 @@ class TextLinesEditor
 
     async get_image(image_id)
     {
-        console.log(this.focus_to);
         this.abort_controller.abort();
         this.abort_controller = new AbortController();
         let abort_signal = this.abort_controller.signal;
@@ -291,6 +290,7 @@ class TextLinesEditor
         else {
             this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Unignore line';
         }
+        this.change_url(this.active_line.id);
     }
 
     line_focus_out()
@@ -363,6 +363,28 @@ class TextLinesEditor
     compute_scores(){
         let route_ = Flask.url_for('document.compute_scores', {'document_id': document.querySelector('#document-id').textContent});
         $.get(route_);
+    }
+
+    change_url(line_id){
+        let parsed_url = window.location.href.split('/').reverse();
+        let counter = 0;
+        for (let part of parsed_url) {
+            if (part == 'show_results') {
+                break;
+            } else {
+                counter += 1;
+            }
+        }
+        if (counter == 2){
+            let document_id = window.location.href.split('/').reverse()[1];
+            let image_id = window.location.href.split('/').reverse()[0];
+            window.history.replaceState({}, '','/ocr/show_results/'+document_id+'/'+image_id+'/'+line_id);
+        }
+        if (counter == 3){
+            let document_id = window.location.href.split('/').reverse()[2];
+            let image_id = window.location.href.split('/').reverse()[1];
+            window.history.replaceState({}, '','/ocr/show_results/'+document_id+'/'+image_id+'/'+line_id);
+        }
     }
 }
 
