@@ -29,7 +29,7 @@
 
         {%for line in lines%}
             <div class="card" style="margin-top: 10px;">
-              <a href="/ocr/show_results/{{ line.document_id }}/{{ line.image_id }}/{{ line.id }}" target="_blank"><img class="line_image card-img-top" src="..." alt="Textline"></a>
+              <a href="/ocr/show_results/{{ line.document_id }}/{{ line.image_id }}/{{ line.id }}" target="_blank"><img loading="lazy" class="line_image card-img-top" src="..." alt="Textline"></a>
               <div class="card-body">
                 <p class="card-text">{{ line.text }}</p>
               </div>
