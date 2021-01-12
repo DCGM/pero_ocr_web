@@ -48,6 +48,8 @@
                 <button id="next-btn" type="button" class="btn btn-secondary mb-2">Next (Ctrl+M)&nbsp;&nbsp;<i class="fas fa-arrow-right"></i></button>
                 <button id="skip-btn" type="button" class="btn btn-secondary mb-2">Skip (Ctrl+Q)</button>
                 <button id="save-next-btn" type="button" class="btn btn-success mb-2">Save and next (Ctrl+S)&nbsp;&nbsp;<i class="fas fa-arrow-right"></i></button>
+                <button type="button" id="deletebutton" class="btn btn-danger  mb-2"><i class="far fa-trash-alt"></i>&nbsp;&nbsp;Delete line (Alt+B)</button>
+                <button type="button" id="ignorebutton" class="btn btn-info  mb-2"><i class="fas fa-minus-circle"></i>&nbsp;&nbsp;Ignore line (Alt+N)</button>
             </div>
             <div class="col-xl-4">
                 <div style="width: fit-content;" class="float-right">
@@ -130,6 +132,12 @@
 
         document.onkeydown = function (e) {
             e = e || window.event;
+            if (e.keyCode == 66 && !e.ctrlKey && !e.shiftKey && e.altKey){// ALT + B
+                line_editor.delete_line();
+            }
+            if (e.keyCode == 78 && !e.ctrlKey && !e.shiftKey && e.altKey){// ALT + N
+                line_editor.ignore_line();
+            }
             if (!e.ctrlKey) return;
             var code = e.which || e.keyCode;
             switch (code) {

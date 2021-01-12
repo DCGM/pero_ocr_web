@@ -9,6 +9,7 @@ class LineEditor {
         this.annotated_in_session = [];
         this.image_index = 0;
         this.document_id = document_id;
+        this.deleted_lines = new Set();
 
         this.line_image = document.getElementById('line-img');
         this.line_image.setAttribute("src", "/static/img/loading.gif");
@@ -18,12 +19,16 @@ class LineEditor {
         this.skip_btn = document.getElementById('skip-btn');
         this.save_next_btn = document.getElementById('save-next-btn');
         this.go_to_line_btn = document.getElementById("go-to-line-btn");
+        this.delete_btn = document.getElementById("deletebutton");
+        this.ignore_btn = document.getElementById("ignorebutton");
         this.text_container = document.getElementById('text-container');
         this.back_btn.addEventListener('click', this.previous_line.bind(this));
         this.next_btn.addEventListener('click', this.next_line.bind(this));
         this.skip_btn.addEventListener('click', this.skip_line.bind(this));
         this.save_next_btn.addEventListener('click', this.save_next_line.bind(this));
         this.go_to_line_btn.addEventListener('click', this.go_to_line.bind(this));
+        this.delete_btn.addEventListener('click', this.delete_line.bind(this));
+        this.ignore_btn.addEventListener('click', this.ignore_line.bind(this));
 
         this.actual_line_container = document.getElementById('actual-line');
         this.lines_total_container = document.getElementById('lines-total');
@@ -34,9 +39,90 @@ class LineEditor {
         $("#line_options input[name='line_type']").click(this.change_mode.bind(this));
     }
 
-    line_focus(){
+    delete_line(){
+        if (this.active_line.valid){
+            this.active_line.valid = false;
+            this.deleted_lines.add(this.active_line.id);
+        }
+        else{
+            this.active_line.valid = true;
+            this.deleted_lines.delete(this.active_line.id);
+        }
 
+        this.active_line.mutate();
+
+        if (this.active_line.valid){
+            this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i>&nbsp;&nbsp;Delete line (Alt+B)';
+            this.delete_btn.className  = 'btn btn-danger  mb-2';
+        }
+        else{
+            this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i>&nbsp;&nbsp;Restore line (Alt+B)';
+            this.delete_btn.className  = 'btn btn-primary  mb-2';
+        }
+
+        let delete_flag;
+        if (this.active_line.valid){
+            delete_flag = 0;
+        }
+        else{
+            delete_flag = 1;
+        }
+
+        let text_lines_editor = this;
+        let route = Flask.url_for('ocr.delete_line', {'line_id': this.active_line.id, 'delete_flag': delete_flag});
+        $.ajax({
+            type: "POST",
+            url: route,
+            data: {'line_id': this.active_line.id, 'delete_flag': delete_flag},
+            dataType: "json",
+            error: function(xhr, ajaxOptions, ThrownError){
+                text_lines_editor.active_line.valid = ! text_lines_editor.active_line.valid;
+                text_lines_editor.active_line.mutate();
+                if (this.active_line.valid){
+                    this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i>&nbsp;&nbsp;Delete line (Alt+B)';
+                    this.delete_btn.className  = 'btn btn-danger  mb-2';
+                }
+                else{
+                    this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i>&nbsp;&nbsp;Restore line (Alt+B)';
+                    this.delete_btn.className  = 'btn btn-primary  mb-2';
+                }
+                alert('Unable to set delete flag. Check your remote connection.');
+            }
+        });
+        this.active_line.container.focus();
+    }
+
+    ignore_line(){
+        if (this.active_line != false){
+            this.active_line.for_training_checkbox.checked = ! this.active_line.for_training_checkbox.checked;
+            this.active_line.set_training_flag();
+        if (this.active_line.for_training_checkbox.checked){
+            this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i>&nbsp;&nbsp;Ignore line (Alt+N)';
+        }
+        else {
+            this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i>&nbsp;&nbsp;Unignore line (Alt+N)';
+        }
+            this.active_line.container.focus();
+        }
+    }
+
+    line_focus(){
         this.focused_line = true;
+        if (this.active_line.valid){
+            this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i>&nbsp;&nbsp;Delete line (Alt+B)';
+            this.delete_btn.className  = 'btn btn-danger  mb-2';
+        }
+        else{
+            this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i>&nbsp;&nbsp;Restore line (Alt+B)';
+            this.delete_btn.className  = 'btn btn-primary  mb-2';
+        }
+        if (this.active_line.for_training_checkbox.checked){
+            this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i>&nbsp;&nbsp;Ignore line (Alt+N)';
+        }
+        else {
+            this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i>&nbsp;&nbsp;Unignore line (Alt+N)';
+        }
+        this.active_line.container.focus();
     }
 
     line_focus_out(){
@@ -72,6 +158,7 @@ class LineEditor {
                 this.text_container.firstChild.remove();
         }
         this.line_image.setAttribute("src", Flask.url_for('document.get_cropped_image', {'line_id': this.active_line.id}));
+        this.text_container.appendChild(this.active_line.checkbox_span);
         this.text_container.appendChild(this.active_line.container);
         this.text_container.children[0].focus();
         this.line_focus();
@@ -80,6 +167,23 @@ class LineEditor {
         }
         this.text_container.children[0].addEventListener('focus', this.line_focus.bind(this));
         this.text_container.children[0].addEventListener('focusout', this.line_focus_out.bind(this));
+        this.active_line.checkbox_span.addEventListener('click', this.line_focus_from_checkbox.bind(this));
+        if (this.deleted_lines.has(this.active_line.id)){
+            this.active_line.valid = false;
+            this.active_line.mutate();
+            if (this.active_line.valid){
+                this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i>&nbsp;&nbsp;Delete line (Alt+B)';
+                this.delete_btn.className  = 'btn btn-danger  mb-2';
+            }
+            else{
+                this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i>&nbsp;&nbsp;Restore line (Alt+B)';
+                this.delete_btn.className  = 'btn btn-primary  mb-2';
+            }
+        }
+    }
+
+    line_focus_from_checkbox(){
+        this.line_focus();
     }
 
     previous_line() {
@@ -89,6 +193,7 @@ class LineEditor {
             this.line_image.setAttribute("src", "/static/img/loading.gif");
             let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
             $.get(route_, this.get_line.bind(this));
+            this.line_focus();
         }
     }
 
@@ -99,6 +204,7 @@ class LineEditor {
             this.line_image.setAttribute("src", "/static/img/loading.gif");
             let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
             $.get(route_, this.get_line.bind(this));
+            this.line_focus();
         }
     }
 
@@ -113,6 +219,7 @@ class LineEditor {
         this.line_image.setAttribute("src", "/static/img/loading.gif");
         let route_ = Flask.url_for('document.get_line_info', {'line_id': this.lines[this.image_index][0]});
         $.get(route_, this.get_line.bind(this));
+        this.line_focus();
     }
 
     skip_line() {
@@ -141,6 +248,7 @@ class LineEditor {
             this.lines_total_container.textContent = String(this.lines.length-1);
             this.image_index -= 1;
         }
+        this.line_focus();
     }
 
     save_next_line(save=true) {
@@ -160,6 +268,7 @@ class LineEditor {
             this.active_line.skip();
             this.annotated_in_session[this.image_index] = true;
         }
+        this.line_focus();
     }
 
     change_mode(){
@@ -178,6 +287,7 @@ class LineEditor {
             break;
         }
         $.get(route_, this.parse_lines.bind(this));
+        this.line_focus();
     }
 }
 

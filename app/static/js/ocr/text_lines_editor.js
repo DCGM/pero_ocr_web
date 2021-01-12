@@ -84,7 +84,6 @@ class TextLinesEditor
 
         let text_lines_editor = this;
         let route = Flask.url_for('ocr.delete_line', {'line_id': this.active_line.id, 'delete_flag': delete_flag});
-        $.post(route);
         $.ajax({
             type: "POST",
             url: route,
