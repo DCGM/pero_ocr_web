@@ -9,7 +9,7 @@ from app.document.general import create_document, check_and_remove_document, sav
     remove_image, get_document_images, get_page_layout, get_page_layout_text, update_confidences, is_user_trusted,\
     is_granted_acces_for_page, is_granted_acces_for_document, get_line_image_by_id, get_sucpect_lines_ids, \
     compute_scores_of_doc, skip_textline, get_line, is_granted_acces_for_line, create_string_response, \
-    update_baselines, make_image_preview
+    update_baselines, make_image_preview, find_textlines
 
 from werkzeug.exceptions import NotFound
 
@@ -26,6 +26,7 @@ import time
 import os
 import json
 import re
+
 
 @bp.route('/documents')
 @login_required
@@ -586,3 +587,30 @@ def get_line_info(line_id):
 
     return jsonify(lines)
 
+
+@bp.route('/search', methods=['GET', 'POST'])
+def search_bar():
+    query = ""
+    lines = []
+    if is_user_trusted(current_user):
+       user_documents = get_all_documents()
+    else:
+       user_documents = get_user_documents(current_user)
+
+    selected = [False for _ in user_documents]
+
+    if request.method == 'POST':
+        query = request.form['query']
+        document_ids = request.form.getlist('documents')
+        user_document_ids = []
+        for i, document in enumerate(user_documents):
+            if document_ids != []:
+                if str(document.id) in document_ids:
+                    selected[i] = True
+                    user_document_ids.append(str(document.id))
+            else:
+                user_document_ids.append(str(document.id))
+
+        lines = find_textlines(query, current_user, user_document_ids)
+
+    return render_template('document/search_lines.html', query=query, lines=lines, documents=enumerate(user_documents), selected=selected)

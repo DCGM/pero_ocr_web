@@ -18,6 +18,7 @@ class TextLinesEditor
         this.map_element = this.container.getElementsByClassName("editor-map")[0];
         this.active_line = false;
         this.focused_line = false;
+        this.focus_to = null;
         this.save_btn = document.getElementsByClassName('save-btn');
         this.delete_btn = document.getElementById('deletebutton');
         this.ignore_btn = document.getElementById('ignorebutton');
@@ -126,7 +127,7 @@ class TextLinesEditor
                 }
             }
         }
-        this.get_image(image_id)
+        this.get_image(image_id);
         this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
         this.delete_btn.className  = 'btn btn-danger';
         this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Ignore line';
@@ -187,6 +188,7 @@ class TextLinesEditor
         let i = 0;
         let debug_line_container = document.getElementById('debug-line-container');
         let debug_line_container_2 = document.getElementById('debug-line-container-2');
+        let focused = false;
         for (let l of data['lines'])
         {
             let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic, l.for_training,
@@ -195,13 +197,23 @@ class TextLinesEditor
             line.np_heights = l.np_heights;
             this.add_line_to_map(i, line);
             this.lines.push(line);
+            if (l.id == this.focus_to){
+                this.line_focus(line);
+                this.polygon_click(line);
+                focused = true;
+            }
             i += 1;
             if(i % 50 == 49){
                 await new Promise(resolve => setTimeout(resolve, 0));
                 if( abort_signal.aborted){return;}
             }
         }
-        this.map_element.focus();
+        if (this.focus_to != null){
+            this.focus_to = null;
+        }
+        else{
+            this.map_element.focus();
+        }
     }
 
     add_line_to_map(i, line)
@@ -277,6 +289,7 @@ class TextLinesEditor
         else {
             this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Unignore line';
         }
+        this.change_url(this.active_line.id);
     }
 
     line_focus_out()
@@ -349,6 +362,28 @@ class TextLinesEditor
     compute_scores(){
         let route_ = Flask.url_for('document.compute_scores', {'document_id': document.querySelector('#document-id').textContent});
         $.get(route_);
+    }
+
+    change_url(line_id){
+        let parsed_url = window.location.href.split('/').reverse();
+        let counter = 0;
+        for (let part of parsed_url) {
+            if (part == 'show_results') {
+                break;
+            } else {
+                counter += 1;
+            }
+        }
+        if (counter == 2){
+            let document_id = window.location.href.split('/').reverse()[1];
+            let image_id = window.location.href.split('/').reverse()[0];
+            window.history.replaceState({}, '','/ocr/show_results/'+document_id+'/'+image_id+'/'+line_id);
+        }
+        if (counter == 3){
+            let document_id = window.location.href.split('/').reverse()[2];
+            let image_id = window.location.href.split('/').reverse()[1];
+            window.history.replaceState({}, '','/ocr/show_results/'+document_id+'/'+image_id+'/'+line_id);
+        }
     }
 }
 

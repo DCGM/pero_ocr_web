@@ -1,0 +1,64 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+    <div class="container-fluid px-4">
+        <div class="row my-4">
+            <div class="col-sm-12">
+                <h3 class="text-left">Text line search</h3>
+                <div id="document-id" style="display: none"></div>
+            </div>
+        </div>
+
+        <form method="POST">
+            <label for="documents">Documents</label>
+            <div class="row" style="margin-left: 0px; margin-right: 0px; margin-bottom: 10px;">
+                <select id="documents" class="js-example-basic-single" name="documents" multiple="multiple" style="width:100%">
+                    {% for i, document in  documents %}
+                        <option {% if selected[i] == True %} selected {% endif %} value="{{ document.id }}">{{document.name}} ({{ document.id }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <label for="query">Query</label>
+            <div class="input-group">
+                <input id="query" type="text" class="form-control" name="query" placeholder="Query" value="{{ query }}">
+              <span class="input-group-btn">
+                <input class="btn btn-primary" type="submit" value="Search"/>
+              </span>
+            </div>
+        </form>
+
+        {%for line in lines%}
+            <div class="card" style="margin-top: 10px;">
+              <a href="/ocr/show_results/{{ line.document_id }}/{{ line.image_id }}/{{ line.id }}" target="_blank"><img loading="lazy" class="line_image card-img-top" src="..." alt="Textline"></a>
+              <div class="card-body">
+                <p class="card-text">{{ line.text }}</p>
+              </div>
+            </div>
+            <li style="display: none" class="line">{{ line.id }}</li>
+        {%endfor%}
+    </div>
+{% endblock %}
+
+{% block styles %}
+    <link rel="stylesheet" href="/static/leaflet/leaflet.css">
+    <link rel="stylesheet" href="/static/css/ocr_results.css">
+{% endblock %}
+
+{% block scripts %}
+    <script src="/static/leaflet/leaflet.js"></script>
+    <script src="/static/leaflet/Leaflet.Editable.js"></script>
+    <script src="/static/leaflet/Path.Drag.js"></script>
+    <script src="/static/js/search.js?version=1.4.2"></script>
+    <script>
+    let search_object = new SearchObject();
+    </script>
+    <link href="/static/select2/select2.min.css" rel="stylesheet" />
+    <script src="/static/select2/select2.min.js"></script>
+    <script>
+    $(document).ready(function() {
+      $('.js-example-basic-single').select2({
+        placeholder: 'Documents'
+      });
+    });
+    </script>
+{% endblock %}

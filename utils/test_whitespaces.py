@@ -47,7 +47,7 @@ if __name__ == '__main__':
                 if len(row.text) > 20 and len(set(row.text)) > 5:
                     string = ' '.join(row.text.split())
                     if (len(string) - string.count(' ')) < (string.count(' ') * 2) and string.count('.') < 4:
-                        print(row.text)
+                        #print(row.text)
                         bad_textlines.append(row)
                         bad_dictionary['textlines'].add(str(row.id))
 

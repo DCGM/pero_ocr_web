@@ -6,7 +6,7 @@ import sqlalchemy
 from sqlalchemy import and_
 from app.db.model import DocumentState
 from app.db.general import get_document_by_id, remove_document_by_id, save_document, save_image_to_document,\
-                           get_user_by_id, is_image_duplicate
+                           get_user_by_id, is_image_duplicate, get_user_documents
 import os
 from flask import current_app
 from flask import Response
@@ -509,3 +509,33 @@ def document_in_allowed_state(document_id, state):
         return True
     else:
         return False
+
+
+def get_line_page_doc_address(line):
+    document_id, image_id = db_session.query(Document.id, Image.id).join(Image).join(TextRegion)\
+                                                                   .filter(TextRegion.id == line.region_id).first()
+    return document_id, image_id
+
+
+def find_textlines(query, user, document_ids):
+    if document_ids == []:
+        documents = get_user_documents(user)
+        document_ids = [document.id for document in documents]
+
+    query_words = query.split(' ')
+
+    db_query = db_session.query(Document.id, Image.id, TextLine).filter(Document.id.in_(document_ids)) \
+                         .outerjoin(Image, Image.document_id == Document.id)\
+                         .outerjoin(TextRegion, TextRegion.image_id == Image.id)\
+                         .outerjoin(TextLine, TextLine.region_id == TextRegion.id)
+
+    for word in query_words:
+        db_query = db_query.filter(TextLine.text.like('%{}%' .format(word)))
+
+    text_lines = db_query.all()
+
+    lines = []
+    for line in text_lines:
+         lines.append({"id": line[2].id, "document_id": line[0], "image_id": line[1], "text": line[2].text})
+
+    return lines
