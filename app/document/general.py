@@ -511,18 +511,12 @@ def document_in_allowed_state(document_id, state):
         return False
 
 
-def get_line_page_doc_address(line):
-    document_id, image_id = db_session.query(Document.id, Image.id).join(Image).join(TextRegion)\
-                                                                   .filter(TextRegion.id == line.region_id).first()
-    return document_id, image_id
-
-
 def find_textlines(query, user, document_ids):
     if document_ids == []:
         documents = get_user_documents(user)
         document_ids = [document.id for document in documents]
 
-    query_words = query.split(' ')
+    query_words = query.split(' ')[:10]
 
     db_query = db_session.query(Document.id, Image.id, TextLine).filter(Document.id.in_(document_ids)) \
                          .outerjoin(Image, Image.document_id == Document.id)\
@@ -532,7 +526,7 @@ def find_textlines(query, user, document_ids):
     for word in query_words:
         db_query = db_query.filter(TextLine.text.like('%{}%' .format(word)))
 
-    text_lines = db_query.all()
+    text_lines = db_query.limit(200).all()
 
     lines = []
     for line in text_lines:

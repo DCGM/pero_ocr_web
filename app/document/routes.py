@@ -240,12 +240,7 @@ def get_page_xml_lines(image_id):
         flash(u'You do not have sufficient rights to download xml!', 'danger')
         return redirect(url_for('main.index'))
 
-    if request.headers.get('active_ignoring') is not None:
-        active_ignoring = True
-    else:
-        active_ignoring = False
-
-    page_layout = get_page_layout(db_image, only_regions=False, active_ignoring=active_ignoring)
+    page_layout = get_page_layout(db_image, only_regions=False)
     filename = "{}.xml".format(os.path.splitext(page_layout.id)[0])
     return create_string_response(filename, page_layout.to_pagexml_string(), minetype='text/xml')
 
@@ -271,13 +266,8 @@ def get_annotated_page_xml_lines(image_id, from_time=None):
         except:
             return 'ERROR: Could not parse from_time argument.', 400
 
-    if request.headers.get('active_ignoring') is not None:
-        active_ignoring = True
-    else:
-        active_ignoring = False
-
     page_layout = get_page_layout(db_image, only_regions=False, only_annotated=True, from_time=from_time,
-                                  active_ignoring=active_ignoring)
+                                  active_ignoring=True)
     filename = "{}.xml".format(os.path.splitext(page_layout.id)[0])
     return create_string_response(filename, page_layout.to_pagexml_string(), minetype='text/xml')
 
@@ -296,13 +286,7 @@ def get_alto_xml(image_id):
         flash(u'You do not have sufficient rights to download alto!', 'danger')
         return redirect(url_for('main.index'))
 
-    if request.headers.get('active_ignoring') is not None:
-        active_ignoring = True
-    else:
-        active_ignoring = False
-
-    page_layout = get_page_layout(db_image, only_regions=False, only_annotated=False, alto=True,
-                                  active_ignoring=active_ignoring)
+    page_layout = get_page_layout(db_image, only_regions=False, only_annotated=False, alto=True)
     filename = "{}.xml".format(os.path.splitext(page_layout.id)[0])
     return create_string_response(filename, page_layout.to_altoxml_string(page_uuid=image_id), minetype='text/xml')
 
@@ -321,12 +305,8 @@ def get_text(image_id):
         flash(u'You do not have sufficient rights to download text!', 'danger')
         return redirect(url_for('main.index'))
 
-    if request.headers.get('active_ignoring') is not None:
-        active_ignoring = True
-    else:
-        active_ignoring = False
 
-    page_layout = get_page_layout(db_image, only_regions=False, only_annotated=False, active_ignoring=active_ignoring)
+    page_layout = get_page_layout(db_image, only_regions=False, only_annotated=False)
     file_name = "{}.txt".format(os.path.splitext(page_layout.id)[0])
     return create_string_response(file_name, get_page_layout_text(page_layout), minetype='text/plain')
 
