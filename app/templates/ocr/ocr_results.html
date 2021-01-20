@@ -186,16 +186,14 @@
     <script src="/static/js/arabic_reshaper.js?version=1.4.20"></script>
     <script src="/static/js/ocr/ocr_export_buttons.js?version=1.4.2"></script>
     <script src="/static/js/ocr/text_line.js?version=1.4.21"></script>
-    <script src="/static/js/ocr/text_lines_editor.js?version=1.4.20"></script>
+    <script src="/static/js/ocr/text_lines_editor.js?version=1.4.21"></script>
     <script src="/static/js/ocr/keyboard.js?version=1.4.6"></script>
-    <script src="/static/js/image_list.js?version=1.4.7"></script>
-    <script src="/static/js/focuser.js?version=1.4.7"></script>
+    <script src="/static/js/image_list.js?version=1.4.8"></script>
     <script>
         let ocr_export_buttons = new OCRExportButtons();
         let text_lines_editor = new TextLinesEditor(document.getElementById('map-container'));
         let keyboard = new Keyboard(document.getElementById('keyboard'), text_lines_editor);
         let image_list = new ImageList([ocr_export_buttons, text_lines_editor]);
-        let focuser = new Focuser(image_list, text_lines_editor);
 
         document.querySelector('body').addEventListener('keydown', shortcut);
         function shortcut(e) {

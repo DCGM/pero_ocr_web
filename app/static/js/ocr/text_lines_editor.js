@@ -107,7 +107,7 @@ class TextLinesEditor
         this.active_line.container.focus();
     }
 
-    change_image(image_id)
+    change_image(image_id, change_url_callback, line_id)
     {
         if (typeof this.lines !== 'undefined')
         {
@@ -127,10 +127,12 @@ class TextLinesEditor
                 }
             }
         }
+        this.focus_to = line_id;
         this.get_image(image_id);
         this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
         this.delete_btn.className  = 'btn btn-danger';
         this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Ignore line';
+        this.change_url = change_url_callback;
     }
 
     async get_image(image_id)
@@ -349,7 +351,6 @@ class TextLinesEditor
 
     save_annotations()
     {
-        let annotations = [];
         for (let l of this.lines)
         {
             if (l.edited)
@@ -362,28 +363,6 @@ class TextLinesEditor
     compute_scores(){
         let route_ = Flask.url_for('document.compute_scores', {'document_id': document.querySelector('#document-id').textContent});
         $.get(route_);
-    }
-
-    change_url(line_id){
-        let parsed_url = window.location.href.split('/').reverse();
-        let counter = 0;
-        for (let part of parsed_url) {
-            if (part == 'show_results') {
-                break;
-            } else {
-                counter += 1;
-            }
-        }
-        if (counter == 2){
-            let document_id = window.location.href.split('/').reverse()[1];
-            let image_id = window.location.href.split('/').reverse()[0];
-            window.history.replaceState({}, '','/ocr/show_results/'+document_id+'/'+image_id+'/'+line_id);
-        }
-        if (counter == 3){
-            let document_id = window.location.href.split('/').reverse()[2];
-            let image_id = window.location.href.split('/').reverse()[1];
-            window.history.replaceState({}, '','/ocr/show_results/'+document_id+'/'+image_id+'/'+line_id);
-        }
     }
 }
 
