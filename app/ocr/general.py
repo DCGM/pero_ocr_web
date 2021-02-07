@@ -2,7 +2,8 @@ import os
 import numpy as np
 import shutil
 
-from app.db.model import RequestState, RequestType, Request, DocumentState, TextLine, Annotation, TextRegion
+from app.db.model import RequestState, RequestType, Request, DocumentState, TextLine, Annotation, TextRegion, Document
+from app.db.user import User
 from app.db.general import get_text_region_by_id, get_text_line_by_id
 from app import db_session
 from flask import jsonify
@@ -172,5 +173,8 @@ def add_ocr_request_and_change_document_state(request):
 
 
 def get_first_ocr_request():
-    return Request.query.filter_by(state=RequestState.PENDING, request_type=RequestType.OCR) \
-        .order_by(Request.created_date).first()
+    requests = Request.query.filter_by(state=RequestState.PENDING, request_type=RequestType.OCR) \
+        .order_by(Request.created_date)
+    if False:
+        requests = requests.join(Document).join(User).filter(User.trusted > 0)
+    return requests.first()

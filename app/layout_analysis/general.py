@@ -1,4 +1,5 @@
-from app.db.model import RequestState, RequestType, Request, DocumentState, TextRegion
+from app.db.model import RequestState, RequestType, Request, DocumentState, TextRegion, Document
+from app.db.user import User
 from app import db_session
 from flask import jsonify
 import numpy as np
@@ -68,8 +69,12 @@ def add_layout_request_and_change_document_state(request):
 
 
 def get_first_layout_request():
-    return Request.query.filter_by(state=RequestState.PENDING, request_type=RequestType.LAYOUT_ANALYSIS) \
-        .order_by(Request.created_date).first()
+    requests = Request.query.filter_by(state=RequestState.PENDING, request_type=RequestType.LAYOUT_ANALYSIS) \
+        .order_by(Request.created_date)
+    if False:
+        requests = requests.join(Document).join(User).filter(User.trusted > 0)
+
+    return requests.first()
 
 
 def change_layout_request_and_document_state(request, request_state, document_state):
