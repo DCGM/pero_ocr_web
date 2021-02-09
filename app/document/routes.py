@@ -486,11 +486,17 @@ def lines_check(document_id):
 @bp.route('/get_all_lines/<string:document_id>', methods=['GET'])
 @login_required
 def get_all_lines(document_id):
+    show_ignored_lines = request.headers.get('show-ignored-lines')
+    if show_ignored_lines == 'true':
+        show_ignored_lines = True
+    elif show_ignored_lines == 'false':
+        show_ignored_lines = False
+
     if not is_granted_acces_for_document(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
 
-    lines = get_sucpect_lines_ids(document_id, 'all')
+    lines = get_sucpect_lines_ids(document_id, 'all', show_ignored_lines)
 
     return jsonify(lines)
 
@@ -498,11 +504,17 @@ def get_all_lines(document_id):
 @bp.route('/get_annotated_lines/<string:document_id>', methods=['GET'])
 @login_required
 def get_annotated_lines(document_id):
+    show_ignored_lines = request.headers.get('show-ignored-lines')
+    if show_ignored_lines == 'true':
+        show_ignored_lines = True
+    elif show_ignored_lines == 'false':
+        show_ignored_lines = False
+
     if not is_granted_acces_for_document(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
 
-    lines = get_sucpect_lines_ids(document_id, 'annotated')
+    lines = get_sucpect_lines_ids(document_id, 'annotated', show_ignored_lines)
 
     return jsonify(lines)
 
@@ -510,11 +522,17 @@ def get_annotated_lines(document_id):
 @bp.route('/get_not_annotated_lines/<string:document_id>', methods=['GET'])
 @login_required
 def get_not_annotated_lines(document_id):
+    show_ignored_lines = request.headers.get('show-ignored-lines')
+    if show_ignored_lines == 'true':
+        show_ignored_lines = True
+    elif show_ignored_lines == 'false':
+        show_ignored_lines = False
+
     if not is_granted_acces_for_document(document_id, current_user):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
 
-    lines = get_sucpect_lines_ids(document_id, 'not_annotated')
+    lines = get_sucpect_lines_ids(document_id, 'not_annotated', show_ignored_lines)
 
     return jsonify(lines)
 

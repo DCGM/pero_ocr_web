@@ -22,6 +22,7 @@ class LineEditor {
         this.delete_btn = document.getElementById("deletebutton");
         this.ignore_btn = document.getElementById("ignorebutton");
         this.text_container = document.getElementById('text-container');
+        this.show_ignored_lines_btn = document.getElementById("show-ignored-lines-btn");
         this.back_btn.addEventListener('click', this.previous_line.bind(this));
         this.next_btn.addEventListener('click', this.next_line.bind(this));
         this.skip_btn.addEventListener('click', this.skip_line.bind(this));
@@ -29,14 +30,24 @@ class LineEditor {
         this.go_to_line_btn.addEventListener('click', this.go_to_line.bind(this));
         this.delete_btn.addEventListener('click', this.delete_line.bind(this));
         this.ignore_btn.addEventListener('click', this.ignore_line.bind(this));
+        this.show_ignored_lines_btn.addEventListener('change', this.ignored_lines_switch.bind(this));
 
         this.actual_line_container = document.getElementById('actual-line');
         this.lines_total_container = document.getElementById('lines-total');
 
+        $.ajaxSetup({
+           headers:{
+              'show-ignored-lines': this.show_ignored_lines_btn.checked
+           }
+        });
         let route_ = Flask.url_for('document.get_all_lines', {'document_id': this.document_id});
         $.get(route_, this.parse_lines.bind(this));
 
         $("#line_options input[name='line_type']").click(this.change_mode.bind(this));
+    }
+
+    ignored_lines_switch(){
+        this.change_mode();
     }
 
     delete_line(){
@@ -275,6 +286,13 @@ class LineEditor {
         this.mode = $('input:radio[name=line_type]:checked').val();
         this.image_index = 0;
         this.line_image.setAttribute("src", "/static/img/loading.gif");
+
+        $.ajaxSetup({
+           headers:{
+              'show-ignored-lines': this.show_ignored_lines_btn.checked
+           }
+        });
+
         switch(this.mode) {
           case 'all':
             var route_ = Flask.url_for('document.get_all_lines', {'document_id': this.document_id});
