@@ -509,8 +509,14 @@ class LayoutEditor{
     }
 
     reload_layout_preview(uuid){
-        document.querySelector('figure[data-image="'+ uuid +'"]').children[0].attributes['src'].nodeValue = Flask.url_for(
+        try {
+          document.querySelector('figure[data-image="'+ uuid +'"]').children[0].attributes['src'].nodeValue = Flask.url_for(
                 'document.get_image_preview', {'image_id': uuid}) + '?a=' + String(Math.random()).substr(2);
+        }
+        catch(err) {
+          document.querySelector('figure[data-image="'+ uuid +'"]').children[0].attributes['src'] = Flask.url_for(
+                'document.get_image_preview', {'image_id': uuid}) + '?a=' + String(Math.random()).substr(2);
+        }
     }
 
     save_image(){

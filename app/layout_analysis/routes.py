@@ -28,8 +28,9 @@ import shutil
 ########################################################################################################################
 
 @bp.route('/show_results/<string:document_id>', methods=['GET'])
+@bp.route('/show_results/<string:document_id>/<string:image_id>', methods=['GET'])
 @login_required
-def show_results(document_id):
+def show_results(document_id, image_id=None):
     if not document_exists(document_id):
         flash(u'Document with this id does not exist!', 'danger')
         return redirect(url_for('main.index'))

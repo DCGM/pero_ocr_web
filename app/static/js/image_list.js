@@ -13,7 +13,12 @@ class ImageList
 
         this.image_index = 1;
         if (this.image_id != null){
-            this.image_index = $("[data-image="+this.image_id+"]")[0].getAttribute('data-index');
+            try {
+                this.image_index = $("[data-image="+this.image_id+"]")[0].getAttribute('data-index');
+            }
+            catch(err) {
+
+            }
             window.localStorage.setItem('last_opened_page_'+this.document_id, this.image_index);
         }
         else{
@@ -111,11 +116,20 @@ class ImageList
         if (line_id != null){
             this.line_id = line_id;
         }
-        if (this.line_id == null){
-            window.history.replaceState({}, '','/ocr/show_results/'+this.document_id+'/'+this.image_id);
+
+        let results_type;
+        if (window.location.href.includes("ocr")){
+            results_type = 'ocr';
         }
         else{
-            window.history.replaceState({}, '','/ocr/show_results/'+this.document_id+'/'+this.image_id+'/'+this.line_id);
+            results_type = 'layout_analysis';
+        }
+
+        if (this.line_id == null){
+            window.history.replaceState({}, '','/'+results_type+'/show_results/'+this.document_id+'/'+this.image_id);
+        }
+        else{
+            window.history.replaceState({}, '','/'+results_type+'/show_results/'+this.document_id+'/'+this.image_id+'/'+this.line_id);
         }
     }
 
