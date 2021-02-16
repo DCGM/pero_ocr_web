@@ -92,7 +92,7 @@ class LineEditor {
             if (button) {
                 this.active_line.for_training_checkbox.checked = !this.active_line.for_training_checkbox.checked;
             }
-            
+
             let training_flag;
             if (this.active_line.for_training_checkbox.checked){training_flag = 1;}else{training_flag = 0;}
 
@@ -187,11 +187,12 @@ class LineEditor {
         this.text_container.children[0].focus();
         this.line_focus();
         if (this.annotated_in_session[this.image_index] || this.lines[this.image_index][1]){
-            this.active_line.set_background_to_annotated()
+            this.active_line.mutate();
         }
         this.text_container.children[0].addEventListener('focus', this.line_focus.bind(this));
         this.text_container.children[0].addEventListener('focusout', this.line_focus_out.bind(this));
-        this.active_line.for_training_checkbox.addEventListener('click', this.line_focus_from_checkbox.bind(this));
+        this.active_line.checkbox_span.addEventListener('click', this.line_focus_from_checkbox.bind(this));
+        this.active_line.for_training_checkbox.addEventListener('click', this.ignore_action_from_checkbox.bind(this));
         if (this.deleted_lines.has(this.active_line.id)){
             this.active_line.valid = false;
             this.active_line.mutate();
@@ -201,6 +202,10 @@ class LineEditor {
 
     line_focus_from_checkbox(){
         this.line_focus();
+    }
+
+    ignore_action_from_checkbox(line) {
+        this.line_focus_from_checkbox();
         this.ignore_line_btn_action();
     }
 

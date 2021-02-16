@@ -31,8 +31,8 @@ class TextLinesEditor
             btn.addEventListener('click', this.save_annotations.bind(this));
         }
         this.next_suspect_btn.addEventListener('click', this.show_next_line.bind(this));
-        this.delete_btn.addEventListener('click', this.delete_line.bind(this));
-        this.ignore_btn.addEventListener('click', this.ignore_line.bind(this));
+        this.delete_btn.addEventListener('click', this.delete_line_btn_action.bind(this));
+        this.ignore_btn.addEventListener('click', this.ignore_line_btn_action.bind(this), true);
         this.show_line_height.addEventListener('input', this.show_line_change.bind(this));
         this.show_bottom_pad.addEventListener('input', this.show_line_change.bind(this));
         this.text_container = document.getElementById('text-container');
@@ -42,30 +42,21 @@ class TextLinesEditor
         }
     }
 
-    ignore_line(){
-        if (this.active_line != false){
-            this.active_line.for_training_checkbox.checked = ! this.active_line.for_training_checkbox.checked;
-            this.active_line.set_training_flag();
-            if (this.active_line.for_training_checkbox.checked){
-                this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Ignore line';
-            }
-            else {
-                this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Unignore line';
-            }
+    swap_ignore_line_button_blueprint(){
+        if (this.active_line.for_training_checkbox.checked){
+            this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Ignore line';
+        }
+        else {
+            this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Unignore line';
+        }
+        try {
             this.active_line.container.focus();
+        }
+        catch(err) {
         }
     }
 
-    delete_line(){
-        if (this.active_line.valid){
-            this.active_line.valid = false;
-        }
-        else{
-            this.active_line.valid = true;
-        }
-
-        this.active_line.mutate();
-
+    swap_delete_line_button_blueprint(){
         if (this.active_line.valid){
             this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
             this.delete_btn.className  = 'btn btn-danger';
@@ -74,37 +65,77 @@ class TextLinesEditor
             this.delete_btn.innerHTML  = '<i class="fas fa-undo"></i> Restore line';
             this.delete_btn.className  = 'btn btn-primary';
         }
-
-        let delete_flag;
-        if (this.active_line.valid){
-            delete_flag = 0;
+        try {
+            this.active_line.container.focus();
         }
-        else{
-            delete_flag = 1;
+        catch(err) {
         }
+    }
 
-        let text_lines_editor = this;
-        let route = Flask.url_for('ocr.delete_line', {'line_id': this.active_line.id, 'delete_flag': delete_flag});
-        $.ajax({
-            type: "POST",
-            url: route,
-            data: {'line_id': this.active_line.id, 'delete_flag': delete_flag},
-            dataType: "json",
-            error: function(xhr, ajaxOptions, ThrownError){
-                text_lines_editor.active_line.valid = ! text_lines_editor.active_line.valid;
-                text_lines_editor.active_line.mutate();
-                if (text_lines_editor.active_line.valid){
-                    text_lines_editor.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
-                    text_lines_editor.delete_btn.className  = 'btn btn-danger';
-                }
-                else{
-                    text_lines_editor.delete_btn.innerHTML  = '<i class="fas fa-undo"></i> Restore line';
-                    text_lines_editor.delete_btn.className  = 'btn btn-primary';
-                }
-                alert('Unable to set delete flag. Check your remote connection.');
+    ignore_line_btn_action(button=false){
+        if (this.active_line != false){
+            if (button) {
+                this.active_line.for_training_checkbox.checked = !this.active_line.for_training_checkbox.checked;
             }
-        });
-        this.active_line.container.focus();
+
+            let training_flag;
+            if (this.active_line.for_training_checkbox.checked){training_flag = 1;}else{training_flag = 0;}
+
+            let text_lines_editor = this;
+            let route = Flask.url_for('ocr.training_line', {'line_id': this.active_line.id, 'training_flag': training_flag});
+            this.ignore_btn.disabled = true;
+            this.active_line.for_training_checkbox.disabled = true;
+            $.ajax({
+                type: "POST",
+                url: route,
+                data: {'line_id': this.active_line.id, 'training_flag': training_flag},
+                dataType: "json",
+                error: function(xhr, ajaxOptions, ThrownError){
+                    text_lines_editor.active_line.for_training_checkbox.checked = ! text_lines_editor.active_line.for_training_checkbox.checked;
+                    text_lines_editor.swap_ignore_line_button_blueprint();
+                    text_lines_editor.ignore_btn.disabled = false;
+                    text_lines_editor.active_line.for_training_checkbox.disabled = false;
+                    alert('Unable to set training flag. Check your remote connection.');
+                },
+                success: function(xhr, ajaxOptions) {
+                    text_lines_editor.swap_ignore_line_button_blueprint();
+                    text_lines_editor.ignore_btn.disabled = false;
+                    text_lines_editor.active_line.for_training_checkbox.disabled = false;
+                }
+            });
+        }
+    }
+
+    delete_line_btn_action(){
+        if (this.active_line != false){
+            this.active_line.valid = !this.active_line.valid;
+
+            let delete_flag;
+            if (this.active_line.valid){delete_flag = 0;}else{delete_flag = 1;}
+
+            let text_lines_editor = this;
+            let route = Flask.url_for('ocr.delete_line', {'line_id': this.active_line.id, 'delete_flag': delete_flag});
+            this.delete_btn.disabled = true;
+            $.ajax({
+                type: "POST",
+                url: route,
+                data: {'line_id': this.active_line.id, 'delete_flag': delete_flag},
+                dataType: "json",
+                error: function(xhr, ajaxOptions, ThrownError){
+                    text_lines_editor.active_line.valid = !text_lines_editor.active_line.valid;
+                    text_lines_editor.active_line.mutate();
+                    text_lines_editor.swap_delete_line_button_blueprint();
+                    text_lines_editor.delete_btn.disabled = false;
+                    alert('Unable to set delete flag. Check your remote connection.');
+                },
+                success: function(xhr, ajaxOptions) {
+                    text_lines_editor.active_line.mutate();
+                    text_lines_editor.swap_delete_line_button_blueprint();
+                    text_lines_editor.delete_btn.disabled = false;
+                }
+            });
+            this.active_line.container.focus();
+        }
     }
 
     change_image(image_id, change_url_callback, line_id)
@@ -129,8 +160,7 @@ class TextLinesEditor
         }
         this.focus_to = line_id;
         this.get_image(image_id);
-        this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
-        this.delete_btn.className  = 'btn btn-danger';
+        this.swap_delete_line_button_blueprint();
         this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Ignore line';
         this.change_url = change_url_callback;
     }
@@ -238,6 +268,7 @@ class TextLinesEditor
         line.container.addEventListener('focusout', this.line_focus_out.bind(this));
 
         line.checkbox_span.addEventListener('click', this.line_focus_from_checkbox.bind(this, line));
+        line.for_training_checkbox.addEventListener('click', this.ignore_action_from_checkbox.bind(this, line));
 
         this.text_container.appendChild(line.checkbox_span);
         this.text_container.appendChild(line.container);
@@ -246,6 +277,11 @@ class TextLinesEditor
     line_focus_from_checkbox(line) {
         this.line_focus(line);
         line.container.focus();
+    }
+
+    ignore_action_from_checkbox(line) {
+        this.line_focus_from_checkbox(line);
+        this.ignore_line_btn_action();
     }
 
     press_text_container(e)
@@ -277,20 +313,9 @@ class TextLinesEditor
         this.active_line = line;
         line.polygon.setStyle({ color: "#028700", opacity: 1, fillColor: "#028700", fillOpacity: 0.1, weight: 2});
 
-        if (this.active_line.valid){
-            this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
-            this.delete_btn.className  = 'btn btn-danger';
-        }
-        else{
-            this.delete_btn.innerHTML  = '<i class="fas fa-undo"></i> Restore line';
-            this.delete_btn.className  = 'btn btn-primary';
-        }
-        if (this.active_line.for_training_checkbox.checked){
-            this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Ignore line';
-        }
-        else {
-            this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Unignore line';
-        }
+        this.swap_delete_line_button_blueprint();
+        this.swap_ignore_line_button_blueprint();
+
         this.change_url(this.active_line.id);
     }
 
