@@ -4,10 +4,21 @@
     <div class="container-fluid px-4">
         <div class="row my-4">
             <div class="col-sm-12">
-                <h3 class="text-left">{{ document.name }} - OCR Results</h3>
-                <div id="document-id" style="display: none">{{ document.id }}</div>
+                <h3 class="text-left">Line check</h3>
             </div>
         </div>
+        <form method="POST">
+            <div class="d-flex flex-row" style="margin-left: 0px; margin-right: 0px; margin-bottom: 10px;">
+                <select id="documents" class="js-example-basic-single form-group" name="documents" multiple="multiple" style="width:100%">
+                    {% for i, document in  documents %}
+                        <option {% if selected[i] == True %} selected {% endif %} value="{{ document.id }}" id="{{ document.id }}">{{document.name}} ({{ document.id }})</option>
+                    {% endfor %}
+                </select>
+                <span class="input-group-btn">
+                    <input class="btn btn-primary" type="submit" style="height: 100%; margin-left: 15px;" value="Get"/>
+                </span>
+            </div>
+        </form>
             <div class="col-xl-4" style="padding-left: 0px;">
                 <div class="card text-right" style="width: fit-content;">
                     <div class="card-body" style="padding-top: 6px; padding-bottom: 6px;">
@@ -113,11 +124,21 @@
     <script src="/static/leaflet/Leaflet.Editable.js"></script>
     <script src="/static/leaflet/Path.Drag.js"></script>
     <script src="/static/js/ocr/keyboard.js?version=1.4.3"></script>
-    <script src="/static/js/line_editor.js?version=1.4.22"></script>
-    <script src="/static/js/ocr/text_line.js?version=1.4.22"></script>
+    <script src="/static/js/line_editor.js?version=1.4.23"></script>
+    <script src="/static/js/ocr/text_line.js?version=1.4.23"></script>
+    <link href="/static/select2/select2.min.css" rel="stylesheet" />
+    <script src="/static/select2/select2.min.js"></script>
     <script>
-        let document_id = document.getElementById('document-id').textContent;
-        let line_editor = new LineEditor(document_id);
+        $(document).ready(function() {
+          $('.js-example-basic-single').select2({
+            placeholder: 'Documents'
+          });
+        });
+
+        let options = $('.js-example-basic-single');
+        let documents = $.map(options, e => $(e).val());
+
+        let line_editor = new LineEditor(documents);
         let keyboard = new Keyboard(document.getElementById('keyboard'), line_editor);
 
         function save_next_line(event) {

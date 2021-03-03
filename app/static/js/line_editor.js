@@ -1,14 +1,13 @@
 
 
 class LineEditor {
-    constructor(document_id) {
+    constructor(document_ids) {
         this.mode = 'all';
         this.focused_line = false;
         this.active_line = null;
         this.lines = [];
         this.annotated_in_session = [];
         this.image_index = 0;
-        this.document_id = document_id;
         this.deleted_lines = new Set();
 
         this.line_image = document.getElementById('line-img');
@@ -37,10 +36,12 @@ class LineEditor {
 
         $.ajaxSetup({
            headers:{
-              'show-ignored-lines': this.show_ignored_lines_btn.checked
+              'show-ignored-lines': this.show_ignored_lines_btn.checked,
+              'documents': JSON.stringify(document_ids)
            }
         });
-        let route_ = Flask.url_for('document.get_all_lines', {'document_id': this.document_id});
+        let route_ = Flask.url_for('document.get_all_lines');
+        console.log(route_, JSON.stringify(document_ids));
         $.get(route_, this.parse_lines.bind(this));
 
         $("#line_options input[name='line_type']").click(this.change_mode.bind(this));
@@ -299,21 +300,25 @@ class LineEditor {
         this.image_index = 0;
         this.line_image.setAttribute("src", "/static/img/loading.gif");
 
+        let options = $('.js-example-basic-single');
+        let document_ids = $.map(options, e => $(e).val());
+
         $.ajaxSetup({
            headers:{
-              'show-ignored-lines': this.show_ignored_lines_btn.checked
+              'show-ignored-lines': this.show_ignored_lines_btn.checked,
+              'documents': JSON.stringify(document_ids)
            }
         });
 
         switch(this.mode) {
           case 'all':
-            var route_ = Flask.url_for('document.get_all_lines', {'document_id': this.document_id});
+            var route_ = Flask.url_for('document.get_all_lines');
             break;
           case 'annotated':
-            var route_ = Flask.url_for('document.get_annotated_lines', {'document_id': this.document_id});
+            var route_ = Flask.url_for('document.get_annotated_lines');
             break;
           case 'not_annotated':
-            var route_ = Flask.url_for('document.get_not_annotated_lines', {'document_id': this.document_id});
+            var route_ = Flask.url_for('document.get_not_annotated_lines');
             break;
         }
         $.get(route_, this.parse_lines.bind(this));

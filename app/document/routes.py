@@ -9,7 +9,7 @@ from app.document.general import create_document, check_and_remove_document, sav
     remove_image, get_document_images, get_page_layout, get_page_layout_text, update_confidences, is_user_trusted,\
     is_granted_acces_for_page, is_granted_acces_for_document, get_line_image_by_id, get_sucpect_lines_ids, \
     compute_scores_of_doc, skip_textline, get_line, is_granted_acces_for_line, create_string_response, \
-    update_baselines, make_image_preview, find_textlines
+    update_baselines, make_image_preview, find_textlines, get_documents_with_granted_acces
 
 from werkzeug.exceptions import NotFound
 
@@ -471,68 +471,80 @@ def update_all_baselines():
     return redirect(url_for('document.documents'))
 
 
-@bp.route('/lines_check/<string:document_id>', methods=['GET'])
+@bp.route('/lines_check', methods=['GET', 'POST'])
+@bp.route('/lines_check/<string:document_id>', methods=['GET',  'POST'])
 @login_required
-def lines_check(document_id):
-    if not is_granted_acces_for_document(document_id, current_user):
-        flash(u'You do not have sufficient rights to this document!', 'danger')
-        return redirect(url_for('main.index'))
+def lines_check(document_id=None):
+    if is_user_trusted(current_user):
+       user_documents = get_all_documents()
+    else:
+       user_documents = get_user_documents(current_user)
 
-    document = get_document_by_id(document_id)
+    selected = [False for _ in user_documents]
 
-    return render_template('document/lines_check.html', document=document)
+    if document_id is not None:
+        for i, document in enumerate(user_documents):
+            if document_id == str(document.id):
+                selected[i] = True
+
+    if request.method == 'POST':
+        selected = [False for _ in user_documents]
+        document_ids = request.form.getlist('documents')
+        for i, document in enumerate(user_documents):
+            if document_ids != []:
+                if str(document.id) in document_ids:
+                    selected[i] = True
+
+    return render_template('document/lines_check.html', documents=enumerate(user_documents), selected=selected)
 
 
-@bp.route('/get_all_lines/<string:document_id>', methods=['GET'])
+@bp.route('/get_all_lines', methods=['GET'])
 @login_required
-def get_all_lines(document_id):
+def get_all_lines():
     show_ignored_lines = request.headers.get('show-ignored-lines')
+    document_ids = json.loads(request.headers.get('documents'))
+    document_ids = get_documents_with_granted_acces(document_ids, current_user)
+
     if show_ignored_lines == 'true':
         show_ignored_lines = True
     elif show_ignored_lines == 'false':
         show_ignored_lines = False
 
-    if not is_granted_acces_for_document(document_id, current_user):
-        flash(u'You do not have sufficient rights to this document!', 'danger')
-        return redirect(url_for('main.index'))
-
-    lines = get_sucpect_lines_ids(document_id, 'all', show_ignored_lines)
+    lines = get_sucpect_lines_ids(document_ids, 'all', show_ignored_lines)
 
     return jsonify(lines)
 
 
-@bp.route('/get_annotated_lines/<string:document_id>', methods=['GET'])
+@bp.route('/get_annotated_lines', methods=['GET'])
 @login_required
-def get_annotated_lines(document_id):
+def get_annotated_lines():
     show_ignored_lines = request.headers.get('show-ignored-lines')
+    document_ids = json.loads(request.headers.get('documents'))
+    document_ids = get_documents_with_granted_acces(document_ids, current_user)
+
     if show_ignored_lines == 'true':
         show_ignored_lines = True
     elif show_ignored_lines == 'false':
         show_ignored_lines = False
 
-    if not is_granted_acces_for_document(document_id, current_user):
-        flash(u'You do not have sufficient rights to this document!', 'danger')
-        return redirect(url_for('main.index'))
-
-    lines = get_sucpect_lines_ids(document_id, 'annotated', show_ignored_lines)
+    lines = get_sucpect_lines_ids(document_ids, 'annotated', show_ignored_lines)
 
     return jsonify(lines)
 
 
-@bp.route('/get_not_annotated_lines/<string:document_id>', methods=['GET'])
+@bp.route('/get_not_annotated_lines', methods=['GET'])
 @login_required
-def get_not_annotated_lines(document_id):
+def get_not_annotated_lines():
     show_ignored_lines = request.headers.get('show-ignored-lines')
+    document_ids = json.loads(request.headers.get('documents'))
+    document_ids = get_documents_with_granted_acces(document_ids, current_user)
+
     if show_ignored_lines == 'true':
         show_ignored_lines = True
     elif show_ignored_lines == 'false':
         show_ignored_lines = False
 
-    if not is_granted_acces_for_document(document_id, current_user):
-        flash(u'You do not have sufficient rights to this document!', 'danger')
-        return redirect(url_for('main.index'))
-
-    lines = get_sucpect_lines_ids(document_id, 'not_annotated', show_ignored_lines)
+    lines = get_sucpect_lines_ids(document_ids, 'not_annotated', show_ignored_lines)
 
     return jsonify(lines)
 
