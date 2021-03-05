@@ -419,15 +419,15 @@ def is_score_computed(document_id):
         return False
 
 
-def get_sucpect_lines_ids(document_id, type, show_ignored_lines, threshold=0.95):
+def get_sucpect_lines_ids(document_ids, type, show_ignored_lines, threshold=0.95):
     if type == "all":
-        text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id == document_id).filter(TextLine.for_training == show_ignored_lines).order_by(TextLine.score.asc())[:2000]
+        text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id.in_(document_ids)).filter(TextLine.for_training != show_ignored_lines).order_by(TextLine.score.asc())[:2000]
     elif type == "annotated":
-        text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id == document_id, TextLine.annotations.any()).filter(TextLine.for_training == show_ignored_lines).order_by(TextLine.score.asc())[:2000]
+        text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id.in_(document_ids), TextLine.annotations.any()).filter(TextLine.for_training != show_ignored_lines).order_by(TextLine.score.asc())[:2000]
     elif type == "not_annotated":
-        text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id == document_id, ~TextLine.annotations.any()).filter(TextLine.for_training == show_ignored_lines).order_by(TextLine.score.asc())[:2000]
+        text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id.in_(document_ids), ~TextLine.annotations.any()).filter(TextLine.for_training != show_ignored_lines).order_by(TextLine.score.asc())[:2000]
 
-    lines_dict = {'document_id': document_id, 'lines': []}
+    lines_dict = {'document_ids': document_ids, 'lines': []}
     for line in text_lines:
         if not line.deleted:
             lines_dict['lines'].append({
@@ -533,3 +533,12 @@ def find_textlines(query, user, document_ids):
          lines.append({"id": line[2].id, "document_id": line[0], "image_id": line[1], "text": line[2].text})
 
     return lines
+
+
+def get_documents_with_granted_acces(document_ids, user):
+    granted_acces = []
+    for document_id in document_ids:
+        if is_granted_acces_for_document(document_id, user):
+            granted_acces.append(document_id)
+
+    return granted_acces

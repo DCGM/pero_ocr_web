@@ -73,30 +73,6 @@ class TextLine
 
         this.checkbox_span.appendChild(this.for_training_checkbox);
         this.checkbox_span.setAttribute("tabindex", "-1");
-
-        this.for_training_checkbox.addEventListener('change', this.set_training_flag.bind(this));
-    }
-
-    set_training_flag(){
-        let training_flag;
-        if (this.for_training_checkbox.checked){
-            training_flag = 1;
-        }
-        else{
-            training_flag = 0;
-        }
-        let this_text_line = this;
-        let route = Flask.url_for('ocr.training_line', {'line_id': this.id, 'training_flag': training_flag});
-        $.ajax({
-            type: "POST",
-            url: route,
-            data: {'line_id': this.id, 'training_flag': training_flag},
-            dataType: "json",
-            error: function(xhr, ajaxOptions, ThrownError){
-                this_text_line.for_training_checkbox.checked = ! this_text_line.for_training_checkbox.checked;
-                alert('Unable to set training flag. Check your remote connection.');
-            }
-        });
     }
 
     set_line_confidences_to_text_line_element(text_to_show, confidences_to_show)
