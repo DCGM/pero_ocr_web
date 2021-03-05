@@ -421,11 +421,11 @@ def is_score_computed(document_id):
 
 def get_sucpect_lines_ids(document_ids, type, show_ignored_lines, threshold=0.95):
     if type == "all":
-        text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id.in_(document_ids)).filter(TextLine.for_training == show_ignored_lines).order_by(TextLine.score.asc())[:2000]
+        text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id.in_(document_ids)).filter(TextLine.for_training != show_ignored_lines).order_by(TextLine.score.asc())[:2000]
     elif type == "annotated":
-        text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id.in_(document_ids), TextLine.annotations.any()).filter(TextLine.for_training == show_ignored_lines).order_by(TextLine.score.asc())[:2000]
+        text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id.in_(document_ids), TextLine.annotations.any()).filter(TextLine.for_training != show_ignored_lines).order_by(TextLine.score.asc())[:2000]
     elif type == "not_annotated":
-        text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id.in_(document_ids), ~TextLine.annotations.any()).filter(TextLine.for_training == show_ignored_lines).order_by(TextLine.score.asc())[:2000]
+        text_lines = TextLine.query.join(TextRegion).join(Image).filter(Image.document_id.in_(document_ids), ~TextLine.annotations.any()).filter(TextLine.for_training != show_ignored_lines).order_by(TextLine.score.asc())[:2000]
 
     lines_dict = {'document_ids': document_ids, 'lines': []}
     for line in text_lines:
