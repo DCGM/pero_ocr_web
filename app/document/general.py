@@ -254,11 +254,15 @@ def get_page_layout(image, only_regions=False, only_annotated=False, alto=False,
                 for text_line in text_lines:
                     if not text_line.deleted:
                         if not active_ignoring or (active_ignoring and text_line.for_training):
+                            transcription_confidence = None
+                            if text_line.np_confidences != []:
+                                transcription_confidence = np.quantile(text_line.np_confidences, .50)
                             region_layout.lines.append(layout.TextLine(id=str(text_line.id),
                                                                        baseline=text_line.np_baseline,
                                                                        polygon=text_line.np_points,
                                                                        heights=text_line.np_heights,
-                                                                       transcription=text_line.text))
+                                                                       transcription=text_line.text,
+                                                                       transcription_confidence=transcription_confidence))
     if alto:
         logits_path = os.path.join(current_app.config['OCR_RESULTS_FOLDER'], str(image.document.id), "{}.logits".format(image.id))
         page_layout.load_logits(logits_path)
