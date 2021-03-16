@@ -124,8 +124,6 @@ def edit_layout(image_id):
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
-        pass
-    if db_image is None:
         return "Image does not exist.", 404
     
     document_id = db_image.document_id
@@ -169,7 +167,10 @@ def post_result(image_id):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights!', 'danger')
         return redirect(url_for('main.index'))
-    image = get_image_by_id(image_id)
+    try:
+        image = get_image_by_id(image_id)
+    except sqlalchemy.exc.StatementError:
+        return "Image does not exist.", 404
     if image.document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
         print()
         print("INSERT REGIONS FROM XMLS TO DB")
@@ -211,8 +212,6 @@ def get_image_result(image_id):
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
-        pass
-    if db_image is None:
         return "Image does not exist.", 404
 
     document_id = db_image.document_id

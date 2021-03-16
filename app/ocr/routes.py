@@ -217,8 +217,6 @@ def get_image_annotation_statistics(image_id):
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
-        pass
-    if db_image is None:
         return "Image does not exist.", 404
 
     if not is_granted_acces_for_page(image_id, current_user):
@@ -236,8 +234,6 @@ def get_lines(image_id):
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
-        pass
-    if db_image is None:
         return "Image does not exist.", 404
 
     if not is_granted_acces_for_page(image_id, current_user):
@@ -392,8 +388,6 @@ def post_result(image_id):
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
-        pass
-    if db_image is None:
         return "Image does not exist.", 404
 
     if db_image.document.state != DocumentState.COMPLETED_OCR:

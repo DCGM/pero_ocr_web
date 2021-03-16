@@ -180,9 +180,6 @@ def get_image_preview(image_id=None):
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
-        pass
-
-    if db_image is None:
         return "Image does not exist.", 404
 
     document_id = db_image.document_id
@@ -204,7 +201,7 @@ def get_document_image_ids(document_id):
         return redirect(url_for('main.index'))
 
     document = get_document_by_id(document_id)
-    return jsonify([str(x.id) for x in document.images])
+    return jsonify([str(x.id) for x in document.images if not x.deleted])
 
 
 @bp.route('/get_page_xml_regions/<string:image_id>')
@@ -213,8 +210,6 @@ def get_page_xml_regions(image_id):
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
-        pass
-    if db_image is None:
         return "Image does not exist.", 404
 
     if not is_granted_acces_for_page(image_id, current_user):
@@ -232,8 +227,6 @@ def get_page_xml_lines(image_id):
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
-        pass
-    if db_image is None:
         return "Image does not exist.", 404
 
     if not is_granted_acces_for_page(image_id, current_user):
@@ -252,8 +245,6 @@ def get_annotated_page_xml_lines(image_id, from_time=None):
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
-        pass
-    if db_image is None:
         return "Image does not exist.", 404
 
     if not is_granted_acces_for_page(image_id, current_user):
@@ -278,8 +269,6 @@ def get_alto_xml(image_id):
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
-        pass
-    if db_image is None:
         return "Image does not exist.", 404
 
     if not is_granted_acces_for_page(image_id, current_user):
@@ -297,8 +286,6 @@ def get_text(image_id):
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
-        pass
-    if db_image is None:
         return "Image does not exist.", 404
 
     if not is_granted_acces_for_page(image_id, current_user):
@@ -317,8 +304,6 @@ def get_image(image_id):
     try:
         image_db = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
-        pass
-    if image_db is None:
         return "Image does not exist.", 404
 
     if not is_granted_acces_for_page(image_id, current_user):
@@ -327,6 +312,7 @@ def get_image(image_id):
 
     image_path = os.path.join(current_app.config['UPLOADED_IMAGES_FOLDER'], str(image_db.document_id), image_db.path)
     if not os.path.isfile(image_path):
+        print('ERRPR: Could not find image on disk', image_id, image_path)
         raise NotFound()
 
     return send_file(image_path, as_attachment=True, attachment_filename=image_db.filename)
@@ -343,7 +329,7 @@ def get_document_pages(document_id):
     with zipfile.ZipFile(memory_file, 'w') as zf:
         document = get_document_by_id(document_id)
         for image in document.images:
-            page_layout = get_page_layout(get_image_by_id(str(image.id)), only_regions=False, only_annotated=False)
+            page_layout = get_page_layout(image, only_regions=False, only_annotated=False)
             page_string = page_layout.to_pagexml_string()
             text_string = get_page_layout_text(page_layout)
             d_page = zipfile.ZipInfo("{}.xml".format(os.path.splitext(page_layout.id)[0]))
@@ -370,7 +356,7 @@ def get_document_annotated_pages(document_id):
     with zipfile.ZipFile(memory_file, 'w') as zf:
         document = get_document_by_id(document_id)
         for image in document.images:
-            page_layout = get_page_layout(get_image_by_id(str(image.id)), only_regions=False, only_annotated=True)
+            page_layout = get_page_layout(image, only_regions=False, only_annotated=True)
             xml_string = page_layout.to_pagexml_string()
             d_XML = zipfile.ZipInfo("{}.xml".format(os.path.splitext(page_layout.id)[0]))
             d_XML.date_time = time.localtime(time.time())[:6]
@@ -386,8 +372,6 @@ def remove_image_get(document_id, image_id):
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
-        pass
-    if db_image is None:
         return "Image does not exist.", 404
 
     if not is_user_owner_or_collaborator(document_id, current_user):

@@ -84,7 +84,7 @@ def get_request_by_id(request_id):
 
 
 def get_image_by_id(image_id):
-    return Image.query.filter_by(id=image_id, deleted=False).first()
+    return Image.query.filter_by(id=image_id, deleted=False).one()
 
 
 def get_text_region_by_id(id):

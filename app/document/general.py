@@ -4,6 +4,7 @@ import numpy as np
 import hashlib
 import sqlalchemy
 from sqlalchemy import and_
+from sqlalchemy.orm import joinedload, contains_eager
 from app.db.model import DocumentState
 from app.db.general import get_document_by_id, remove_document_by_id, save_document, save_image_to_document,\
                            get_user_by_id, is_image_duplicate, get_user_documents
@@ -229,29 +230,32 @@ def get_document_images(document):
     return document.images.filter_by(deleted=False)
 
 
-def get_page_layout(image, only_regions=False, only_annotated=False, alto=False, from_time: datetime.datetime=None,
+def get_page_layout(db_image, only_regions=False, only_annotated=False, alto=False, from_time: datetime.datetime=None,
                     active_ignoring=False):
     page_layout = layout.PageLayout()
-    page_layout.id = image.filename
-    page_layout.page_size = (image.height, image.width)
+    page_layout.id = db_image.filename
+    page_layout.page_size = (db_image.height, db_image.width)
 
-    text_regions = sort_text_regions(list(image.textregions))
+    if only_regions:
+        db_text_regions = db_image.text_regions
+    else:
+        db_text_regions = db_session.query(TextRegion).filter(TextRegion.image_id == db_image.id)
+        if only_annotated:
+            db_text_regions = db_text_regions.join(TextLine).join(Annotation).options(contains_eager(TextRegion.textlines))
+            if from_time:
+                db_text_regions = db_text_regions.filter(Annotation.created_date > from_time)
+        else:
+            db_text_regions = db_text_regions.options(joinedload(TextRegion.textlines))
+        db_text_regions = db_text_regions.all()
 
-    for text_region in text_regions:
-        if not text_region.deleted:
-            region_layout = layout.RegionLayout(id=str(text_region.id), polygon=text_region.np_points)
+    db_text_regions = sort_text_regions(list(db_text_regions))
+    for db_text_region in db_text_regions:
+        if not db_text_region.deleted:
+            region_layout = layout.RegionLayout(id=str(db_text_region.id), polygon=db_text_region.np_points)
             page_layout.regions.append(region_layout)
 
             if not only_regions:
-                text_lines = TextLine.query.filter_by(region_id=text_region.id).distinct()
-                if only_annotated:
-                    text_lines = text_lines.join(Annotation)
-                    if from_time:
-                        text_lines = text_lines.filter(Annotation.created_date > from_time)
-                text_lines = text_lines.order_by(TextLine.order)
-                text_lines = text_lines.all()
-
-                for text_line in text_lines:
+                for text_line in sorted(db_text_region.textlines, key=lambda x: x.order):
                     if not text_line.deleted:
                         if not active_ignoring or (active_ignoring and text_line.for_training):
                             region_layout.lines.append(layout.TextLine(id=str(text_line.id),
@@ -260,7 +264,7 @@ def get_page_layout(image, only_regions=False, only_annotated=False, alto=False,
                                                                        heights=text_line.np_heights,
                                                                        transcription=text_line.text))
     if alto:
-        logits_path = os.path.join(current_app.config['OCR_RESULTS_FOLDER'], str(image.document.id), "{}.logits".format(image.id))
+        logits_path = os.path.join(current_app.config['OCR_RESULTS_FOLDER'], str(db_image.document.id), "{}.logits".format(db_image.id))
         page_layout.load_logits(logits_path)
 
     return page_layout
@@ -270,10 +274,10 @@ def create_string_response(filename, string, minetype):
     r = Response(string, mimetype=minetype)
 
     try:
-        filename = filename.encode('latin-1')
+        filename = filename.encode('ascii')
     except UnicodeEncodeError:
         filenames = {
-            'filename': unicodedata.normalize('NFKD', filename).encode('latin-1', 'ignore'),
+            'filename': unicodedata.normalize('NFKD', filename).encode('ascii', 'ignore'),
             'filename*': "UTF-8''{}".format(url_quote(filename)),
         }
     else:
