@@ -14,7 +14,7 @@ from flask_login import login_required, current_user
 from app.ocr import bp
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_baseline_by_id, get_ocr_by_id, \
                            get_language_model_by_id, get_text_line_by_id, get_image_annotation_statistics_db, \
-                           get_previews_for_documents
+                           get_document_annotation_statistics_db, get_previews_for_documents
 from app.db import DocumentState, OCR, Document, Image, TextRegion, Baseline, LanguageModel, User, OCRTrainingDocuments
 from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
@@ -224,6 +224,24 @@ def get_image_annotation_statistics(image_id):
 
     line_count, annotated_count = get_image_annotation_statistics_db(image_id)
     response = {'image_id': image_id, 'line_count': line_count, 'annotated_count': annotated_count}
+
+    return jsonify(response)
+
+
+@bp.route('/get_document_annotation_statistics/<string:document_id>', methods=['GET'])
+@login_required
+def get_document_annotation_statistics(document_id):
+    if not is_granted_acces_for_document(document_id, current_user):
+        return "Access denied.", 401
+
+    try:
+        db_document = get_document_by_id(document_id)
+    except sqlalchemy.exc.StatementError:
+        return "Image does not exist.", 404
+
+
+    annotated_count = get_document_annotation_statistics_db(document_id)
+    response = {'document_id': document_id, 'annotated_count': annotated_count}
 
     return jsonify(response)
 

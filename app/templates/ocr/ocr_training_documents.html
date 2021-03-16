@@ -23,6 +23,7 @@ input[type=checkbox] {
         <th scope="col">Timestamp</th>
         <th scope="col">Name</th>
         <th scope="col">Owner</th>
+        <th scope="col">Annotated</th>
         <th scope="col" >Model</th>
         {% for ocr in ocr_engines %}
             <th scope="col" id="selected_column">{{ocr.name}}</th>
@@ -45,6 +46,8 @@ input[type=checkbox] {
 
             <td><a href="{{ url_for('ocr.show_results', document_id=document.id) }}">{{ document.name }}</a></td>
             <td>{{ document.user.first_name }} {{ document.user.last_name }}</td>
+
+            <td><div class="lazy-img">N/A</div></td>
 
             {% if not document.requests_lazy or not document.requests_lazy[-1].ocr_id %}
                 <td>N/A</td>
@@ -75,6 +78,24 @@ input[type=checkbox] {
         for(var elem of document.getElementsByClassName("utc-time")){
             const date = new Date(elem.textContent + 'Z');
             elem.innerHTML = date.toLocaleString();
+        }
+
+        function template_set_url_callback(element){
+            if(element.tagName.toUpperCase() == 'DIV') {
+                let state_fetch = fetch("/ocr/get_document_annotation_statistics/" + element.parentElement.parentElement.dataset['document'])
+                    .then(response => response.json())
+                    .then(data => {
+                        element.textContent = data['annotated_count']
+                        console.log('DIV done');
+                    });
+                return state_fetch;
+            } else {
+                return new Promise((resolve, reject) => {
+                    element.onload = () => resolve();
+                    element.onerror = reject;
+                    element.src = element.dataset.src;
+                });
+            }
         }
 
         document.addEventListener("DOMContentLoaded",
