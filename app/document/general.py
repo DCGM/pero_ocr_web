@@ -237,7 +237,7 @@ def get_page_layout(db_image, only_regions=False, only_annotated=False, alto=Fal
     page_layout.page_size = (db_image.height, db_image.width)
 
     if only_regions:
-        db_text_regions = db_image.text_regions
+        db_text_regions = db_image.textregions
     else:
         db_text_regions = db_session.query(TextRegion).filter(TextRegion.image_id == db_image.id)
         if only_annotated:
