@@ -38,6 +38,8 @@ class Document(Base):
     name = Column(String())
     state = Column(Enum(DocumentState), index=True)
     deleted = Column(Boolean(), default=False)
+    line_count = Column(Integer(), default=0)
+    annotated_line_count = Column(Integer(), default=0)
     #preview_image_id = Column(GUID(), ForeignKey('documents.id'), nullable=True, index=True)
 
     user_id = Column(Integer, ForeignKey('users.id'))
@@ -120,6 +122,7 @@ class TextLine(Base):
     heights = Column(String())
     confidences = Column(String())
     deleted = Column(Boolean(), default=False)
+    annotated = Column(Boolean(), default=False)
     for_training = Column(Boolean(), default=True)
     text = Column(String())
     score = Column(Float(), index=True)

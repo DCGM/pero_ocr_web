@@ -82,11 +82,13 @@
 
         <div class="row">
             <div class="offset-xl-1 col-xl-10">
-                <table id="document_table" class="table table-hover">
+                <table id="document_table" class="display" style="width:100%">
                     <thead>
                     <tr role="row">
                         <th scope="col" class="image_column">Page</th>
                         <th scope="col">Name</th>
+                        <th scope="col">Lines</th>
+                        <th scope="col">Revised</th>
                         <th scope="col">Owner</th>
                         <th scope="col">State</th>
                         <th scope="col" class="action_column">Actions</th>
@@ -101,6 +103,8 @@
                                 </div>
                             </td>
                             <td><a href="{{ url_for('ocr.show_results', document_id=document.id) }}">{{ document.name }}</a></td>
+                            <td>{{ document.line_count }}</td>
+                            <td>{{ document.annotated_line_count }}</td>
                             <td>{{ document.user.first_name }} {{ document.user.last_name }}</td>
                             <td>{{ document.state.value }}</td>
                             <td>
@@ -153,8 +157,8 @@
                 } catch(err){
                     console.log('ERROR')
                 }
-                if (title != 'Actions' && title != 'Page') {
-                    $(this).html('<input type="text" placeholder="Search"  value="' + input_value + '"/>');
+                if (title != 'Actions' && title != 'Page' && title != 'Lines' && title != 'Revised') {
+                    $(this).html('<input type="text" placeholder="Search" width="100%" value="' + input_value + '"/>');
                     $('input', this).on('keyup change', function () {
                         if (table.column(i).search() !== this.value) {
                             table.column(i).search(this.value).draw();

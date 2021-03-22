@@ -3,6 +3,7 @@ from app.db import Document, Image, TextLine, Annotation, User, TextRegion
 from collections import defaultdict
 from Levenshtein import distance
 from sqlalchemy.sql import select, and_
+from sqlalchemy import func
 
 
 def filter_document(query, document_db):
@@ -27,6 +28,14 @@ def filter_user(query, user_db):
     if user_db is not None:
         query = query.filter(Annotation.user_id == user_db.id)
     return query
+
+
+def get_document_annotation_statistics_by_day(document_id):
+    annotations = db_session.query(func.DATE(Annotation.created_date), User.first_name, User.last_name, func.count(Annotation.created_date))\
+        .join(TextLine).join(TextRegion).join(Image).join(User).filter(Image.document_id == document_id)\
+        .group_by(func.DATE(Annotation.created_date), User.id)
+
+    return annotations.all()
 
 
 def compute_statistics(results, activity_timeout):

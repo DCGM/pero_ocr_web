@@ -1,0 +1,73 @@
+{% extends "base/base.html" %}
+{% block content %}
+
+    <div class="container-fluid px-4">
+        <div class="row">
+            <div class="col-sm-6">
+                <h3 class="text-left">Document name: {{ document.name }}</h3>
+                <h3 id="document-id" style="display: None">{{ document.id }}</h3>
+            </div>
+            <div class="col-sm-4 text-right" >
+                {% include '/document/document_action_buttons.html' %}
+            </div>
+        </div>
+        <div class="row">
+            <div id="vis" class="offset-xl-1 col-xl-10">
+            </div>
+        </div>
+        <div class="row">
+            <div class="offset-xl-1 col-xl-10">
+                <table id="request_table" class="table table-hover">
+                    <thead>
+                    <tr role="row">
+                        <th scope="col">Date</th>
+                        <th scope="col">Job State</th>
+                        <th scope="col">Job Type</th>
+                        <th scope="col">Models</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for request in requests %}
+                        <tr data-document="{{ request.id }}">
+                            <td class="utc-time" data-sort="{{loop.index}}">{{ request.created_date.isoformat() }}</td>
+                            <td>{{ request.state.name }}</td>
+                            <td>{{ request.request_type.name }}</td>
+                            <td>{{ request.layout_detector.name if request.layout_detector.name else "---"}}, {{ request.baseline.name if request.baseline.name else "---"}}, {{ request.ocr.name if request.ocr.name else "---" }}, {{ request.language_model.name if request.language_model.name else "---" }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block styles %}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="/static/css/loader.css?v=1.0">
+    <style>
+        .document-action-btn{
+            min-height: 25px;
+        }
+    </style>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+    <script>
+        $(document).ready(function () {
+            var spec = {{ graph_json|safe }};
+            var opt = {"renderer": "canvas", "actions": false};
+            vegaEmbed("#vis", spec, opt);
+            // Setup table - add a text input to each footer cell
+        });
+
+        for(var elem of document.getElementsByClassName("utc-time")){
+            const date = new Date(elem.textContent + 'Z');
+            elem.innerHTML = date.toLocaleString();
+        }
+    </script>
+{% endblock %}

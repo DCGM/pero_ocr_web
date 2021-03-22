@@ -18,7 +18,7 @@ from app.db.general import get_requests
 from app.db.general import get_user_documents, get_document_by_id, get_user_by_email, get_all_documents,\
                            get_previews_for_documents, get_image_by_id
 from app.document.forms import CreateDocumentForm
-from app.document.annotation_statistics import get_document_annotation_statistics, get_user_annotation_statistics
+from app.document.annotation_statistics import get_document_annotation_statistics, get_user_annotation_statistics, get_document_annotation_statistics_by_day
 from io import BytesIO
 import dateutil.parser
 import zipfile
@@ -118,6 +118,32 @@ def requests():
     requests = get_requests(document_ids)
 
     return render_template('requests/request_list.html', requests=requests)
+
+
+@bp.route('/document_history/<string:document_id>')
+@login_required
+def document_history(document_id):
+    if not (is_user_owner_or_collaborator(document_id, current_user) or is_user_trusted(current_user)):
+        flash(u'You do not have sufficient rights to view statistics for this document!', 'danger')
+        return redirect(url_for('main.index'))
+
+    db_requests = get_requests(document_ids=[document_id])
+    db_document = get_document_by_id(document_id)
+
+    ann_stats = get_document_annotation_statistics_by_day(db_document.id)
+
+    import altair as alt
+    data = [{'x': str(date), 'y': count, 'u': f'{user1} {user2}'} for date, user1, user2, count in ann_stats]
+    data = alt.Data(values=data)
+    chart = alt.Chart(data).mark_bar().encode(
+            x='x:T',  # specify ordinal data
+            y='sum(y):Q',  # specify quantitative data
+            color='u:N'
+        ).properties(width='container', height=300)
+
+    return render_template('document/document_history.html',
+                           requests=db_requests, document=db_document, graph_json=chart.to_json(indent=0))
+
 
 
 @bp.route('/new_document', methods=['GET', 'POST'])
@@ -608,3 +634,5 @@ def search_bar():
         lines = find_textlines(query, current_user, user_document_ids)
 
     return render_template('document/search_lines.html', query=query, lines=lines, documents=enumerate(user_documents), selected=selected)
+
+

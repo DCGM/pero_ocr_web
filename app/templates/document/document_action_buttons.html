@@ -30,8 +30,15 @@
     href="{{ url_for('layout_analysis.show_results', document_id=document.id) }}"
     data-toggle="tooltip"
     data-placement="right"
-    title="Show layout analysis results">
+    title="Open document">
     <i class="fas fa-eye fa-fw"></i>
+</a>
+<a  class="document-action-btn btn btn-secondary text-white"
+    href="{{ url_for('document.document_history', document_id=document.id) }}"
+    data-toggle="tooltip"
+    data-placement="right"
+    title="Document history">
+    <i class="fas fa-info fa-fw"></i>
 </a>
 <a  class="document-action-btn btn btn-secondary text-white"
     href="{{ url_for('ocr.select_ocr', document_id=document.id) }}"
@@ -56,8 +63,15 @@
     href="{{ url_for('ocr.show_results', document_id=document.id) }}"
     data-toggle="tooltip"
     data-placement="right"
-    title="Show ocr results">
+    title="Open document">
     <i class="fas fa-eye fa-fw"></i>
+</a>
+<a  class="document-action-btn btn btn-secondary text-white"
+    href="{{ url_for('document.document_history', document_id=document.id) }}"
+    data-toggle="tooltip"
+    data-placement="right"
+    title="Document history">
+    <i class="fas fa-info fa-fw"></i>
 </a>
 <a  class="document-action-btn btn btn-secondary text-white"
     href="{{ url_for('ocr.select_ocr', document_id=document.id) }}"
@@ -102,3 +116,4 @@
         <i class="fas fa-trash fa-fw"></i>
     </a>
 {% endif %}
+
