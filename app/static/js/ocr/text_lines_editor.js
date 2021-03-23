@@ -182,23 +182,6 @@ class TextLinesEditor
             signal: abort_signal,})
             .then(res => res.json());
 
-        if (this.map)
-        {
-            this.map.off();
-            this.map.remove();
-        }
-        this.map = L.map(this.map_element, {
-            crs: L.CRS.Simple,
-            minZoom: -3,
-            maxZoom: 3,
-            center: [0, 0],
-            zoom: 0,
-            editable: true,
-            fadeAnimation: true,
-            zoomAnimation: true,
-            zoomSnap: 0
-        });
-
         let data = await response;
 
         if( data['image_id'] != image_id){
@@ -211,10 +194,28 @@ class TextLinesEditor
         this.active_line = false;
         this.lines = [];
 
+        if (this.map)
+        {
+            this.map.off();
+            this.map.remove();
+        }
+        this.map = L.map(this.map_element, {
+            crs: L.CRS.Simple,
+            minZoom: -3,
+            maxZoom: 3,
+            center: [this.width/2, this.height/2],
+            zoom: 0,
+            editable: true,
+            fadeAnimation: false,
+            zoomAnimation: true,
+            zoomSnap: 0
+        });
+
+
         let bounds = [xy(0, -this.height), xy(this.width, 0)];
-        L.imageOverlay(Flask.url_for('document.get_image', {'image_id': this.image_id}), bounds).addTo(this.map);
-        this.map.setView(xy(this.width / 2, -this.height / 2), -2);
+        //this.map.setView(xy(this.width / 2, -this.height / 2), -2);
         this.map.fitBounds(bounds);
+        L.imageOverlay(Flask.url_for('document.get_image', {'image_id': this.image_id}), bounds).addTo(this.map);
         if( abort_signal.aborted){ return;}
 
         let i = 0;
@@ -307,7 +308,7 @@ class TextLinesEditor
         }
 
         let focus_line_points = get_focus_line_points(line);
-
+        this.map.stop();
         this.map.flyToBounds([xy(focus_line_points[0], -focus_line_points[2]), xy(focus_line_points[1], -focus_line_points[2])],
                              {animate: true, duration: 0.5});
         this.active_line = line;
@@ -329,6 +330,7 @@ class TextLinesEditor
         if (this.active_line)
         {
             let focus_line_points = get_focus_line_points(this.active_line);
+            this.map.stop();
             this.map.flyToBounds([xy(focus_line_points[0], -focus_line_points[2]), xy(focus_line_points[1], -focus_line_points[2])],
                                  {animate: false, duration: 0});
         }
