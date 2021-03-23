@@ -36,6 +36,7 @@ def documents():
     else:
        user_documents = get_user_documents(current_user)
 
+    user_documents = sorted(user_documents, key=lambda x: x.created_date)[::-1]
     document_ids = [d.id for d in user_documents]
     previews = dict([(im.document_id, im) for im in get_previews_for_documents(document_ids)])
 
