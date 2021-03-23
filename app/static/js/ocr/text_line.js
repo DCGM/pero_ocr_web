@@ -8,6 +8,7 @@ class TextLine
         this.id = id;
         this.text = text;
         this.confidences = confidences;
+        this.line_confidence = 0;
         this.ligatures_mapping = ligatures_mapping;
         this.arabic = arabic;
         this.debug_line_container = debug_line_container;
@@ -23,6 +24,16 @@ class TextLine
         this.container.setAttribute("contentEditable", "true");
         this.container.style.display = "block";
         this.container.style.lineHeight = "220%";
+
+        if(confidences.length > 0){
+            var power_const = 5;
+            for(var c of this.confidences){
+                this.line_confidence += (1 - c) ** power_const;
+            }
+            this.line_confidence = 1 - (this.line_confidence / this.confidences.length) ** (1.0/power_const)
+        } else {
+            this.line_confidence = 1;
+        }
 
         let text_to_show = "";
         let confidences_to_show = [];

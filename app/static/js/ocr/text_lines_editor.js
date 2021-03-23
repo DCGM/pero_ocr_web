@@ -7,6 +7,9 @@ xy = function(x, y) {
     return yx(y, x);  // When doing xy(x, y);
 };
 
+function rgb(r, g, b){
+  return "rgb("+r+","+g+","+b+")";
+};
 
 class TextLinesEditor
 {
@@ -17,7 +20,6 @@ class TextLinesEditor
         this.container.innerHTML = "<div class='editor-map'></div><div class='status'></div>";
         this.map_element = this.container.getElementsByClassName("editor-map")[0];
         this.active_line = false;
-        this.focused_line = false;
         this.focus_to = null;
         this.save_btn = document.getElementsByClassName('save-btn');
         this.delete_btn = document.getElementById('deletebutton');
@@ -40,6 +42,7 @@ class TextLinesEditor
         if (this.compute_scores_btn != null){
             this.compute_scores_btn.addEventListener('click', this.compute_scores.bind(this));
         }
+        this.worst_confidence = 0;
     }
 
     swap_ignore_line_button_blueprint(){
@@ -103,6 +106,29 @@ class TextLinesEditor
                     text_lines_editor.active_line.for_training_checkbox.disabled = false;
                 }
             });
+        }
+    }
+
+    set_line_style(line){
+        var conf = (line.line_confidence-this.worst_confidence) / (1-this.worst_confidence);
+        console.log('X ' + conf + ' ' + this.worst_confidence + ' ' + line.annotated);
+        console.log(line.edited);
+        console.log(line.valid);
+
+        var color = '';
+        if( !line.valid){
+            color = rgb(16, 16, 16);
+        } else if(line.edited){
+            color = '#ffcc54'
+        } else if(line.annotated){
+            color = "#028700";
+        } else {
+            color = rgb((1-conf) * 255, 16, conf * 255);
+        }
+        if(line.focus){
+            line.polygon.setStyle({ color: color, opacity: 1, fillColor: color, fillOpacity: 0.15, weight: 2});
+        } else {
+            line.polygon.setStyle({ color: color, opacity: 0.5, fillColor: color, fillOpacity: 0.1, weight: 1});
         }
     }
 
@@ -218,6 +244,13 @@ class TextLinesEditor
         L.imageOverlay(Flask.url_for('document.get_image', {'image_id': this.image_id}), bounds).addTo(this.map);
         if( abort_signal.aborted){ return;}
 
+        let self = this;
+        let observer = new MutationObserver(function(mutations){
+          mutations.forEach(function(m){
+              self.set_line_style(self.lines[ m.target.id]);
+          });
+        });
+
         let i = 0;
         let debug_line_container = document.getElementById('debug-line-container');
         let debug_line_container_2 = document.getElementById('debug-line-container-2');
@@ -228,19 +261,30 @@ class TextLinesEditor
                                     debug_line_container, debug_line_container_2)
             line.np_points = l.np_points;
             line.np_heights = l.np_heights;
+            line.focus = false;
             this.add_line_to_map(i, line);
             this.lines.push(line);
             if (l.id == this.focus_to){
+                line.focus = true;
                 this.line_focus(line);
                 this.polygon_click(line);
                 focused = true;
             }
+            observer.observe(line.container, {attributes: true});
             i += 1;
             if(i % 50 == 49){
                 await new Promise(resolve => setTimeout(resolve, 0));
                 if( abort_signal.aborted){return;}
             }
         }
+        this.worst_confidence = 0.95;
+        for(let l of this.lines){
+            this.worst_confidence = Math.min(this.worst_confidence, l.line_confidence);
+        }
+        for(let l of this.lines){
+            this.set_line_style(l, false);
+        }
+
         if (this.focus_to != null){
             this.focus_to = null;
         }
@@ -258,7 +302,6 @@ class TextLinesEditor
             points.push(xy(point[0], -point[1]));
         }
         line.polygon = L.polygon(points);
-        line.polygon.setStyle({ color: "#0059ff", opacity: 0.5, fillColor: "#0059ff", fillOpacity: 0.05, weight: 1});
 
         line.polygon.addTo(this.map);
         line.polygon.on('click', this.polygon_click.bind(this, line));
@@ -266,7 +309,7 @@ class TextLinesEditor
         line.container.setAttribute("id", i);
 
         line.container.addEventListener('focus', this.line_focus.bind(this, line));
-        line.container.addEventListener('focusout', this.line_focus_out.bind(this));
+        line.container.addEventListener('focusout', this.line_focus_out.bind(this, line));
 
         line.checkbox_span.addEventListener('click', this.line_focus_from_checkbox.bind(this, line));
         line.for_training_checkbox.addEventListener('click', this.ignore_action_from_checkbox.bind(this, line));
@@ -301,10 +344,10 @@ class TextLinesEditor
 
     line_focus(line)
     {
-        this.focused_line = true;
         if (this.active_line)
         {
-            this.active_line.polygon.setStyle({ color: "#0059ff", opacity: 0.5, fillColor: "#0059ff", fillOpacity: 0.05, weight: 1});
+            this.active_line.focus = false;
+            this.set_line_style(this.active_line);
         }
 
         let focus_line_points = get_focus_line_points(line);
@@ -312,7 +355,8 @@ class TextLinesEditor
         this.map.flyToBounds([xy(focus_line_points[0], -focus_line_points[2]), xy(focus_line_points[1], -focus_line_points[2])],
                              {animate: true, duration: 0.5});
         this.active_line = line;
-        line.polygon.setStyle({ color: "#028700", opacity: 1, fillColor: "#028700", fillOpacity: 0.1, weight: 2});
+        line.focus = true;
+        this.set_line_style(line)
 
         this.swap_delete_line_button_blueprint();
         this.swap_ignore_line_button_blueprint();
@@ -320,9 +364,9 @@ class TextLinesEditor
         this.change_url(this.active_line.id);
     }
 
-    line_focus_out()
+    line_focus_out(line)
     {
-        this.focused_line = false;
+        this.set_line_style(line)
     }
 
     show_line_change()
