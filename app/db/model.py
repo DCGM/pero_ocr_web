@@ -40,6 +40,7 @@ class Document(Base):
     deleted = Column(Boolean(), default=False)
     line_count = Column(Integer(), default=0)
     annotated_line_count = Column(Integer(), default=0)
+    created_date = Column(DateTime, default=datetime.datetime.utcnow, index=True)
     #preview_image_id = Column(GUID(), ForeignKey('documents.id'), nullable=True, index=True)
 
     user_id = Column(Integer, ForeignKey('users.id'))

@@ -31,13 +31,13 @@ def get_document_annotation_statistics_db(document_id):
 
 
 def get_all_documents():
-    all_documents = Document.query.filter_by(deleted=False).all()
+    all_documents = Document.query.filter_by(deleted=False).order_by(Document.created_date).all()
     return all_documents
 
 
 def get_user_documents(user):
-    user_created_documents = user.documents.filter_by(deleted=False).all()
-    collaborators_documents = user.collaborator_documents.filter_by(deleted=False).all()
+    user_created_documents = user.documents.filter_by(deleted=False).order_by(Document.created_date).all()
+    collaborators_documents = user.collaborator_documents.filter_by(deleted=False).order_by(Document.created_date).all()
     return user_created_documents + collaborators_documents
 
 
