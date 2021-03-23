@@ -91,3 +91,25 @@ END
 CREATE TRIGGER textlines_update_document_annotated AFTER UPDATE ON textlines
     FOR EACH ROW EXECUTE PROCEDURE update_document_annotated();
 
+
+
+CREATE OR REPLACE FUNCTION insert_document_line()
+RETURNS TRIGGER AS
+'
+DECLARE
+    del_update integer := 0;
+    ann_update integer := 0;
+
+BEGIN
+	UPDATE documents
+	SET line_count = line_count + 1
+	from images, textregions
+	where documents.id = images.document_id and images.id = textregions.image_id and textregions.id = NEW.region_id;
+    RETURN NEW;
+END
+' LANGUAGE plpgsql;
+
+CREATE TRIGGER textlines_insert_document_line AFTER INSERT ON textlines
+    FOR EACH ROW EXECUTE PROCEDURE insert_document_line();
+
+
