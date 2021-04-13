@@ -215,8 +215,7 @@
             if (e.keyCode == 78 && !e.ctrlKey && !e.shiftKey && e.altKey)
             {
                 e.preventDefault();
-                text_lines_editor.ignore_line_btn_action();
-                console.log("ALT + N");
+                text_lines_editor.ignore_line_btn_action(true);
             }
 
             // ALT + M

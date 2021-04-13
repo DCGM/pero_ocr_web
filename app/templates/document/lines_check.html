@@ -165,7 +165,7 @@
                 line_editor.delete_line_btn_action();
             }
             if (e.keyCode == 78 && !e.ctrlKey && !e.shiftKey && e.altKey){// ALT + N
-                line_editor.ignore_line_btn_action();
+                line_editor.ignore_line_btn_action(true);
             }
             if (!e.ctrlKey) return;
             var code = e.which || e.keyCode;
