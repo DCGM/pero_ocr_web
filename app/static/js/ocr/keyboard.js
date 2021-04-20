@@ -139,7 +139,7 @@ class Keyboard{
     letter_mousedown(char, e)
     {
         e.preventDefault();
-        if (this.text_lines_editor.focused_line)
+        if (this.text_lines_editor.focus_to)
         {
             this.text_lines_editor.active_line.remove_selection_and_prepare_line_for_insertion();
             document.execCommand("insertText", false, char);
