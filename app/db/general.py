@@ -21,7 +21,7 @@ def get_document_by_id(document_id):
 
 def get_image_annotation_statistics_db(image_id):
     line_count = db_session.query(func.count(TextLine.id)).filter(TextLine.deleted == False).join(TextRegion).join(Image).filter(Image.id == image_id).one()[0]
-    annotated_count = db_session.query(func.count(distinct(TextLine.id))).filter(TextLine.deleted == False).join(TextRegion).join(Image).join(Annotation).filter(Image.id == image_id).one()[0]
+    annotated_count = db_session.query(func.count(distinct(TextLine.id))).filter(TextLine.deleted == False).filter(TextLine.annotated == True).join(TextRegion).join(Image).filter(Image.id == image_id).one()[0]
     return line_count, annotated_count
 
 
