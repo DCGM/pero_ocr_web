@@ -5,13 +5,15 @@ from app.db import Image, TextRegion, TextLine
 from app.ocr.general import get_confidences
 
 
-def update_page_layout(db_session, db_document, page_layout, image_id, path):
+def update_page_layout(db_session, db_document, page_layout, image_id, path, new_regions=False):
     try:
         image_id = uuid.UUID(image_id, version=4)
         db_image = db_session.query(Image).filter(Image.id == image_id).first()
+        print("already in")
     except ValueError:
         db_image = create_image(page_layout, image_id, path)
         db_document.images.append(db_image)
+        print("create new")
 
     db_region_map = dict([(str(region.id), region) for region in db_image.textregions])
     for region_order, region in enumerate(page_layout.regions):
@@ -19,7 +21,7 @@ def update_page_layout(db_session, db_document, page_layout, image_id, path):
             db_region = db_region_map[region.id]
             db_region.np_points = region.polygon
         else:
-            db_region = create_text_region(region, region_order)
+            db_region = create_text_region(region, region_order, new_region=new_regions)
             db_image.textregions.append(db_region)
 
         db_line_map = dict([(str(line.id), line) for line in db_region.textlines])
@@ -68,11 +70,14 @@ def create_text_line(line, order):
     return text_line
 
 
-def create_text_region(region, order):
-    try:
-        region_id = uuid.UUID(region.id, version=4)
-    except ValueError:
+def create_text_region(region, order, new_region=False):
+    if new_region:
         region_id = uuid.uuid4()
+    else:
+        try:
+            region_id = uuid.UUID(region.id, version=4)
+        except ValueError:
+            region_id = uuid.uuid4()
     text_region = TextRegion(id=region_id,
                              order=order,
                              np_points=region.polygon,

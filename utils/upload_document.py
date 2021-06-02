@@ -13,11 +13,13 @@ from shutil import copyfile
 def parseargs():
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--database', type=str, required=True, help="Database.")
-    parser.add_argument('-o', '--document-folder', type=str, required=True, help="Folder with xmls and logits (page, logits).")
+    parser.add_argument('-i', '--images-folder', type=str, required=True, help="Folder with images.")
+    parser.add_argument('-x', '--xmls-folder', type=str, required=True, help="Folder with xmls.")
+    parser.add_argument('-o', '--logits-folder', type=str, help="Folder with logits.")
     parser.add_argument('-n', '--document-name', type=str, help="Document name (will be used if document is not in the database)")
-    parser.add_argument('-u', '--uploaded-images-dir', type=str, help="Path to uploaded images")
+    parser.add_argument('-u', '--uploaded-images-dir', type=str, required=True, help="Path to uploaded images")
     parser.add_argument('-l', '--only-layout', action='store_true')
-    parser.add_argument('--logits', action='store_true')
+    parser.add_argument('--new-regions', action='store_true', help='Create new ID for each text region.')
     args = parser.parse_args()
     return args
 
@@ -32,7 +34,7 @@ def main():
                                              bind=engine))
 
     db_document = None
-    for image in os.listdir(os.path.join(args.document_folder, 'images')):
+    for image in os.listdir(args.images_folder):
         image_id = image.split('.')[0]
         try:
             image_id = uuid.UUID(image_id, version=4)
@@ -71,28 +73,28 @@ def main():
     if not os.path.exists(uploaded_images_dir):
         os.makedirs(uploaded_images_dir)
 
-    for image in os.listdir(os.path.join(args.document_folder, 'images')):
+    for image in os.listdir(args.images_folder):
         image_ext = image.split('.')[1]
         break
 
-    for image in os.listdir(os.path.join(args.document_folder, 'xmls')):
+    for image in os.listdir(args.xmls_folder):
         image_id = image.split('.')[0]
 
         page_layout = PageLayout()
 
-        xml_path = os.path.join(args.document_folder, 'xmls', image)
+        xml_path = os.path.join(args.xmls_folder, image)
         page_layout.from_pagexml(xml_path)
 
-        if not args.only_layout and args.logits:
-            logits_path = os.path.join(args.document_folder, 'output', 'logits', "{}.logits".format(image_id))
+        if not args.only_layout and args.logits_folder is not None:
+            logits_path = os.path.join(args.logits_folder, "{}.logits".format(image_id))
             page_layout.load_logits(logits_path)
 
         image_name = "{}.{}".format(image_id, image_ext)
-        copy_image_from_path = os.path.join(args.document_folder, 'images', image_name)
+        copy_image_from_path = os.path.join(args.images_folder, image_name)
         copy_image_to_path = os.path.join(uploaded_images_dir, image_name)
 
         db_image = update_page_layout(db_session=db_session, db_document=db_document, page_layout=page_layout,
-                                      image_id=image_id, path=copy_image_to_path)
+                                      image_id=image_id, path=copy_image_to_path, new_regions=args.new_regions)
 
         if not os.path.exists(db_image.path):
             copyfile(copy_image_from_path, db_image.path)
