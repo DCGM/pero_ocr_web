@@ -208,15 +208,14 @@
             if (e.keyCode == 66 && !e.ctrlKey && !e.shiftKey && e.altKey)
             {
                 e.preventDefault();
-                text_lines_editor.delete_line();
+                text_lines_editor.delete_line_btn_action();
             }
 
             // ALT + N
             if (e.keyCode == 78 && !e.ctrlKey && !e.shiftKey && e.altKey)
             {
                 e.preventDefault();
-                text_lines_editor.ignore_line();
-                console.log("ALT + N");
+                text_lines_editor.ignore_line_btn_action(true);
             }
 
             // ALT + M
