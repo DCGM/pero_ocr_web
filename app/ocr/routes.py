@@ -82,8 +82,8 @@ def revert_ocr(document_id):
     print("##################################################################")
     delete_user = db_session.query(User).filter(User.first_name == "#revert_OCR_backup#").first()
     backup_document = Document(name="revert_backup_" + document.name, state=DocumentState.COMPLETED_OCR,
-                               user_id=delete_user.id)
-
+                               user_id=delete_user.id, line_count=document.line_count,
+                               annotated_line_count=document.annotated_line_count)
     db_session.add(backup_document)
     new_regions = []
     for img in document.images:
@@ -99,6 +99,7 @@ def revert_ocr(document_id):
                 line.region_id = backup_region.id
         db_session.commit()
     document.state = DocumentState.COMPLETED_LAYOUT_ANALYSIS
+    document.annotated_line_count = 0
     db_session.commit()
     print("##################################################################")
     return document_id
