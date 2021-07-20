@@ -13,12 +13,14 @@
             </div>
         </div>
 
+        <!-- Image horizontal scroll bar -->
         <div class="row mb-4">
             <div class="col-sm-12">
                 {% include 'base/scrolling_wrapper.html' %}
             </div>
         </div>
 
+        <!-- Buttons -->
         <div class="row">
             <div class="col-lg-6 col-md-5">
                 <button id="back-btn" type="button" class="btn btn-secondary mb-2" data-toggle="tooltip"
@@ -40,6 +42,7 @@
             </div>
         </div>
 
+        <!-- Annotator -->
         <div class="row">
             <div class="col-sm-12">
                 <div id="map-container">
@@ -52,12 +55,23 @@
             </div>
         </div>
 
+        <!-- Annotator Component -->
+        <div class="row">
+            <div class="col-12">
+                <div id="app_app">
+                    <annotator-wrapper-component ref="annotator_wrapper_component"></annotator-wrapper-component>
+                </div>
+            </div>
+        </div>
+
+        <!-- Text scroll editor -->
         <div class="row">
             <div class="col-sm-12 text-center">
                 <div id="text-container" style="height: 200px; overflow-y: auto;"></div>
             </div>
         </div>
 
+        <!-- Buttons -->
         <div class="row mt-2">
             <div class="col-sm-11 d-xl-none text-center">
                 <button type="button" class="save-btn btn btn-success"><i class="far fa-save fa-lg"></i>&nbsp;&nbsp;Save</button>
