@@ -18,6 +18,7 @@ def get_args():
     parser.add_argument('--alto', action='store_true', help='Download results in ALTO XML format.')
     parser.add_argument('--page', action='store_true', help='Download results in PAGE XML format.')
     parser.add_argument('--txt', action='store_true', help='Download results in plain text format.')
+    parser.add_argument('--image', action='store_true', help='Download image.')
     args = parser.parse_args()
     return args
 
@@ -32,7 +33,7 @@ def get_document_ids(session, base_url, document_ids, document_id):
         return False, None
 
 
-def download_results(page_uuid, session, server_url, output_path, alto, page, txt):
+def download_results(page_uuid, session, server_url, output_path, alto, page, txt, image):
     requested_formats = []
 
     if alto:
@@ -44,6 +45,9 @@ def download_results(page_uuid, session, server_url, output_path, alto, page, tx
     if txt:
         requested_formats.append(
             (join_url(server_url, '/document/get_text', page_uuid), '.txt'))
+    if image:
+        requested_formats.append(
+            (join_url(server_url, '/document/get_image', page_uuid), '.jpg'))
 
     for url, extension in requested_formats:
         r = session.get(url, stream=True)
@@ -78,9 +82,9 @@ if __name__ == '__main__':
         print("##############################################################")
 
         print()
-        print("DOWNLOADING ALTO")
+        print("DOWNLOADING PAGES")
         print("##############################################################")
         for i, page_uuid in enumerate(page_uuids):
             print('Downloading page', i, page_uuid)
-            download_results(page_uuid, session, args.url, args.output_path, args.alto, args.page, args.txt)
+            download_results(page_uuid, session, args.url, args.output_path, args.alto, args.page, args.txt, args.image)
         print("##############################################################")
