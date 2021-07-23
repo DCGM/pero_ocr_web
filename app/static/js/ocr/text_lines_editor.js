@@ -199,18 +199,18 @@ class TextLinesEditor
         await new Promise(resolve => setTimeout(resolve, 150));
         if( abort_signal.aborted){ return;}
 
-        let route = Flask.url_for('ocr.get_lines', {'image_id': image_id});
-        while (this.text_container.firstChild)
-        {
+        // Init text scroll editor
+        while (this.text_container.firstChild) {
             this.text_container.firstChild.remove();
         }
+
+        // Get annotations data
+        let route = Flask.url_for('ocr.get_lines', {'image_id': image_id}); // Get data url
         let response = fetch(route, {
             signal: abort_signal,})
             .then(res => res.json());
-
         let data = await response;
-
-        if( data['image_id'] != image_id){
+        if(data['image_id'] != image_id) {
             return;
         }
 
@@ -220,8 +220,8 @@ class TextLinesEditor
         this.active_line = false;
         this.lines = [];
 
-        if (this.map)
-        {
+        // Init map
+        if (this.map) {
             this.map.off();
             this.map.remove();
         }
@@ -237,15 +237,17 @@ class TextLinesEditor
             zoomSnap: 0
         });
 
-
         let bounds = [xy(0, -this.height), xy(this.width, 0)];
         //this.map.setView(xy(this.width / 2, -this.height / 2), -2);
         this.map.fitBounds(bounds);
-        L.imageOverlay(Flask.url_for('document.get_image', {'image_id': this.image_id}), bounds).addTo(this.map);
+
+        // Set map background image
+        let image_url = Flask.url_for('document.get_image', {'image_id': this.image_id}); // Get image url
+        L.imageOverlay(image_url, bounds).addTo(this.map);
         if( abort_signal.aborted){ return;}
 
         let self = this;
-        let observer = new MutationObserver(function(mutations){
+        let observer = new MutationObserver(function(mutations) {
           mutations.forEach(function(m){
               self.set_line_style(self.lines[ m.target.id]);
           });
@@ -255,8 +257,9 @@ class TextLinesEditor
         let debug_line_container = document.getElementById('debug-line-container');
         let debug_line_container_2 = document.getElementById('debug-line-container-2');
         let focused = false;
-        for (let l of data['lines'])
-        {
+
+        // Add annotations to map
+        for (let l of data['lines']) {
             let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic, l.for_training,
                                     debug_line_container, debug_line_container_2)
             line.np_points = l.np_points;
@@ -278,17 +281,17 @@ class TextLinesEditor
             }
         }
         this.worst_confidence = 0.95;
-        for(let l of this.lines){
+        for(let l of this.lines) {
             this.worst_confidence = Math.min(this.worst_confidence, l.line_confidence);
         }
         for(let l of this.lines){
             this.set_line_style(l, false);
         }
 
-        if (this.focus_to != null){
+        if (this.focus_to != null) {
             this.focus_to = null;
         }
-        else{
+        else {
             this.map_element.focus();
         }
     }
