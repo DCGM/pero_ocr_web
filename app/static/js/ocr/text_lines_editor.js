@@ -329,7 +329,13 @@ class TextLinesEditor {
 
         line.container.setAttribute("id", i);
 
-        line.container.addEventListener('focus', this.line_focus.bind(this, line));
+        line.container.addEventListener('focus', () => {
+            /** Select line **/
+            this.annotator_wrapper_component.select_row(line.id);
+            /** Select line (old) **/
+            this.line_focus(line);
+        });
+
         line.container.addEventListener('focusout', this.line_focus_out.bind(this, line));
 
         line.checkbox_span.addEventListener('click', this.line_focus_from_checkbox.bind(this, line));
