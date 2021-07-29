@@ -187,7 +187,7 @@ export function createAnnotation(view, type, parent_region_uuid = null) {
         annotation.is_valid = false;
         annotation.text = '';
     }
-    console.log(annotation)
+    // console.log(annotation)
 
     // Emit event
     type = type === 'regions'? 'region': 'row';
