@@ -69,10 +69,15 @@ export default {
         load_annotations(annotations) {
           this.$refs.annotator_component.loadAnnotations(annotations);
         },
+        select_row(row_uuid) {
+          this.$refs.annotator_component.canvasSelectRowAnnotation(row_uuid);
+        },
+
+
 
         // Custom event handler
         myEventHandler: (type, event) => {
-            console.log('selected event ' + type, event);
+        //     console.log('selected event ' + type, event);
         },
 
         annotationDeletedEventHandler(type, uuid) {
