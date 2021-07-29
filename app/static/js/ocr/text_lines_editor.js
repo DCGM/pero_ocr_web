@@ -271,6 +271,21 @@ class TextLinesEditor {
                 this.polygon_click(selected_line);
         });
 
+        /** Annotator component: Event listener -> Row/region created event **/
+        this.annotator_wrapper_component.$refs.annotator_component.$on('row-created-event', (annotation) => annotationCreatedEditedEventHandler(annotation, 'row', this.image_id));
+        this.annotator_wrapper_component.$refs.annotator_component.$on('region-created-event', (annotation) => annotationCreatedEditedEventHandler(annotation, 'region', this.image_id));
+
+        function annotationCreatedEditedEventHandler(annotation, annotation_type, image_id=null) {
+            console.log(annotation, annotation_type, image_id);
+            axios
+                .post('/ocr/create_edit_annotation', {
+                    annotation: annotation,
+                    annotation_type: annotation_type,
+                    image_id: image_id,
+                })
+                .catch((errors) => console.log(errors));
+        }
+
         let self = this;
         let observer = new MutationObserver(function (mutations) {
             mutations.forEach(function (m) {

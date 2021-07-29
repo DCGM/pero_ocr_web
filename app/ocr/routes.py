@@ -14,7 +14,7 @@ from flask_login import login_required, current_user
 from app.ocr import bp
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_baseline_by_id, get_ocr_by_id, \
                            get_language_model_by_id, get_text_line_by_id, get_image_annotation_statistics_db, \
-                           get_document_annotation_statistics_db, get_previews_for_documents
+                           get_document_annotation_statistics_db, get_previews_for_documents, TextLine
 from app.db import DocumentState, OCR, Document, Image, TextRegion, Baseline, LanguageModel, User, OCRTrainingDocuments
 from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
@@ -104,6 +104,42 @@ def revert_ocr(document_id):
     print("##################################################################")
     return document_id
 
+
+@bp.route('/create_edit_annotation', methods=['POST'])
+@login_required
+def create_edit_annotation():
+    data = request.get_json()
+    annotation = data['annotation']
+    annotation_type = data['annotation_type']
+    image_id = data['image_id']
+    points = ' '.join(map(lambda p: f'{int(p["x"])},{int(p["y"])}', annotation['points']))
+
+    if image_id:
+        # Create new annotation
+        insert_data = None
+        if annotation_type == 'row':
+            insert_data = TextLine(
+                id=annotation['uuid'],
+                region_id=annotation['region_annotation_uuid'],
+                text=annotation['text'],
+                points=points,
+                baseline='1,1 2,2',  # TODO
+                order=1  # TODO
+            )
+        elif annotation_type == 'region':
+            insert_data = TextRegion(
+                id=annotation['uuid'],
+                points=points,
+                image_id=image_id,
+                order=42  # TODO
+            )
+        db_session.add(insert_data)
+        db_session.commit()
+    else:
+        # Edit existing annotation
+        # TODO
+        pass
+    return 'ok', 200
 
 # SELECT PAGE
 ########################################################################################################################
