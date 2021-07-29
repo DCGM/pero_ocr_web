@@ -276,6 +276,12 @@ def get_lines(image_id):
     arabic_helper = ArabicHelper()
     arabic = False
 
+    # Add regions
+    lines_dict['regions'] = list(map(lambda r: {
+        'uuid': r.id,
+        'np_points': r.np_points.tolist()
+    }, text_regions))
+
     for text_region in text_regions:
         text_lines = sorted(list(text_region.textlines), key=lambda x: x.order)
 

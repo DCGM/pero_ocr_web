@@ -254,8 +254,13 @@ class TextLinesEditor {
         this.annotator_wrapper_component.load_image(image_url);
 
         /** Annotator component: Load row annotations **/
-        let row_annotations = get_row_annotations(data);
+        let row_annotations = get_annotations(data, 'row');
         this.annotator_wrapper_component.load_annotations(row_annotations);
+
+        /** Annotator component: Load row annotations **/
+        let region_annotations = get_annotations(data, 'region');
+        this.annotator_wrapper_component.load_annotations(region_annotations);
+
 
         /** Annotator component: Event listener -> Row selected event **/
         this.annotator_wrapper_component.$refs.annotator_component.$on('row-selected-event', (annotation) => {
@@ -526,21 +531,34 @@ function rgbToHex(r, g, b) {
 // Annotator component helper functions
 
 /**
- * Converts raw annotations to desired format
+ * Converts raw data annotations to desired format
  * @param raw_data {}
- * @returns row_annotations [{*}]
+ * @param type str row/region
+ * @returns annotations [{*}]
  */
-function get_row_annotations(raw_data) {
-    return raw_data.lines.map(raw_row => {
-        return {
-            uuid: raw_row.id,
-            points: raw_row.np_points.map(point => {
-                return {x: point[0], y: point[1]}
-            }),
-            region_annotation_uuid: 'not_used_yet', // FK to parent region uuid
-            state: '', // active/ignored/edited
-            text: raw_row.text,
-            order: 0
-        }
-    });
+function get_annotations(raw_data, type) {
+    if (type === 'row') {
+        return raw_data.lines.map(raw_row => {
+            return {
+                uuid: raw_row.id,
+                points: raw_row.np_points.map(point => {
+                    return {x: point[0], y: point[1]}
+                }),
+                region_annotation_uuid: 'not_used_yet', // FK to parent region uuid
+                state: '', // active/ignored/edited
+                text: raw_row.text,
+                order: 0
+            }
+        });
+    }
+    else if (type === 'region') {
+        return raw_data.regions.map(raw_region => {
+            return {
+                uuid: raw_region.id,
+                points: raw_region.np_points.map(point => {
+                    return {x: point[0], y: point[1]}
+                }),
+            }
+        });
+    }
 }
