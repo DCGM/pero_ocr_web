@@ -278,7 +278,14 @@ button.active {
             width: 100% !important;
             height: 100% !important;
             display: block !important;
-            border-radius: 5px !important;
+            //border-radius: 5px !important;
+        }
+
+        #tutorial {
+            background: $body-bg;
+            color: white;
+            font-weight: normal;
+            font-size: 14px;
         }
     }
 
