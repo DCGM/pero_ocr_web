@@ -262,7 +262,8 @@ class TextLinesEditor {
             // Find line
             let selected_line = this.lines.find(item => item.id === annotation.uuid);
             // Text Scroll: Select line
-            this.polygon_click(selected_line);
+            if (selected_line)
+                this.polygon_click(selected_line);
         });
 
         let self = this;
