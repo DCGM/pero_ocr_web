@@ -253,14 +253,13 @@ class TextLinesEditor {
         /** Annotator component: Load image **/
         this.annotator_wrapper_component.load_image(image_url);
 
-        /** Annotator component: Load row annotations **/
-        let row_annotations = get_annotations(data, 'row');
-        this.annotator_wrapper_component.load_annotations(row_annotations);
-
-        /** Annotator component: Load row annotations **/
+        /** Annotator component: Load region annotations **/
         let region_annotations = get_annotations(data, 'region');
         this.annotator_wrapper_component.load_annotations(region_annotations);
 
+        /** Annotator component: Load row annotations **/
+        let row_annotations = get_annotations(data, 'row');
+        this.annotator_wrapper_component.load_annotations(row_annotations);
 
         /** Annotator component: Event listener -> Row selected event **/
         this.annotator_wrapper_component.$refs.annotator_component.$on('row-selected-event', (annotation) => {
@@ -569,7 +568,7 @@ function get_annotations(raw_data, type) {
     else if (type === 'region') {
         return raw_data.regions.map(raw_region => {
             return {
-                uuid: raw_region.id,
+                uuid: raw_region.uuid,
                 points: raw_region.np_points.map(point => {
                     return {x: point[0], y: point[1]}
                 }),
