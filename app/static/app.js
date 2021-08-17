@@ -7449,9 +7449,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
-//
-//
 
 
 
@@ -43503,75 +43500,6 @@ var render = function() {
         _vm._v(" "),
         _c(
           "div",
-          { staticClass: "text-primary", attrs: { id: "canvas-row-text" } },
-          [
-            _vm.active_row
-              ? _c("span", [
-                  _c("input", {
-                    directives: [
-                      {
-                        name: "model",
-                        rawName: "v-model",
-                        value: _vm.active_row.view.text.content,
-                        expression: "active_row.view.text.content"
-                      }
-                    ],
-                    ref: "input-transcription-text",
-                    staticClass: "input-transcription-text",
-                    attrs: { type: "text" },
-                    domProps: { value: _vm.active_row.view.text.content },
-                    on: {
-                      input: function($event) {
-                        if ($event.target.composing) {
-                          return
-                        }
-                        _vm.$set(
-                          _vm.active_row.view.text,
-                          "content",
-                          $event.target.value
-                        )
-                      }
-                    }
-                  }),
-                  _c("span", { staticClass: "text-muted" }, [
-                    _vm._v(
-                      "(" +
-                        _vm._s(_vm.active_row.view.text.content.length) +
-                        ")"
-                    )
-                  ])
-                ])
-              : _vm._e()
-          ]
-        ),
-        _vm._v(" "),
-        _c(
-          "div",
-          { staticClass: "text-primary", attrs: { id: "canvas-coordinates" } },
-          [
-            _vm.scope
-              ? _c("span", [
-                  _vm._v(
-                    "ZOOM: " +
-                      _vm._s(Math.round(_vm.scope.view.zoom * 100, 2) / 100) +
-                      " "
-                  )
-                ])
-              : _vm._e(),
-            _vm._v(" "),
-            _c("span", { staticClass: "p-2" }, [
-              _vm._v(
-                "X: " +
-                  _vm._s(_vm.mouse_coordinates.x) +
-                  ", Y: " +
-                  _vm._s(_vm.mouse_coordinates.y)
-              )
-            ])
-          ]
-        ),
-        _vm._v(" "),
-        _c(
-          "div",
           {
             staticClass: "d-flex flex-column",
             attrs: { id: "canvas-contextmenu" }
@@ -56375,7 +56303,7 @@ Rok: 2021
 
 function emitAnnotationEditedEvent(annotation) {
   var annotation_type = annotation.hasOwnProperty('text') ? 'row' : 'region';
-  annotation.view.path = setPathColor(annotation.view.path, annotation_type, annotation.is_valid);
+  annotation.view.path = setPathColor(annotation.view.path, annotation_type, annotation);
   this.$emit(annotation_type + '-edited-event', this.serializeAnnotation(annotation));
 }
 /**
@@ -56392,7 +56320,7 @@ function loadAnnotations(annotations) {
     for (_iterator.s(); !(_step = _iterator.n()).done;) {
       var annotation = _step.value;
       var type = annotation.hasOwnProperty('order') ? 'rows' : 'regions';
-      annotation.view = this.createAnnotationView(annotation.points, type, annotation.text, annotation.is_valid);
+      annotation.view = this.createAnnotationView(annotation, type);
       this.annotations[type].push(annotation);
     }
   } catch (err) {
@@ -56532,22 +56460,27 @@ function removeAnnotationSegm() {
  * Set path's color
  * @param path
  * @param annotation_type
- * @param is_valid
+ * @param annotation
  */
 
-function setPathColor(path, annotation_type, is_valid) {
+function setPathColor(path, annotation_type, annotation) {
   if (annotation_type === 'row' || annotation_type === 'rows') {
     path.strokeWidth = 2;
     path.strokeColor = 'rgba(34,43,68,0.8)'; // path.strokeColor = 'rgb(162,160,146)';
     // path.fillColor = 'rgba(219,200,28, 0.1)';
+    // Set background color
 
-    path.fillColor = 'rgba(34,43,68,0.08)';
-
-    if (is_valid) {
-      // path.fillColor = 'rgba(19,203,93, 0.1)';
-      path.fillColor = 'rgba(108,178,235, 0.2)';
-    }
+    var worst_confidence = 0.394;
+    var conf = (annotation.confidence - worst_confidence) / (1 - worst_confidence);
+    var color = "rgba(".concat((1 - conf) * 255, ", ", 16, ", ").concat(conf * 255, ", 0.1)");
+    if (!annotation.is_valid) color = 'rgba(16, 16, 16, 0.1)';else if (annotation.edited) color = 'rgba(255,204,84,0.1)';else if (annotation.annotated) color = "rgba(2,135,0,0.1)";
+    path.fillColor = color; // OLD
+    // if (line.focus)
+    //     line.polygon.setStyle({color: color, opacity: 1, fillColor: color, fillOpacity: 0.15, weight: 2});
+    // else
+    //     line.polygon.setStyle({color: color, opacity: 0.5, fillColor: color, fillOpacity: 0.1, weight: 1});
   } else {
+    // Region
     path.strokeWidth = 3;
     path.strokeColor = 'rgba(34,43,68, 0.9)'; // path.fillColor = 'rgba(34,43,68,1)';
     // path.fillColor = 'rgba(34,43,68,0.2)';
@@ -56594,24 +56527,21 @@ function createAnnotation(view, type) {
 /**
  * Create annotation GUI view
  * this: annotator_component
- * @param points
+ * @param annotation
  * @param type
- * @param text_content
  * @returns {{path: paper.Path, text: null, group: paper.Group}}
  */
 
-function createAnnotationView(points, type) {
+function createAnnotationView(annotation, type) {
   var _this = this;
 
-  var text_content = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-  var is_valid = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
   //
   var path = new paper.Path();
   path.closed = true; // Color path
 
-  path = setPathColor(path, type, is_valid); // Add points to path
+  path = setPathColor(path, type, annotation); // Add points to path
 
-  var _iterator3 = _createForOfIteratorHelper(points),
+  var _iterator3 = _createForOfIteratorHelper(annotation.points),
       _step3;
 
   try {
@@ -56670,7 +56600,7 @@ function createAnnotationView(points, type) {
     // Create text
     text = new paper.PointText(path.firstSegment.point.add(new paper.Point(20, -20))); // TODO
 
-    text.content = text_content ? text_content : '';
+    text.content = annotation.text_content ? annotation.text_content : '';
     text.opacity = 0;
     group.addChild(text);
   }
@@ -56725,7 +56655,8 @@ function activeRowChangedHandler(next, prev) {
 
   if (prev) {
     prev.view.path.selected = false;
-    prev.view.path = setPathColor(prev.view.path, 'row', prev.is_valid);
+    console.log('pref', prev);
+    prev.view.path = setPathColor(prev.view.path, 'row', prev);
   }
 }
 
