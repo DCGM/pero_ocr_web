@@ -561,7 +561,13 @@ function get_annotations(raw_data, type) {
                 region_annotation_uuid: 'not_used_yet', // FK to parent region uuid
                 state: '', // active/ignored/edited
                 text: raw_row.text,
-                order: 0
+                order: 0,
+                confidence: get_confidence(raw_row.np_confidences),
+
+                // Statuses
+                edited: false,
+                annotated: raw_row.annotated,
+                is_valid: true
             }
         });
     }
@@ -575,4 +581,20 @@ function get_annotations(raw_data, type) {
             }
         });
     }
+}
+
+/**
+ * Get line confidence
+ * @param confidences
+ * @returns {number}
+ */
+function get_confidence(confidences) {
+    let line_confidence = 0;
+    if(confidences.length > 0){
+        let power_const = 5;
+        for (let c of confidences)
+            line_confidence += (1 - c) ** power_const;
+        line_confidence = 1 - (line_confidence / confidences.length) ** (1.0/power_const)
+    }
+    return line_confidence;
 }
