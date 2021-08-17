@@ -15,7 +15,7 @@ import {v4 as uuidv4} from 'uuid';
  */
 export function emitAnnotationEditedEvent(annotation) {
     let annotation_type = annotation.hasOwnProperty('text')? 'row': 'region';
-    annotation.view.path = setPathColor(annotation.view.path, annotation_type, annotation.is_valid);
+    annotation.view.path = setPathColor(annotation.view.path, annotation_type, annotation);
     this.$emit(annotation_type+'-edited-event', this.serializeAnnotation(annotation));
 }
 
@@ -27,7 +27,7 @@ export function emitAnnotationEditedEvent(annotation) {
 export function loadAnnotations(annotations) {
     for (let annotation of annotations) {
         let type = annotation.hasOwnProperty('order')? 'rows': 'regions';
-        annotation.view = this.createAnnotationView(annotation.points, type, annotation.text, annotation.is_valid);
+        annotation.view = this.createAnnotationView(annotation, type);
         this.annotations[type].push(annotation);
     }
 }
@@ -139,22 +139,37 @@ export function removeAnnotationSegm() {
  * Set path's color
  * @param path
  * @param annotation_type
- * @param is_valid
+ * @param annotation
  */
-function setPathColor(path, annotation_type, is_valid) {
+function setPathColor(path, annotation_type, annotation) {
     if (annotation_type === 'row' || annotation_type === 'rows') {
         path.strokeWidth = 2;
         path.strokeColor = 'rgba(34,43,68,0.8)';
         // path.strokeColor = 'rgb(162,160,146)';
         // path.fillColor = 'rgba(219,200,28, 0.1)';
-        path.fillColor = 'rgba(34,43,68,0.08)';
 
-        if (is_valid) {
-            // path.fillColor = 'rgba(19,203,93, 0.1)';
-            path.fillColor = 'rgba(108,178,235, 0.2)';
-        }
+        // Set background color
+        let worst_confidence = 0.394;
+        let conf = (annotation.confidence - worst_confidence) / (1 - worst_confidence);
+        let color = `rgba(${(1 - conf) * 255}, ${16}, ${conf * 255}, 0.1)`;
+
+        if (!annotation.is_valid)
+            color = 'rgba(16, 16, 16, 0.1)';
+        else if (annotation.edited)
+            color = 'rgba(255,204,84,0.1)'
+        else if (annotation.annotated)
+            color = "rgba(2,135,0,0.1)";
+
+        path.fillColor = color;
+
+        // OLD
+        // if (line.focus)
+        //     line.polygon.setStyle({color: color, opacity: 1, fillColor: color, fillOpacity: 0.15, weight: 2});
+        // else
+        //     line.polygon.setStyle({color: color, opacity: 0.5, fillColor: color, fillOpacity: 0.1, weight: 1});
+
     }
-    else {
+    else { // Region
         path.strokeWidth = 3;
         path.strokeColor = 'rgba(34,43,68, 0.9)';
         // path.fillColor = 'rgba(34,43,68,1)';
@@ -199,21 +214,20 @@ export function createAnnotation(view, type, parent_region_uuid = null) {
 /**
  * Create annotation GUI view
  * this: annotator_component
- * @param points
+ * @param annotation
  * @param type
- * @param text_content
  * @returns {{path: paper.Path, text: null, group: paper.Group}}
  */
-export function createAnnotationView(points, type, text_content=null, is_valid=false) {
+export function createAnnotationView(annotation, type) {
     //
     let path = new paper.Path();
     path.closed = true;
 
     // Color path
-    path = setPathColor(path, type, is_valid);
+    path = setPathColor(path, type, annotation);
 
     // Add points to path
-    for (let point of points)
+    for (let point of annotation.points)
         path.add(new paper.Point(point));
 
     path.onMouseDown = (e) => {
@@ -252,7 +266,7 @@ export function createAnnotationView(points, type, text_content=null, is_valid=f
     if (type === 'rows') {
         // Create text
         text = new paper.PointText(path.firstSegment.point.add(new paper.Point(20, -20))); // TODO
-        text.content = text_content? text_content: '';
+        text.content = annotation.text_content? annotation.text_content: '';
         text.opacity = 0;
         group.addChild(text);
     }
