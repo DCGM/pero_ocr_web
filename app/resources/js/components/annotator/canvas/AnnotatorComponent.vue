@@ -39,9 +39,6 @@ Rok: 2021
             <!-- Zoom to image -->
             <div class="p-2 text-center" @click="canvasZoomImage"><i class="fas fa-compress-arrows-alt"></i></div>
 
-            <!-- Remove all annotations -->
-<!--            <div class="p-2 text-center" @click="canvasClean"><i class="fas fa-broom"></i></div>-->
-<!--            <div class="p-2 text-center" @click="getAnnotations"><i class="fas fa-broom"></i></div>-->
         </aside>
 
         <!-- Middle section (Canvas) -->
