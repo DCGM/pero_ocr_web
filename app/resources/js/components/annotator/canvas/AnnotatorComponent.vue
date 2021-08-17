@@ -75,15 +75,15 @@ Rok: 2021
 
 
             <!-- Row text -->
-            <div id="canvas-row-text" class="text-primary">
-                <span v-if="active_row"><input ref="input-transcription-text" type="text" class="input-transcription-text" v-model="active_row.view.text.content"/><span class="text-muted">({{ active_row.view.text.content.length }})</span></span>
-            </div>
+<!--            <div id="canvas-row-text" class="text-primary">-->
+<!--                <span v-if="active_row"><input ref="input-transcription-text" type="text" class="input-transcription-text" v-model="active_row.view.text.content"/><span class="text-muted">({{ active_row.view.text.content.length }})</span></span>-->
+<!--            </div>-->
 
             <!-- Mouse coordinates -->
-            <div id="canvas-coordinates" class="text-primary">
-                <span v-if="scope">ZOOM: {{ Math.round(scope.view.zoom*100, 2)/100 }} </span>
-                <span class="p-2">X: {{ mouse_coordinates.x }}, Y: {{ mouse_coordinates.y }}</span>
-            </div>
+<!--            <div id="canvas-coordinates" class="text-primary">-->
+<!--                <span v-if="scope">ZOOM: {{ Math.round(scope.view.zoom*100, 2)/100 }} </span>-->
+<!--                <span class="p-2">X: {{ mouse_coordinates.x }}, Y: {{ mouse_coordinates.y }}</span>-->
+<!--            </div>-->
 
             <!-- Context menu -->
             <div id="canvas-contextmenu" class="d-flex flex-column">
