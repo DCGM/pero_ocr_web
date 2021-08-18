@@ -7117,6 +7117,7 @@ __webpack_require__.r(__webpack_exports__);
     };
   },
   methods: {
+    /** PUBLIC API **/
     load_image: function load_image(path) {
       this.$refs.annotator_component.canvasSelectImage(path);
     },
@@ -7126,9 +7127,13 @@ __webpack_require__.r(__webpack_exports__);
     select_row: function select_row(row_uuid) {
       this.$refs.annotator_component.canvasSelectRowAnnotation(row_uuid);
     },
-    // Custom event handler
-    myEventHandler: function myEventHandler(type, event) {//     console.log('selected event ' + type, event);
+    zoom_row: function zoom_row(uuid) {
+      this.$refs.annotator_component.canvasZoomAnnotation(uuid);
     },
+    // Custom event handler
+    // myEventHandler: (type, event) => {
+    // //     console.log('selected event ' + type, event);
+    // },
     annotationDeletedEventHandler: function annotationDeletedEventHandler(type, uuid) {
       axios["delete"]('/api/annotations/' + type + '/' + uuid);
     },
@@ -56655,7 +56660,6 @@ function activeRowChangedHandler(next, prev) {
 
   if (prev) {
     prev.view.path.selected = false;
-    console.log('pref', prev);
     prev.view.path = setPathColor(prev.view.path, 'row', prev);
   }
 }
@@ -57011,9 +57015,27 @@ function canvasZoomImage() {
   // this.scope.project.activeLayer.fitBounds(this.scope.project.activeLayer.children()[0].bounds);
   // this.scope.project.activeLayer.fitBounds(this.image.raster.bounds);
 }
-function canvasZoomAnnotation(annotation) {
-  this.scope.view.zoom = 1; // TODO:
-  // this.scope.fitBounds(annotation.view.path.bounds);
+/**
+ * Zoom annotation (row)
+ * * this: annotator_component
+ * @param uuid
+ */
+
+function canvasZoomAnnotation(uuid) {
+  var row = this.annotations.rows.find(function (item) {
+    return item.uuid === uuid;
+  });
+  if (!row) return; // Inspired by: https://github.com/paperjs/paper.js/issues/1688
+
+  var item_bounds = row.view.group.bounds;
+  var view = this.scope.project.activeLayer.view;
+  var view_bounds = view.bounds; // Zoom
+
+  var scale_ratio = Math.min(view_bounds.width / item_bounds.width, view_bounds.height / item_bounds.height);
+  view.scale(scale_ratio); // Translate
+
+  var delta = view_bounds.center.subtract(item_bounds.center);
+  view.translate(delta);
 }
 /**
  *

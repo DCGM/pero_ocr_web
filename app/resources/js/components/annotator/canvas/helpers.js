@@ -198,10 +198,27 @@ export function canvasZoomImage() {
     // this.scope.project.activeLayer.fitBounds(this.image.raster.bounds);
 }
 
-export function canvasZoomAnnotation(annotation) {
-    this.scope.view.zoom = 1;
-    // TODO:
-    // this.scope.fitBounds(annotation.view.path.bounds);
+/**
+ * Zoom annotation (row)
+ * * this: annotator_component
+ * @param uuid
+ */
+export function canvasZoomAnnotation(uuid) {
+    let row = this.annotations.rows.find(item => item.uuid === uuid);
+    if (!row) return;
+
+    // Inspired by: https://github.com/paperjs/paper.js/issues/1688
+    let item_bounds = row.view.group.bounds;
+    let view = this.scope.project.activeLayer.view;
+    let view_bounds = view.bounds;
+
+    // Zoom
+    let scale_ratio = Math.min(view_bounds.width / item_bounds.width, view_bounds.height / item_bounds.height);
+    view.scale(scale_ratio);
+
+    // Translate
+    let delta = view_bounds.center.subtract(item_bounds.center);
+    view.translate(delta);
 }
 
 /**

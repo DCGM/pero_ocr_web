@@ -265,6 +265,10 @@ class TextLinesEditor {
         this.annotator_wrapper_component.$refs.annotator_component.$on('row-selected-event', (annotation) => {
             // Find line
             let selected_line = this.lines.find(item => item.id === annotation.uuid);
+
+            // Zoom annotation
+            this.annotator_wrapper_component.zoom_row(annotation.uuid);
+
             // Text Scroll: Select line
             if (selected_line)
                 this.polygon_click(selected_line);
@@ -354,6 +358,8 @@ class TextLinesEditor {
             this.annotator_wrapper_component.select_row(line.id);
             /** Select line (old) **/
             this.line_focus(line);
+            /** Zoom line **/
+            this.annotator_wrapper_component.zoom_row(line.id);
         });
 
         line.container.addEventListener('focusout', this.line_focus_out.bind(this, line));

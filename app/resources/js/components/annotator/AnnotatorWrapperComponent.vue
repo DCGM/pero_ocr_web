@@ -63,14 +63,18 @@ export default {
         }
     },
     methods: {
+        /** PUBLIC API **/
         load_image(path) {
-          this.$refs.annotator_component.canvasSelectImage(path);
+            this.$refs.annotator_component.canvasSelectImage(path);
         },
         load_annotations(annotations) {
-          this.$refs.annotator_component.loadAnnotations(annotations);
+            this.$refs.annotator_component.loadAnnotations(annotations);
         },
         select_row(row_uuid) {
-          this.$refs.annotator_component.canvasSelectRowAnnotation(row_uuid);
+            this.$refs.annotator_component.canvasSelectRowAnnotation(row_uuid);
+        },
+        zoom_row(uuid) {
+            this.$refs.annotator_component.canvasZoomAnnotation(uuid)
         },
 
 
