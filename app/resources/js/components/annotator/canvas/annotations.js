@@ -316,7 +316,6 @@ export function activeRowChangedHandler(next, prev) {
     }
     if (prev) {
         prev.view.path.selected = false;
-
-        prev.view.path = setPathColor(prev.view.path, 'row', prev.is_valid);
+        prev.view.path = setPathColor(prev.view.path, 'row', prev);
     }
 }
