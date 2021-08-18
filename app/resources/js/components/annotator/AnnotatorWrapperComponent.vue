@@ -94,8 +94,6 @@ export default {
                 .catch((errors) => console.log(errors));
         }
     },
-    mounted() {
-    }
 }
 </script>
 
