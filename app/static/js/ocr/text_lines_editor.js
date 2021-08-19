@@ -267,7 +267,7 @@ class TextLinesEditor {
             let selected_line = this.lines.find(item => item.id === annotation.uuid);
 
             // Zoom annotation
-            this.annotator_wrapper_component.zoom_row(annotation.uuid);
+            // this.annotator_wrapper_component.zoom_row(annotation.uuid);
 
             // Text Scroll: Select line
             if (selected_line)

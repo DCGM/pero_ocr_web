@@ -7130,46 +7130,7 @@ __webpack_require__.r(__webpack_exports__);
     zoom_row: function zoom_row(uuid) {
       this.$refs.annotator_component.canvasZoomAnnotation(uuid);
     },
-    // Custom event handler
-    // myEventHandler: (type, event) => {
-    // //     console.log('selected event ' + type, event);
-    // },
-    annotationDeletedEventHandler: function annotationDeletedEventHandler(type, uuid) {
-      axios["delete"]('/api/annotations/' + type + '/' + uuid);
-    },
-    imageSelectedEventHandler: function imageSelectedEventHandler(image_id) {
-      var _this = this;
-
-      return new Promise(function (resolve, reject) {
-        _this.fetchImageWithAnnotationsPromise(image_id, _this.dataset_id).then(function (dataset_image) {
-          // Select image
-          _this.load_image(dataset_image.image.path); // // Load region annotations
-          // this.load_annotations(dataset_image.region_annotations);
-          // // Load row annotations
-          // this.$refs.annotator_component.loadAnnotations(dataset_image.row_annotations);
-
-
-          resolve();
-        });
-      });
-    },
-    fetchDatasetWithImagesPromise: function fetchDatasetWithImagesPromise(dataset_id) {
-      return new Promise(function (resolve, reject) {
-        axios.get('/api/datasets/showWithImages/' + dataset_id).then(function (response) {
-          return resolve(response.data);
-        })["catch"](function (errors) {
-          return reject(errors);
-        });
-      });
-    },
-    fetchImageWithAnnotationsPromise: function fetchImageWithAnnotationsPromise(image_id, dataset_id) {
-      return new Promise(function (resolve, reject) {
-        axios.get('/api/datasetImageWithAnnotations/' + dataset_id + '/image/' + image_id).then(function (response) {
-          return resolve(response.data);
-        })["catch"](function (errors) {
-          return reject(errors);
-        });
-      });
+    annotationDeletedEventHandler: function annotationDeletedEventHandler(type, uuid) {// axios.delete('/api/annotations/' + type + '/' + uuid);
     },
     annotationCreatedEditedEventHandler: function annotationCreatedEditedEventHandler(annotation, annotation_type) {
       var image_id = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
@@ -7182,33 +7143,6 @@ __webpack_require__.r(__webpack_exports__);
         return console.log(errors);
       });
     }
-  },
-  mounted: function mounted() {// this.image_id = 1;
-    // Get image and dataset id from url
-    // let url_params = window.location.pathname.split('/');
-    // this.dataset_id = url_params[3];
-    // this.image_id = url_params.length >= 5? url_params[4]: null;
-    // let row_uuid = url_params.length >= 6? url_params[5]: null;
-    // console.log(url_params);
-    // console.log(this.document_id)
-    // this.fetchDatasetWithImagesPromise(this.dataset_id)
-    //     .then((dataset) => {
-    // Load dataset to annotator
-    // this.$refs.annotator_component.canvasSelectDataset(dataset);  // Optional
-    // Load image with annotations to annotator
-    // let selected_image = dataset.images.find((item) => item.id === this.image_id);
-    // this.image_id = selected_image? selected_image.id: dataset.images[0].id;  // Find or first
-    // this.imageSelectedEventHandler(this.image_id)
-    //     .then(() => {
-    //         // Select row annotation
-    //         if (row_uuid)
-    //             this.$refs.annotator_component.canvasSelectRowAnnotation(row_uuid);
-    //     });
-    // });
-    // this.$on('imageSelectEv_imageSelected', (image_id) => {
-    //     this.image_id = image_id;
-    //     this.imageSelectedEventHandler(image_id);
-    // });
   }
 });
 
@@ -7454,6 +7388,15 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -7489,6 +7432,7 @@ __webpack_require__.r(__webpack_exports__);
       // Default
       bbox_tool: null,
       polygon_tool: null,
+      join_rows_tool: null,
       creating_annotation_type: 'regions',
       // COMPONENT:
       dataset: null
@@ -7542,6 +7486,423 @@ __webpack_require__.r(__webpack_exports__);
     this.canvasInit();
   }
 });
+
+/***/ }),
+
+/***/ "./node_modules/hull.js/src/convex.js":
+/*!********************************************!*\
+  !*** ./node_modules/hull.js/src/convex.js ***!
+  \********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _cross(o, a, b) {
+    return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+}
+
+function _upperTangent(pointset) {
+    const lower = [];
+    for (let l = 0; l < pointset.length; l++) {
+        while (lower.length >= 2 && (_cross(lower[lower.length - 2], lower[lower.length - 1], pointset[l]) <= 0)) {
+            lower.pop();
+        }
+        lower.push(pointset[l]);
+    }
+    lower.pop();
+    return lower;
+}
+
+function _lowerTangent(pointset) {
+    const reversed = pointset.reverse(),
+        upper = [];
+    for (let u = 0; u < reversed.length; u++) {
+        while (upper.length >= 2 && (_cross(upper[upper.length - 2], upper[upper.length - 1], reversed[u]) <= 0)) {
+            upper.pop();
+        }
+        upper.push(reversed[u]);
+    }
+    upper.pop();
+    return upper;
+}
+
+// pointset has to be sorted by X
+function convex(pointset) {
+    const upper = _upperTangent(pointset),
+          lower = _lowerTangent(pointset);
+    const convex = lower.concat(upper);
+    convex.push(pointset[0]);  
+    return convex;  
+}
+
+module.exports = convex;
+
+
+/***/ }),
+
+/***/ "./node_modules/hull.js/src/format.js":
+/*!********************************************!*\
+  !*** ./node_modules/hull.js/src/format.js ***!
+  \********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = {
+
+    toXy: function(pointset, format) {
+        if (format === undefined) {
+            return pointset.slice();
+        }
+        return pointset.map(function(pt) {
+            /*jslint evil: true */
+            const _getXY = new Function('pt', 'return [pt' + format[0] + ',' + 'pt' + format[1] + '];');
+            return _getXY(pt);
+        });
+    },
+
+    fromXy: function(pointset, format) {
+        if (format === undefined) {
+            return pointset.slice();
+        }
+        return pointset.map(function(pt) {
+            /*jslint evil: true */
+            const _getObj = new Function('pt', 'const o = {}; o' + format[0] + '= pt[0]; o' + format[1] + '= pt[1]; return o;');
+            return _getObj(pt);
+        });
+    }
+
+}
+
+/***/ }),
+
+/***/ "./node_modules/hull.js/src/grid.js":
+/*!******************************************!*\
+  !*** ./node_modules/hull.js/src/grid.js ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function Grid(points, cellSize) {
+    this._cells = [];
+    this._cellSize = cellSize;
+    this._reverseCellSize = 1 / cellSize;
+
+    for (let i = 0; i < points.length; i++) {
+        const point = points[i];
+        const x = this.coordToCellNum(point[0]);
+        const y = this.coordToCellNum(point[1]);
+        if (!this._cells[x]) {
+            const array = [];
+            array[y] = [point];
+            this._cells[x] = array;
+        } else if (!this._cells[x][y]) {
+            this._cells[x][y] = [point];
+        } else {
+            this._cells[x][y].push(point);
+        }
+    }
+}
+
+Grid.prototype = {
+    cellPoints: function(x, y) { // (Number, Number) -> Array
+        return (this._cells[x] !== undefined && this._cells[x][y] !== undefined) ? this._cells[x][y] : [];
+    },
+
+    rangePoints: function(bbox) { // (Array) -> Array
+        const tlCellX = this.coordToCellNum(bbox[0]);
+        const tlCellY = this.coordToCellNum(bbox[1]);
+        const brCellX = this.coordToCellNum(bbox[2]);
+        const brCellY = this.coordToCellNum(bbox[3]);
+        const points = [];
+
+        for (let x = tlCellX; x <= brCellX; x++) {
+            for (let y = tlCellY; y <= brCellY; y++) {
+                // replaced Array.prototype.push.apply to avoid hitting stack size limit on larger arrays.
+                for (let i = 0; i < this.cellPoints(x, y).length; i++) {
+                    points.push(this.cellPoints(x, y)[i]);
+                }
+            }
+        }
+
+        return points;
+    },
+
+    removePoint: function(point) { // (Array) -> Array
+        const cellX = this.coordToCellNum(point[0]);
+        const cellY = this.coordToCellNum(point[1]);
+        const cell = this._cells[cellX][cellY];
+        let pointIdxInCell;
+
+        for (let i = 0; i < cell.length; i++) {
+            if (cell[i][0] === point[0] && cell[i][1] === point[1]) {
+                pointIdxInCell = i;
+                break;
+            }
+        }
+
+        cell.splice(pointIdxInCell, 1);
+
+        return cell;
+    },
+
+    trunc: Math.trunc || function(val) { // (number) -> number
+        return val - val % 1;
+    },
+
+    coordToCellNum: function(x) { // (number) -> number
+        return this.trunc(x * this._reverseCellSize);
+    },
+
+    extendBbox: function(bbox, scaleFactor) { // (Array, Number) -> Array
+        return [
+            bbox[0] - (scaleFactor * this._cellSize),
+            bbox[1] - (scaleFactor * this._cellSize),
+            bbox[2] + (scaleFactor * this._cellSize),
+            bbox[3] + (scaleFactor * this._cellSize)
+        ];
+    }
+};
+
+function grid(points, cellSize) {
+    return new Grid(points, cellSize);
+}
+
+module.exports = grid;
+
+/***/ }),
+
+/***/ "./node_modules/hull.js/src/hull.js":
+/*!******************************************!*\
+  !*** ./node_modules/hull.js/src/hull.js ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/*
+ (c) 2014-2020, Andrii Heonia
+ Hull.js, a JavaScript library for concave hull generation by set of points.
+ https://github.com/AndriiHeonia/hull
+*/
+
+
+
+const intersect = __webpack_require__(/*! ./intersect.js */ "./node_modules/hull.js/src/intersect.js");
+const grid = __webpack_require__(/*! ./grid.js */ "./node_modules/hull.js/src/grid.js");
+const formatUtil = __webpack_require__(/*! ./format.js */ "./node_modules/hull.js/src/format.js");
+const convexHull = __webpack_require__(/*! ./convex.js */ "./node_modules/hull.js/src/convex.js");
+
+function _filterDuplicates(pointset) {
+    const unique = [pointset[0]];
+    let lastPoint = pointset[0];
+    for (let i = 1; i < pointset.length; i++) {
+        const currentPoint = pointset[i];
+        if (lastPoint[0] !== currentPoint[0] || lastPoint[1] !== currentPoint[1]) {
+            unique.push(currentPoint);
+        }
+        lastPoint = currentPoint;
+    }
+    return unique;
+}
+
+function _sortByX(pointset) {
+    return pointset.sort(function(a, b) {
+        return (a[0] - b[0]) || (a[1] - b[1]);
+    });
+}
+
+function _sqLength(a, b) {
+    return Math.pow(b[0] - a[0], 2) + Math.pow(b[1] - a[1], 2);
+}
+
+function _cos(o, a, b) {
+    const aShifted = [a[0] - o[0], a[1] - o[1]],
+        bShifted = [b[0] - o[0], b[1] - o[1]],
+        sqALen = _sqLength(o, a),
+        sqBLen = _sqLength(o, b),
+        dot = aShifted[0] * bShifted[0] + aShifted[1] * bShifted[1];
+
+    return dot / Math.sqrt(sqALen * sqBLen);
+}
+
+function _intersect(segment, pointset) {
+    for (let i = 0; i < pointset.length - 1; i++) {
+        const seg = [pointset[i], pointset[i + 1]];
+        if (segment[0][0] === seg[0][0] && segment[0][1] === seg[0][1] ||
+            segment[0][0] === seg[1][0] && segment[0][1] === seg[1][1]) {
+            continue;
+        }
+        if (intersect(segment, seg)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function _occupiedArea(pointset) {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    for (let i = pointset.length - 1; i >= 0; i--) {
+        if (pointset[i][0] < minX) {
+            minX = pointset[i][0];
+        }
+        if (pointset[i][1] < minY) {
+            minY = pointset[i][1];
+        }
+        if (pointset[i][0] > maxX) {
+            maxX = pointset[i][0];
+        }
+        if (pointset[i][1] > maxY) {
+            maxY = pointset[i][1];
+        }
+    }
+
+    return [
+        maxX - minX, // width
+        maxY - minY  // height
+    ];
+}
+
+function _bBoxAround(edge) {
+    return [
+        Math.min(edge[0][0], edge[1][0]), // left
+        Math.min(edge[0][1], edge[1][1]), // top
+        Math.max(edge[0][0], edge[1][0]), // right
+        Math.max(edge[0][1], edge[1][1])  // bottom
+    ];
+}
+
+function _midPoint(edge, innerPoints, convex) {
+    let point = null,
+        angle1Cos = MAX_CONCAVE_ANGLE_COS,
+        angle2Cos = MAX_CONCAVE_ANGLE_COS,
+        a1Cos, a2Cos;
+
+    for (let i = 0; i < innerPoints.length; i++) {
+        a1Cos = _cos(edge[0], edge[1], innerPoints[i]);
+        a2Cos = _cos(edge[1], edge[0], innerPoints[i]);
+
+        if (a1Cos > angle1Cos && a2Cos > angle2Cos &&
+            !_intersect([edge[0], innerPoints[i]], convex) &&
+            !_intersect([edge[1], innerPoints[i]], convex)) {
+
+            angle1Cos = a1Cos;
+            angle2Cos = a2Cos;
+            point = innerPoints[i];
+        }
+    }
+
+    return point;
+}
+
+function _concave(convex, maxSqEdgeLen, maxSearchArea, grid, edgeSkipList) {
+    let midPointInserted = false;
+
+    for (let i = 0; i < convex.length - 1; i++) {
+        const edge = [convex[i], convex[i + 1]];
+        // generate a key in the format X0,Y0,X1,Y1
+        const keyInSkipList = edge[0][0] + ',' + edge[0][1] + ',' + edge[1][0] + ',' + edge[1][1];
+
+        if (_sqLength(edge[0], edge[1]) < maxSqEdgeLen ||
+            edgeSkipList.has(keyInSkipList)) { continue; }
+
+        let scaleFactor = 0;
+        let bBoxAround = _bBoxAround(edge);
+        let bBoxWidth;
+        let bBoxHeight;
+        let midPoint;
+        do {
+            bBoxAround = grid.extendBbox(bBoxAround, scaleFactor);
+            bBoxWidth = bBoxAround[2] - bBoxAround[0];
+            bBoxHeight = bBoxAround[3] - bBoxAround[1];
+
+            midPoint = _midPoint(edge, grid.rangePoints(bBoxAround), convex);
+            scaleFactor++;
+        }  while (midPoint === null && (maxSearchArea[0] > bBoxWidth || maxSearchArea[1] > bBoxHeight));
+
+        if (bBoxWidth >= maxSearchArea[0] && bBoxHeight >= maxSearchArea[1]) {
+            edgeSkipList.add(keyInSkipList);
+        }
+
+        if (midPoint !== null) {
+            convex.splice(i + 1, 0, midPoint);
+            grid.removePoint(midPoint);
+            midPointInserted = true;
+        }
+    }
+
+    if (midPointInserted) {
+        return _concave(convex, maxSqEdgeLen, maxSearchArea, grid, edgeSkipList);
+    }
+
+    return convex;
+}
+
+function hull(pointset, concavity, format) {
+    let maxEdgeLen = concavity || 20;
+
+    const points = _filterDuplicates(_sortByX(formatUtil.toXy(pointset, format)));
+
+    if (points.length < 4) {
+        return points.concat([points[0]]);
+    }
+
+    const occupiedArea = _occupiedArea(points);
+    const maxSearchArea = [
+        occupiedArea[0] * MAX_SEARCH_BBOX_SIZE_PERCENT,
+        occupiedArea[1] * MAX_SEARCH_BBOX_SIZE_PERCENT
+    ];
+
+    const convex = convexHull(points);
+    const innerPoints = points.filter(function(pt) {
+        return convex.indexOf(pt) < 0;
+    });
+
+    const cellSize = Math.ceil(1 / (points.length / (occupiedArea[0] * occupiedArea[1])));
+
+    const concave = _concave(
+        convex, Math.pow(maxEdgeLen, 2),
+        maxSearchArea, grid(innerPoints, cellSize), new Set());
+
+    if (format) {
+        return formatUtil.fromXy(concave, format);
+    } else {
+        return concave;
+    }
+}
+
+const MAX_CONCAVE_ANGLE_COS = Math.cos(90 / (180 / Math.PI)); // angle = 90 deg
+const MAX_SEARCH_BBOX_SIZE_PERCENT = 0.6;
+
+module.exports = hull;
+
+
+/***/ }),
+
+/***/ "./node_modules/hull.js/src/intersect.js":
+/*!***********************************************!*\
+  !*** ./node_modules/hull.js/src/intersect.js ***!
+  \***********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function ccw(x1, y1, x2, y2, x3, y3) {           
+    const cw = ((y3 - y1) * (x2 - x1)) - ((y2 - y1) * (x3 - x1));
+    return cw > 0 ? true : cw < 0 ? false : true; // colinear
+}
+
+function intersect(seg1, seg2) {
+  const x1 = seg1[0][0], y1 = seg1[0][1],
+      x2 = seg1[1][0], y2 = seg1[1][1],
+      x3 = seg2[0][0], y3 = seg2[0][1],
+      x4 = seg2[1][0], y4 = seg2[1][1];
+
+    return ccw(x1, y1, x3, y3, x4, y4) !== ccw(x2, y2, x3, y3, x4, y4) && ccw(x1, y1, x2, y2, x3, y3) !== ccw(x1, y1, x2, y2, x4, y4);
+}
+
+module.exports = intersect;
 
 /***/ }),
 
@@ -43460,6 +43821,20 @@ var render = function() {
             on: { click: _vm.canvasZoomImage }
           },
           [_c("i", { staticClass: "fas fa-compress-arrows-alt" })]
+        ),
+        _vm._v(" "),
+        _c(
+          "div",
+          {
+            staticClass: "p-2 text-center",
+            class: { active: _vm.canvasIsToolActive(_vm.join_rows_tool) },
+            on: {
+              click: function($event) {
+                return _vm.canvasSelectTool(_vm.join_rows_tool)
+              }
+            }
+          },
+          [_c("i", { staticClass: "fab fa-confluence" })]
         )
       ]
     ),
@@ -55974,6 +56349,7 @@ window.paper = paper__WEBPACK_IMPORTED_MODULE_1__;
 /** Axios **/
 
 window.axios = __webpack_require__(/*! axios */ "./node_modules/axios/index.js")["default"];
+window.hull = __webpack_require__(/*! hull.js */ "./node_modules/hull.js/src/hull.js");
 /** Register Vue components **/
 
 var files = __webpack_require__("./resources/js sync recursive \\.vue$/");
@@ -56645,7 +57021,9 @@ function activeRowChangedHandler(next, prev) {
   var _this3 = this;
 
   if (next) {
-    next.view.path.selected = true;
+    next.view.path.selected = true; // Notify join rows tool
+
+    if (this.canvasIsToolActive(this.join_rows_tool)) this.join_rows_tool.row_selected(next);
     this.$nextTick(function () {
       //
       var parent_region = _this3.annotations.regions.find(function (item) {
@@ -56820,12 +57198,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _scale_move_tool_canvas_events__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./scale_move_tool_canvas_events */ "./resources/js/components/annotator/canvas/scale_move_tool_canvas_events.js");
 /* harmony import */ var _bbox_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./bbox_tool */ "./resources/js/components/annotator/canvas/bbox_tool.js");
 /* harmony import */ var _polygon_tool__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./polygon_tool */ "./resources/js/components/annotator/canvas/polygon_tool.js");
+/* harmony import */ var _join_rows_tool__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./join_rows_tool */ "./resources/js/components/annotator/canvas/join_rows_tool.js");
 /**
 Tento soubor byl převzat z diplomové práce "Active Learning pro zpracování archivních pramenů"
 
 Autor práce: David Hříbek
 Rok: 2021
 **/
+
 
 
 
@@ -56866,6 +57246,7 @@ function canvasInit() {
   this.scale_move_tool = Object(_scale_move_tool_canvas_events__WEBPACK_IMPORTED_MODULE_0__["createScaleMoveViewTool"])(this);
   this.bbox_tool = Object(_bbox_tool__WEBPACK_IMPORTED_MODULE_1__["createBboxTool"])(this);
   this.polygon_tool = Object(_polygon_tool__WEBPACK_IMPORTED_MODULE_2__["createPolygonTool"])(this);
+  this.join_rows_tool = Object(_join_rows_tool__WEBPACK_IMPORTED_MODULE_3__["createJoinRowsTool"])(this);
   /** Activate default tool and select other **/
 
   this.scale_move_tool.activate();
@@ -57057,6 +57438,81 @@ function canvasSelectTool(tool) {
   this.selected_tool = tool;
   this.selected_tool.activate();
   this.$forceUpdate();
+}
+
+/***/ }),
+
+/***/ "./resources/js/components/annotator/canvas/join_rows_tool.js":
+/*!********************************************************************!*\
+  !*** ./resources/js/components/annotator/canvas/join_rows_tool.js ***!
+  \********************************************************************/
+/*! exports provided: createJoinRowsTool */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createJoinRowsTool", function() { return createJoinRowsTool; });
+/* harmony import */ var _annotations__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./annotations */ "./resources/js/components/annotator/canvas/annotations.js");
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+
+/**
+ * Autor práce: David Hříbek
+ * Rok: 2021
+ **/
+
+function createJoinRowsTool(annotator_component) {
+  var tool = new paper.Tool();
+  var base_row = null;
+
+  tool.row_selected = function (to_join_row) {
+    if (base_row && base_row !== to_join_row) {
+      // Join points
+      var points = Object(_annotations__WEBPACK_IMPORTED_MODULE_0__["getPathPoints"])(base_row.view.path).concat(Object(_annotations__WEBPACK_IMPORTED_MODULE_0__["getPathPoints"])(to_join_row.view.path)); // Calc. convex envelope and join paths
+
+      points = points.map(function (item) {
+        return [item.x, item.y];
+      });
+      points = hull(points, 200);
+      base_row.view.path.clear();
+
+      var _iterator = _createForOfIteratorHelper(points),
+          _step;
+
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var point = _step.value;
+          base_row.view.path.add(new paper.Point(point));
+        } // annotator_component.last_active_annotation = annotator_component.active_row = base_row;
+        // Join texts
+
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
+      }
+
+      base_row.text += to_join_row.text;
+      base_row.view.text.content = base_row.text; // Delete second row
+
+      annotator_component.removeAnnotation(to_join_row.uuid); // Init
+
+      base_row = null; // annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
+    } else base_row = to_join_row;
+  };
+
+  tool.onKeyDown = function (event) {
+    if (event.key === "escape") {
+      base_row = null;
+      annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
+    }
+  };
+
+  return tool;
 }
 
 /***/ }),

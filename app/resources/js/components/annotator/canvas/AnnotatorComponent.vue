@@ -31,13 +31,22 @@ Rok: 2021
             </div>
             <div class="p-2 text-center"
                  :class="{'active': canvasIsToolActive(polygon_tool) && creating_annotation_type === 'rows'}"
-                 @click="canvasSelectTool(polygon_tool); creating_annotation_type='rows';"><i class="fas fa-draw-polygon"></i>
+                 @click="canvasSelectTool(polygon_tool); creating_annotation_type='rows';"
+            >
+              <i class="fas fa-draw-polygon"></i>
             </div>
 
             <div class="text-small pt-5">Ostatní</div>
 
             <!-- Zoom to image -->
             <div class="p-2 text-center" @click="canvasZoomImage"><i class="fas fa-compress-arrows-alt"></i></div>
+
+            <div class="p-2 text-center"
+                 :class="{'active': canvasIsToolActive(join_rows_tool)}"
+                 @click="canvasSelectTool(join_rows_tool)"
+            >
+              <i class="fab fa-confluence"></i>
+            </div>
 
         </aside>
 
@@ -187,7 +196,7 @@ export default {
         }
     },
     mounted() {
-        this.canvasInit()
+        this.canvasInit();
     }
 }
 </script>

@@ -303,6 +303,10 @@ export function activeRowChangedHandler(next, prev) {
     if (next) {
         next.view.path.selected = true;
 
+        // Notify join rows tool
+        if (this.canvasIsToolActive(this.join_rows_tool))
+            this.join_rows_tool.row_selected(next);
+
         this.$nextTick(() => {
             //
             let parent_region = this.annotations.regions.find((item) => item.uuid === next.region_annotation_uuid)

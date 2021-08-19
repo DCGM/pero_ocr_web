@@ -81,7 +81,7 @@ export default {
 
 
         annotationDeletedEventHandler(type, uuid) {
-            axios.delete('/api/annotations/' + type + '/' + uuid);
+            // axios.delete('/api/annotations/' + type + '/' + uuid);
         },
         annotationCreatedEditedEventHandler(annotation, annotation_type, image_id=null) {
             axios
