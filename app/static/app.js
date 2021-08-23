@@ -7397,6 +7397,12 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
 
 
 
@@ -7432,6 +7438,7 @@ __webpack_require__.r(__webpack_exports__);
       // Default
       bbox_tool: null,
       polygon_tool: null,
+      baseline_tool: null,
       join_rows_tool: null,
       creating_annotation_type: 'regions',
       // COMPONENT:
@@ -43812,6 +43819,25 @@ var render = function() {
           [_c("i", { staticClass: "fas fa-draw-polygon" })]
         ),
         _vm._v(" "),
+        _c(
+          "div",
+          {
+            staticClass: "p-2 text-center",
+            class: {
+              active:
+                _vm.canvasIsToolActive(_vm.baseline_tool) &&
+                _vm.creating_annotation_type === "rows"
+            },
+            on: {
+              click: function($event) {
+                _vm.canvasSelectTool(_vm.baseline_tool)
+                _vm.creating_annotation_type = "rows"
+              }
+            }
+          },
+          [_c("i", { staticClass: "fas fa-grip-lines" })]
+        ),
+        _vm._v(" "),
         _c("div", { staticClass: "text-small pt-5" }, [_vm._v("Ostatní")]),
         _vm._v(" "),
         _c(
@@ -56892,10 +56918,11 @@ function createAnnotation(view, type) {
     annotation.is_deleted = false;
   } else if (type === 'rows') {
     annotation.region_annotation_uuid = parent_region_uuid; // Parent region
+    // annotation.state = ''; // active/ignored/edited
 
-    annotation.state = ''; // active/ignored/edited
-
-    annotation.is_valid = false;
+    annotation.is_valid = true;
+    annotation.annotated = false;
+    annotation.edited = false;
     annotation.text = '';
   } // console.log(annotation)
   // Emit event
@@ -57044,6 +57071,140 @@ function activeRowChangedHandler(next, prev) {
 
 /***/ }),
 
+/***/ "./resources/js/components/annotator/canvas/baseline_tool.js":
+/*!*******************************************************************!*\
+  !*** ./resources/js/components/annotator/canvas/baseline_tool.js ***!
+  \*******************************************************************/
+/*! exports provided: createBaselineTool */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createBaselineTool", function() { return createBaselineTool; });
+/* harmony import */ var _polygon_tool__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./polygon_tool */ "./resources/js/components/annotator/canvas/polygon_tool.js");
+/**
+ * Autor práce: David Hříbek
+ * Rok: 2021
+**/
+
+
+function makePolygon(baseline, up, down) {
+  var polygon = new paper.Path();
+  polygon.selected = true;
+  polygon.closed = true;
+  polygon.strokeWidth = 2;
+  polygon.strokeColor = 'rgba(34,43,68,0.8)';
+  var up_seg, down_seg;
+
+  for (var i = 0; i < baseline.segments.length; i++) {
+    up_seg = new paper.Point(baseline.segments[i].point.x, baseline.segments[i].point.y - (up ? up.length : 0));
+    down_seg = new paper.Point(baseline.segments[i].point.x, baseline.segments[i].point.y + (down ? down.length : 0));
+    polygon.insert(i, up_seg);
+    polygon.insert(i + 1, down_seg);
+  }
+
+  return polygon;
+}
+
+function createBaselineTool(annotator_component) {
+  var tool = new paper.Tool(); // Create tmp variables
+
+  var baseline = null;
+  var up = null;
+  var down = null;
+  var polygon = null;
+
+  tool.onKeyDown = function (event) {
+    if (event.key === "escape") {
+      // Remove currently created annotation
+      for (var _i = 0, _arr = [baseline, up, down, polygon]; _i < _arr.length; _i++) {
+        var item = _arr[_i];
+
+        if (item.path) {
+          item.path.remove();
+          item.path = null;
+        }
+      }
+    }
+  };
+
+  tool.onMouseDown = function (event) {
+    event.preventDefault();
+
+    if (event.event.which !== 1) {
+      // Right click
+      if (baseline.segments.length >= 2) {
+        if (!up) {
+          // Baseline -> Up
+          baseline.selected = false;
+          up = new paper.Path([baseline.lastSegment, baseline.lastSegment]);
+          up.selected = true;
+        }
+      }
+    } else {
+      // Left click
+      if (!baseline) {
+        // Baseline create
+        baseline = new paper.Path();
+        baseline.strokeColor = 'rgb(34 43 68)';
+        baseline.strokeWidth = 2;
+        baseline.selected = true;
+      }
+
+      if (!up && !down) {
+        // Baseline add point
+        var canvasMousePosition = new paper.Point(event.event.offsetX, event.event.offsetY);
+        var viewPosition = annotator_component.scope.view.viewToProject(canvasMousePosition);
+        baseline.add(new paper.Point(viewPosition));
+      }
+
+      if (up && !down) {
+        // Up -> Down
+        up.selected = false;
+        down = new paper.Path([baseline.lastSegment, baseline.lastSegment]);
+        down.selected = true;
+      } else if (down) {
+        // Down -> Finish
+        down.selected = false; //
+
+        Object(_polygon_tool__WEBPACK_IMPORTED_MODULE_0__["confirmAnnotation"])({
+          path: polygon
+        }, annotator_component); // Init
+
+        up.remove();
+        down.remove();
+        baseline.remove();
+        up = down = baseline = polygon = false;
+      }
+    }
+  };
+
+  tool.onMouseMove = function (event) {
+    var direction = down ? down : up;
+
+    if (direction) {
+      // Move last point
+      var pp = annotator_component.scope.view.projectToView(baseline.lastSegment.point);
+      var canvasMousePosition = new paper.Point(pp.x, event.event.offsetY);
+      var viewPosition = annotator_component.scope.view.viewToProject(canvasMousePosition);
+      var point = new paper.Point(viewPosition); // Check up above baseline or down below baseline
+
+      if (direction === up && point.y < baseline.lastSegment.point.y || direction === down && point.y > baseline.lastSegment.point.y) {
+        direction.lastSegment.remove();
+        direction.add(point);
+      } // Make tmp polygon
+
+
+      if (polygon) polygon.remove();
+      polygon = makePolygon(baseline, up, down);
+    }
+  };
+
+  return tool;
+}
+
+/***/ }),
+
 /***/ "./resources/js/components/annotator/canvas/bbox_tool.js":
 /*!***************************************************************!*\
   !*** ./resources/js/components/annotator/canvas/bbox_tool.js ***!
@@ -57055,12 +57216,14 @@ function activeRowChangedHandler(next, prev) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createBboxTool", function() { return createBboxTool; });
 /* harmony import */ var _annotations__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./annotations */ "./resources/js/components/annotator/canvas/annotations.js");
+/* harmony import */ var _polygon_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./polygon_tool */ "./resources/js/components/annotator/canvas/polygon_tool.js");
 /**
 Tento soubor byl převzat z diplomové práce "Active Learning pro zpracování archivních pramenů"
 
 Autor práce: David Hříbek
 Rok: 2021
 **/
+
 
 function createBboxTool(annotator_component) {
   var tool = new paper.Tool(); // Create bbox tmp variables
@@ -57110,13 +57273,18 @@ function createBboxTool(annotator_component) {
     if (bbox.path) {
       // Check if area is too small (probably miss click)
       if (bbox.path.area > 50) {
-        var annotation_view = annotator_component.createAnnotationView(Object(_annotations__WEBPACK_IMPORTED_MODULE_0__["getPathPoints"])(bbox.path), annotator_component.creating_annotation_type, false, false);
-        var active_region_uuid = annotator_component.active_region ? annotator_component.active_region.uuid : null;
-        var annotation = annotator_component.createAnnotation(annotation_view, annotator_component.creating_annotation_type, active_region_uuid); // Push region to annotations
-
-        annotator_component.annotations[annotator_component.creating_annotation_type].push(annotation); // Set this annotation to active
-
-        if (annotator_component.creating_annotation_type === 'regions') annotator_component.active_region = annotation;else annotator_component.active_row = annotation;
+        Object(_polygon_tool__WEBPACK_IMPORTED_MODULE_1__["confirmAnnotation"])(bbox, annotator_component); // let annotation_view = annotator_component.createAnnotationView(getPathPoints(bbox.path), annotator_component.creating_annotation_type, false, false);
+        // let active_region_uuid = annotator_component.active_region ? annotator_component.active_region.uuid : null;
+        // let annotation = annotator_component.createAnnotation(annotation_view, annotator_component.creating_annotation_type, active_region_uuid);
+        //
+        // // Push region to annotations
+        // annotator_component.annotations[annotator_component.creating_annotation_type].push(annotation);
+        //
+        // // Set this annotation to active
+        // if (annotator_component.creating_annotation_type === 'regions')
+        //     annotator_component.active_region = annotation;
+        // else
+        //     annotator_component.active_row = annotation;
       } // Remove tmp path
 
 
@@ -57198,13 +57366,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _scale_move_tool_canvas_events__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./scale_move_tool_canvas_events */ "./resources/js/components/annotator/canvas/scale_move_tool_canvas_events.js");
 /* harmony import */ var _bbox_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./bbox_tool */ "./resources/js/components/annotator/canvas/bbox_tool.js");
 /* harmony import */ var _polygon_tool__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./polygon_tool */ "./resources/js/components/annotator/canvas/polygon_tool.js");
-/* harmony import */ var _join_rows_tool__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./join_rows_tool */ "./resources/js/components/annotator/canvas/join_rows_tool.js");
+/* harmony import */ var _baseline_tool__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./baseline_tool */ "./resources/js/components/annotator/canvas/baseline_tool.js");
+/* harmony import */ var _join_rows_tool__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./join_rows_tool */ "./resources/js/components/annotator/canvas/join_rows_tool.js");
 /**
 Tento soubor byl převzat z diplomové práce "Active Learning pro zpracování archivních pramenů"
 
 Autor práce: David Hříbek
 Rok: 2021
 **/
+
 
 
 
@@ -57246,7 +57416,8 @@ function canvasInit() {
   this.scale_move_tool = Object(_scale_move_tool_canvas_events__WEBPACK_IMPORTED_MODULE_0__["createScaleMoveViewTool"])(this);
   this.bbox_tool = Object(_bbox_tool__WEBPACK_IMPORTED_MODULE_1__["createBboxTool"])(this);
   this.polygon_tool = Object(_polygon_tool__WEBPACK_IMPORTED_MODULE_2__["createPolygonTool"])(this);
-  this.join_rows_tool = Object(_join_rows_tool__WEBPACK_IMPORTED_MODULE_3__["createJoinRowsTool"])(this);
+  this.baseline_tool = Object(_baseline_tool__WEBPACK_IMPORTED_MODULE_3__["createBaselineTool"])(this);
+  this.join_rows_tool = Object(_join_rows_tool__WEBPACK_IMPORTED_MODULE_4__["createJoinRowsTool"])(this);
   /** Activate default tool and select other **/
 
   this.scale_move_tool.activate();
@@ -57521,11 +57692,12 @@ function createJoinRowsTool(annotator_component) {
 /*!******************************************************************!*\
   !*** ./resources/js/components/annotator/canvas/polygon_tool.js ***!
   \******************************************************************/
-/*! exports provided: createPolygonTool */
+/*! exports provided: confirmAnnotation, createPolygonTool */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "confirmAnnotation", function() { return confirmAnnotation; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createPolygonTool", function() { return createPolygonTool; });
 /* harmony import */ var _annotations__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./annotations */ "./resources/js/components/annotator/canvas/annotations.js");
 /**
@@ -57535,9 +57707,12 @@ Autor práce: David Hříbek
 Rok: 2021
 **/
 
-
-function confirmPolygon(polygon, annotator_component) {
-  var annotation_view = annotator_component.createAnnotationView(Object(_annotations__WEBPACK_IMPORTED_MODULE_0__["getPathPoints"])(polygon.path), annotator_component.creating_annotation_type, false, false);
+function confirmAnnotation(polygon, annotator_component) {
+  var tmp_ann = {
+    points: Object(_annotations__WEBPACK_IMPORTED_MODULE_0__["getPathPoints"])(polygon.path),
+    is_valid: false
+  };
+  var annotation_view = annotator_component.createAnnotationView(tmp_ann, annotator_component.creating_annotation_type);
   var active_region_uuid = annotator_component.active_region ? annotator_component.active_region.uuid : null;
   var annotation = annotator_component.createAnnotation(annotation_view, annotator_component.creating_annotation_type, active_region_uuid); // Push region to annotations
 
@@ -57548,10 +57723,9 @@ function confirmPolygon(polygon, annotator_component) {
     annotator_component.active_row.is_valid = false;
   } // Remove tmp path
 
-  polygon.path.remove();
+  if (polygon.path) polygon.path.remove();
   polygon.path = null;
 }
-
 function createPolygonTool(annotator_component) {
   var tool = new paper.Tool(); // Create bbox tmp variables
 
@@ -57570,7 +57744,7 @@ function createPolygonTool(annotator_component) {
       // Remove currently created rectangle
       if (polygon.path && polygon.path.segments.length >= 4) {
         polygon.path.lastSegment.remove();
-        confirmPolygon(polygon, annotator_component);
+        confirmAnnotation(polygon, annotator_component);
       }
     }
   };
@@ -57581,7 +57755,7 @@ function createPolygonTool(annotator_component) {
     if (event.event.which !== 1) {
       if (polygon.path.segments.length >= 4) {
         polygon.path.lastSegment.remove();
-        confirmPolygon(polygon, annotator_component);
+        confirmAnnotation(polygon, annotator_component);
       }
     } else {
       //

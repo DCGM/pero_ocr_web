@@ -596,7 +596,7 @@ function get_annotations(raw_data, type) {
  */
 function get_confidence(confidences) {
     let line_confidence = 0;
-    if(confidences.length > 0){
+    if (confidences.length > 0){
         let power_const = 5;
         for (let c of confidences)
             line_confidence += (1 - c) ** power_const;

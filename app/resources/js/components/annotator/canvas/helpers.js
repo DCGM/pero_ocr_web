@@ -8,6 +8,7 @@ Rok: 2021
 import {createScaleMoveViewTool} from "./scale_move_tool_canvas_events";
 import {createBboxTool} from "./bbox_tool";
 import {createPolygonTool} from "./polygon_tool";
+import {createBaselineTool} from "./baseline_tool";
 import {createJoinRowsTool} from "./join_rows_tool";
 
 /**
@@ -43,6 +44,7 @@ export function canvasInit() {
     this.scale_move_tool = createScaleMoveViewTool(this);
     this.bbox_tool = createBboxTool(this);
     this.polygon_tool = createPolygonTool(this);
+    this.baseline_tool = createBaselineTool(this);
     this.join_rows_tool = createJoinRowsTool(this);
 
     /** Activate default tool and select other **/
