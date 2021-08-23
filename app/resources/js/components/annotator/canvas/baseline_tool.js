@@ -34,16 +34,14 @@ export function createBaselineTool(annotator_component) {
     let down = null;
     let polygon = null;
 
-
     tool.onKeyDown = (event) => {
         if (event.key === "escape") {
             // Remove currently created annotation
             for (let item of [baseline, up, down, polygon]) {
-                if (item.path) {
-                    item.path.remove();
-                    item.path = null;
-                }
+                if (item)
+                    item.remove();
             }
+            baseline = up = down = polygon = null;
         }
     }
 

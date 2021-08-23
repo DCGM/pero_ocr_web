@@ -33,7 +33,13 @@ Rok: 2021
                  :class="{'active': canvasIsToolActive(polygon_tool) && creating_annotation_type === 'rows'}"
                  @click="canvasSelectTool(polygon_tool); creating_annotation_type='rows';"
             >
-              <i class="fas fa-draw-polygon"></i>
+                <i class="fas fa-draw-polygon"></i>
+            </div>
+            <div class="p-2 text-center"
+                 :class="{'active': canvasIsToolActive(baseline_tool) && creating_annotation_type === 'rows'}"
+                 @click="canvasSelectTool(baseline_tool); creating_annotation_type='rows';"
+            >
+                <i class="fas fa-grip-lines"></i>
             </div>
 
             <div class="text-small pt-5">Ostatní</div>
