@@ -7134,14 +7134,14 @@ __webpack_require__.r(__webpack_exports__);
     },
     annotationCreatedEditedEventHandler: function annotationCreatedEditedEventHandler(annotation, annotation_type) {
       var image_id = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-      axios.post('/api/annotations', {
-        annotation: annotation,
-        annotation_type: annotation_type,
-        image_id: image_id,
-        dataset_id: this.dataset_id
-      })["catch"](function (errors) {
-        return console.log(errors);
-      });
+      console.log('edited'); // axios
+      //     .post('/api/annotations', {
+      //         annotation: annotation,
+      //         annotation_type: annotation_type,
+      //         image_id: image_id,
+      //         dataset_id: this.dataset_id
+      //     })
+      //     .catch((errors) => console.log(errors));
     }
   }
 });
@@ -7421,8 +7421,11 @@ __webpack_require__.r(__webpack_exports__);
         raster: null,
         path: null
       },
-      last_segm: null,
       left_control_active: false,
+      // Edit annotation
+      last_segm: null,
+      last_baseline: null,
+      last_segm_type: null,
       // Annotations
       annotations: {
         regions: [],
@@ -56689,6 +56692,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "activeRowChangedHandler", function() { return activeRowChangedHandler; });
 /* harmony import */ var uuid__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! uuid */ "./node_modules/uuid/index.js");
 /* harmony import */ var uuid__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(uuid__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _baseline_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./baseline_tool */ "./resources/js/components/annotator/canvas/baseline_tool.js");
 function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
@@ -56696,11 +56700,12 @@ function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o =
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 /**
-Tento soubor byl převzat z diplomové práce "Active Learning pro zpracování archivních pramenů"
+ Tento soubor byl převzat z diplomové práce "Active Learning pro zpracování archivních pramenů"
 
-Autor práce: David Hříbek
-Rok: 2021
-**/
+ Autor práce: David Hříbek
+ Rok: 2021
+ **/
+
 
 /**
  * Emit edit event
@@ -56924,13 +56929,48 @@ function createAnnotation(view, type) {
     annotation.annotated = false;
     annotation.edited = false;
     annotation.text = '';
-  } // console.log(annotation)
-  // Emit event
+  } // Emit event
 
 
   type = type === 'regions' ? 'region' : 'row';
   this.$emit(type + '-created-event', serializeAnnotation(annotation));
   return annotation;
+}
+/**
+ * Get nearest path segment from point
+ * @param path
+ * @param point
+ * @returns {null}
+ */
+
+function getNearestPathSegment(path, point) {
+  // Find nearest segment on path
+  var p_min = path.segments[0].point;
+  var last_segm = null;
+  var dist = 100;
+  var p = path.getNearestPoint(point); // Find nearest path segment
+
+  var _iterator3 = _createForOfIteratorHelper(path.segments),
+      _step3;
+
+  try {
+    for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+      var s = _step3.value;
+      var d = Math.sqrt(Math.pow(s.point.x - p.x, 2) + Math.pow(s.point.y - p.y, 2));
+
+      if (d < dist) {
+        last_segm = s;
+        dist = d;
+        p_min = s.point;
+      }
+    }
+  } catch (err) {
+    _iterator3.e(err);
+  } finally {
+    _iterator3.f();
+  }
+
+  return last_segm;
 }
 /**
  * Create annotation GUI view
@@ -56940,57 +56980,98 @@ function createAnnotation(view, type) {
  * @returns {{path: paper.Path, text: null, group: paper.Group}}
  */
 
+
 function createAnnotationView(annotation, type) {
   var _this = this;
 
-  //
-  var path = new paper.Path();
-  path.closed = true; // Color path
+  // Create new group with bbox and text
+  var polygon = new paper.Path();
+  var group = new paper.Group([polygon]);
+  var text = null;
+  var baseline = {};
 
-  path = setPathColor(path, type, annotation); // Add points to path
+  if (type === 'rows') {
+    // Rows
+    // Create baseline
+    var baseline_left = annotation.baseline[0];
+    var baseline_right = annotation.baseline[annotation.baseline.length - 1];
+    var heights = annotation.heights; // Baseline path
 
-  var _iterator3 = _createForOfIteratorHelper(annotation.points),
-      _step3;
+    baseline.baseline_path = new paper.Path(annotation.baseline);
+    baseline.baseline_path.strokeWidth = 2;
+    baseline.baseline_path.strokeColor = 'rgba(34,43,68,0.8)';
 
-  try {
-    for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-      var point = _step3.value;
-      path.add(new paper.Point(point));
-    }
-  } catch (err) {
-    _iterator3.e(err);
-  } finally {
-    _iterator3.f();
-  }
+    baseline.baseline_path.onMouseDown = function (event) {
+      event.preventDefault();
+      _this.last_segm = getNearestPathSegment(baseline.baseline_path, event.point);
+      _this.last_baseline = baseline;
+      _this.last_segm_type = 'baseline_path';
+    }; // Left path
 
-  path.onMouseDown = function (e) {
-    e.preventDefault(); // Find nearest segment on path
 
-    var p_min = path.segments[0].point;
-    _this.last_segm = null;
-    var dist = 50;
-    var p = path.getNearestPoint(e.point); // Find nearest path segment
+    baseline.baseline_left_path = new paper.Path([[baseline_left.x, baseline_left.y + heights.down], [baseline_left.x, baseline_left.y - heights.up]]);
+    baseline.baseline_left_path.strokeWidth = 2;
+    baseline.baseline_left_path.strokeColor = 'rgba(34,43,68,0.8)';
 
-    var _iterator4 = _createForOfIteratorHelper(path.segments),
+    baseline.baseline_left_path.onMouseDown = function (event) {
+      event.preventDefault();
+      _this.last_segm = getNearestPathSegment(baseline.baseline_left_path, event.point);
+      _this.last_baseline = baseline;
+      _this.last_segm_type = 'left_path';
+    }; // Right path
+
+
+    baseline.baseline_right_path = new paper.Path([[baseline_right.x, baseline_right.y + heights.down], [baseline_right.x, baseline_right.y - heights.up]]);
+    baseline.baseline_right_path.strokeWidth = 2;
+    baseline.baseline_right_path.strokeColor = 'rgba(34,43,68,0.8)';
+
+    baseline.baseline_right_path.onMouseDown = function (event) {
+      event.preventDefault();
+      _this.last_segm = getNearestPathSegment(baseline.baseline_right_path, event.point);
+      _this.last_baseline = baseline;
+      _this.last_segm_type = 'right_path';
+    };
+
+    group.addChild(baseline.baseline_path);
+    group.addChild(baseline.baseline_left_path);
+    group.addChild(baseline.baseline_right_path); // Make polygon
+
+    polygon = Object(_baseline_tool__WEBPACK_IMPORTED_MODULE_1__["makePolygon"])(baseline.baseline_path, new paper.Path([baseline.baseline_path.segments[0], baseline.baseline_left_path.segments[1]]), new paper.Path([baseline.baseline_path.segments[0], baseline.baseline_left_path.segments[0]]));
+    baseline.baseline_path.insertAbove(polygon);
+    baseline.baseline_left_path.insertAbove(polygon);
+    baseline.baseline_right_path.insertAbove(polygon); // polygon.insertBelow(baseline.baseline_path);
+    // Create text
+
+    text = new paper.PointText(polygon.firstSegment.point.add(new paper.Point(20, -20))); // TODO
+
+    text.content = annotation.text ? annotation.text : '';
+    text.opacity = 0;
+    group.addChild(text);
+  } else {
+    // Regions
+    // Create polygon
+    polygon.closed = true; // Add points to path
+
+    var _iterator4 = _createForOfIteratorHelper(annotation.points),
         _step4;
 
     try {
       for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
-        var s = _step4.value;
-        var d = Math.sqrt(Math.pow(s.point.x - p.x, 2) + Math.pow(s.point.y - p.y, 2));
-
-        if (d < dist) {
-          _this.last_segm = s;
-          dist = d;
-          p_min = s.point;
-        }
-      } // Find annotation and make it active
-
+        var point = _step4.value;
+        polygon.add(new paper.Point(point));
+      }
     } catch (err) {
       _iterator4.e(err);
     } finally {
       _iterator4.f();
     }
+  } // Color polygon
+
+
+  polygon = setPathColor(polygon, type, annotation);
+
+  polygon.onMouseDown = function (e) {
+    e.preventDefault(); // Find annotation and make it active
 
     if (type === 'regions') _this.last_active_annotation = _this.active_region = _this.annotations.regions.find(function (item) {
       return item.view.path === e.target;
@@ -56998,25 +57079,13 @@ function createAnnotationView(annotation, type) {
       return item.view.path === e.target;
     });
     if (e.event.which === 3) _this.activateContextMenu();
-  }; // Create new group with bbox and text
-
-
-  var group = new paper.Group([path]);
-  var text = null;
-
-  if (type === 'rows') {
-    // Create text
-    text = new paper.PointText(path.firstSegment.point.add(new paper.Point(20, -20))); // TODO
-
-    text.content = annotation.text_content ? annotation.text_content : '';
-    text.opacity = 0;
-    group.addChild(text);
-  }
+  };
 
   return {
     group: group,
-    path: path,
-    text: text
+    path: polygon,
+    text: text,
+    baseline: baseline
   };
 }
 function activeRegionChangedHandler(next, prev) {
@@ -57048,7 +57117,10 @@ function activeRowChangedHandler(next, prev) {
   var _this3 = this;
 
   if (next) {
-    next.view.path.selected = true; // Notify join rows tool
+    // Select row
+    next.view.baseline.baseline_path.selected = true;
+    next.view.baseline.baseline_left_path.selected = true;
+    next.view.baseline.baseline_right_path.selected = true; // Notify join rows tool
 
     if (this.canvasIsToolActive(this.join_rows_tool)) this.join_rows_tool.row_selected(next);
     this.$nextTick(function () {
@@ -57064,8 +57136,10 @@ function activeRowChangedHandler(next, prev) {
   }
 
   if (prev) {
-    prev.view.path.selected = false;
     prev.view.path = setPathColor(prev.view.path, 'row', prev);
+    prev.view.baseline.baseline_path.selected = false;
+    prev.view.baseline.baseline_left_path.selected = false;
+    prev.view.baseline.baseline_right_path.selected = false;
   }
 }
 
@@ -57075,11 +57149,12 @@ function activeRowChangedHandler(next, prev) {
 /*!*******************************************************************!*\
   !*** ./resources/js/components/annotator/canvas/baseline_tool.js ***!
   \*******************************************************************/
-/*! exports provided: createBaselineTool */
+/*! exports provided: makePolygon, createBaselineTool */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "makePolygon", function() { return makePolygon; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createBaselineTool", function() { return createBaselineTool; });
 /* harmony import */ var _polygon_tool__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./polygon_tool */ "./resources/js/components/annotator/canvas/polygon_tool.js");
 /**
@@ -57087,10 +57162,17 @@ __webpack_require__.r(__webpack_exports__);
  * Rok: 2021
 **/
 
+/**
+ * TODO
+ * @param baseline path
+ * @param up path
+ * @param down path
+ * @returns {paper.Path}
+ */
 
 function makePolygon(baseline, up, down) {
-  var polygon = new paper.Path();
-  polygon.selected = true;
+  var polygon = new paper.Path(); // polygon.selected = true;
+
   polygon.closed = true;
   polygon.strokeWidth = 2;
   polygon.strokeColor = 'rgba(34,43,68,0.8)';
@@ -57105,7 +57187,6 @@ function makePolygon(baseline, up, down) {
 
   return polygon;
 }
-
 function createBaselineTool(annotator_component) {
   var tool = new paper.Tool(); // Create tmp variables
 
@@ -57119,12 +57200,10 @@ function createBaselineTool(annotator_component) {
       // Remove currently created annotation
       for (var _i = 0, _arr = [baseline, up, down, polygon]; _i < _arr.length; _i++) {
         var item = _arr[_i];
-
-        if (item.path) {
-          item.path.remove();
-          item.path = null;
-        }
+        if (item) item.remove();
       }
+
+      baseline = up = down = polygon = null;
     }
   };
 
@@ -57215,15 +57294,13 @@ function createBaselineTool(annotator_component) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createBboxTool", function() { return createBboxTool; });
-/* harmony import */ var _annotations__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./annotations */ "./resources/js/components/annotator/canvas/annotations.js");
-/* harmony import */ var _polygon_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./polygon_tool */ "./resources/js/components/annotator/canvas/polygon_tool.js");
+/* harmony import */ var _polygon_tool__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./polygon_tool */ "./resources/js/components/annotator/canvas/polygon_tool.js");
 /**
 Tento soubor byl převzat z diplomové práce "Active Learning pro zpracování archivních pramenů"
 
 Autor práce: David Hříbek
 Rok: 2021
 **/
-
 
 function createBboxTool(annotator_component) {
   var tool = new paper.Tool(); // Create bbox tmp variables
@@ -57273,7 +57350,7 @@ function createBboxTool(annotator_component) {
     if (bbox.path) {
       // Check if area is too small (probably miss click)
       if (bbox.path.area > 50) {
-        Object(_polygon_tool__WEBPACK_IMPORTED_MODULE_1__["confirmAnnotation"])(bbox, annotator_component); // let annotation_view = annotator_component.createAnnotationView(getPathPoints(bbox.path), annotator_component.creating_annotation_type, false, false);
+        Object(_polygon_tool__WEBPACK_IMPORTED_MODULE_0__["confirmAnnotation"])(bbox, annotator_component); // let annotation_view = annotator_component.createAnnotationView(getPathPoints(bbox.path), annotator_component.creating_annotation_type, false, false);
         // let active_region_uuid = annotator_component.active_region ? annotator_component.active_region.uuid : null;
         // let annotation = annotator_component.createAnnotation(annotation_view, annotator_component.creating_annotation_type, active_region_uuid);
         //
@@ -57803,6 +57880,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "canvasMouseDownEv", function() { return canvasMouseDownEv; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "canvasMouseUpEv", function() { return canvasMouseUpEv; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "canvasMouseDblClickEv", function() { return canvasMouseDblClickEv; });
+/* harmony import */ var _baseline_tool__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./baseline_tool */ "./resources/js/components/annotator/canvas/baseline_tool.js");
 /**
 Tento soubor byl převzat z diplomové práce "Active Learning pro zpracování archivních pramenů"
 
@@ -57815,6 +57893,7 @@ Rok: 2021
  * @param annotator_component
  * @returns {paper.Tool}
  */
+
 function createScaleMoveViewTool(annotator_component) {
   var tool = new paper.Tool();
 
@@ -57823,9 +57902,46 @@ function createScaleMoveViewTool(annotator_component) {
       var offset = event.point.subtract(event.downPoint);
       annotator_component.scope.view.center = annotator_component.scope.view.center.subtract(offset);
     } else {
+      // Moving baseline point
       if (annotator_component.last_segm) {
-        annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta);
         annotator_component.mouse_drag = true;
+
+        if (annotator_component.last_segm_type === 'left_path' || annotator_component.last_segm_type === 'right_path') {
+          var path = annotator_component.last_segm_type === 'left_path' ? annotator_component.last_baseline.baseline_left_path : annotator_component.last_baseline.baseline_right_path;
+          var oposite_path = annotator_component.last_segm_type === 'left_path' ? annotator_component.last_baseline.baseline_right_path : annotator_component.last_baseline.baseline_left_path;
+          var second_segm = annotator_component.last_segm === path.segments[0] ? path.segments[1] : path.segments[0];
+
+          if (Math.abs(event.delta.x) > Math.abs(event.delta.y)) {
+            // Move both points
+            // Move baseline left/right path
+            annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta);
+            second_segm.point = second_segm.point.add(event.delta); // Move baseline left/right point
+
+            var idx = annotator_component.last_segm_type === 'left_path' ? 0 : annotator_component.last_baseline.baseline_path.segments.length - 1;
+            annotator_component.last_baseline.baseline_path.segments[idx].point = annotator_component.last_baseline.baseline_path.segments[idx].point.add(event.delta);
+          } else {
+            // Move one point vertically
+            var is_up_segm = annotator_component.last_segm.point.y > second_segm.point.y;
+            var oposite_segm = oposite_path.segments[0].point.y > oposite_path.segments[1].point.y === is_up_segm ? oposite_path.segments[0] : oposite_path.segments[1];
+            oposite_segm.point = oposite_segm.point.add({
+              x: 0,
+              y: event.delta.y
+            });
+            annotator_component.last_segm.point = annotator_component.last_segm.point.add({
+              x: 0,
+              y: event.delta.y
+            });
+          }
+        } else {
+          // Baseline path
+          annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta);
+        } // Make polygon
+
+
+        var polygon = Object(_baseline_tool__WEBPACK_IMPORTED_MODULE_0__["makePolygon"])(annotator_component.last_baseline.baseline_path, new paper.Path([annotator_component.last_baseline.baseline_path.segments[0], annotator_component.last_baseline.baseline_left_path.segments[1]]), new paper.Path([annotator_component.last_baseline.baseline_path.segments[0], annotator_component.last_baseline.baseline_left_path.segments[0]]));
+        annotator_component.active_row.view.path.clear();
+        annotator_component.active_row.view.path.segments = polygon.segments;
+        polygon.remove();
       }
     }
   };

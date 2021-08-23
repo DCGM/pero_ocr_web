@@ -564,6 +564,10 @@ function get_annotations(raw_data, type) {
                 points: raw_row.np_points.map(point => {
                     return {x: point[0], y: point[1]}
                 }),
+                baseline: raw_row.np_baseline.map(point => {
+                    return {x: point[0], y: point[1]}
+                }),
+                heights: {up: raw_row.np_heights[0], down: raw_row.np_heights[1]},
                 region_annotation_uuid: 'not_used_yet', // FK to parent region uuid
                 state: '', // active/ignored/edited
                 text: raw_row.text,

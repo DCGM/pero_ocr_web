@@ -155,8 +155,12 @@ export default {
             scope: null, // PaperJs scope
             mouse_coordinates: {x: null, y: null},
             image: {raster: null, path: null},
-            last_segm: null,
             left_control_active: false,
+
+            // Edit annotation
+            last_segm: null,
+            last_baseline: null,
+            last_segm_type: null,
 
             // Annotations
             annotations: {regions: [], rows: []},
@@ -169,6 +173,8 @@ export default {
             scale_move_tool: null, // Default
             bbox_tool: null,
             polygon_tool: null,
+            baseline_tool: null,
+            join_rows_tool: null,
 
             creating_annotation_type: 'regions',
 

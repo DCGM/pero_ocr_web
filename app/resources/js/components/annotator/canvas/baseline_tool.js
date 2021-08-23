@@ -5,9 +5,16 @@
 
 import {confirmAnnotation} from "./polygon_tool";
 
-function makePolygon(baseline, up, down) {
+/**
+ * TODO
+ * @param baseline path
+ * @param up path
+ * @param down path
+ * @returns {paper.Path}
+ */
+export function makePolygon(baseline, up, down) {
     let polygon = new paper.Path();
-    polygon.selected = true;
+    // polygon.selected = true;
     polygon.closed = true;
 
     polygon.strokeWidth = 2;

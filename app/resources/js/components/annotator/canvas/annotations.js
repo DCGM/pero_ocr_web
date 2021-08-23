@@ -1,11 +1,12 @@
 /**
-Tento soubor byl převzat z diplomové práce "Active Learning pro zpracování archivních pramenů"
+ Tento soubor byl převzat z diplomové práce "Active Learning pro zpracování archivních pramenů"
 
-Autor práce: David Hříbek
-Rok: 2021
-**/
+ Autor práce: David Hříbek
+ Rok: 2021
+ **/
 
 import {v4 as uuidv4} from 'uuid';
+import {makePolygon} from "./baseline_tool";
 
 
 /**
@@ -37,7 +38,7 @@ export function loadAnnotations(annotations) {
  * @returns - {regions:[], rows:[]}
  */
 export function getAnnotations() {
-    let annotations = {regions:[], rows:[]};
+    let annotations = {regions: [], rows: []};
     for (let type of ['regions', 'rows'])
         for (let annotation of this.annotations[type])
             annotations[type].push(serializeAnnotation(annotation));
@@ -204,13 +205,37 @@ export function createAnnotation(view, type, parent_region_uuid = null) {
         annotation.edited = false;
         annotation.text = '';
     }
-    // console.log(annotation)
 
     // Emit event
     type = type === 'regions'? 'region': 'row';
     this.$emit(type+'-created-event', serializeAnnotation(annotation));
 
     return annotation;
+}
+
+/**
+ * Get nearest path segment from point
+ * @param path
+ * @param point
+ * @returns {null}
+ */
+function getNearestPathSegment(path, point) {
+    // Find nearest segment on path
+    let p_min = path.segments[0].point;
+    let last_segm = null;
+    let dist = 100;
+    let p = path.getNearestPoint(point);
+
+    // Find nearest path segment
+    for (const s of path.segments) {
+        let d = Math.sqrt(Math.pow(s.point.x - p.x, 2) + Math.pow(s.point.y - p.y, 2));
+        if (d < dist) {
+            last_segm = s;
+            dist = d;
+            p_min = s.point;
+        }
+    }
+    return last_segm;
 }
 
 /**
@@ -221,35 +246,94 @@ export function createAnnotation(view, type, parent_region_uuid = null) {
  * @returns {{path: paper.Path, text: null, group: paper.Group}}
  */
 export function createAnnotationView(annotation, type) {
-    //
-    let path = new paper.Path();
-    path.closed = true;
+    // Create new group with bbox and text
+    let polygon = new paper.Path();
+    let group = new paper.Group([polygon]);
 
-    // Color path
-    path = setPathColor(path, type, annotation);
+    let text = null;
+    let baseline = {};
 
-    // Add points to path
-    for (let point of annotation.points)
-        path.add(new paper.Point(point));
+    if (type === 'rows') { // Rows
+        // Create baseline
+        let baseline_left = annotation.baseline[0];
+        let baseline_right = annotation.baseline[annotation.baseline.length - 1];
+        let heights = annotation.heights;
 
-    path.onMouseDown = (e) => {
-        e.preventDefault();
+        // Baseline path
+        baseline.baseline_path = new paper.Path(annotation.baseline);
+        baseline.baseline_path.strokeWidth = 2;
+        baseline.baseline_path.strokeColor = 'rgba(34,43,68,0.8)';
+        baseline.baseline_path.onMouseDown = (event) => {
+            event.preventDefault();
+            this.last_segm = getNearestPathSegment(baseline.baseline_path, event.point);
+            this.last_baseline = baseline;
+            this.last_segm_type = 'baseline_path';
+        };
 
-        // Find nearest segment on path
-        let p_min = path.segments[0].point;
-        this.last_segm = null;
-        let dist = 50;
-        let p = path.getNearestPoint(e.point);
+        // Left path
+        baseline.baseline_left_path = new paper.Path([
+            [baseline_left.x, baseline_left.y + heights.down],
+            [baseline_left.x, baseline_left.y - heights.up]
+        ]);
+        baseline.baseline_left_path.strokeWidth = 2;
+        baseline.baseline_left_path.strokeColor = 'rgba(34,43,68,0.8)';
+        baseline.baseline_left_path.onMouseDown = (event) => {
+            event.preventDefault();
+            this.last_segm = getNearestPathSegment(baseline.baseline_left_path, event.point);
+            this.last_baseline = baseline;
+            this.last_segm_type = 'left_path';
+        };
 
-        // Find nearest path segment
-        for (const s of path.segments) {
-            let d = Math.sqrt(Math.pow(s.point.x - p.x, 2) + Math.pow(s.point.y - p.y, 2));
-            if (d < dist) {
-                this.last_segm = s;
-                dist = d;
-                p_min = s.point;
-            }
+        // Right path
+        baseline.baseline_right_path = new paper.Path([
+            [baseline_right.x, baseline_right.y + heights.down],
+            [baseline_right.x, baseline_right.y - heights.up]
+        ]);
+        baseline.baseline_right_path.strokeWidth = 2;
+        baseline.baseline_right_path.strokeColor = 'rgba(34,43,68,0.8)';
+        baseline.baseline_right_path.onMouseDown = (event) => {
+            event.preventDefault();
+            this.last_segm = getNearestPathSegment(baseline.baseline_right_path, event.point);
+            this.last_baseline = baseline;
+            this.last_segm_type = 'right_path';
+
         }
+
+        group.addChild(baseline.baseline_path);
+        group.addChild(baseline.baseline_left_path);
+        group.addChild(baseline.baseline_right_path);
+
+        // Make polygon
+        polygon = makePolygon(
+            baseline.baseline_path,
+            new paper.Path([baseline.baseline_path.segments[0], baseline.baseline_left_path.segments[1]]),
+            new paper.Path([baseline.baseline_path.segments[0], baseline.baseline_left_path.segments[0]])
+        );
+        baseline.baseline_path.insertAbove(polygon);
+        baseline.baseline_left_path.insertAbove(polygon);
+        baseline.baseline_right_path.insertAbove(polygon);
+        // polygon.insertBelow(baseline.baseline_path);
+
+        // Create text
+        text = new paper.PointText(polygon.firstSegment.point.add(new paper.Point(20, -20))); // TODO
+        text.content = annotation.text ? annotation.text : '';
+        text.opacity = 0;
+        group.addChild(text);
+    }
+    else { // Regions
+        // Create polygon
+        polygon.closed = true;
+
+        // Add points to path
+        for (let point of annotation.points)
+            polygon.add(new paper.Point(point));
+    }
+
+    // Color polygon
+    polygon = setPathColor(polygon, type, annotation);
+
+    polygon.onMouseDown = (e) => {
+        e.preventDefault();
 
         // Find annotation and make it active
         if (type === 'regions')
@@ -261,19 +345,7 @@ export function createAnnotationView(annotation, type) {
             this.activateContextMenu();
     }
 
-    // Create new group with bbox and text
-    let group = new paper.Group([path]);
-
-    let text = null;
-    if (type === 'rows') {
-        // Create text
-        text = new paper.PointText(path.firstSegment.point.add(new paper.Point(20, -20))); // TODO
-        text.content = annotation.text_content? annotation.text_content: '';
-        text.opacity = 0;
-        group.addChild(text);
-    }
-
-    return {group: group, path: path, text: text};
+    return {group: group, path: polygon, text: text, baseline: baseline};
 }
 
 export function activeRegionChangedHandler(next, prev) {
@@ -303,7 +375,10 @@ export function activeRegionChangedHandler(next, prev) {
 
 export function activeRowChangedHandler(next, prev) {
     if (next) {
-        next.view.path.selected = true;
+        // Select row
+        next.view.baseline.baseline_path.selected = true;
+        next.view.baseline.baseline_left_path.selected = true;
+        next.view.baseline.baseline_right_path.selected = true;
 
         // Notify join rows tool
         if (this.canvasIsToolActive(this.join_rows_tool))
@@ -321,7 +396,9 @@ export function activeRowChangedHandler(next, prev) {
         this.$emit('row-selected-event', serializeAnnotation(next))
     }
     if (prev) {
-        prev.view.path.selected = false;
         prev.view.path = setPathColor(prev.view.path, 'row', prev);
+        prev.view.baseline.baseline_path.selected = false;
+        prev.view.baseline.baseline_left_path.selected = false;
+        prev.view.baseline.baseline_right_path.selected = false;
     }
 }

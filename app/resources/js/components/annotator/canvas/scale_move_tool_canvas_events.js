@@ -5,6 +5,8 @@ Autor práce: David Hříbek
 Rok: 2021
 **/
 
+import {makePolygon} from './baseline_tool';
+
 /**
  * Create tool for scaling and moving over canvas
  * @param annotator_component
@@ -19,9 +21,45 @@ export function createScaleMoveViewTool(annotator_component) {
             annotator_component.scope.view.center = annotator_component.scope.view.center.subtract(offset);
         }
         else {
+            // Moving baseline point
             if (annotator_component.last_segm) {
-                annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta);
                 annotator_component.mouse_drag = true;
+
+                if (annotator_component.last_segm_type === 'left_path' || annotator_component.last_segm_type === 'right_path') {
+                    let path = annotator_component.last_segm_type === 'left_path'? annotator_component.last_baseline.baseline_left_path: annotator_component.last_baseline.baseline_right_path;
+                    let oposite_path = annotator_component.last_segm_type === 'left_path'? annotator_component.last_baseline.baseline_right_path: annotator_component.last_baseline.baseline_left_path;
+                    let second_segm = annotator_component.last_segm === path.segments[0] ? path.segments[1] : path.segments[0];
+
+                    if (Math.abs(event.delta.x) > Math.abs(event.delta.y)) { // Move both points
+                        // Move baseline left/right path
+                        annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta);
+                        second_segm.point = second_segm.point.add(event.delta);
+
+                        // Move baseline left/right point
+                        let idx = annotator_component.last_segm_type === 'left_path'? 0: annotator_component.last_baseline.baseline_path.segments.length - 1;
+                        annotator_component.last_baseline.baseline_path.segments[idx].point = annotator_component.last_baseline.baseline_path.segments[idx].point.add(event.delta)
+                    }
+                    else { // Move one point vertically
+                        let is_up_segm = annotator_component.last_segm.point.y > second_segm.point.y;
+                        let oposite_segm = (oposite_path.segments[0].point.y > oposite_path.segments[1].point.y) === is_up_segm? oposite_path.segments[0]: oposite_path.segments[1];
+
+                        oposite_segm.point = oposite_segm.point.add({x: 0, y: event.delta.y});
+                        annotator_component.last_segm.point = annotator_component.last_segm.point.add({x: 0, y: event.delta.y});
+                    }
+                }
+                else { // Baseline path
+                    annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta);
+                }
+
+                // Make polygon
+                let polygon = makePolygon(
+                    annotator_component.last_baseline.baseline_path,
+                    new paper.Path([annotator_component.last_baseline.baseline_path.segments[0], annotator_component.last_baseline.baseline_left_path.segments[1]]),
+                    new paper.Path([annotator_component.last_baseline.baseline_path.segments[0], annotator_component.last_baseline.baseline_left_path.segments[0]])
+                );
+                annotator_component.active_row.view.path.clear();
+                annotator_component.active_row.view.path.segments = polygon.segments;
+                polygon.remove();
             }
         }
     };

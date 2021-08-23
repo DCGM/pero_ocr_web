@@ -84,14 +84,15 @@ export default {
             // axios.delete('/api/annotations/' + type + '/' + uuid);
         },
         annotationCreatedEditedEventHandler(annotation, annotation_type, image_id=null) {
-            axios
-                .post('/api/annotations', {
-                    annotation: annotation,
-                    annotation_type: annotation_type,
-                    image_id: image_id,
-                    dataset_id: this.dataset_id
-                })
-                .catch((errors) => console.log(errors));
+            console.log('edited');
+            // axios
+            //     .post('/api/annotations', {
+            //         annotation: annotation,
+            //         annotation_type: annotation_type,
+            //         image_id: image_id,
+            //         dataset_id: this.dataset_id
+            //     })
+            //     .catch((errors) => console.log(errors));
         }
     },
 }
