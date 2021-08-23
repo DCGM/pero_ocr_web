@@ -198,8 +198,10 @@ export function createAnnotation(view, type, parent_region_uuid = null) {
         annotation.is_deleted = false;
     } else if (type === 'rows') {
         annotation.region_annotation_uuid = parent_region_uuid; // Parent region
-        annotation.state = ''; // active/ignored/edited
-        annotation.is_valid = false;
+        // annotation.state = ''; // active/ignored/edited
+        annotation.is_valid = true;
+        annotation.annotated = false;
+        annotation.edited = false;
         annotation.text = '';
     }
     // console.log(annotation)
