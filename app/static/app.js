@@ -56999,7 +56999,7 @@ function createAnnotationView(annotation, type) {
 
     baseline.baseline_path = new paper.Path(annotation.baseline);
     baseline.baseline_path.strokeWidth = 2;
-    baseline.baseline_path.strokeColor = 'rgba(34,43,68,0.8)';
+    baseline.baseline_path.strokeColor = 'rgba(34,43,68,0.1)';
 
     baseline.baseline_path.onMouseDown = function (event) {
       event.preventDefault();
@@ -57011,7 +57011,7 @@ function createAnnotationView(annotation, type) {
 
     baseline.baseline_left_path = new paper.Path([[baseline_left.x, baseline_left.y + heights.down], [baseline_left.x, baseline_left.y - heights.up]]);
     baseline.baseline_left_path.strokeWidth = 2;
-    baseline.baseline_left_path.strokeColor = 'rgba(34,43,68,0.8)';
+    baseline.baseline_left_path.strokeColor = 'rgba(34,43,68,0.1)';
 
     baseline.baseline_left_path.onMouseDown = function (event) {
       event.preventDefault();
@@ -57023,7 +57023,7 @@ function createAnnotationView(annotation, type) {
 
     baseline.baseline_right_path = new paper.Path([[baseline_right.x, baseline_right.y + heights.down], [baseline_right.x, baseline_right.y - heights.up]]);
     baseline.baseline_right_path.strokeWidth = 2;
-    baseline.baseline_right_path.strokeColor = 'rgba(34,43,68,0.8)';
+    baseline.baseline_right_path.strokeColor = 'rgba(34,43,68,0.1)';
 
     baseline.baseline_right_path.onMouseDown = function (event) {
       event.preventDefault();

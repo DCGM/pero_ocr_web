@@ -354,12 +354,17 @@ class TextLinesEditor {
         line.container.setAttribute("id", i);
 
         line.container.addEventListener('focus', () => {
-            /** Select line **/
-            this.annotator_wrapper_component.select_row(line.id);
             /** Select line (old) **/
             this.line_focus(line);
+
+            /** Select line **/
+            let active_row = this.annotator_wrapper_component.$refs.annotator_component.active_row;
+            let old_uuid = active_row? active_row.uuid: null;
+            this.annotator_wrapper_component.select_row(line.id);
+
             /** Zoom line **/
-            this.annotator_wrapper_component.zoom_row(line.id);
+            if (old_uuid !== line.id)
+                this.annotator_wrapper_component.zoom_row(line.id);
         });
 
         line.container.addEventListener('focusout', this.line_focus_out.bind(this, line));
