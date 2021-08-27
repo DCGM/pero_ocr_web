@@ -16,17 +16,16 @@ export function createScaleMoveViewTool(annotator_component) {
     let tool = new paper.Tool();
 
     tool.onMouseDrag = (event) => {
-        if (!annotator_component.left_control_active) {
+        if (!annotator_component.left_control_active) {  // Move camera
             let offset = event.point.subtract(event.downPoint);
             annotator_component.scope.view.center = annotator_component.scope.view.center.subtract(offset);
         }
-        else {
-            // Moving baseline point
+        else {  // Move baseline point
             if (annotator_component.last_segm) {
                 annotator_component.mouse_drag = true;
 
-                if (annotator_component.last_segm_type === 'left_path' || annotator_component.last_segm_type === 'right_path') {
-                    let path = annotator_component.last_segm_type === 'left_path'? annotator_component.last_baseline.baseline_left_path: annotator_component.last_baseline.baseline_right_path;
+                if (annotator_component.last_segm_type === 'left_path' || annotator_component.last_segm_type === 'right_path') { // Baseline left/right path
+                    let path = annotator_component.last_segm_type === 'left_path'? annotator_component.last_baseline.baseline_left_path: annotator_component.last_baseline.baseline_right_path;  // Currently moving
                     let oposite_path = annotator_component.last_segm_type === 'left_path'? annotator_component.last_baseline.baseline_right_path: annotator_component.last_baseline.baseline_left_path;
                     let second_segm = annotator_component.last_segm === path.segments[0] ? path.segments[1] : path.segments[0];
 
@@ -48,7 +47,20 @@ export function createScaleMoveViewTool(annotator_component) {
                     }
                 }
                 else { // Baseline path
+                    // Move baseline point
                     annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta);
+
+                    // Move baseline left/right right (if moving first or last baseline point)
+                    let p = null;
+                    if (annotator_component.last_segm === annotator_component.last_baseline.baseline_path.firstSegment)
+                        p = annotator_component.last_baseline.baseline_left_path;
+                    else if (annotator_component.last_segm === annotator_component.last_baseline.baseline_path.lastSegment)
+                        p = annotator_component.last_baseline.baseline_right_path;
+
+                    if (p) {
+                        p.firstSegment.point = p.firstSegment.point.add(event.delta);
+                        p.lastSegment.point = p.lastSegment.point.add(event.delta);
+                    }
                 }
 
                 // Make polygon
