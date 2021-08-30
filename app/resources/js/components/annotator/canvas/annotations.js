@@ -352,7 +352,7 @@ export function createAnnotationView(annotation, type) {
  * @param tmp_view
  * @param annotator_component
  */
-export function confirmAnnotation(tmp_view, annotator_component) {
+export function confirmAnnotation(tmp_view) {
     let tmp_ann = {
         points: getPathPoints(tmp_view.path),
         is_valid: false,
@@ -374,11 +374,6 @@ export function confirmAnnotation(tmp_view, annotator_component) {
         annotator_component.active_row = annotation;
         annotator_component.active_row.is_valid = false;
     }
-
-    // Remove tmp path
-    if (tmp_view.path)
-        tmp_view.path.remove();
-    tmp_view.path = null;
 }
 
 export function activeRegionChangedHandler(next, prev) {
