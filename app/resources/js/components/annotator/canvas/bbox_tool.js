@@ -5,7 +5,8 @@ Autor práce: David Hříbek
 Rok: 2021
 **/
 
-import {confirmAnnotation} from "./polygon_tool";
+import {confirmAnnotation} from "./annotations";
+
 
 export function createBboxTool(annotator_component) {
     let tool = new paper.Tool();

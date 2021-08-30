@@ -348,6 +348,40 @@ export function createAnnotationView(annotation, type) {
     return {group: group, path: polygon, text: text, baseline: baseline};
 }
 
+/**
+ *
+ * @param tmp_view
+ * @param annotator_component
+ */
+export function confirmAnnotation(tmp_view, annotator_component) {
+    let tmp_ann = {
+        points: getPathPoints(tmp_view.path),
+        is_valid: false,
+        baseline: tmp_view.baseline? getPathPoints(tmp_view.baseline.baseline): [],
+        heights: tmp_view.baseline? {down: tmp_view.baseline.down.length, up: tmp_view.baseline.up.length}: {}
+    };
+
+    let annotation_view = annotator_component.createAnnotationView(tmp_ann, annotator_component.creating_annotation_type);
+    let active_region_uuid = annotator_component.active_region ? annotator_component.active_region.uuid : null;
+    let annotation = annotator_component.createAnnotation(annotation_view, annotator_component.creating_annotation_type, active_region_uuid);
+
+    // Push region to annotations
+    annotator_component.annotations[annotator_component.creating_annotation_type].push(annotation);
+
+    // Set this annotation to active
+    if (annotator_component.creating_annotation_type === 'regions')
+        annotator_component.active_region = annotation;
+    else {
+        annotator_component.active_row = annotation;
+        annotator_component.active_row.is_valid = false;
+    }
+
+    // Remove tmp path
+    if (tmp_view.path)
+        tmp_view.path.remove();
+    tmp_view.path = null;
+}
+
 export function activeRegionChangedHandler(next, prev) {
     // Active row
     if (!(this.active_row && this.active_region && this.active_row.region_annotation_uuid === this.active_region.uuid))

@@ -3,7 +3,8 @@
  * Rok: 2021
 **/
 
-import {confirmAnnotation} from "./polygon_tool";
+import {confirmAnnotation} from "./annotations";
+
 
 /**
  * TODO

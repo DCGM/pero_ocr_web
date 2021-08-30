@@ -5,29 +5,8 @@ Autor práce: David Hříbek
 Rok: 2021
 **/
 
-import {getPathPoints} from "./annotations";
+import {confirmAnnotation} from "./annotations";
 
-export function confirmAnnotation(polygon, annotator_component) {
-    let tmp_ann = {points: getPathPoints(polygon.path), is_valid: false};
-    let annotation_view = annotator_component.createAnnotationView(tmp_ann, annotator_component.creating_annotation_type);
-    let active_region_uuid = annotator_component.active_region ? annotator_component.active_region.uuid : null;
-    let annotation = annotator_component.createAnnotation(annotation_view, annotator_component.creating_annotation_type, active_region_uuid);
-    // Push region to annotations
-    annotator_component.annotations[annotator_component.creating_annotation_type].push(annotation);
-
-    // Set this annotation to active
-    if (annotator_component.creating_annotation_type === 'regions')
-        annotator_component.active_region = annotation;
-    else {
-        annotator_component.active_row = annotation;
-        annotator_component.active_row.is_valid = false;
-    }
-
-    // Remove tmp path
-    if (polygon.path)
-        polygon.path.remove();
-    polygon.path = null;
-}
 
 export function createPolygonTool(annotator_component) {
     let tool = new paper.Tool();
