@@ -26,6 +26,9 @@ export function createPolygonTool(annotator_component) {
             if (polygon.path && polygon.path.segments.length >= 4) {
                 polygon.path.lastSegment.remove();
                 annotator_component.confirmAnnotation(polygon);
+
+                // Remove tmp path
+                polygon.path.remove();
             }
         }
     }
@@ -37,6 +40,9 @@ export function createPolygonTool(annotator_component) {
             if (polygon.path.segments.length >= 4) {
                 polygon.path.lastSegment.remove();
                 annotator_component.confirmAnnotation(polygon);
+
+                // Remove tmp path
+                polygon.path.remove();
             }
         }
         else {
