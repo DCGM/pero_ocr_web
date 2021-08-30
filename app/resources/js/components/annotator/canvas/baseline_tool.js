@@ -85,12 +85,13 @@ export function createBaselineTool(annotator_component) {
             else if (down) { // Down -> Finish
                 down.selected = false;
                 //
-                annotator_component.confirmAnnotation({path: polygon, baseline: {baseline: baseline, up: up, down: down}});
+                annotator_component.confirmAnnotation(null, {baseline: baseline, up: up, down: down});
 
-                // Init
+                // Remove tmps
                 up.remove();
                 down.remove();
                 baseline.remove();
+                polygon.remove();
                 up = down = baseline = polygon = false;
             }
         }

@@ -352,27 +352,27 @@ export function createAnnotationView(annotation, type) {
  * @param tmp_view
  * @param annotator_component
  */
-export function confirmAnnotation(tmp_view) {
-    let tmp_ann = {
-        points: getPathPoints(tmp_view.path),
+export function confirmAnnotation(polygon=null, baseline=null) {
+    let annotation_data = {
+        points: polygon? getPathPoints(polygon.path): null,
         is_valid: false,
-        baseline: tmp_view.baseline? getPathPoints(tmp_view.baseline.baseline): [],
-        heights: tmp_view.baseline? {down: tmp_view.baseline.down.length, up: tmp_view.baseline.up.length}: {}
+        baseline: baseline? getPathPoints(baseline.baseline): null,
+        heights: baseline? {down: baseline.down.length, up: baseline.up.length}: null
     };
 
-    let annotation_view = annotator_component.createAnnotationView(tmp_ann, annotator_component.creating_annotation_type);
-    let active_region_uuid = annotator_component.active_region ? annotator_component.active_region.uuid : null;
-    let annotation = annotator_component.createAnnotation(annotation_view, annotator_component.creating_annotation_type, active_region_uuid);
+    let annotation_view = this.createAnnotationView(annotation_data, this.creating_annotation_type);
+    let active_region_uuid = this.active_region ? this.active_region.uuid : null;
+    let annotation = this.createAnnotation(annotation_view, this.creating_annotation_type, active_region_uuid);
 
     // Push region to annotations
-    annotator_component.annotations[annotator_component.creating_annotation_type].push(annotation);
+    this.annotations[this.creating_annotation_type].push(annotation);
 
     // Set this annotation to active
-    if (annotator_component.creating_annotation_type === 'regions')
-        annotator_component.active_region = annotation;
+    if (this.creating_annotation_type === 'regions')
+        this.active_region = annotation;
     else {
-        annotator_component.active_row = annotation;
-        annotator_component.active_row.is_valid = false;
+        this.active_row = annotation;
+        this.active_row.is_valid = false;
     }
 }
 
