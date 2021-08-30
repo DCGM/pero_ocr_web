@@ -11,7 +11,7 @@
  * @param down path
  * @returns {paper.Path}
  */
-export function makePolygon(baseline, up, down) {
+export function makePolygonFromBaseline(baseline, up, down) {
     let polygon = new paper.Path();
     // polygon.selected = true;
     polygon.closed = true;
@@ -115,7 +115,7 @@ export function createBaselineTool(annotator_component) {
             // Make tmp polygon
             if (polygon)
                 polygon.remove();
-            polygon = makePolygon(baseline, up, down);
+            polygon = makePolygonFromBaseline(baseline, up, down);
         }
     }
 

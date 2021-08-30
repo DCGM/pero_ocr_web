@@ -5,7 +5,7 @@ Autor práce: David Hříbek
 Rok: 2021
 **/
 
-import {makePolygon} from './baseline_tool';
+import {makePolygonFromBaseline} from './baseline_tool';
 
 /**
  * Create tool for scaling and moving over canvas
@@ -64,7 +64,7 @@ export function createScaleMoveViewTool(annotator_component) {
                 }
 
                 // Make polygon
-                let polygon = makePolygon(
+                let polygon = makePolygonFromBaseline(
                     annotator_component.last_baseline.baseline_path,
                     new paper.Path([annotator_component.last_baseline.baseline_path.segments[0], annotator_component.last_baseline.baseline_left_path.segments[1]]),
                     new paper.Path([annotator_component.last_baseline.baseline_path.segments[0], annotator_component.last_baseline.baseline_left_path.segments[0]])

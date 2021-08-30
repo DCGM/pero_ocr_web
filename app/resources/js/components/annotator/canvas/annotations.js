@@ -6,7 +6,7 @@
  **/
 
 import {v4 as uuidv4} from 'uuid';
-import {makePolygon} from "./baseline_tool";
+import {makePolygonFromBaseline} from "./baseline_tool";
 
 
 /**
@@ -303,7 +303,7 @@ export function createAnnotationView(annotation, type) {
         group.addChild(baseline.baseline_right_path);
 
         // Make polygon
-        polygon = makePolygon(
+        polygon = makePolygonFromBaseline(
             baseline.baseline_path,
             new paper.Path([baseline.baseline_path.segments[0], baseline.baseline_left_path.segments[1]]),
             new paper.Path([baseline.baseline_path.segments[0], baseline.baseline_left_path.segments[0]])
