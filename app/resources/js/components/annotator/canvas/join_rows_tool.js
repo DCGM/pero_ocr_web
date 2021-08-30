@@ -1,4 +1,4 @@
-import {getPathPoints, serializeAnnotation} from "./annotations";
+import {getPathPoints} from "./annotations";
 
 /**
  * Autor práce: David Hříbek

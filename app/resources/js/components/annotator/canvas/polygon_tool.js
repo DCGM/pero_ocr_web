@@ -5,8 +5,6 @@ Autor práce: David Hříbek
 Rok: 2021
 **/
 
-import {confirmAnnotation} from "./annotations";
-
 
 export function createPolygonTool(annotator_component) {
     let tool = new paper.Tool();
@@ -27,7 +25,7 @@ export function createPolygonTool(annotator_component) {
             // Remove currently created rectangle
             if (polygon.path && polygon.path.segments.length >= 4) {
                 polygon.path.lastSegment.remove();
-                confirmAnnotation(polygon, annotator_component);
+                annotator_component.confirmAnnotation(polygon);
             }
         }
     }
@@ -38,7 +36,7 @@ export function createPolygonTool(annotator_component) {
         if (event.event.which !== 1) {
             if (polygon.path.segments.length >= 4) {
                 polygon.path.lastSegment.remove();
-                confirmAnnotation(polygon, annotator_component);
+                annotator_component.confirmAnnotation(polygon);
             }
         }
         else {

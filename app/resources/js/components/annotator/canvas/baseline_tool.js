@@ -3,8 +3,6 @@
  * Rok: 2021
 **/
 
-import {confirmAnnotation} from "./annotations";
-
 
 /**
  * TODO
@@ -87,7 +85,7 @@ export function createBaselineTool(annotator_component) {
             else if (down) { // Down -> Finish
                 down.selected = false;
                 //
-                confirmAnnotation({path: polygon}, annotator_component);
+                annotator_component.confirmAnnotation({path: polygon, baseline: {baseline: baseline, up: up, down: down}});
 
                 // Init
                 up.remove();

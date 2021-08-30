@@ -5,8 +5,6 @@ Autor práce: David Hříbek
 Rok: 2021
 **/
 
-import {confirmAnnotation} from "./annotations";
-
 
 export function createBboxTool(annotator_component) {
     let tool = new paper.Tool();
@@ -60,7 +58,7 @@ export function createBboxTool(annotator_component) {
         if (bbox.path) {
             // Check if area is too small (probably miss click)
             if (bbox.path.area > 50) {
-                confirmAnnotation(bbox, annotator_component);
+                annotator_component.confirmAnnotation(bbox);
                 // let annotation_view = annotator_component.createAnnotationView(getPathPoints(bbox.path), annotator_component.creating_annotation_type, false, false);
                 // let active_region_uuid = annotator_component.active_region ? annotator_component.active_region.uuid : null;
                 // let annotation = annotator_component.createAnnotation(annotation_view, annotator_component.creating_annotation_type, active_region_uuid);

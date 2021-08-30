@@ -296,7 +296,6 @@ export function createAnnotationView(annotation, type) {
             this.last_segm = getNearestPathSegment(baseline.baseline_right_path, event.point);
             this.last_baseline = baseline;
             this.last_segm_type = 'right_path';
-
         }
 
         group.addChild(baseline.baseline_path);
@@ -312,7 +311,6 @@ export function createAnnotationView(annotation, type) {
         baseline.baseline_path.insertAbove(polygon);
         baseline.baseline_left_path.insertAbove(polygon);
         baseline.baseline_right_path.insertAbove(polygon);
-        // polygon.insertBelow(baseline.baseline_path);
 
         // Create text
         text = new paper.PointText(polygon.firstSegment.point.add(new paper.Point(20, -20))); // TODO
@@ -349,7 +347,8 @@ export function createAnnotationView(annotation, type) {
 }
 
 /**
- *
+ * TODO
+ * this: annotator_component
  * @param tmp_view
  * @param annotator_component
  */
