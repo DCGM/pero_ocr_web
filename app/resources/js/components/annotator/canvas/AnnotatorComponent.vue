@@ -134,7 +134,7 @@ Rok: 2021
 <script>
 import {canvasZoomAnnotation, canvasSelectRowAnnotation, canvasSelectImage, canvasSelectDataset, canvasClean, canvasInit, canvasZoomImage, canvasIsToolActive, canvasSelectTool} from './helpers';
 import {activateContextMenu, deactivateContextMenu, canvasContextMenuEv} from './context_menu';
-import {emitAnnotationEditedEvent, serializeAnnotation, getAnnotations, loadAnnotations, removeAnnotation, removeAnnotationSegm, createAnnotation, createAnnotationView, activeRegionChangedHandler, activeRowChangedHandler, confirmAnnotation} from './annotations';
+import {emitAnnotationEditedEvent, serializeAnnotation, getAnnotations, loadAnnotations, removeAnnotation, removeAnnotationSegm, createAnnotation, createAnnotationView, activeRegionChangedHandler, activeRowChangedHandler, confirmAnnotation, validateRowAnnotation} from './annotations';
 import {canvasMouseWheelEv, canvasMouseMoveEv, canvasMouseDownEv, canvasMouseUpEv, canvasMouseDblClickEv} from './scale_move_tool_canvas_events';
 
 export default {
@@ -179,7 +179,7 @@ export default {
         canvasIsToolActive, canvasSelectTool,
 
         canvasZoomAnnotation, canvasSelectDataset, canvasSelectImage, canvasSelectRowAnnotation, canvasClean, canvasInit,
-        emitAnnotationEditedEvent, serializeAnnotation, getAnnotations, loadAnnotations, removeAnnotation, removeAnnotationSegm, createAnnotation, createAnnotationView, confirmAnnotation,
+        emitAnnotationEditedEvent, serializeAnnotation, getAnnotations, loadAnnotations, removeAnnotation, removeAnnotationSegm, createAnnotation, createAnnotationView, confirmAnnotation, validateRowAnnotation,
         activateContextMenu, deactivateContextMenu, canvasContextMenuEv,
         activeRegionChangedHandler, activeRowChangedHandler,
     },

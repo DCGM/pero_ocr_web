@@ -7129,6 +7129,9 @@ __webpack_require__.r(__webpack_exports__);
     zoom_row: function zoom_row(uuid) {
       this.$refs.annotator_component.canvasZoomAnnotation(uuid);
     },
+    validate_row_annotation: function validate_row_annotation(uuid) {
+      this.$refs.annotator_component.validateRowAnnotation(uuid);
+    },
     annotationDeletedEventHandler: function annotationDeletedEventHandler(type, uuid) {// axios.delete('/api/annotations/' + type + '/' + uuid);
     }
   }
@@ -7451,6 +7454,7 @@ __webpack_require__.r(__webpack_exports__);
     createAnnotation: _annotations__WEBPACK_IMPORTED_MODULE_2__["createAnnotation"],
     createAnnotationView: _annotations__WEBPACK_IMPORTED_MODULE_2__["createAnnotationView"],
     confirmAnnotation: _annotations__WEBPACK_IMPORTED_MODULE_2__["confirmAnnotation"],
+    validateRowAnnotation: _annotations__WEBPACK_IMPORTED_MODULE_2__["validateRowAnnotation"],
     activateContextMenu: _context_menu__WEBPACK_IMPORTED_MODULE_1__["activateContextMenu"],
     deactivateContextMenu: _context_menu__WEBPACK_IMPORTED_MODULE_1__["deactivateContextMenu"],
     canvasContextMenuEv: _context_menu__WEBPACK_IMPORTED_MODULE_1__["canvasContextMenuEv"],
@@ -56608,13 +56612,14 @@ __webpack_require__.r(__webpack_exports__);
 /*!*****************************************************************!*\
   !*** ./resources/js/components/annotator/canvas/annotations.js ***!
   \*****************************************************************/
-/*! exports provided: emitAnnotationEditedEvent, loadAnnotations, getAnnotations, serializeAnnotation, getPathPoints, removeAnnotation, removeAnnotationSegm, createAnnotation, createAnnotationView, confirmAnnotation, activeRegionChangedHandler, activeRowChangedHandler */
+/*! exports provided: emitAnnotationEditedEvent, loadAnnotations, validateRowAnnotation, getAnnotations, serializeAnnotation, getPathPoints, removeAnnotation, removeAnnotationSegm, createAnnotation, createAnnotationView, confirmAnnotation, activeRegionChangedHandler, activeRowChangedHandler */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "emitAnnotationEditedEvent", function() { return emitAnnotationEditedEvent; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "loadAnnotations", function() { return loadAnnotations; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "validateRowAnnotation", function() { return validateRowAnnotation; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAnnotations", function() { return getAnnotations; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "serializeAnnotation", function() { return serializeAnnotation; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getPathPoints", function() { return getPathPoints; });
@@ -56674,6 +56679,21 @@ function loadAnnotations(annotations) {
     _iterator.e(err);
   } finally {
     _iterator.f();
+  }
+}
+/**
+ * Validate row annotation (mark annotated, change polygon color)
+ * @param uuid - row uuid
+ */
+
+function validateRowAnnotation(uuid) {
+  var row = this.annotations.rows.find(function (item) {
+    return item.uuid === uuid;
+  });
+
+  if (row) {
+    row.annotated = true;
+    row.view.path = setPathColor(row.view.path, 'row', row);
   }
 }
 /**
@@ -57027,7 +57047,7 @@ function createAnnotationView(annotation, type) {
   };
 }
 /**
- * TODO
+ * Create and register new row/region
  * this: annotator_component
  * @param tmp_view
  * @param annotator_component

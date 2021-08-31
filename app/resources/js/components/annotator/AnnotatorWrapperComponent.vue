@@ -75,6 +75,9 @@ export default {
         zoom_row(uuid) {
           this.$refs.annotator_component.canvasZoomAnnotation(uuid);
         },
+        validate_row_annotation(uuid) {
+          this.$refs.annotator_component.validateRowAnnotation(uuid);
+        },
 
 
 

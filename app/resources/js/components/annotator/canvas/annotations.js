@@ -34,6 +34,18 @@ export function loadAnnotations(annotations) {
 }
 
 /**
+ * Validate row annotation (mark annotated, change polygon color)
+ * @param uuid - row uuid
+ */
+export function validateRowAnnotation(uuid) {
+    let row = this.annotations.rows.find((item) => item.uuid === uuid);
+    if (row) {
+        row.annotated = true;
+        row.view.path = setPathColor(row.view.path, 'row', row);
+    }
+}
+
+/**
  * Get all annotation from canvas
  * @returns - {regions:[], rows:[]}
  */
@@ -353,7 +365,7 @@ export function createAnnotationView(annotation, type) {
 }
 
 /**
- * TODO
+ * Create and register new row/region
  * this: annotator_component
  * @param tmp_view
  * @param annotator_component

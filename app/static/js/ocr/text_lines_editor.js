@@ -328,6 +328,11 @@ class TextLinesEditor {
                     return;
                 }
             }
+
+            /** Line saved successfully event handler **/
+            line.notify_line_validated = () => {
+                this.annotator_wrapper_component.validate_row_annotation(line.id);
+            }
         }
         this.worst_confidence = 0.95;
         for (let l of this.lines) {
