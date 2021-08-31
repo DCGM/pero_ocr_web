@@ -53,7 +53,13 @@ export function getAnnotations() {
  */
 export function serializeAnnotation(annotation) {
     let copy = Object.assign({}, annotation);
+    // Serialize view
     copy.points = getPathPoints(copy.view.path);
+    copy.baseline = getPathPoints(copy.view.baseline.baseline_path);
+    copy.heights = [
+        copy.view.baseline.baseline_left_path.segments[1].point.subtract(copy.view.baseline.baseline_path.segments[0].point).length,
+        copy.view.baseline.baseline_left_path.segments[0].point.subtract(copy.view.baseline.baseline_path.segments[0].point).length
+    ];
     if (annotation.hasOwnProperty('text'))
         copy.text = copy.view.text.content;
     delete copy.view;

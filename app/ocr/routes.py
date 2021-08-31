@@ -113,20 +113,22 @@ def create_edit_annotation():
     annotation_type = data['annotation_type']
     image_id = data['image_id']
     points = ' '.join(map(lambda p: f'{int(p["x"])},{int(p["y"])}', annotation['points']))
+    baseline = ' '.join(map(lambda p: f'{int(p["x"])},{int(p["y"])}', annotation['baseline']))
+    heights = f"{annotation['heights'][0]} {annotation['heights'][1]}"
 
-    if image_id:
-        # Create new annotation
+    if image_id:  # Create new annotation
         insert_data = None
-        if annotation_type == 'row':
+        if annotation_type == 'row':  # Row
             insert_data = TextLine(
                 id=annotation['uuid'],
                 region_id=annotation['region_annotation_uuid'],
                 text=annotation['text'],
                 points=points,
-                baseline='1,1 2,2',  # TODO
+                baseline=baseline,
+                heights=heights,
                 order=1  # TODO
             )
-        elif annotation_type == 'region':
+        elif annotation_type == 'region':  # Region
             insert_data = TextRegion(
                 id=annotation['uuid'],
                 points=points,
@@ -135,8 +137,7 @@ def create_edit_annotation():
             )
         db_session.add(insert_data)
         db_session.commit()
-    else:
-        # Edit existing annotation
+    else:  # Edit existing annotation
         # TODO
         pass
     return 'ok', 200
