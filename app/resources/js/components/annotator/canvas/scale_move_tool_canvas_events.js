@@ -140,10 +140,12 @@ export function canvasMouseDownEv(event) {
  * @param event
  */
 export function canvasMouseUpEv(event) {
-    // Finish editing polygon
+    // Finish editing annotation
     if (this.mouse_drag) {
         this.mouse_drag = false;
         this.last_segm = null;
+        this.last_baseline = null;
+        this.last_segm_type = null;
         this.emitAnnotationEditedEvent(this.last_active_annotation);
     }
 }

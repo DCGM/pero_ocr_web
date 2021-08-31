@@ -57008,7 +57008,8 @@ function createAnnotationView(annotation, type) {
   polygon = setPathColor(polygon, type, annotation);
 
   polygon.onMouseDown = function (e) {
-    e.preventDefault(); // Find annotation and make it active
+    e.preventDefault();
+    console.log('pol'); // Find annotation and make it active
 
     if (type === 'regions') _this.last_active_annotation = _this.active_region = _this.annotations.regions.find(function (item) {
       return item.view.path === e.target;
@@ -57950,10 +57951,12 @@ function canvasMouseDownEv(event) {}
  */
 
 function canvasMouseUpEv(event) {
-  // Finish editing polygon
+  // Finish editing annotation
   if (this.mouse_drag) {
     this.mouse_drag = false;
     this.last_segm = null;
+    this.last_baseline = null;
+    this.last_segm_type = null;
     this.emitAnnotationEditedEvent(this.last_active_annotation);
   }
 }
