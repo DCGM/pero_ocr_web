@@ -12,9 +12,6 @@ Rok: 2021
 
             v-on:row-deleted-event="(annotation) => annotationDeletedEventHandler('row', annotation.uuid)"
             v-on:region-deleted-event="(annotation) => annotationDeletedEventHandler('region', annotation.uuid)"
-
-            v-on:row-edited-event="(annotation) => annotationCreatedEditedEventHandler(annotation, 'row')"
-            v-on:region-edited-event="(annotation) => annotationCreatedEditedEventHandler(annotation, 'region')"
         ></annotator-component>
     </div>
 </template>
@@ -25,6 +22,8 @@ Rok: 2021
 <!--v-on:row-created-event="(annotation) => annotationCreatedEditedEventHandler(annotation, 'row', this.image_id)"-->
 <!--v-on:region-created-event="(annotation) => annotationCreatedEditedEventHandler(annotation, 'region', this.image_id)"-->
 
+<!--v-on:row-edited-event="(annotation) => annotationCreatedEditedEventHandler(annotation, 'row')"-->
+<!--v-on:region-edited-event="(annotation) => annotationCreatedEditedEventHandler(annotation, 'region')"-->
 
 <script>
 export default {
