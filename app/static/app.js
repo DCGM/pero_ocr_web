@@ -7057,7 +7057,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-//
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
     return {
@@ -7131,17 +7130,6 @@ __webpack_require__.r(__webpack_exports__);
       this.$refs.annotator_component.canvasZoomAnnotation(uuid);
     },
     annotationDeletedEventHandler: function annotationDeletedEventHandler(type, uuid) {// axios.delete('/api/annotations/' + type + '/' + uuid);
-    },
-    annotationCreatedEditedEventHandler: function annotationCreatedEditedEventHandler(annotation, annotation_type) {
-      var image_id = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-      console.log('edited'); // axios
-      //     .post('/api/annotations', {
-      //         annotation: annotation,
-      //         annotation_type: annotation_type,
-      //         image_id: image_id,
-      //         dataset_id: this.dataset_id
-      //     })
-      //     .catch((errors) => console.log(errors));
     }
   }
 });
@@ -43539,12 +43527,6 @@ var render = function() {
           },
           "region-deleted-event": function(annotation) {
             return _vm.annotationDeletedEventHandler("region", annotation.uuid)
-          },
-          "row-edited-event": function(annotation) {
-            return _vm.annotationCreatedEditedEventHandler(annotation, "row")
-          },
-          "region-edited-event": function(annotation) {
-            return _vm.annotationCreatedEditedEventHandler(annotation, "region")
           }
         }
       })
@@ -56733,8 +56715,11 @@ function getAnnotations() {
  */
 
 function serializeAnnotation(annotation) {
-  var copy = Object.assign({}, annotation);
+  var copy = Object.assign({}, annotation); // Serialize view
+
   copy.points = getPathPoints(copy.view.path);
+  copy.baseline = getPathPoints(copy.view.baseline.baseline_path);
+  copy.heights = [copy.view.baseline.baseline_left_path.segments[1].point.subtract(copy.view.baseline.baseline_path.segments[0].point).length, copy.view.baseline.baseline_left_path.segments[0].point.subtract(copy.view.baseline.baseline_path.segments[0].point).length];
   if (annotation.hasOwnProperty('text')) copy.text = copy.view.text.content;
   delete copy.view;
   return copy;

@@ -278,6 +278,10 @@ class TextLinesEditor {
         this.annotator_wrapper_component.$refs.annotator_component.$on('row-created-event', (annotation) => annotationCreatedEditedEventHandler(annotation, 'row', this.image_id));
         this.annotator_wrapper_component.$refs.annotator_component.$on('region-created-event', (annotation) => annotationCreatedEditedEventHandler(annotation, 'region', this.image_id));
 
+        /** Annotator component: Event listener -> Row/region edited event **/
+        this.annotator_wrapper_component.$refs.annotator_component.$on('row-edited-event', (annotation) => annotationCreatedEditedEventHandler(annotation, 'row'));
+        this.annotator_wrapper_component.$refs.annotator_component.$on('region-edited-event', (annotation) => annotationCreatedEditedEventHandler(annotation, 'region'));
+
         function annotationCreatedEditedEventHandler(annotation, annotation_type, image_id=null) {
             console.log(annotation, annotation_type, image_id);
             axios

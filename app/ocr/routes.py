@@ -13,7 +13,7 @@ from flask import url_for, redirect, flash, jsonify
 from flask_login import login_required, current_user
 from app.ocr import bp
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_baseline_by_id, get_ocr_by_id, \
-                           get_language_model_by_id, get_text_line_by_id, get_image_annotation_statistics_db, \
+                           get_language_model_by_id, get_text_line_by_id, get_text_region_by_id, get_image_annotation_statistics_db, \
                            get_document_annotation_statistics_db, get_previews_for_documents, TextLine
 from app.db import DocumentState, OCR, Document, Image, TextRegion, Baseline, LanguageModel, User, OCRTrainingDocuments
 from app.ocr.general import create_json_from_request, create_ocr_request, \
@@ -116,7 +116,7 @@ def create_edit_annotation():
     baseline = ' '.join(map(lambda p: f'{int(p["x"])},{int(p["y"])}', annotation['baseline']))
     heights = f"{annotation['heights'][0]} {annotation['heights'][1]}"
 
-    if image_id:  # Create new annotation
+    if image_id:  # Create new row/region
         insert_data = None
         if annotation_type == 'row':  # Row
             insert_data = TextLine(
@@ -137,10 +137,19 @@ def create_edit_annotation():
             )
         db_session.add(insert_data)
         db_session.commit()
-    else:  # Edit existing annotation
-        # TODO
-        pass
-    return 'ok', 200
+        return 'created', 200
+    else:  # Edit existing row/region
+        if annotation_type == 'row':
+            text_line = get_text_line_by_id(annotation['uuid'])
+            #
+            text_line.points = points
+            text_line.baseline = baseline
+            text_line.heights = heights
+        elif annotation_type == 'region':
+            text_region = get_text_region_by_id(annotation['uuid'])
+            text_region.points = points
+        db_session.commit()
+        return 'edited', 200
 
 # SELECT PAGE
 ########################################################################################################################
