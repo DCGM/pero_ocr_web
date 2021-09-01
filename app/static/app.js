@@ -57660,6 +57660,7 @@ function canvasIsToolActive(tool) {
 function canvasSelectTool(tool) {
   this.selected_tool = tool;
   this.selected_tool.activate();
+  this.active_row = this.active_region = this.last_active_annotation = null;
   this.$forceUpdate();
 }
 
