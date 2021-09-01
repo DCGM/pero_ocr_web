@@ -256,6 +256,10 @@ button.active {
   background-color: #222b44;
 }
 
+#annotator #canvas-wrapper #canvas-contextmenu div {
+  color: white !important;
+}
+
 #annotator #canvas-wrapper #canvas-contextmenu div:hover {
   background-color: #151a30;
 }

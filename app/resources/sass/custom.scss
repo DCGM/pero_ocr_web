@@ -240,6 +240,9 @@ button.active {
             padding: 5px;
             cursor: grab;
             background-color: $navbar-bg;
+            div {
+                color: white !important;
+            }
 
             div:hover {
                 background-color: $body-bg;
