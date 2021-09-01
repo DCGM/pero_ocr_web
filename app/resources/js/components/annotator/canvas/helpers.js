@@ -243,6 +243,8 @@ export function canvasIsToolActive(tool) {
 export function canvasSelectTool(tool) {
     this.selected_tool = tool;
     this.selected_tool.activate();
-    this.active_row = this.active_region = this.last_active_annotation = null;
+    // Disable focus if not creating new row
+    if (tool !== this.baseline_tool)
+        this.active_row = this.active_region = this.last_active_annotation = null;
     this.$forceUpdate();
 }

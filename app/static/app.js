@@ -56753,10 +56753,9 @@ function getPathPoints(path) {
  */
 
 function removeAnnotation(uuid) {
-  // Delete regions
   var region_idx = this.annotations.regions.findIndex(function (item) {
     return item.uuid === uuid;
-  });
+  }); // Delete regions
 
   if (region_idx !== -1) {
     // Emit event
@@ -56780,7 +56779,7 @@ function removeAnnotation(uuid) {
 
       this.annotations.rows.splice(_row_idx, 1);
     }
-  } // Delete rows
+  } // Delete row
 
 
   var row_idx = this.annotations.rows.findIndex(function (item) {
@@ -56792,7 +56791,7 @@ function removeAnnotation(uuid) {
     var parent_region_uuid = this.annotations.rows[row_idx].region_annotation_uuid;
 
     if (parent_region_uuid) {
-      /** Delete region **/
+      /** Delete parent region **/
       var rows = this.annotations.rows.filter(function (item) {
         return item.region_annotation_uuid === parent_region_uuid;
       });
@@ -57659,8 +57658,9 @@ function canvasIsToolActive(tool) {
 
 function canvasSelectTool(tool) {
   this.selected_tool = tool;
-  this.selected_tool.activate();
-  this.active_row = this.active_region = this.last_active_annotation = null;
+  this.selected_tool.activate(); // Disable focus if not creating new row
+
+  if (tool !== this.baseline_tool) this.active_row = this.active_region = this.last_active_annotation = null;
   this.$forceUpdate();
 }
 
@@ -57732,8 +57732,8 @@ function createJoinRowsTool(annotator_component) {
       // base_row.text += to_join_row.text;
       // base_row.view.text.content = base_row.text;
       // Delete both rows
+      // annotator_component.removeAnnotation(base_row.uuid);
 
-      annotator_component.removeAnnotation(base_row.uuid);
       annotator_component.removeAnnotation(to_join_row.uuid); // Init
 
       base_row = null;
