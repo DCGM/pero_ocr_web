@@ -94,7 +94,7 @@ export function getPathPoints(path) {
  * @param uuid - annotation uuid
  */
 export function removeAnnotation(uuid) {
-    // Delete regions
+    // Delete region
     let region_idx = this.annotations.regions.findIndex((item) => item.uuid === uuid);
     if (region_idx !== -1) {
         // Emit event
@@ -108,33 +108,15 @@ export function removeAnnotation(uuid) {
         this.annotations.regions.splice(region_idx, 1)
 
         // Delete region rows
-        let row_idx;
-        while ((row_idx = this.annotations.rows.findIndex((item) => item.region_annotation_uuid === uuid)) !== -1) {
-            // Emit event
-            this.$emit('row-deleted-event', serializeAnnotation(this.annotations.rows[row_idx]));
-
-            // Disable active row
-            if (this.annotations.rows[row_idx] === this.active_row)
-                this.active_row = null;
-
-            this.annotations.rows[row_idx].view.group.remove();
-            this.annotations.rows.splice(row_idx, 1);
+        let row;
+        while (row = this.annotations.rows.find((item) => item.region_annotation_uuid === uuid)) {
+            this.removeAnnotation(row.uuid);
         }
     }
 
-    // Delete rows
+    // Delete row
     let row_idx = this.annotations.rows.findIndex((item) => item.uuid === uuid);
     if (row_idx !== -1) {
-        // Check if parent region has only one row => delete entire region
-        let parent_region_uuid = this.annotations.rows[row_idx].region_annotation_uuid;
-        if (parent_region_uuid) {
-            /** Delete region **/
-            let rows = this.annotations.rows.filter(item => item.region_annotation_uuid === parent_region_uuid);
-            if (rows.length === 1)
-                this.removeAnnotation(parent_region_uuid);
-        }
-
-        row_idx = this.annotations.rows.findIndex((item) => item.uuid === uuid);
         // Emit event
         this.$emit('row-deleted-event', serializeAnnotation(this.annotations.rows[row_idx]));
 
@@ -142,8 +124,27 @@ export function removeAnnotation(uuid) {
         if (this.annotations.rows[row_idx] === this.active_row)
             this.active_row = null;
 
-        this.annotations.rows[row_idx].view.group.remove();
+        // Remove view items
+        let ann_view = this.annotations.rows[row_idx].view;
+        if (ann_view.baseline) {
+            ann_view.baseline.baseline_path.remove();
+            ann_view.baseline.baseline_left_path.remove();
+            ann_view.baseline.baseline_right_path.remove();
+        }
+        ann_view.path.remove();
+        ann_view.group.remove();
+
+        // Unregister row
         this.annotations.rows.splice(row_idx, 1);
+
+        // Check if parent region has no rows => delete entire region
+        let parent_region_uuid = this.annotations.rows[row_idx].region_annotation_uuid;
+        if (parent_region_uuid) {
+            /** Delete parent region **/
+            let rows = this.annotations.rows.filter(item => item.region_annotation_uuid === parent_region_uuid);
+            if (rows.length === 0)
+                this.removeAnnotation(parent_region_uuid);
+        }
     }
 }
 
