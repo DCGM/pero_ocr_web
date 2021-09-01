@@ -354,6 +354,7 @@ def get_lines(image_id):
 
             lines_dict['lines'].append({
                             'id': line.id,
+                            'region_id': line.region_id,
                             'np_points':  line.np_points.tolist(),
                             'np_baseline':  line.np_baseline.tolist(),
                             'np_heights':  line.np_heights.tolist(),
