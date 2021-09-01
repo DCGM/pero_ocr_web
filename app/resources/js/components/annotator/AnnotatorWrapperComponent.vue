@@ -9,9 +9,6 @@ Rok: 2021
     <div id="annotator">
         <annotator-component
             ref="annotator_component"
-
-            v-on:row-deleted-event="(annotation) => annotationDeletedEventHandler('row', annotation.uuid)"
-            v-on:region-deleted-event="(annotation) => annotationDeletedEventHandler('region', annotation.uuid)"
         ></annotator-component>
     </div>
 </template>
@@ -24,6 +21,9 @@ Rok: 2021
 
 <!--v-on:row-edited-event="(annotation) => annotationCreatedEditedEventHandler(annotation, 'row')"-->
 <!--v-on:region-edited-event="(annotation) => annotationCreatedEditedEventHandler(annotation, 'region')"-->
+
+<!--v-on:row-deleted-event="(annotation) => annotationDeletedEventHandler('row', annotation.uuid)"-->
+<!--v-on:region-deleted-event="(annotation) => annotationDeletedEventHandler('region', annotation.uuid)"-->
 
 <script>
 export default {
@@ -77,13 +77,6 @@ export default {
         },
         validate_row_annotation(uuid) {
           this.$refs.annotator_component.validateRowAnnotation(uuid);
-        },
-
-
-
-
-        annotationDeletedEventHandler(type, uuid) {
-            // axios.delete('/api/annotations/' + type + '/' + uuid);
         },
     },
 }

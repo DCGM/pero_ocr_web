@@ -83,8 +83,8 @@ def update_text_lines(annotations):
     db_session.commit()
 
 
-def set_delete_flag(text_line, delete_flag):
-    text_line.deleted = delete_flag
+def set_delete_flag(text_line_or_region, delete_flag):
+    text_line_or_region.deleted = delete_flag
     db_session.commit()
 
 

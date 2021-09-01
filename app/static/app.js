@@ -7131,8 +7131,6 @@ __webpack_require__.r(__webpack_exports__);
     },
     validate_row_annotation: function validate_row_annotation(uuid) {
       this.$refs.annotator_component.validateRowAnnotation(uuid);
-    },
-    annotationDeletedEventHandler: function annotationDeletedEventHandler(type, uuid) {// axios.delete('/api/annotations/' + type + '/' + uuid);
     }
   }
 });
@@ -43522,19 +43520,7 @@ var render = function() {
   return _c(
     "div",
     { attrs: { id: "annotator" } },
-    [
-      _c("annotator-component", {
-        ref: "annotator_component",
-        on: {
-          "row-deleted-event": function(annotation) {
-            return _vm.annotationDeletedEventHandler("row", annotation.uuid)
-          },
-          "region-deleted-event": function(annotation) {
-            return _vm.annotationDeletedEventHandler("region", annotation.uuid)
-          }
-        }
-      })
-    ],
+    [_c("annotator-component", { ref: "annotator_component" })],
     1
   )
 }
@@ -56738,9 +56724,14 @@ function serializeAnnotation(annotation) {
   var copy = Object.assign({}, annotation); // Serialize view
 
   copy.points = getPathPoints(copy.view.path);
-  copy.baseline = getPathPoints(copy.view.baseline.baseline_path);
-  copy.heights = [copy.view.baseline.baseline_left_path.segments[1].point.subtract(copy.view.baseline.baseline_path.segments[0].point).length, copy.view.baseline.baseline_left_path.segments[0].point.subtract(copy.view.baseline.baseline_path.segments[0].point).length];
-  if (annotation.hasOwnProperty('text')) copy.text = copy.view.text.content;
+
+  if (annotation.hasOwnProperty('text')) {
+    // Row annotation
+    copy.text = copy.view.text.content;
+    copy.baseline = getPathPoints(copy.view.baseline.baseline_path);
+    copy.heights = [copy.view.baseline.baseline_left_path.segments[1].point.subtract(copy.view.baseline.baseline_path.segments[0].point).length, copy.view.baseline.baseline_left_path.segments[0].point.subtract(copy.view.baseline.baseline_path.segments[0].point).length];
+  }
+
   delete copy.view;
   return copy;
 }
@@ -56814,8 +56805,18 @@ function removeAnnotation(uuid) {
 
     this.$emit('row-deleted-event', serializeAnnotation(this.annotations.rows[row_idx])); // Disable active row
 
-    if (this.annotations.rows[row_idx] === this.active_row) this.active_row = null;
-    this.annotations.rows[row_idx].view.group.remove();
+    if (this.annotations.rows[row_idx] === this.active_row) this.active_row = null; // Remove view items
+
+    var ann_view = this.annotations.rows[row_idx].view;
+
+    if (ann_view.baseline) {
+      ann_view.baseline.baseline_path.remove();
+      ann_view.baseline.baseline_left_path.remove();
+      ann_view.baseline.baseline_right_path.remove();
+    }
+
+    ann_view.path.remove();
+    ann_view.group.remove();
     this.annotations.rows.splice(row_idx, 1);
   }
 }
@@ -57075,6 +57076,7 @@ function confirmAnnotation() {
     this.active_row = annotation;
     this.active_row.is_valid = false;
   }
+  return annotation;
 }
 function activeRegionChangedHandler(next, prev) {
   var _this2 = this;
@@ -57693,36 +57695,48 @@ function createJoinRowsTool(annotator_component) {
   tool.row_selected = function (to_join_row) {
     if (base_row && base_row !== to_join_row) {
       // Join points
-      var points = Object(_annotations__WEBPACK_IMPORTED_MODULE_0__["getPathPoints"])(base_row.view.path).concat(Object(_annotations__WEBPACK_IMPORTED_MODULE_0__["getPathPoints"])(to_join_row.view.path)); // Calc. convex envelope and join paths
-
-      points = points.map(function (item) {
-        return [item.x, item.y];
-      });
-      points = hull(points, 200);
-      base_row.view.path.clear();
-
-      var _iterator = _createForOfIteratorHelper(points),
+      // let points = getPathPoints(base_row.view.path).concat(getPathPoints(to_join_row.view.path));
+      // Calc. convex envelope and join paths
+      // points = points.map((item) => [item.x, item.y]);
+      // points = hull(points, 200);
+      // Join baselines
+      var _iterator = _createForOfIteratorHelper(to_join_row.view.baseline.baseline_path.segments),
           _step;
 
       try {
         for (_iterator.s(); !(_step = _iterator.n()).done;) {
-          var point = _step.value;
-          base_row.view.path.add(new paper.Point(point));
-        } // annotator_component.last_active_annotation = annotator_component.active_row = base_row;
-        // Join texts
-
+          var segment = _step.value;
+          base_row.view.baseline.baseline_path.add(segment);
+        }
       } catch (err) {
         _iterator.e(err);
       } finally {
         _iterator.f();
       }
 
-      base_row.text += to_join_row.text;
-      base_row.view.text.content = base_row.text; // Delete second row
+      var up = new paper.Path([base_row.view.baseline.baseline_path.firstSegment.point, base_row.view.baseline.baseline_left_path.lastSegment.point]);
+      var down = new paper.Path([base_row.view.baseline.baseline_path.firstSegment.point, base_row.view.baseline.baseline_left_path.firstSegment.point]);
+      var baseline = {
+        baseline: base_row.view.baseline.baseline_path,
+        up: up,
+        down: down
+      };
+      annotator_component.creating_annotation_type = 'rows';
+      var new_row = annotator_component.confirmAnnotation(null, baseline);
+      up.remove();
+      down.remove(); // Join texts
 
+      new_row.text = base_row.text + to_join_row.text;
+      new_row.view.text.content = new_row.text; // annotator_component.last_active_annotation = annotator_component.active_row = base_row;
+      // base_row.text += to_join_row.text;
+      // base_row.view.text.content = base_row.text;
+      // Delete both rows
+
+      annotator_component.removeAnnotation(base_row.uuid);
       annotator_component.removeAnnotation(to_join_row.uuid); // Init
 
-      base_row = null; // annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
+      base_row = null;
+      annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
     } else base_row = to_join_row;
   };
 

@@ -134,7 +134,9 @@ class TextLinesEditor {
         }
     }
 
-    delete_line_btn_action() {
+    delete_line_btn_action(uuid=null) {  // TODO: old code working only for lines
+        let delete_uuid = uuid? uuid: this.active_line.id;
+
         if (this.active_line != false) {
             this.active_line.valid = !this.active_line.valid;
 
@@ -146,12 +148,12 @@ class TextLinesEditor {
             }
 
             let text_lines_editor = this;
-            let route = Flask.url_for('ocr.delete_line', {'line_id': this.active_line.id, 'delete_flag': delete_flag});
+            let route = Flask.url_for('ocr.delete_line', {'line_or_region_id': delete_uuid, 'delete_flag': delete_flag});
             this.delete_btn.disabled = true;
             $.ajax({
                 type: "POST",
                 url: route,
-                data: {'line_id': this.active_line.id, 'delete_flag': delete_flag},
+                data: {'line_id': delete_uuid, 'delete_flag': delete_flag},
                 dataType: "json",
                 error: function (xhr, ajaxOptions, ThrownError) {
                     text_lines_editor.active_line.valid = !text_lines_editor.active_line.valid;
@@ -293,7 +295,16 @@ class TextLinesEditor {
                 .catch((errors) => console.log(errors));
         }
 
+        /** Annotator component: Event listener -> Row/region deleted event **/
+        this.annotator_wrapper_component.$refs.annotator_component.$on('row-deleted-event', (annotation) => annotationDeletedEventHandler(annotation.uuid, 'row'));
+        this.annotator_wrapper_component.$refs.annotator_component.$on('region-deleted-event', (annotation) => annotationDeletedEventHandler(annotation.uuid, 'region'));
+
         let self = this;
+        function annotationDeletedEventHandler(uuid, type) {
+            // console.log(uuid, type);
+            self.delete_line_btn_action(uuid);
+        }
+
         let observer = new MutationObserver(function (mutations) {
             mutations.forEach(function (m) {
                 self.set_line_style(self.lines[m.target.id]);

@@ -409,11 +409,19 @@ def save_annotations():
     return jsonify({'status': 'success'})
 
 
-@bp.route('/delete_line/<string:line_id>/<int:delete_flag>', methods=['POST'])
+@bp.route('/delete_line/<string:line_or_region_id>/<int:delete_flag>', methods=['POST'])
 @login_required
-def delete_line(line_id, delete_flag):
-    text_line = get_text_line_by_id(line_id)
-    document = text_line.region.image.document
+def delete_line(line_or_region_id, delete_flag):
+    # Get text_line/text_region
+    text_region = None
+    text_line = get_text_line_by_id(line_or_region_id)
+    if text_line:
+        document = text_line.region.image.document
+    else:
+        text_region = get_text_region_by_id(line_or_region_id)
+        document = text_region.image.document
+
+    #
     if not is_user_owner_or_collaborator(document.id, current_user):
         flash(u'You do not have sufficient rights to add annotations to the document!', 'danger')
         return jsonify({'status': 'redirect', 'href': url_for('document.documents')})
@@ -421,7 +429,14 @@ def delete_line(line_id, delete_flag):
         flash(u'You cannot add annotations to unprocessed document!', 'danger')
         return jsonify({'status': 'redirect', 'href': url_for('document.documents')})
 
-    set_delete_flag(text_line, delete_flag)
+    # Delete text_line / text_region + nested text_lines
+    if text_region:
+        set_delete_flag(text_region, delete_flag)
+        # Delete all nested text_lines after deleting text_region
+        for text_line_child in text_region.textlines:
+            set_delete_flag(text_line_child, delete_flag)
+    else:
+        set_delete_flag(text_line, delete_flag)
 
     return jsonify({'status': 'success'})
 

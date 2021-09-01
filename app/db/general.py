@@ -93,7 +93,10 @@ def get_image_by_id(image_id):
 
 
 def get_text_region_by_id(id):
-    return TextRegion.query.get(id)
+    try:
+        return TextRegion.query.get(id)
+    except:
+        return None
 
 
 def get_layout_detector_by_id(id):
