@@ -339,16 +339,10 @@ export function createAnnotationView(annotation, type) {
         group.addChild(baseline.baseline_right_path);
 
         // Make polygon
-        polygon = makePolygonFromBaseline(
-            baseline.baseline_path,
-            new paper.Path([baseline.baseline_path.segments[0], baseline.baseline_left_path.segments[1]]),
-            new paper.Path([baseline.baseline_path.segments[0], baseline.baseline_left_path.segments[0]])
-        );
-        baseline.baseline_path.insertAbove(polygon);
-        baseline.baseline_left_path.insertAbove(polygon);
-        baseline.baseline_right_path.insertAbove(polygon);
-
-
+        polygon = makePolygonFromBaseline(getPathPoints(baseline.baseline_path), heights.up, heights.down);
+        // baseline.baseline_path.insertAbove(polygon);
+        // baseline.baseline_left_path.insertAbove(polygon);
+        // baseline.baseline_right_path.insertAbove(polygon);
     }
     else { // Regions
         // Create polygon

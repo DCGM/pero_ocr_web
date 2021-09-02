@@ -4,25 +4,26 @@
 **/
 
 
+import {getPathPoints} from "./annotations";
+
 /**
- * TODO
- * @param baseline path
- * @param up path
- * @param down path
+ * Create polygon based on baseline
  * @returns {paper.Path}
+ * @param baseline_points {[{x:int, y:int}]}
+ * @param up_height {float}
+ * @param down_height {float}
  */
-export function makePolygonFromBaseline(baseline, up, down) {
+export function makePolygonFromBaseline(baseline_points, up_height, down_height) {
     let polygon = new paper.Path();
-    // polygon.selected = true;
     polygon.closed = true;
 
     polygon.strokeWidth = 2;
     polygon.strokeColor = 'rgba(34,43,68,0.8)';
 
     let up_seg, down_seg;
-    for (let i=0; i < baseline.segments.length; i++) {
-        up_seg = new paper.Point(baseline.segments[i].point.x, baseline.segments[i].point.y - (up? up.length: 0));
-        down_seg = new paper.Point(baseline.segments[i].point.x, baseline.segments[i].point.y + (down? down.length: 0));
+    for (let i=0; i < baseline_points.length; i++) {
+        up_seg = new paper.Point(baseline_points[i].x, baseline_points[i].y - up_height);
+        down_seg = new paper.Point(baseline_points[i].x, baseline_points[i].y + down_height);
 
         polygon.insert(i, up_seg);
         polygon.insert(i+1, down_seg);
@@ -116,7 +117,7 @@ export function createBaselineTool(annotator_component) {
             // Make tmp polygon
             if (polygon)
                 polygon.remove();
-            polygon = makePolygonFromBaseline(baseline, up, down);
+            polygon = makePolygonFromBaseline(getPathPoints(baseline), up.length, down.length);
         }
     }
 

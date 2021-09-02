@@ -6,6 +6,7 @@ Rok: 2021
 **/
 
 import {makePolygonFromBaseline} from './baseline_tool';
+import {getPathPoints} from "./annotations";
 
 /**
  * Create tool for scaling and moving over canvas
@@ -65,9 +66,9 @@ export function createScaleMoveViewTool(annotator_component) {
 
                 // Make polygon
                 let polygon = makePolygonFromBaseline(
-                    annotator_component.last_baseline.baseline_path,
-                    new paper.Path([annotator_component.last_baseline.baseline_path.segments[0], annotator_component.last_baseline.baseline_left_path.segments[1]]),
-                    new paper.Path([annotator_component.last_baseline.baseline_path.segments[0], annotator_component.last_baseline.baseline_left_path.segments[0]])
+                    getPathPoints(annotator_component.last_baseline.baseline_path),
+                    new paper.Path([annotator_component.last_baseline.baseline_path.segments[0], annotator_component.last_baseline.baseline_left_path.segments[1]]).length,  // TODO: refactor
+                    new paper.Path([annotator_component.last_baseline.baseline_path.segments[0], annotator_component.last_baseline.baseline_left_path.segments[0]]).length
                 );
                 annotator_component.active_row.view.path.clear();
                 annotator_component.active_row.view.path.segments = polygon.segments;
