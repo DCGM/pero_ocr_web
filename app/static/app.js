@@ -43855,52 +43855,6 @@ var render = function() {
               ]
             ),
             _vm._v(" "),
-            _vm.last_active_annotation && _vm.last_active_annotation.is_valid
-              ? _c(
-                  "div",
-                  {
-                    staticClass: "p-2 text-primary",
-                    on: {
-                      click: function($event) {
-                        _vm.last_active_annotation.is_valid = false
-                        _vm.emitAnnotationEditedEvent(
-                          _vm.last_active_annotation
-                        )
-                        _vm.deactivateContextMenu()
-                      }
-                    }
-                  },
-                  [
-                    _c("i", { staticClass: "fas fa-times text-muted pr-2" }),
-                    _vm._v(
-                      " Zrušit potvrzení správnosti přepisu\n                "
-                    )
-                  ]
-                )
-              : _vm._e(),
-            _vm._v(" "),
-            _vm.last_active_annotation && !_vm.last_active_annotation.is_valid
-              ? _c(
-                  "div",
-                  {
-                    staticClass: "p-2 text-primary",
-                    on: {
-                      click: function($event) {
-                        _vm.last_active_annotation.is_valid = true
-                        _vm.emitAnnotationEditedEvent(
-                          _vm.last_active_annotation
-                        )
-                        _vm.deactivateContextMenu()
-                      }
-                    }
-                  },
-                  [
-                    _c("i", { staticClass: "fas fa-check text-muted pr-2" }),
-                    _vm._v(" Potvrdit správnost přepisu\n                ")
-                  ]
-                )
-              : _vm._e(),
-            _vm._v(" "),
             _vm.last_segm
               ? _c(
                   "div",
