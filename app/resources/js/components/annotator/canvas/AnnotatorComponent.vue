@@ -92,18 +92,18 @@ Rok: 2021
                      @click="removeAnnotation(last_active_annotation.uuid); deactivateContextMenu();"><i
                     class="fas fa-trash-alt text-muted pr-2"></i> Smazat
                 </div>
-                <div class="p-2 text-primary"
-                     v-if="last_active_annotation && last_active_annotation.is_valid"
-                     @click="last_active_annotation.is_valid = false; emitAnnotationEditedEvent(last_active_annotation); deactivateContextMenu();"
-                >
-                    <i class="fas fa-times text-muted pr-2"></i> Zrušit potvrzení správnosti přepisu
-                </div>
-                <div class="p-2 text-primary"
-                     v-if="last_active_annotation && !last_active_annotation.is_valid"
-                     @click="last_active_annotation.is_valid = true; emitAnnotationEditedEvent(last_active_annotation); deactivateContextMenu();"
-                >
-                    <i class="fas fa-check text-muted pr-2"></i> Potvrdit správnost přepisu
-                </div>
+<!--                <div class="p-2 text-primary"-->
+<!--                     v-if="last_active_annotation && last_active_annotation.is_valid"-->
+<!--                     @click="last_active_annotation.is_valid = false; emitAnnotationEditedEvent(last_active_annotation); deactivateContextMenu();"-->
+<!--                >-->
+<!--                    <i class="fas fa-times text-muted pr-2"></i> Zrušit potvrzení správnosti přepisu-->
+<!--                </div>-->
+<!--                <div class="p-2 text-primary"-->
+<!--                     v-if="last_active_annotation && !last_active_annotation.is_valid"-->
+<!--                     @click="last_active_annotation.is_valid = true; emitAnnotationEditedEvent(last_active_annotation); deactivateContextMenu();"-->
+<!--                >-->
+<!--                    <i class="fas fa-check text-muted pr-2"></i> Potvrdit správnost přepisu-->
+<!--                </div>-->
                 <div v-if="last_segm" class="p-2 text-primary" @click="removeAnnotationSegm(); deactivateContextMenu();">
                     <i class="fas fa-edit text-muted pr-2"></i> Odstranit bod
                 </div>
