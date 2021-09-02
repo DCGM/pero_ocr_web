@@ -56863,7 +56863,7 @@ function getNearestPathSegment(path, point) {
   // Find nearest segment on path
   var p_min = path.segments[0].point;
   var last_segm = null;
-  var dist = 100;
+  var dist = 50;
   var p = path.getNearestPoint(point); // Find nearest path segment
 
   var _iterator3 = _createForOfIteratorHelper(path.segments),
@@ -56915,19 +56915,7 @@ function createAnnotationView(annotation, type) {
     /** Make baseline **/
 
     var baseline_left = annotation.baseline[0];
-    var baseline_right = annotation.baseline[annotation.baseline.length - 1]; // Baseline path
-
-    baseline.baseline_path = new paper.Path(annotation.baseline);
-    baseline.baseline_path.strokeWidth = 2;
-    baseline.baseline_path.strokeColor = 'rgba(34,43,68,0.1)';
-
-    baseline.baseline_path.onMouseDown = function (event) {
-      event.preventDefault();
-      _this.last_segm = getNearestPathSegment(baseline.baseline_path, event.point);
-      _this.last_baseline = baseline;
-      _this.last_segm_type = 'baseline_path';
-    }; // Left path
-
+    var baseline_right = annotation.baseline[annotation.baseline.length - 1]; // Left path
 
     baseline.baseline_left_path = new paper.Path([[baseline_left.x, baseline_left.y + heights.down], [baseline_left.x, baseline_left.y - heights.up]]);
     baseline.baseline_left_path.strokeWidth = 2;
@@ -56937,7 +56925,9 @@ function createAnnotationView(annotation, type) {
       event.preventDefault();
       _this.last_segm = getNearestPathSegment(baseline.baseline_left_path, event.point);
       _this.last_baseline = baseline;
-      _this.last_segm_type = 'left_path';
+      _this.last_segm_type = 'left_path'; // Find annotation and make it active
+
+      activateAnnotation(type);
     }; // Right path
 
 
@@ -56949,7 +56939,23 @@ function createAnnotationView(annotation, type) {
       event.preventDefault();
       _this.last_segm = getNearestPathSegment(baseline.baseline_right_path, event.point);
       _this.last_baseline = baseline;
-      _this.last_segm_type = 'right_path';
+      _this.last_segm_type = 'right_path'; // Find annotation and make it active
+
+      activateAnnotation(type);
+    }; // Baseline path
+
+
+    baseline.baseline_path = new paper.Path(annotation.baseline);
+    baseline.baseline_path.strokeWidth = 2;
+    baseline.baseline_path.strokeColor = 'rgba(34,43,68,0.1)';
+
+    baseline.baseline_path.onMouseDown = function (event) {
+      event.preventDefault();
+      _this.last_segm = getNearestPathSegment(baseline.baseline_path, event.point);
+      _this.last_baseline = baseline;
+      _this.last_segm_type = 'baseline_path'; // Find annotation and make it active
+
+      activateAnnotation(type);
     };
 
     group.addChild(baseline.baseline_path);
@@ -56985,13 +56991,19 @@ function createAnnotationView(annotation, type) {
   polygon.onMouseDown = function (e) {
     e.preventDefault(); // Find annotation and make it active
 
-    if (type === 'regions') _this.last_active_annotation = _this.active_region = _this.annotations.regions.find(function (item) {
-      return item.view.path === e.target;
-    });else if (type === 'rows') _this.last_active_annotation = _this.active_row = _this.annotations.rows.find(function (item) {
-      return item.view.path === e.target;
-    });
+    activateAnnotation(type);
     if (e.event.which === 3) _this.activateContextMenu();
   };
+
+  var self = this;
+
+  function activateAnnotation(type) {
+    if (type === 'regions') self.last_active_annotation = self.active_region = self.annotations.regions.find(function (item) {
+      return item.view.path === polygon;
+    });else if (type === 'rows') self.last_active_annotation = self.active_row = self.annotations.rows.find(function (item) {
+      return item.view.path === polygon;
+    });
+  }
 
   return {
     group: group,
@@ -57942,6 +57954,17 @@ function canvasMouseMoveEv(event) {}
 
 function canvasMouseDownEv(event) {
   this.deactivateContextMenu();
+  var hitOptions = {
+    // point: true,
+    segments: true,
+    stroke: true,
+    fill: true,
+    // class: Path
+    tolerance: 50
+  };
+  var hitResult = this.scope.project.activeLayer.hitTest(event.point, hitOptions);
+  if (!hitResult) return;
+  console.log(hitResult);
 }
 /**
  * Event: Mouse up on canvas

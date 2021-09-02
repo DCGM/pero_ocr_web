@@ -260,7 +260,7 @@ function getNearestPathSegment(path, point) {
     // Find nearest segment on path
     let p_min = path.segments[0].point;
     let last_segm = null;
-    let dist = 100;
+    let dist = 50;
     let p = path.getNearestPoint(point);
 
     // Find nearest path segment
@@ -300,17 +300,6 @@ export function createAnnotationView(annotation, type) {
         let baseline_left = annotation.baseline[0];
         let baseline_right = annotation.baseline[annotation.baseline.length - 1];
 
-        // Baseline path
-        baseline.baseline_path = new paper.Path(annotation.baseline);
-        baseline.baseline_path.strokeWidth = 2;
-        baseline.baseline_path.strokeColor = 'rgba(34,43,68,0.1)';
-        baseline.baseline_path.onMouseDown = (event) => {
-            event.preventDefault();
-            this.last_segm = getNearestPathSegment(baseline.baseline_path, event.point);
-            this.last_baseline = baseline;
-            this.last_segm_type = 'baseline_path';
-        };
-
         // Left path
         baseline.baseline_left_path = new paper.Path([
             [baseline_left.x, baseline_left.y + heights.down],
@@ -323,6 +312,9 @@ export function createAnnotationView(annotation, type) {
             this.last_segm = getNearestPathSegment(baseline.baseline_left_path, event.point);
             this.last_baseline = baseline;
             this.last_segm_type = 'left_path';
+
+            // Find annotation and make it active
+            activateAnnotation(type);
         };
 
         // Right path
@@ -337,7 +329,24 @@ export function createAnnotationView(annotation, type) {
             this.last_segm = getNearestPathSegment(baseline.baseline_right_path, event.point);
             this.last_baseline = baseline;
             this.last_segm_type = 'right_path';
+
+            // Find annotation and make it active
+            activateAnnotation(type);
         }
+
+        // Baseline path
+        baseline.baseline_path = new paper.Path(annotation.baseline);
+        baseline.baseline_path.strokeWidth = 2;
+        baseline.baseline_path.strokeColor = 'rgba(34,43,68,0.1)';
+        baseline.baseline_path.onMouseDown = (event) => {
+            event.preventDefault();
+            this.last_segm = getNearestPathSegment(baseline.baseline_path, event.point);
+            this.last_baseline = baseline;
+            this.last_segm_type = 'baseline_path';
+
+            // Find annotation and make it active
+            activateAnnotation(type);
+        };
 
         group.addChild(baseline.baseline_path);
         group.addChild(baseline.baseline_left_path);
@@ -365,13 +374,19 @@ export function createAnnotationView(annotation, type) {
         e.preventDefault();
 
         // Find annotation and make it active
-        if (type === 'regions')
-            this.last_active_annotation = this.active_region = this.annotations.regions.find((item) => item.view.path === e.target);
-        else if (type === 'rows')
-            this.last_active_annotation = this.active_row = this.annotations.rows.find((item) => item.view.path === e.target);
+        activateAnnotation(type);
 
         if (e.event.which === 3)
             this.activateContextMenu();
+    }
+
+    let self = this;
+    function activateAnnotation(type) {
+        if (type === 'regions')
+            self.last_active_annotation = self.active_region = self.annotations.regions.find((item) => item.view.path === polygon);
+        else if (type === 'rows')
+            self.last_active_annotation = self.active_row = self.annotations.rows.find((item) => item.view.path === polygon);
+
     }
 
     return {group: group, path: polygon, baseline: baseline};
