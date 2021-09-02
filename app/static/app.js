@@ -56954,13 +56954,7 @@ function createAnnotationView(annotation, type) {
     polygon = Object(_baseline_tool__WEBPACK_IMPORTED_MODULE_1__["makePolygonFromBaseline"])(baseline.baseline_path, new paper.Path([baseline.baseline_path.segments[0], baseline.baseline_left_path.segments[1]]), new paper.Path([baseline.baseline_path.segments[0], baseline.baseline_left_path.segments[0]]));
     baseline.baseline_path.insertAbove(polygon);
     baseline.baseline_left_path.insertAbove(polygon);
-    baseline.baseline_right_path.insertAbove(polygon); // Create text
-
-    var t = new paper.PointText(new paper.Point(0, 0)); // TODO
-
-    t.content = annotation.text ? annotation.text : ''; // t.opacity = 0;
-
-    group.addChild(t); // t.remove();
+    baseline.baseline_right_path.insertAbove(polygon);
   } else {
     // Regions
     // Create polygon
@@ -57444,7 +57438,7 @@ function canvasInit() {
         _this.emitAnnotationEditedEvent(_this.active_row);
       }
     } else if (event.code === "Backspace") {// Remove last
-      // this.active_row.text.content = this.active_row.text.content.slice(0, -1);
+      // this.active_row.text = this.active_row.text.slice(0, -1);
     } else if (event.code === "Escape") {
       // Remove annotation text
       _this.active_row.is_valid = false;

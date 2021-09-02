@@ -281,14 +281,13 @@ function getNearestPathSegment(path, point) {
  * this: annotator_component
  * @param annotation
  * @param type
- * @returns {{path: paper.Path, text: null, group: paper.Group}}
+ * @returns {{path: paper.Path, baseline: {}, group: paper.Group}}
  */
 export function createAnnotationView(annotation, type) {
-    // Create new group with bbox and text
+    // Create new group
     let polygon = new paper.Path();
     let group = new paper.Group([polygon]);
 
-    let text = null;
     let baseline = {};
 
     if (type === 'rows') { // Rows
@@ -350,11 +349,7 @@ export function createAnnotationView(annotation, type) {
         baseline.baseline_left_path.insertAbove(polygon);
         baseline.baseline_right_path.insertAbove(polygon);
 
-        // Create text
-        text = new paper.PointText(polygon.firstSegment.point.add(new paper.Point(20, -20))); // TODO
-        text.content = annotation.text ? annotation.text : '';
-        text.opacity = 0;
-        group.addChild(text);
+
     }
     else { // Regions
         // Create polygon
@@ -381,7 +376,7 @@ export function createAnnotationView(annotation, type) {
             this.activateContextMenu();
     }
 
-    return {group: group, path: polygon, text: text, baseline: baseline};
+    return {group: group, path: polygon, baseline: baseline};
 }
 
 /**
