@@ -270,6 +270,7 @@ class TextLinesEditor {
 
         /** Annotator component: Event listener -> Row selected event **/
         this.annotator_wrapper_component.$refs.annotator_component.$on('row-selected-event', (annotation) => {
+            console.log('selected row', annotation)
             // Find line
             let selected_line = this.lines.find(item => item.id === annotation.uuid);
 
@@ -281,6 +282,11 @@ class TextLinesEditor {
                 this.polygon_click(selected_line);
         });
 
+        /** Annotator component: Event listener -> Region selected event **/
+        this.annotator_wrapper_component.$refs.annotator_component.$on('region-selected-event', (annotation) => {
+            console.log('selected region', annotation)
+        });
+
         /** Annotator component: Event listener -> Row/region created event **/
         this.annotator_wrapper_component.$refs.annotator_component.$on('row-created-event', (annotation) => annotationCreatedEditedEventHandler(annotation, 'row', this.image_id));
         this.annotator_wrapper_component.$refs.annotator_component.$on('region-created-event', (annotation) => annotationCreatedEditedEventHandler(annotation, 'region', this.image_id));
@@ -290,7 +296,7 @@ class TextLinesEditor {
         this.annotator_wrapper_component.$refs.annotator_component.$on('region-edited-event', (annotation) => annotationCreatedEditedEventHandler(annotation, 'region'));
 
         function annotationCreatedEditedEventHandler(annotation, annotation_type, image_id=null) {
-            console.log(annotation, annotation_type, image_id);
+            console.log('creating/editing', annotation, annotation_type, image_id);
             axios
                 .post('/ocr/create_edit_annotation', {
                     annotation: annotation,
