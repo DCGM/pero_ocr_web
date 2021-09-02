@@ -137,15 +137,17 @@ class TextLinesEditor {
     delete_line_btn_action(uuid=null) {  // TODO: old code working only for lines
         let delete_uuid = uuid? uuid: this.active_line.id;
 
-        if (this.active_line != false) {
-            this.active_line.valid = !this.active_line.valid;
+        if (this.active_line !== false || uuid) {
+            if (!uuid)
+                this.active_line.valid = !this.active_line.valid;
 
             let delete_flag;
-            if (this.active_line.valid) {
-                delete_flag = 0;
-            } else {
+            if (uuid)
                 delete_flag = 1;
-            }
+            else if (this.active_line.valid)
+                delete_flag = 0;
+            else
+                delete_flag = 1;
 
             let text_lines_editor = this;
             let route = Flask.url_for('ocr.delete_line', {'line_or_region_id': delete_uuid, 'delete_flag': delete_flag});
@@ -163,12 +165,15 @@ class TextLinesEditor {
                     alert('Unable to set delete flag. Check your remote connection.');
                 },
                 success: function (xhr, ajaxOptions) {
-                    text_lines_editor.active_line.mutate();
+                    if (!uuid) {
+                        text_lines_editor.active_line.mutate();
+                    }
                     text_lines_editor.swap_delete_line_button_blueprint();
                     text_lines_editor.delete_btn.disabled = false;
                 }
             });
-            this.active_line.container.focus();
+            if (!uuid)
+                this.active_line.container.focus();
         }
     }
 
