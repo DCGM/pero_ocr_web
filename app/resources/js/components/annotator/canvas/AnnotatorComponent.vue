@@ -59,7 +59,7 @@ Rok: 2021
                 class="float-left"
                 resize
             />
-            <div >
+            <div id="tutorial">
                 <div>
                     <span class="pr-3"><span class="badge badge-primary" style="background: #6cb2eb;">Přepsaný řádek</span> - Přepsané řádky jsou barevně zvýrazněny</span>
                     <span class="pr-3"><span class="badge badge-primary">Levý Alt</span> - Podržením vyberete nástroj pro posuv</span>
