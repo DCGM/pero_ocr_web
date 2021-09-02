@@ -92,11 +92,19 @@ export function getPathPoints(path) {
  * Remove annotation from canvas by UUID
  * this: annotator_component
  * @param uuid - annotation uuid
+ * @param prompt
  */
-export function removeAnnotation(uuid) {
+export function removeAnnotation(uuid, prompt=false) {
     // Delete region
     let region_idx = this.annotations.regions.findIndex((item) => item.uuid === uuid);
     if (region_idx !== -1) {
+        // Confirm removing
+        if (prompt) {
+            let num_child_rows = this.annotations.rows.filter(item => item.region_annotation_uuid === uuid).length;
+            if (!confirm('Opravdu smazat odstavec i s řádky ('+ num_child_rows +')'))
+                return
+        }
+
         // Emit event
         this.$emit('region-deleted-event', serializeAnnotation(this.annotations.regions[region_idx]));
 
@@ -115,11 +123,18 @@ export function removeAnnotation(uuid) {
         while (row = this.annotations.rows.find((item) => item.region_annotation_uuid === uuid)) {
             this.removeAnnotation(row.uuid);
         }
+        return;
     }
 
     // Delete row
     let row_idx = this.annotations.rows.findIndex((item) => item.uuid === uuid);
     if (row_idx !== -1) {
+        // Confirm removing
+        if (prompt) {
+            if (!confirm('Opravdu smazat řádek?'))
+                return
+        }
+
         // Emit event
         this.$emit('row-deleted-event', serializeAnnotation(this.annotations.rows[row_idx]));
 

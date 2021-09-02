@@ -88,9 +88,9 @@ Rok: 2021
 
             <!-- Context menu -->
             <div id="canvas-contextmenu" class="d-flex flex-column">
-                <div class="p-2 text-primary"
-                     @click="removeAnnotation(last_active_annotation.uuid); deactivateContextMenu();"><i
-                    class="fas fa-trash-alt text-muted pr-2"></i> Smazat
+                <div class="p-2 text-primary" @click="removeAnnotation(last_active_annotation.uuid, true); deactivateContextMenu();">
+                    <i class="fas fa-trash-alt text-muted pr-2"></i>
+                    <span v-if="last_active_annotation === active_region">Smazat odstavec</span><span v-else>Smazat řádek</span>
                 </div>
 <!--                <div class="p-2 text-primary"-->
 <!--                     v-if="last_active_annotation && last_active_annotation.is_valid"-->

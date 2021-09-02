@@ -43844,14 +43844,17 @@ var render = function() {
                 staticClass: "p-2 text-primary",
                 on: {
                   click: function($event) {
-                    _vm.removeAnnotation(_vm.last_active_annotation.uuid)
+                    _vm.removeAnnotation(_vm.last_active_annotation.uuid, true)
                     _vm.deactivateContextMenu()
                   }
                 }
               },
               [
                 _c("i", { staticClass: "fas fa-trash-alt text-muted pr-2" }),
-                _vm._v(" Smazat\n                ")
+                _vm._v(" "),
+                _vm.last_active_annotation === _vm.active_region
+                  ? _c("span", [_vm._v("Smazat odstavec")])
+                  : _c("span", [_vm._v("Smazat řádek")])
               ]
             ),
             _vm._v(" "),
@@ -56704,16 +56707,26 @@ function getPathPoints(path) {
  * Remove annotation from canvas by UUID
  * this: annotator_component
  * @param uuid - annotation uuid
+ * @param prompt
  */
 
 function removeAnnotation(uuid) {
+  var prompt = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
   // Delete region
   var region_idx = this.annotations.regions.findIndex(function (item) {
     return item.uuid === uuid;
   });
 
   if (region_idx !== -1) {
-    // Emit event
+    // Confirm removing
+    if (prompt) {
+      var num_child_rows = this.annotations.rows.filter(function (item) {
+        return item.region_annotation_uuid === uuid;
+      }).length;
+      if (!confirm('Opravdu smazat odstavec i s řádky (' + num_child_rows + ')')) return;
+    } // Emit event
+
+
     this.$emit('region-deleted-event', serializeAnnotation(this.annotations.regions[region_idx])); // Disable active region
 
     if (this.annotations.regions[region_idx] === this.active_region) this.active_region = null;
@@ -56729,6 +56742,8 @@ function removeAnnotation(uuid) {
     })) {
       this.removeAnnotation(row.uuid);
     }
+
+    return;
   } // Delete row
 
 
@@ -56737,7 +56752,12 @@ function removeAnnotation(uuid) {
   });
 
   if (row_idx !== -1) {
-    // Emit event
+    // Confirm removing
+    if (prompt) {
+      if (!confirm('Opravdu smazat řádek?')) return;
+    } // Emit event
+
+
     this.$emit('row-deleted-event', serializeAnnotation(this.annotations.rows[row_idx])); // Disable active row
 
     if (this.annotations.rows[row_idx] === this.active_row) this.active_row = null; // Remove view items
