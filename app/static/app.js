@@ -56951,10 +56951,9 @@ function createAnnotationView(annotation, type) {
     group.addChild(baseline.baseline_left_path);
     group.addChild(baseline.baseline_right_path); // Make polygon
 
-    polygon = Object(_baseline_tool__WEBPACK_IMPORTED_MODULE_1__["makePolygonFromBaseline"])(baseline.baseline_path, new paper.Path([baseline.baseline_path.segments[0], baseline.baseline_left_path.segments[1]]), new paper.Path([baseline.baseline_path.segments[0], baseline.baseline_left_path.segments[0]]));
-    baseline.baseline_path.insertAbove(polygon);
-    baseline.baseline_left_path.insertAbove(polygon);
-    baseline.baseline_right_path.insertAbove(polygon);
+    polygon = Object(_baseline_tool__WEBPACK_IMPORTED_MODULE_1__["makePolygonFromBaseline"])(getPathPoints(baseline.baseline_path), heights.up, heights.down); // baseline.baseline_path.insertAbove(polygon);
+    // baseline.baseline_left_path.insertAbove(polygon);
+    // baseline.baseline_right_path.insertAbove(polygon);
   } else {
     // Regions
     // Create polygon
@@ -57094,29 +57093,30 @@ function activeRowChangedHandler(next, prev) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "makePolygonFromBaseline", function() { return makePolygonFromBaseline; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createBaselineTool", function() { return createBaselineTool; });
+/* harmony import */ var _annotations__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./annotations */ "./resources/js/components/annotator/canvas/annotations.js");
 /**
  * Autor práce: David Hříbek
  * Rok: 2021
 **/
 
 /**
- * TODO
- * @param baseline path
- * @param up path
- * @param down path
+ * Create polygon based on baseline
  * @returns {paper.Path}
+ * @param baseline_points {[{x:int, y:int}]}
+ * @param up_height {float}
+ * @param down_height {float}
  */
-function makePolygonFromBaseline(baseline, up, down) {
-  var polygon = new paper.Path(); // polygon.selected = true;
 
+function makePolygonFromBaseline(baseline_points, up_height, down_height) {
+  var polygon = new paper.Path();
   polygon.closed = true;
   polygon.strokeWidth = 2;
   polygon.strokeColor = 'rgba(34,43,68,0.8)';
   var up_seg, down_seg;
 
-  for (var i = 0; i < baseline.segments.length; i++) {
-    up_seg = new paper.Point(baseline.segments[i].point.x, baseline.segments[i].point.y - (up ? up.length : 0));
-    down_seg = new paper.Point(baseline.segments[i].point.x, baseline.segments[i].point.y + (down ? down.length : 0));
+  for (var i = 0; i < baseline_points.length; i++) {
+    up_seg = new paper.Point(baseline_points[i].x, baseline_points[i].y - up_height);
+    down_seg = new paper.Point(baseline_points[i].x, baseline_points[i].y + down_height);
     polygon.insert(i, up_seg);
     polygon.insert(i + 1, down_seg);
   }
@@ -57214,7 +57214,7 @@ function createBaselineTool(annotator_component) {
 
 
       if (polygon) polygon.remove();
-      polygon = makePolygonFromBaseline(baseline, up, down);
+      polygon = makePolygonFromBaseline(Object(_annotations__WEBPACK_IMPORTED_MODULE_0__["getPathPoints"])(baseline), up.length, down.length);
     }
   };
 
@@ -57791,12 +57791,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "canvasMouseUpEv", function() { return canvasMouseUpEv; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "canvasMouseDblClickEv", function() { return canvasMouseDblClickEv; });
 /* harmony import */ var _baseline_tool__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./baseline_tool */ "./resources/js/components/annotator/canvas/baseline_tool.js");
+/* harmony import */ var _annotations__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./annotations */ "./resources/js/components/annotator/canvas/annotations.js");
 /**
 Tento soubor byl převzat z diplomové práce "Active Learning pro zpracování archivních pramenů"
 
 Autor práce: David Hříbek
 Rok: 2021
 **/
+
 
 /**
  * Create tool for scaling and moving over canvas
@@ -57860,7 +57862,8 @@ function createScaleMoveViewTool(annotator_component) {
         } // Make polygon
 
 
-        var polygon = Object(_baseline_tool__WEBPACK_IMPORTED_MODULE_0__["makePolygonFromBaseline"])(annotator_component.last_baseline.baseline_path, new paper.Path([annotator_component.last_baseline.baseline_path.segments[0], annotator_component.last_baseline.baseline_left_path.segments[1]]), new paper.Path([annotator_component.last_baseline.baseline_path.segments[0], annotator_component.last_baseline.baseline_left_path.segments[0]]));
+        var polygon = Object(_baseline_tool__WEBPACK_IMPORTED_MODULE_0__["makePolygonFromBaseline"])(Object(_annotations__WEBPACK_IMPORTED_MODULE_1__["getPathPoints"])(annotator_component.last_baseline.baseline_path), new paper.Path([annotator_component.last_baseline.baseline_path.segments[0], annotator_component.last_baseline.baseline_left_path.segments[1]]).length, // TODO: refactor
+        new paper.Path([annotator_component.last_baseline.baseline_path.segments[0], annotator_component.last_baseline.baseline_left_path.segments[0]]).length);
         annotator_component.active_row.view.path.clear();
         annotator_component.active_row.view.path.segments = polygon.segments;
         polygon.remove();
