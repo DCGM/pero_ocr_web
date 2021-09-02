@@ -56763,7 +56763,9 @@ function removeAnnotation(uuid) {
     this.$emit('region-deleted-event', serializeAnnotation(this.annotations.regions[region_idx])); // Disable active region
 
     if (this.annotations.regions[region_idx] === this.active_region) this.active_region = null;
-    this.annotations.regions[region_idx].view.group.remove();
+    this.annotations.regions[region_idx].view.path.remove();
+    this.annotations.regions[region_idx].view.group.remove(); // Unregister region
+
     this.annotations.regions.splice(region_idx, 1); // Delete region rows
 
     var row;

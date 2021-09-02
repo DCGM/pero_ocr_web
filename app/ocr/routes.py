@@ -317,6 +317,7 @@ def get_lines(image_id):
         text_regions = sorted(list(db_image.textregions), key=lambda x: x.order)
     else:
         text_regions = db_image.textregions
+    text_regions = list(filter(lambda region: not region.deleted, text_regions))
 
     annotated_lines = set(get_page_annotated_lines(image_id))
 
