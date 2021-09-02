@@ -56901,16 +56901,21 @@ function createAnnotationView(annotation, type) {
   var _this = this;
 
   // Create new group
+  var group = new paper.Group();
   var polygon = new paper.Path();
-  var group = new paper.Group([polygon]);
   var baseline = {};
 
   if (type === 'rows') {
     // Rows
-    // Create baseline
+    var heights = annotation.heights;
+    /** Make polygon **/
+
+    polygon = Object(_baseline_tool__WEBPACK_IMPORTED_MODULE_1__["makePolygonFromBaseline"])(annotation.baseline, heights.up, heights.down);
+    group.addChild(polygon);
+    /** Make baseline **/
+
     var baseline_left = annotation.baseline[0];
-    var baseline_right = annotation.baseline[annotation.baseline.length - 1];
-    var heights = annotation.heights; // Baseline path
+    var baseline_right = annotation.baseline[annotation.baseline.length - 1]; // Baseline path
 
     baseline.baseline_path = new paper.Path(annotation.baseline);
     baseline.baseline_path.strokeWidth = 2;
@@ -56949,9 +56954,7 @@ function createAnnotationView(annotation, type) {
 
     group.addChild(baseline.baseline_path);
     group.addChild(baseline.baseline_left_path);
-    group.addChild(baseline.baseline_right_path); // Make polygon
-
-    polygon = Object(_baseline_tool__WEBPACK_IMPORTED_MODULE_1__["makePolygonFromBaseline"])(getPathPoints(baseline.baseline_path), heights.up, heights.down); // baseline.baseline_path.insertAbove(polygon);
+    group.addChild(baseline.baseline_right_path); // baseline.baseline_path.insertAbove(polygon);
     // baseline.baseline_left_path.insertAbove(polygon);
     // baseline.baseline_right_path.insertAbove(polygon);
   } else {
@@ -56972,6 +56975,8 @@ function createAnnotationView(annotation, type) {
     } finally {
       _iterator4.f();
     }
+
+    group.addChild(baseline.baseline_path);
   } // Color polygon
 
 
@@ -57862,8 +57867,14 @@ function createScaleMoveViewTool(annotator_component) {
         } // Make polygon
 
 
-        var up_height = annotator_component.last_baseline.baseline_path.segments[0].point.distanceTo(annotator_component.last_baseline.baseline_left_path.segments[1].point);
-        var down_height = annotator_component.last_baseline.baseline_path.segments[0].point.distanceTo(annotator_component.last_baseline.baseline_left_path.segments[0].point);
+        var left_baseline_point = _.pick(annotator_component.last_baseline.baseline_path.firstSegment.point, ['x', 'y']);
+
+        var up_point = _.pick(annotator_component.last_baseline.baseline_left_path.lastSegment.point, ['x', 'y']);
+
+        var down_point = _.pick(annotator_component.last_baseline.baseline_left_path.firstSegment.point, ['x', 'y']);
+
+        var up_height = pointDistance(left_baseline_point, up_point);
+        var down_height = pointDistance(left_baseline_point, down_point);
         var polygon = Object(_baseline_tool__WEBPACK_IMPORTED_MODULE_0__["makePolygonFromBaseline"])(Object(_annotations__WEBPACK_IMPORTED_MODULE_1__["getPathPoints"])(annotator_component.last_baseline.baseline_path), up_height, down_height);
         annotator_component.active_row.view.path.clear();
         annotator_component.active_row.view.path.segments = polygon.segments;
@@ -57875,10 +57886,23 @@ function createScaleMoveViewTool(annotator_component) {
   return tool;
 }
 /**
+ * Compute point distance
+ * @param p1 {{x: float, y:float}}
+ * @param p2 {{x: float, y:float}}
+ * @returns {number}
+ */
+
+function pointDistance(p1, p2) {
+  var dx = p1.x - p2.x;
+  var dy = p1.y - p2.y;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+/**
  * Event: Wheel mouse on canvas
  * this: annotator_component
  * @param event
  */
+
 
 function canvasMouseWheelEv(event) {
   // Cast kodu funkce byla inspirovana ukazkou: https://codepen.io/hichem147/pen/dExxNK
