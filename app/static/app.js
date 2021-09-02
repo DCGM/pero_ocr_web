@@ -57862,8 +57862,9 @@ function createScaleMoveViewTool(annotator_component) {
         } // Make polygon
 
 
-        var polygon = Object(_baseline_tool__WEBPACK_IMPORTED_MODULE_0__["makePolygonFromBaseline"])(Object(_annotations__WEBPACK_IMPORTED_MODULE_1__["getPathPoints"])(annotator_component.last_baseline.baseline_path), new paper.Path([annotator_component.last_baseline.baseline_path.segments[0], annotator_component.last_baseline.baseline_left_path.segments[1]]).length, // TODO: refactor
-        new paper.Path([annotator_component.last_baseline.baseline_path.segments[0], annotator_component.last_baseline.baseline_left_path.segments[0]]).length);
+        var up_height = annotator_component.last_baseline.baseline_path.segments[0].point.distanceTo(annotator_component.last_baseline.baseline_left_path.segments[1].point);
+        var down_height = annotator_component.last_baseline.baseline_path.segments[0].point.distanceTo(annotator_component.last_baseline.baseline_left_path.segments[0].point);
+        var polygon = Object(_baseline_tool__WEBPACK_IMPORTED_MODULE_0__["makePolygonFromBaseline"])(Object(_annotations__WEBPACK_IMPORTED_MODULE_1__["getPathPoints"])(annotator_component.last_baseline.baseline_path), up_height, down_height);
         annotator_component.active_row.view.path.clear();
         annotator_component.active_row.view.path.segments = polygon.segments;
         polygon.remove();
