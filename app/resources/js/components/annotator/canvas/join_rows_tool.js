@@ -12,27 +12,29 @@ export function createJoinRowsTool(annotator_component) {
 
     tool.row_selected = (to_join_row) => {
         if (base_row && base_row !== to_join_row) {
-            // Join points
-            let points = getPathPoints(base_row.view.path).concat(getPathPoints(to_join_row.view.path));
+            // Join baselines and create new row
+            for (let segment of to_join_row.view.baseline.baseline_path.segments)
+                base_row.view.baseline.baseline_path.add(segment);
 
-            // Calc. convex envelope and join paths
-            points = points.map((item) => [item.x, item.y]);
-            points = hull(points, 200);
-            base_row.view.path.clear();
-            for (let point of points)
-                base_row.view.path.add(new paper.Point(point));
+            let up = new paper.Path([base_row.view.baseline.baseline_path.firstSegment.point, base_row.view.baseline.baseline_left_path.lastSegment.point]);
+            let down = new paper.Path([base_row.view.baseline.baseline_path.firstSegment.point, base_row.view.baseline.baseline_left_path.firstSegment.point]);
+            let baseline = {baseline: base_row.view.baseline.baseline_path, up: up, down: down};
+            annotator_component.creating_annotation_type = 'rows';
+            let new_row = annotator_component.confirmAnnotation(null, baseline);
+            up.remove();
+            down.remove();
 
-            // annotator_component.last_active_annotation = annotator_component.active_row = base_row;
             // Join texts
-            base_row.text += to_join_row.text;
-            base_row.view.text.content = base_row.text;
+            new_row.text = base_row.text + to_join_row.text;
+            new_row.view.text.content = new_row.text;
 
-            // Delete second row
+            // Delete both rows
+            annotator_component.removeAnnotation(base_row.uuid);
             annotator_component.removeAnnotation(to_join_row.uuid);
 
             // Init
             base_row = null;
-            // annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
+            annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
         }
         else
             base_row = to_join_row;
