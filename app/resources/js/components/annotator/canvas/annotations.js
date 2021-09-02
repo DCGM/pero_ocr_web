@@ -412,6 +412,8 @@ export function confirmAnnotation(polygon=null, baseline=null) {
         this.active_row = annotation;
         this.active_row.is_valid = false;
     }
+
+    return annotation;
 }
 
 export function activeRegionChangedHandler(next, prev) {
@@ -456,7 +458,7 @@ export function activeRowChangedHandler(next, prev) {
             let parent_region = this.annotations.regions.find((item) => item.uuid === next.region_annotation_uuid)
             this.active_region = parent_region? parent_region: null;
 
-            this.$refs['input-transcription-text'].focus();
+            // this.$refs['input-transcription-text'].focus(); // Disabled (shadowing focus on scrol text)
         });
 
         // Emit event
