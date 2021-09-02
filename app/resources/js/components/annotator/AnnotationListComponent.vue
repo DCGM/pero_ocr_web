@@ -38,12 +38,12 @@ Rok: 2021
                             <input
                                 ref="rows"
                                 placeholder="Přepis řádku..." type="text"
-                                v-model="row.view.text.content"
+                                v-model="row.text"
                                 @change="row.is_valid = true; emitActiveRowEdited(row);"
                                 @click="emitActiveRowChanged(row);"
                                 @focus="emitActiveRowChanged(row);"
                             >
-                            {{ row.view.text.content.length }}
+                            {{ row.text.length }}
                             <i class="fas fa-trash-alt text-muted pt-1 pl-2" @click="$parent.removeAnnotation(row.uuid)"></i>
                         </div>
                     </div>
