@@ -77,7 +77,7 @@ Rok: 2021
 
             <!-- Row text -->
 <!--            <div id="canvas-row-text" class="text-primary">-->
-<!--                <span v-if="active_row"><input ref="input-transcription-text" type="text" class="input-transcription-text" v-model="active_row.view.text.content"/><span class="text-muted">({{ active_row.view.text.content.length }})</span></span>-->
+<!--                <span v-if="active_row"><input ref="input-transcription-text" type="text" class="input-transcription-text" v-model="active_row.text"/><span class="text-muted">({{ active_row.text.length }})</span></span>-->
 <!--            </div>-->
 
             <!-- Mouse coordinates -->

@@ -26,7 +26,6 @@ export function createJoinRowsTool(annotator_component) {
 
             // Join texts
             new_row.text = base_row.text + to_join_row.text;
-            new_row.view.text.content = new_row.text;
 
             // Delete both rows
             annotator_component.removeAnnotation(base_row.uuid);
