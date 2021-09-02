@@ -61,19 +61,19 @@ export function canvasInit() {
             this.$forceUpdate();
         }
         else if(event.code === "Enter" || event.code === "NumpadEnter") {
-            if (this.active_row && this.active_row.view.text.content.length) {
+            if (this.active_row && this.active_row.text.length) {
                 this.active_row.is_valid = true;
                 this.emitAnnotationEditedEvent(this.active_row);
             }
         }
         else if (event.code === "Backspace") {
             // Remove last
-            // this.active_row.view.text.content = this.active_row.view.text.content.slice(0, -1);
+            // this.active_row.text = this.active_row.text.slice(0, -1);
         }
         else if (event.code === "Escape") {
             // Remove annotation text
             this.active_row.is_valid = false;
-            this.active_row.view.text.content = "";
+            this.active_row.text = "";
             this.emitAnnotationEditedEvent(this.active_row);
         }
         else if (event.code === "Delete") {
