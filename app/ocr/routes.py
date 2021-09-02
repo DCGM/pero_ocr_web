@@ -114,12 +114,15 @@ def create_edit_annotation():
     image_id = data['image_id']
     points = ' '.join(map(lambda p: f'{int(p["x"])},{int(p["y"])}', annotation['points']))
 
+    baseline = None
+    heights = None
+    if annotation_type == 'row':
+        baseline = ' '.join(map(lambda p: f'{int(p["x"])},{int(p["y"])}', annotation['baseline']))
+        heights = f"{annotation['heights'][0]} {annotation['heights'][1]}"
+
     if image_id:  # Create new row/region
         insert_data = None
         if annotation_type == 'row':  # Row
-            baseline = ' '.join(map(lambda p: f'{int(p["x"])},{int(p["y"])}', annotation['baseline']))
-            heights = f"{annotation['heights'][0]} {annotation['heights'][1]}"
-
             insert_data = TextLine(
                 id=annotation['uuid'],
                 region_id=annotation['region_annotation_uuid'],
