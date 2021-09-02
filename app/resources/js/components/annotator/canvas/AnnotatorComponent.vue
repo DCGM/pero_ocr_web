@@ -142,7 +142,6 @@ export default {
     data() {
         return {
             scope: null, // PaperJs scope
-            mouse_coordinates: {x: null, y: null},
             image: {raster: null, path: null},
             left_control_active: false,
 

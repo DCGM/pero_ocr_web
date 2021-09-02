@@ -118,12 +118,6 @@ export function canvasMouseWheelEv(event) {
  * @param event
  */
 export function canvasMouseMoveEv(event) {
-    // Print coordinates
-    let canvasMousePosition = new paper.Point(event.offsetX, event.offsetY);
-    let viewPosition = this.scope.view.viewToProject(canvasMousePosition);
-
-    this.mouse_coordinates.x = Math.round(viewPosition.x);
-    this.mouse_coordinates.y = Math.round(viewPosition.y);
 }
 
 /**
@@ -132,6 +126,7 @@ export function canvasMouseMoveEv(event) {
  * @param event
  */
 export function canvasMouseDownEv(event) {
+    this.deactivateContextMenu();
 }
 
 /**

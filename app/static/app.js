@@ -7391,10 +7391,6 @@ __webpack_require__.r(__webpack_exports__);
     return {
       scope: null,
       // PaperJs scope
-      mouse_coordinates: {
-        x: null,
-        y: null
-      },
       image: {
         raster: null,
         path: null
@@ -43428,14 +43424,14 @@ var render = function() {
                         {
                           name: "model",
                           rawName: "v-model",
-                          value: row.view.text.content,
-                          expression: "row.view.text.content"
+                          value: row.text,
+                          expression: "row.text"
                         }
                       ],
                       ref: "rows",
                       refInFor: true,
                       attrs: { placeholder: "Přepis řádku...", type: "text" },
-                      domProps: { value: row.view.text.content },
+                      domProps: { value: row.text },
                       on: {
                         change: function($event) {
                           row.is_valid = true
@@ -43451,17 +43447,13 @@ var render = function() {
                           if ($event.target.composing) {
                             return
                           }
-                          _vm.$set(
-                            row.view.text,
-                            "content",
-                            $event.target.value
-                          )
+                          _vm.$set(row, "text", $event.target.value)
                         }
                       }
                     }),
                     _vm._v(
                       "\n                            " +
-                        _vm._s(row.view.text.content.length) +
+                        _vm._s(row.text.length) +
                         "\n                            "
                     ),
                     _c("i", {
@@ -56684,7 +56676,6 @@ function serializeAnnotation(annotation) {
 
   if (annotation.hasOwnProperty('text')) {
     // Row annotation
-    copy.text = copy.view.text.content;
     copy.baseline = getPathPoints(copy.view.baseline.baseline_path);
     copy.heights = [copy.view.baseline.baseline_left_path.segments[1].point.subtract(copy.view.baseline.baseline_path.segments[0].point).length, copy.view.baseline.baseline_left_path.segments[0].point.subtract(copy.view.baseline.baseline_path.segments[0].point).length];
   }
@@ -56902,17 +56893,16 @@ function getNearestPathSegment(path, point) {
  * this: annotator_component
  * @param annotation
  * @param type
- * @returns {{path: paper.Path, text: null, group: paper.Group}}
+ * @returns {{path: paper.Path, baseline: {}, group: paper.Group}}
  */
 
 
 function createAnnotationView(annotation, type) {
   var _this = this;
 
-  // Create new group with bbox and text
+  // Create new group
   var polygon = new paper.Path();
   var group = new paper.Group([polygon]);
-  var text = null;
   var baseline = {};
 
   if (type === 'rows') {
@@ -56966,11 +56956,11 @@ function createAnnotationView(annotation, type) {
     baseline.baseline_left_path.insertAbove(polygon);
     baseline.baseline_right_path.insertAbove(polygon); // Create text
 
-    text = new paper.PointText(polygon.firstSegment.point.add(new paper.Point(20, -20))); // TODO
+    var t = new paper.PointText(new paper.Point(0, 0)); // TODO
 
-    text.content = annotation.text ? annotation.text : '';
-    text.opacity = 0;
-    group.addChild(text);
+    t.content = annotation.text ? annotation.text : ''; // t.opacity = 0;
+
+    group.addChild(t); // t.remove();
   } else {
     // Regions
     // Create polygon
@@ -56995,8 +56985,7 @@ function createAnnotationView(annotation, type) {
   polygon = setPathColor(polygon, type, annotation);
 
   polygon.onMouseDown = function (e) {
-    e.preventDefault();
-    console.log('pol'); // Find annotation and make it active
+    e.preventDefault(); // Find annotation and make it active
 
     if (type === 'regions') _this.last_active_annotation = _this.active_region = _this.annotations.regions.find(function (item) {
       return item.view.path === e.target;
@@ -57009,7 +56998,6 @@ function createAnnotationView(annotation, type) {
   return {
     group: group,
     path: polygon,
-    text: text,
     baseline: baseline
   };
 }
@@ -57450,17 +57438,17 @@ function canvasInit() {
 
       _this.$forceUpdate();
     } else if (event.code === "Enter" || event.code === "NumpadEnter") {
-      if (_this.active_row && _this.active_row.view.text.content.length) {
+      if (_this.active_row && _this.active_row.text.length) {
         _this.active_row.is_valid = true;
 
         _this.emitAnnotationEditedEvent(_this.active_row);
       }
     } else if (event.code === "Backspace") {// Remove last
-      // this.active_row.view.text.content = this.active_row.view.text.content.slice(0, -1);
+      // this.active_row.text.content = this.active_row.text.content.slice(0, -1);
     } else if (event.code === "Escape") {
       // Remove annotation text
       _this.active_row.is_valid = false;
-      _this.active_row.view.text.content = "";
+      _this.active_row.text = "";
 
       _this.emitAnnotationEditedEvent(_this.active_row);
     } else if (event.code === "Delete") {
@@ -57662,12 +57650,7 @@ function createJoinRowsTool(annotator_component) {
 
   tool.row_selected = function (to_join_row) {
     if (base_row && base_row !== to_join_row) {
-      // Join points
-      // let points = getPathPoints(base_row.view.path).concat(getPathPoints(to_join_row.view.path));
-      // Calc. convex envelope and join paths
-      // points = points.map((item) => [item.x, item.y]);
-      // points = hull(points, 200);
-      // Join baselines
+      // Join baselines and create new row
       var _iterator = _createForOfIteratorHelper(to_join_row.view.baseline.baseline_path.segments),
           _step;
 
@@ -57694,11 +57677,7 @@ function createJoinRowsTool(annotator_component) {
       up.remove();
       down.remove(); // Join texts
 
-      new_row.text = base_row.text + to_join_row.text;
-      new_row.view.text.content = new_row.text; // annotator_component.last_active_annotation = annotator_component.active_row = base_row;
-      // base_row.text += to_join_row.text;
-      // base_row.view.text.content = base_row.text;
-      // Delete both rows
+      new_row.text = base_row.text + to_join_row.text; // Delete both rows
 
       annotator_component.removeAnnotation(base_row.uuid);
       annotator_component.removeAnnotation(to_join_row.uuid); // Init
@@ -57932,20 +57911,16 @@ function canvasMouseWheelEv(event) {
  * @param event
  */
 
-function canvasMouseMoveEv(event) {
-  // Print coordinates
-  var canvasMousePosition = new paper.Point(event.offsetX, event.offsetY);
-  var viewPosition = this.scope.view.viewToProject(canvasMousePosition);
-  this.mouse_coordinates.x = Math.round(viewPosition.x);
-  this.mouse_coordinates.y = Math.round(viewPosition.y);
-}
+function canvasMouseMoveEv(event) {}
 /**
  * Event: Mouse down on canvas
  * this: annotator_component
  * @param event
  */
 
-function canvasMouseDownEv(event) {}
+function canvasMouseDownEv(event) {
+  this.deactivateContextMenu();
+}
 /**
  * Event: Mouse up on canvas
  * this: annotator_component
