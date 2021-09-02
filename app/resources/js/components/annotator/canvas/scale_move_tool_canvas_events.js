@@ -65,8 +65,12 @@ export function createScaleMoveViewTool(annotator_component) {
                 }
 
                 // Make polygon
-                let up_height = annotator_component.last_baseline.baseline_path.segments[0].point.distanceTo(annotator_component.last_baseline.baseline_left_path.segments[1].point);
-                let down_height = annotator_component.last_baseline.baseline_path.segments[0].point.distanceTo(annotator_component.last_baseline.baseline_left_path.segments[0].point);
+                let left_baseline_point = _.pick(annotator_component.last_baseline.baseline_path.firstSegment.point, ['x', 'y']);
+                let up_point = _.pick(annotator_component.last_baseline.baseline_left_path.lastSegment.point, ['x', 'y']);
+                let down_point = _.pick(annotator_component.last_baseline.baseline_left_path.firstSegment.point, ['x', 'y']);
+
+                let up_height = pointDistance(left_baseline_point, up_point);
+                let down_height = pointDistance(left_baseline_point, down_point);
                 let polygon = makePolygonFromBaseline(getPathPoints(annotator_component.last_baseline.baseline_path), up_height, down_height);
                 annotator_component.active_row.view.path.clear();
                 annotator_component.active_row.view.path.segments = polygon.segments;
@@ -76,6 +80,18 @@ export function createScaleMoveViewTool(annotator_component) {
     };
 
     return tool;
+}
+
+/**
+ * Compute point distance
+ * @param p1 {{x: float, y:float}}
+ * @param p2 {{x: float, y:float}}
+ * @returns {number}
+ */
+function pointDistance(p1, p2) {
+    let dx = p1.x - p2.x;
+    let dy = p1.y - p2.y;
+    return Math.sqrt(dx*dx + dy*dy);
 }
 
 /**
