@@ -284,16 +284,21 @@ function getNearestPathSegment(path, point) {
  */
 export function createAnnotationView(annotation, type) {
     // Create new group
+    let group = new paper.Group();
     let polygon = new paper.Path();
-    let group = new paper.Group([polygon]);
 
     let baseline = {};
 
     if (type === 'rows') { // Rows
-        // Create baseline
+        let heights = annotation.heights;
+
+        /** Make polygon **/
+        polygon = makePolygonFromBaseline(annotation.baseline, heights.up, heights.down);
+        group.addChild(polygon);
+
+        /** Make baseline **/
         let baseline_left = annotation.baseline[0];
         let baseline_right = annotation.baseline[annotation.baseline.length - 1];
-        let heights = annotation.heights;
 
         // Baseline path
         baseline.baseline_path = new paper.Path(annotation.baseline);
@@ -338,8 +343,6 @@ export function createAnnotationView(annotation, type) {
         group.addChild(baseline.baseline_left_path);
         group.addChild(baseline.baseline_right_path);
 
-        // Make polygon
-        polygon = makePolygonFromBaseline(getPathPoints(baseline.baseline_path), heights.up, heights.down);
         // baseline.baseline_path.insertAbove(polygon);
         // baseline.baseline_left_path.insertAbove(polygon);
         // baseline.baseline_right_path.insertAbove(polygon);
@@ -351,6 +354,8 @@ export function createAnnotationView(annotation, type) {
         // Add points to path
         for (let point of annotation.points)
             polygon.add(new paper.Point(point));
+
+        group.addChild(baseline.baseline_path);
     }
 
     // Color polygon
