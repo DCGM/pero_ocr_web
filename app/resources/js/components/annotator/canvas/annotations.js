@@ -151,9 +151,6 @@ export function removeAnnotation(uuid, prompt=false) {
         ann_view.path.remove();
         ann_view.group.remove();
 
-        // Unregister row
-        this.annotations.rows.splice(row_idx, 1);
-
         // Check if parent region has no rows => delete entire region
         let parent_region_uuid = this.annotations.rows[row_idx].region_annotation_uuid;
         if (parent_region_uuid) {
@@ -162,6 +159,9 @@ export function removeAnnotation(uuid, prompt=false) {
             if (rows.length === 0)
                 this.removeAnnotation(parent_region_uuid);
         }
+
+        // Unregister row
+        this.annotations.rows.splice(row_idx, 1);
     }
 }
 

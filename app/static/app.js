@@ -56762,9 +56762,7 @@ function removeAnnotation(uuid) {
     }
 
     ann_view.path.remove();
-    ann_view.group.remove(); // Unregister row
-
-    this.annotations.rows.splice(row_idx, 1); // Check if parent region has no rows => delete entire region
+    ann_view.group.remove(); // Check if parent region has no rows => delete entire region
 
     var parent_region_uuid = this.annotations.rows[row_idx].region_annotation_uuid;
 
@@ -56774,7 +56772,10 @@ function removeAnnotation(uuid) {
         return item.region_annotation_uuid === parent_region_uuid;
       });
       if (rows.length === 0) this.removeAnnotation(parent_region_uuid);
-    }
+    } // Unregister row
+
+
+    this.annotations.rows.splice(row_idx, 1);
   }
 }
 function removeAnnotationSegm() {
@@ -57202,7 +57203,7 @@ function createBaselineTool(annotator_component) {
 
 
       if (polygon) polygon.remove();
-      polygon = makePolygonFromBaseline(Object(_annotations__WEBPACK_IMPORTED_MODULE_0__["getPathPoints"])(baseline), up.length, down.length);
+      polygon = makePolygonFromBaseline(Object(_annotations__WEBPACK_IMPORTED_MODULE_0__["getPathPoints"])(baseline), up ? up.length : 0, down ? down.length : 0);
     }
   };
 

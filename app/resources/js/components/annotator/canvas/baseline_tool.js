@@ -117,7 +117,11 @@ export function createBaselineTool(annotator_component) {
             // Make tmp polygon
             if (polygon)
                 polygon.remove();
-            polygon = makePolygonFromBaseline(getPathPoints(baseline), up.length, down.length);
+            polygon = makePolygonFromBaseline(
+                getPathPoints(baseline),
+                up? up.length: 0,
+                down? down.length: 0
+            );
         }
     }
 
