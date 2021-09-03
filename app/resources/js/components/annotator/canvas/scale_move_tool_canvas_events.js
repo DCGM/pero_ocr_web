@@ -47,34 +47,38 @@ export function createScaleMoveViewTool(annotator_component) {
                         annotator_component.last_segm.point = annotator_component.last_segm.point.add({x: 0, y: event.delta.y});
                     }
                 }
-                else { // Baseline path
-                    // Move baseline point
+                else { // Baseline/region path
+                    // Move baseline/region point
                     annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta);
 
-                    // Move baseline left/right right (if moving first or last baseline point)
-                    let p = null;
-                    if (annotator_component.last_segm === annotator_component.last_baseline.baseline_path.firstSegment)
-                        p = annotator_component.last_baseline.baseline_left_path;
-                    else if (annotator_component.last_segm === annotator_component.last_baseline.baseline_path.lastSegment)
-                        p = annotator_component.last_baseline.baseline_right_path;
+                    // Move baseline left/right path (if moving first or last baseline point)
+                    if (annotator_component.last_segm_type === 'baseline_path') {
+                        let p = null;
+                        if (annotator_component.last_segm === annotator_component.last_baseline.baseline_path.firstSegment)
+                            p = annotator_component.last_baseline.baseline_left_path;
+                        else if (annotator_component.last_segm === annotator_component.last_baseline.baseline_path.lastSegment)
+                            p = annotator_component.last_baseline.baseline_right_path;
 
-                    if (p) {
-                        p.firstSegment.point = p.firstSegment.point.add(event.delta);
-                        p.lastSegment.point = p.lastSegment.point.add(event.delta);
+                        if (p) {
+                            p.firstSegment.point = p.firstSegment.point.add(event.delta);
+                            p.lastSegment.point = p.lastSegment.point.add(event.delta);
+                        }
                     }
                 }
 
-                // Make polygon
-                let left_baseline_point = _.pick(annotator_component.last_baseline.baseline_path.firstSegment.point, ['x', 'y']);
-                let up_point = _.pick(annotator_component.last_baseline.baseline_left_path.lastSegment.point, ['x', 'y']);
-                let down_point = _.pick(annotator_component.last_baseline.baseline_left_path.firstSegment.point, ['x', 'y']);
+                if (annotator_component.last_segm_type !== 'region_path') {
+                    // Make polygon
+                    let left_baseline_point = _.pick(annotator_component.last_baseline.baseline_path.firstSegment.point, ['x', 'y']);
+                    let up_point = _.pick(annotator_component.last_baseline.baseline_left_path.lastSegment.point, ['x', 'y']);
+                    let down_point = _.pick(annotator_component.last_baseline.baseline_left_path.firstSegment.point, ['x', 'y']);
 
-                let up_height = pointDistance(left_baseline_point, up_point);
-                let down_height = pointDistance(left_baseline_point, down_point);
-                let polygon = makePolygonFromBaseline(getPathPoints(annotator_component.last_baseline.baseline_path), up_height, down_height);
-                annotator_component.active_row.view.path.clear();
-                annotator_component.active_row.view.path.segments = polygon.segments;
-                polygon.remove();
+                    let up_height = pointDistance(left_baseline_point, up_point);
+                    let down_height = pointDistance(left_baseline_point, down_point);
+                    let polygon = makePolygonFromBaseline(getPathPoints(annotator_component.last_baseline.baseline_path), up_height, down_height);
+                    annotator_component.active_row.view.path.clear();
+                    annotator_component.active_row.view.path.segments = polygon.segments;
+                    polygon.remove();
+                }
             }
         }
     };
@@ -142,6 +146,37 @@ export function canvasMouseMoveEv(event) {
  */
 export function canvasMouseDownEv(event) {
     this.deactivateContextMenu();
+
+    //
+    if (!this.active_region && !this.active_row)
+        return;
+
+    //
+    let canvasMousePosition = new paper.Point(event.offsetX, event.offsetY);
+    let viewPosition = this.scope.view.viewToProject(canvasMousePosition);
+
+    let checks = []
+    if (this.active_region)
+        checks.push({path: this.active_region.view.path, segm_type: 'region_path'});
+    if (this.active_row) {
+        checks.push({path: this.active_row.view.baseline.baseline_path, segm_type: 'baseline_path', baseline: this.active_row.view.baseline});
+        checks.push({path: this.active_row.view.baseline.baseline_left_path, segm_type: 'left_path', baseline: this.active_row.view.baseline});
+        checks.push({path: this.active_row.view.baseline.baseline_right_path, segm_type: 'right_path', baseline: this.active_row.view.baseline});
+    }
+
+    //
+    let min_dist = 2000;
+    for (let check of checks) {
+        for (let segment of check.path.segments) {
+            let dist = pointDistance(viewPosition, segment.point);
+            if (dist < min_dist) {
+                min_dist = dist;
+                this.last_baseline = check.baseline;
+                this.last_segm = segment;
+                this.last_segm_type = check.segm_type;
+            }
+        }
+    }
 }
 
 /**
