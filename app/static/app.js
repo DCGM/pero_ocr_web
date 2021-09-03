@@ -56919,50 +56919,21 @@ function createAnnotationView(annotation, type) {
 
     baseline.baseline_left_path = new paper.Path([[baseline_left.x, baseline_left.y + heights.down], [baseline_left.x, baseline_left.y - heights.up]]);
     baseline.baseline_left_path.strokeWidth = 2;
-    baseline.baseline_left_path.strokeColor = 'rgba(34,43,68,0.1)';
-
-    baseline.baseline_left_path.onMouseDown = function (event) {
-      event.preventDefault();
-      _this.last_segm = getNearestPathSegment(baseline.baseline_left_path, event.point);
-      _this.last_baseline = baseline;
-      _this.last_segm_type = 'left_path'; // Find annotation and make it active
-
-      activateAnnotation(type);
-    }; // Right path
-
+    baseline.baseline_left_path.strokeColor = 'rgba(34,43,68,0.1)'; // baseline.baseline_left_path.onMouseDown = (event) => {activeAnnotation(type)};
+    // Right path
 
     baseline.baseline_right_path = new paper.Path([[baseline_right.x, baseline_right.y + heights.down], [baseline_right.x, baseline_right.y - heights.up]]);
     baseline.baseline_right_path.strokeWidth = 2;
-    baseline.baseline_right_path.strokeColor = 'rgba(34,43,68,0.1)';
-
-    baseline.baseline_right_path.onMouseDown = function (event) {
-      event.preventDefault();
-      _this.last_segm = getNearestPathSegment(baseline.baseline_right_path, event.point);
-      _this.last_baseline = baseline;
-      _this.last_segm_type = 'right_path'; // Find annotation and make it active
-
-      activateAnnotation(type);
-    }; // Baseline path
-
+    baseline.baseline_right_path.strokeColor = 'rgba(34,43,68,0.1)'; // baseline.baseline_right_path.onMouseDown = (event) => {// activateAnnotation(type);}
+    // Baseline path
 
     baseline.baseline_path = new paper.Path(annotation.baseline);
     baseline.baseline_path.strokeWidth = 2;
-    baseline.baseline_path.strokeColor = 'rgba(34,43,68,0.1)';
-
-    baseline.baseline_path.onMouseDown = function (event) {
-      event.preventDefault();
-      _this.last_segm = getNearestPathSegment(baseline.baseline_path, event.point);
-      _this.last_baseline = baseline;
-      _this.last_segm_type = 'baseline_path'; // Find annotation and make it active
-
-      activateAnnotation(type);
-    };
+    baseline.baseline_path.strokeColor = 'rgba(34,43,68,0.1)'; // baseline.baseline_path.onMouseDown = (event) => {// activateAnnotation(type);};
 
     group.addChild(baseline.baseline_path);
     group.addChild(baseline.baseline_left_path);
-    group.addChild(baseline.baseline_right_path); // baseline.baseline_path.insertAbove(polygon);
-    // baseline.baseline_left_path.insertAbove(polygon);
-    // baseline.baseline_right_path.insertAbove(polygon);
+    group.addChild(baseline.baseline_right_path);
   } else {
     // Regions
     // Create polygon
@@ -57546,7 +57517,7 @@ function canvasSelectDataset(dataset) {
  */
 
 function canvasSelectRowAnnotation(row_uuid) {
-  this.active_row = this.annotations.rows.find(function (item) {
+  this.last_active_annotation = this.active_row = this.annotations.rows.find(function (item) {
     return item.uuid === row_uuid;
   });
 }
@@ -57669,7 +57640,8 @@ function createJoinRowsTool(annotator_component) {
         for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var segment = _step.value;
           base_row.view.baseline.baseline_path.add(segment);
-        }
+        } // base_row.view.baseline.baseline_path.segments.sort((a,b) => {a.point.x > b.point.x});
+
       } catch (err) {
         _iterator.e(err);
       } finally {
@@ -57809,6 +57781,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "canvasMouseDblClickEv", function() { return canvasMouseDblClickEv; });
 /* harmony import */ var _baseline_tool__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./baseline_tool */ "./resources/js/components/annotator/canvas/baseline_tool.js");
 /* harmony import */ var _annotations__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./annotations */ "./resources/js/components/annotator/canvas/annotations.js");
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
 /**
 Tento soubor byl převzat z diplomové práce "Active Learning pro zpracování archivních pramenů"
 
@@ -57843,18 +57821,21 @@ function createScaleMoveViewTool(annotator_component) {
           var oposite_path = annotator_component.last_segm_type === 'left_path' ? annotator_component.last_baseline.baseline_right_path : annotator_component.last_baseline.baseline_left_path;
           var second_segm = annotator_component.last_segm === path.segments[0] ? path.segments[1] : path.segments[0];
 
-          if (Math.abs(event.delta.x) > Math.abs(event.delta.y)) {
-            // Move both points
-            // Move baseline left/right path
-            annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta);
-            second_segm.point = second_segm.point.add(event.delta); // Move baseline left/right point
-
-            var idx = annotator_component.last_segm_type === 'left_path' ? 0 : annotator_component.last_baseline.baseline_path.segments.length - 1;
-            annotator_component.last_baseline.baseline_path.segments[idx].point = annotator_component.last_baseline.baseline_path.segments[idx].point.add(event.delta);
+          if (Math.abs(event.delta.x) > Math.abs(event.delta.y)) {// Move both points
+            // // Move baseline left/right path
+            // annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta);
+            // second_segm.point = second_segm.point.add(event.delta);
+            //
+            // // Move baseline left/right point
+            // let idx = annotator_component.last_segm_type === 'left_path'? 0: annotator_component.last_baseline.baseline_path.segments.length - 1;
+            // annotator_component.last_baseline.baseline_path.segments[idx].point = annotator_component.last_baseline.baseline_path.segments[idx].point.add(event.delta)
           } else {
             // Move one point vertically
             var is_up_segm = annotator_component.last_segm.point.y > second_segm.point.y;
-            var oposite_segm = oposite_path.segments[0].point.y > oposite_path.segments[1].point.y === is_up_segm ? oposite_path.segments[0] : oposite_path.segments[1];
+            var oposite_segm = oposite_path.segments[0].point.y > oposite_path.segments[1].point.y === is_up_segm ? oposite_path.segments[0] : oposite_path.segments[1]; // let baseline_y = annotator_component.last_baseline.baseline_path.firstSegment.point.y;
+            // let next_y = oposite_segm.point.y + event.delta.y;
+            // if ((is_up_segm && next_y < baseline_y) || (!is_up_segm && next_y > baseline_y)) {
+
             oposite_segm.point = oposite_segm.point.add({
               x: 0,
               y: event.delta.y
@@ -57862,35 +57843,42 @@ function createScaleMoveViewTool(annotator_component) {
             annotator_component.last_segm.point = annotator_component.last_segm.point.add({
               x: 0,
               y: event.delta.y
-            });
+            }); // }
           }
         } else {
-          // Baseline path
-          // Move baseline point
-          annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta); // Move baseline left/right right (if moving first or last baseline point)
+          // Baseline/region path
+          // Move baseline/region point
+          annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta); // Move baseline left/right path (if moving first or last baseline point)
 
-          var p = null;
-          if (annotator_component.last_segm === annotator_component.last_baseline.baseline_path.firstSegment) p = annotator_component.last_baseline.baseline_left_path;else if (annotator_component.last_segm === annotator_component.last_baseline.baseline_path.lastSegment) p = annotator_component.last_baseline.baseline_right_path;
+          if (annotator_component.last_segm_type === 'baseline_path') {
+            var p = null;
+            if (annotator_component.last_segm === annotator_component.last_baseline.baseline_path.firstSegment) p = annotator_component.last_baseline.baseline_left_path;else if (annotator_component.last_segm === annotator_component.last_baseline.baseline_path.lastSegment) p = annotator_component.last_baseline.baseline_right_path;
 
-          if (p) {
-            p.firstSegment.point = p.firstSegment.point.add(event.delta);
-            p.lastSegment.point = p.lastSegment.point.add(event.delta);
+            if (p) {
+              p.firstSegment.point = p.firstSegment.point.add(event.delta);
+              p.lastSegment.point = p.lastSegment.point.add(event.delta);
+            }
           }
         } // Make polygon
 
 
-        var left_baseline_point = _.pick(annotator_component.last_baseline.baseline_path.firstSegment.point, ['x', 'y']);
+        if (annotator_component.last_segm_type !== 'region_path') {
+          var left_baseline_point = _.pick(annotator_component.last_baseline.baseline_path.firstSegment.point, ['x', 'y']);
 
-        var up_point = _.pick(annotator_component.last_baseline.baseline_left_path.lastSegment.point, ['x', 'y']);
+          var up_point = _.pick(annotator_component.last_baseline.baseline_left_path.lastSegment.point, ['x', 'y']);
 
-        var down_point = _.pick(annotator_component.last_baseline.baseline_left_path.firstSegment.point, ['x', 'y']);
+          var down_point = _.pick(annotator_component.last_baseline.baseline_left_path.firstSegment.point, ['x', 'y']);
 
-        var up_height = pointDistance(left_baseline_point, up_point);
-        var down_height = pointDistance(left_baseline_point, down_point);
-        var polygon = Object(_baseline_tool__WEBPACK_IMPORTED_MODULE_0__["makePolygonFromBaseline"])(Object(_annotations__WEBPACK_IMPORTED_MODULE_1__["getPathPoints"])(annotator_component.last_baseline.baseline_path), up_height, down_height);
-        annotator_component.active_row.view.path.clear();
-        annotator_component.active_row.view.path.segments = polygon.segments;
-        polygon.remove();
+          var up_height = pointDistance(left_baseline_point, up_point);
+          var down_height = pointDistance(left_baseline_point, down_point);
+          var polygon = Object(_baseline_tool__WEBPACK_IMPORTED_MODULE_0__["makePolygonFromBaseline"])(Object(_annotations__WEBPACK_IMPORTED_MODULE_1__["getPathPoints"])(annotator_component.last_baseline.baseline_path), up_height, down_height);
+          annotator_component.active_row.view.path.clear();
+          annotator_component.active_row.view.path.segments = polygon.segments;
+          polygon.remove();
+          annotator_component.last_active_annotation = annotator_component.active_row;
+        } else {
+          annotator_component.last_active_annotation = annotator_component.active_region;
+        }
       }
     }
   };
@@ -57953,18 +57941,63 @@ function canvasMouseMoveEv(event) {}
  */
 
 function canvasMouseDownEv(event) {
-  this.deactivateContextMenu();
-  var hitOptions = {
-    // point: true,
-    segments: true,
-    stroke: true,
-    fill: true,
-    // class: Path
-    tolerance: 50
-  };
-  var hitResult = this.scope.project.activeLayer.hitTest(event.point, hitOptions);
-  if (!hitResult) return;
-  console.log(hitResult);
+  this.deactivateContextMenu(); //
+
+  if (!this.active_region && !this.active_row) return; //
+
+  var canvasMousePosition = new paper.Point(event.offsetX, event.offsetY);
+  var viewPosition = this.scope.view.viewToProject(canvasMousePosition);
+  var checks = [];
+  if (this.active_region) checks.push({
+    path: this.active_region.view.path,
+    segm_type: 'region_path'
+  });
+
+  if (this.active_row) {
+    checks.push({
+      path: this.active_row.view.baseline.baseline_path,
+      segm_type: 'baseline_path',
+      baseline: this.active_row.view.baseline
+    });
+    checks.push({
+      path: this.active_row.view.baseline.baseline_left_path,
+      segm_type: 'left_path',
+      baseline: this.active_row.view.baseline
+    });
+    checks.push({
+      path: this.active_row.view.baseline.baseline_right_path,
+      segm_type: 'right_path',
+      baseline: this.active_row.view.baseline
+    });
+  } //
+
+
+  var min_dist = 500;
+
+  for (var _i = 0, _checks = checks; _i < _checks.length; _i++) {
+    var check = _checks[_i];
+
+    var _iterator = _createForOfIteratorHelper(check.path.segments),
+        _step;
+
+    try {
+      for (_iterator.s(); !(_step = _iterator.n()).done;) {
+        var segment = _step.value;
+        var dist = pointDistance(viewPosition, segment.point);
+
+        if (dist < min_dist) {
+          min_dist = dist;
+          this.last_baseline = check.baseline;
+          this.last_segm = segment;
+          this.last_segm_type = check.segm_type;
+        }
+      }
+    } catch (err) {
+      _iterator.e(err);
+    } finally {
+      _iterator.f();
+    }
+  }
 }
 /**
  * Event: Mouse up on canvas

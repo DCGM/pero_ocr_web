@@ -82,6 +82,11 @@ export function createScaleMoveViewTool(annotator_component) {
                     annotator_component.active_row.view.path.clear();
                     annotator_component.active_row.view.path.segments = polygon.segments;
                     polygon.remove();
+
+                    annotator_component.last_active_annotation = annotator_component.active_row;
+                }
+                else {
+                    annotator_component.last_active_annotation = annotator_component.active_region;
                 }
             }
         }
