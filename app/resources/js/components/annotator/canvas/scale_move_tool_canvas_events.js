@@ -165,7 +165,7 @@ export function canvasMouseDownEv(event) {
     }
 
     //
-    let min_dist = 2000;
+    let min_dist = 500;
     for (let check of checks) {
         for (let segment of check.path.segments) {
             let dist = pointDistance(viewPosition, segment.point);

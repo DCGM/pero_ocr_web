@@ -307,15 +307,7 @@ export function createAnnotationView(annotation, type) {
         ]);
         baseline.baseline_left_path.strokeWidth = 2;
         baseline.baseline_left_path.strokeColor = 'rgba(34,43,68,0.1)';
-        baseline.baseline_left_path.onMouseDown = (event) => {
-            event.preventDefault();
-            this.last_segm = getNearestPathSegment(baseline.baseline_left_path, event.point);
-            this.last_baseline = baseline;
-            this.last_segm_type = 'left_path';
-
-            // Find annotation and make it active
-            activateAnnotation(type);
-        };
+        // baseline.baseline_left_path.onMouseDown = (event) => {activeAnnotation(type)};
 
         // Right path
         baseline.baseline_right_path = new paper.Path([
@@ -324,37 +316,17 @@ export function createAnnotationView(annotation, type) {
         ]);
         baseline.baseline_right_path.strokeWidth = 2;
         baseline.baseline_right_path.strokeColor = 'rgba(34,43,68,0.1)';
-        baseline.baseline_right_path.onMouseDown = (event) => {
-            event.preventDefault();
-            this.last_segm = getNearestPathSegment(baseline.baseline_right_path, event.point);
-            this.last_baseline = baseline;
-            this.last_segm_type = 'right_path';
-
-            // Find annotation and make it active
-            activateAnnotation(type);
-        }
+        // baseline.baseline_right_path.onMouseDown = (event) => {// activateAnnotation(type);}
 
         // Baseline path
         baseline.baseline_path = new paper.Path(annotation.baseline);
         baseline.baseline_path.strokeWidth = 2;
         baseline.baseline_path.strokeColor = 'rgba(34,43,68,0.1)';
-        baseline.baseline_path.onMouseDown = (event) => {
-            event.preventDefault();
-            this.last_segm = getNearestPathSegment(baseline.baseline_path, event.point);
-            this.last_baseline = baseline;
-            this.last_segm_type = 'baseline_path';
-
-            // Find annotation and make it active
-            activateAnnotation(type);
-        };
+        // baseline.baseline_path.onMouseDown = (event) => {// activateAnnotation(type);};
 
         group.addChild(baseline.baseline_path);
         group.addChild(baseline.baseline_left_path);
         group.addChild(baseline.baseline_right_path);
-
-        // baseline.baseline_path.insertAbove(polygon);
-        // baseline.baseline_left_path.insertAbove(polygon);
-        // baseline.baseline_right_path.insertAbove(polygon);
     }
     else { // Regions
         // Create polygon

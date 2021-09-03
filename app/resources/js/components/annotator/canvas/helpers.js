@@ -159,7 +159,7 @@ export function canvasSelectDataset(dataset) {
  * this: annotator_component
  */
 export function canvasSelectRowAnnotation(row_uuid) {
-    this.active_row = this.annotations.rows.find(item => item.uuid === row_uuid);
+    this.last_active_annotation = this.active_row = this.annotations.rows.find(item => item.uuid === row_uuid);
 }
 
 /**
