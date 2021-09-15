@@ -154,7 +154,11 @@ export function canvasMouseMoveEv(event) {
  * @param event
  */
 export function canvasMouseDownEv(event) {
-    this.deactivateContextMenu();
+    // Context menu
+    if (event.which === 3 && (this.active_row || this.active_region))
+        this.activateContextMenu();
+    else
+        this.deactivateContextMenu();
 
     //
     if (!this.active_region && !this.active_row)
