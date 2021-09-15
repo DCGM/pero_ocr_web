@@ -109,10 +109,8 @@ export function createBaselineTool(annotator_component) {
             let point = new paper.Point(viewPosition);
 
             // Check up above baseline or down below baseline
-            if ((direction === up && point.y < baseline.lastSegment.point.y) || (direction === down && point.y > baseline.lastSegment.point.y)) {
-                direction.lastSegment.remove();
-                direction.add(point);
-            }
+            direction.lastSegment.remove();
+            direction.add(point);
 
             // Make tmp polygon
             if (polygon)
