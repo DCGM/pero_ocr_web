@@ -61,14 +61,14 @@ Rok: 2021
             />
             <div id="tutorial">
                 <div>
-                    <span class="pr-3"><span class="badge badge-primary" style="background: #6cb2eb;">Přepsaný řádek</span> - Přepsané řádky jsou barevně zvýrazněny</span>
-                    <span class="pr-3"><span class="badge badge-primary">Levý Alt</span> - Podržením vyberete nástroj pro posuv</span>
+<!--                    <span class="pr-3"><span class="badge badge-primary" style="background: #6cb2eb;">Přepsaný řádek</span> - Přepsané řádky jsou barevně zvýrazněny</span>-->
+<!--                    <span class="pr-3"><span class="badge badge-primary">Levý Alt</span> - Podržením vyberete nástroj pro posuv</span>-->
                 </div>
                 <span v-if="active_row">
-                    <span class="pr-3"><span class="badge badge-success">Enter</span> - Potvrzení správnosti přepisu</span>
-                    <span class="pr-3"><span class="badge badge-danger">Levý Ctrl + Del</span> - Smazání anotace</span>
+<!--                    <span class="pr-3"><span class="badge badge-success">Enter</span> - Potvrzení správnosti přepisu</span>-->
+<!--                    <span class="pr-3"><span class="badge badge-danger">Levý Ctrl + Del</span> - Smazání anotace</span>-->
                     <span class="pr-3"><span class="badge badge-primary">Levý Ctrl + táhnutí</span> - Posuv bodů</span>
-                    <span class="pr-3"><span class="badge badge-primary">Esc</span> - Zrušení přepisu</span>
+<!--                    <span class="pr-3"><span class="badge badge-primary">Esc</span> - Zrušení přepisu</span>-->
                     <span class="pr-3"><span class="badge badge-primary">Šipka nahoru</span> - Předchozí řádek</span>
                     <span class="pr-3"><span class="badge badge-primary">Šipka dolů</span> - Následující řádek</span>
                 </span>
