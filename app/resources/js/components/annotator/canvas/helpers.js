@@ -103,7 +103,7 @@ export function canvasInit() {
         }
         else if (event.code === "AltLeft") {
             this.selected_tool.activate();
-            this.bbox = {start: null, path: null}; // Reset bbox tool
+            this.bbox = {start: null, path: null}; // Reset bbox tool // TODO: remove?
             this.$forceUpdate();
         }
         else if (event.code === "Space") {

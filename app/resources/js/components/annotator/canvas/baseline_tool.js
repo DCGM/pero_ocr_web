@@ -118,7 +118,6 @@ export function createBaselineTool(annotator_component) {
             let viewPosition = annotator_component.scope.view.viewToProject(canvasMousePosition);
             let point = new paper.Point(viewPosition);
 
-            // Check up above baseline or down below baseline
             direction.lastSegment.remove();
             direction.add(point);
 
