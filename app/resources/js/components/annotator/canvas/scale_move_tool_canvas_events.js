@@ -16,6 +16,26 @@ import {getPathPoints} from "./annotations";
 export function createScaleMoveViewTool(annotator_component) {
     let tool = new paper.Tool();
 
+    /**
+     * Removes point from baseline which are not ordered by x coord
+     * @param baseline_path
+     */
+    function reorderBaselinePoints(baseline_path) {
+        let min_x = baseline_path.firstSegment.point.x;
+        let to_del = [];
+        for (let i = 1; i < baseline_path.segments.length; i++) {
+            let segm = baseline_path.segments[i];
+            if (segm.point.x <= min_x)
+                to_del.push(segm);
+            else
+                min_x = segm.point.x;
+        }
+
+        for (let segm of to_del) {
+            segm.remove();
+        }
+    }
+
     tool.onMouseDrag = (event) => {
         if (!annotator_component.left_control_active) {  // Move camera
             let offset = event.point.subtract(event.downPoint);
@@ -30,29 +50,16 @@ export function createScaleMoveViewTool(annotator_component) {
                     let oposite_path = annotator_component.last_segm_type === 'left_path'? annotator_component.last_baseline.baseline_right_path: annotator_component.last_baseline.baseline_left_path;
                     let second_segm = annotator_component.last_segm === path.segments[0] ? path.segments[1] : path.segments[0];
 
-                    if (Math.abs(event.delta.x) > Math.abs(event.delta.y)) { // Move both points
-                        // // Move baseline left/right path
-                        // annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta);
-                        // second_segm.point = second_segm.point.add(event.delta);
-                        //
-                        // // Move baseline left/right point
-                        // let idx = annotator_component.last_segm_type === 'left_path'? 0: annotator_component.last_baseline.baseline_path.segments.length - 1;
-                        // annotator_component.last_baseline.baseline_path.segments[idx].point = annotator_component.last_baseline.baseline_path.segments[idx].point.add(event.delta)
-                    }
-                    else { // Move one point vertically
+                    if (Math.abs(event.delta.x) < Math.abs(event.delta.y)) {  // Move one point vertically
                         let is_up_segm = annotator_component.last_segm.point.y > second_segm.point.y;
                         let oposite_segm = (oposite_path.segments[0].point.y > oposite_path.segments[1].point.y) === is_up_segm? oposite_path.segments[0]: oposite_path.segments[1];
 
-                        // let baseline_y = annotator_component.last_baseline.baseline_path.firstSegment.point.y;
-                        // let next_y = oposite_segm.point.y + event.delta.y;
-                        // if ((is_up_segm && next_y < baseline_y) || (!is_up_segm && next_y > baseline_y)) {
-                            oposite_segm.point = oposite_segm.point.add({x: 0, y: event.delta.y});
-                            annotator_component.last_segm.point = annotator_component.last_segm.point.add({x: 0, y: event.delta.y});
-                        // }
+                        oposite_segm.point = oposite_segm.point.add({x: 0, y: event.delta.y});
+                        annotator_component.last_segm.point = annotator_component.last_segm.point.add({x: 0, y: event.delta.y});
                     }
                 }
-                else { // Baseline/region path
-                    // Move baseline/region point
+                else if (annotator_component.last_segm_type === 'baseline_path') { // Baseline/region path
+                    // Move baseline point
                     annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta);
 
                     // Move baseline left/right path (if moving first or last baseline point)
@@ -68,6 +75,12 @@ export function createScaleMoveViewTool(annotator_component) {
                             p.lastSegment.point = p.lastSegment.point.add(event.delta);
                         }
                     }
+
+                    reorderBaselinePoints(annotator_component.last_baseline.baseline_path);
+                }
+                else {
+                    // Move region point
+                    annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta);
                 }
 
                 // Make polygon
