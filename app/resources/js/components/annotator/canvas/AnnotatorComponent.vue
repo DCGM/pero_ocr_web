@@ -104,9 +104,9 @@ Rok: 2021
 <!--                >-->
 <!--                    <i class="fas fa-check text-muted pr-2"></i> Potvrdit správnost přepisu-->
 <!--                </div>-->
-                <div v-if="last_segm" class="p-2 text-primary" @click="removeAnnotationSegm(); deactivateContextMenu();">
-                    <i class="fas fa-edit text-muted pr-2"></i> Odstranit bod
-                </div>
+<!--                <div v-if="last_segm" class="p-2 text-primary" @click="removeAnnotationSegm(); deactivateContextMenu();">-->
+<!--                    <i class="fas fa-edit text-muted pr-2"></i> Odstranit bod-->
+<!--                </div>-->
 <!--                <div class="p-2 text-primary" @click="canvasZoomAnnotation(last_active_annotation); deactivateContextMenu();">-->
 <!--                    <i class="fas fa-edit text-muted pr-2"></i> Přiblížit-->
 <!--                </div>-->
