@@ -66,6 +66,9 @@ export function createBboxTool(annotator_component) {
 
         bbox.start = null;
         bbox.path = null;
+
+        // Select default tool
+        annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
     }
 
     return tool;

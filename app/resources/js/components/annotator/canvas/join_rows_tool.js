@@ -33,6 +33,8 @@ export function createJoinRowsTool(annotator_component) {
 
             // Init
             base_row = null;
+
+            // Select default tool
             annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
         }
         else

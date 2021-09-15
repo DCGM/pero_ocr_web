@@ -101,6 +101,9 @@ export function createBaselineTool(annotator_component) {
                 baseline.remove();
                 polygon.remove();
                 up = down = baseline = polygon = false;
+
+                // Select default tool
+                annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
             }
         }
     }
