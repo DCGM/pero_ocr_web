@@ -43804,21 +43804,15 @@ var render = function() {
         }),
         _vm._v(" "),
         _c("div", { attrs: { id: "tutorial" } }, [
-          _vm._m(0),
+          _c("div"),
           _vm._v(" "),
           _vm.active_row
             ? _c("span", [
+                _vm._m(0),
+                _vm._v(" "),
                 _vm._m(1),
                 _vm._v(" "),
-                _vm._m(2),
-                _vm._v(" "),
-                _vm._m(3),
-                _vm._v(" "),
-                _vm._m(4),
-                _vm._v(" "),
-                _vm._m(5),
-                _vm._v(" "),
-                _vm._m(6)
+                _vm._m(2)
               ])
             : _vm._e()
         ]),
@@ -43848,26 +43842,7 @@ var render = function() {
                   ? _c("span", [_vm._v("Smazat odstavec")])
                   : _c("span", [_vm._v("Smazat řádek")])
               ]
-            ),
-            _vm._v(" "),
-            _vm.last_segm
-              ? _c(
-                  "div",
-                  {
-                    staticClass: "p-2 text-primary",
-                    on: {
-                      click: function($event) {
-                        _vm.removeAnnotationSegm()
-                        _vm.deactivateContextMenu()
-                      }
-                    }
-                  },
-                  [
-                    _c("i", { staticClass: "fas fa-edit text-muted pr-2" }),
-                    _vm._v(" Odstranit bod\n                ")
-                  ]
-                )
-              : _vm._e()
+            )
           ]
         )
       ]
@@ -43879,65 +43854,11 @@ var staticRenderFns = [
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("div", [
-      _c("span", { staticClass: "pr-3" }, [
-        _c(
-          "span",
-          {
-            staticClass: "badge badge-primary",
-            staticStyle: { background: "#6cb2eb" }
-          },
-          [_vm._v("Přepsaný řádek")]
-        ),
-        _vm._v(" - Přepsané řádky jsou barevně zvýrazněny")
-      ]),
-      _vm._v(" "),
-      _c("span", { staticClass: "pr-3" }, [
-        _c("span", { staticClass: "badge badge-primary" }, [
-          _vm._v("Levý Alt")
-        ]),
-        _vm._v(" - Podržením vyberete nástroj pro posuv")
-      ])
-    ])
-  },
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("span", { staticClass: "pr-3" }, [
-      _c("span", { staticClass: "badge badge-success" }, [_vm._v("Enter")]),
-      _vm._v(" - Potvrzení správnosti přepisu")
-    ])
-  },
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("span", { staticClass: "pr-3" }, [
-      _c("span", { staticClass: "badge badge-danger" }, [
-        _vm._v("Levý Ctrl + Del")
-      ]),
-      _vm._v(" - Smazání anotace")
-    ])
-  },
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
     return _c("span", { staticClass: "pr-3" }, [
       _c("span", { staticClass: "badge badge-primary" }, [
         _vm._v("Levý Ctrl + táhnutí")
       ]),
       _vm._v(" - Posuv bodů")
-    ])
-  },
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("span", { staticClass: "pr-3" }, [
-      _c("span", { staticClass: "badge badge-primary" }, [_vm._v("Esc")]),
-      _vm._v(" - Zrušení přepisu")
     ])
   },
   function() {
@@ -56794,7 +56715,7 @@ function removeAnnotationSegm() {
 
 function setPathColor(path, annotation_type, annotation) {
   if (annotation_type === 'row' || annotation_type === 'rows') {
-    path.strokeWidth = 2;
+    path.strokeWidth = 1;
     path.strokeColor = 'rgba(34,43,68,0.8)'; // path.strokeColor = 'rgb(162,160,146)';
     // path.fillColor = 'rgba(219,200,28, 0.1)';
     // Set background color
@@ -56810,7 +56731,7 @@ function setPathColor(path, annotation_type, annotation) {
     //     line.polygon.setStyle({color: color, opacity: 0.5, fillColor: color, fillOpacity: 0.1, weight: 1});
   } else {
     // Region
-    path.strokeWidth = 3;
+    path.strokeWidth = 2;
     path.strokeColor = 'rgba(34,43,68, 0.9)'; // path.fillColor = 'rgba(34,43,68,1)';
     // path.fillColor = 'rgba(34,43,68,0.2)';
   }
@@ -56899,8 +56820,6 @@ function getNearestPathSegment(path, point) {
 
 
 function createAnnotationView(annotation, type) {
-  var _this = this;
-
   // Create new group
   var group = new paper.Group();
   var polygon = new paper.Path();
@@ -56920,18 +56839,15 @@ function createAnnotationView(annotation, type) {
 
     baseline.baseline_left_path = new paper.Path([[baseline_left.x, baseline_left.y + heights.down], [baseline_left.x, baseline_left.y - heights.up]]);
     baseline.baseline_left_path.strokeWidth = 2;
-    baseline.baseline_left_path.strokeColor = 'rgba(34,43,68,0.1)'; // baseline.baseline_left_path.onMouseDown = (event) => {activeAnnotation(type)};
-    // Right path
+    baseline.baseline_left_path.strokeColor = 'rgba(34,43,68,0.1)'; // Right path
 
     baseline.baseline_right_path = new paper.Path([[baseline_right.x, baseline_right.y + heights.down], [baseline_right.x, baseline_right.y - heights.up]]);
     baseline.baseline_right_path.strokeWidth = 2;
-    baseline.baseline_right_path.strokeColor = 'rgba(34,43,68,0.1)'; // baseline.baseline_right_path.onMouseDown = (event) => {// activateAnnotation(type);}
-    // Baseline path
+    baseline.baseline_right_path.strokeColor = 'rgba(34,43,68,0.1)'; // Baseline path
 
     baseline.baseline_path = new paper.Path(annotation.baseline);
     baseline.baseline_path.strokeWidth = 2;
-    baseline.baseline_path.strokeColor = 'rgba(34,43,68,0.1)'; // baseline.baseline_path.onMouseDown = (event) => {// activateAnnotation(type);};
-
+    baseline.baseline_path.strokeColor = 'rgba(34,43,68,0.1)';
     group.addChild(baseline.baseline_path);
     group.addChild(baseline.baseline_left_path);
     group.addChild(baseline.baseline_right_path);
@@ -56962,9 +56878,9 @@ function createAnnotationView(annotation, type) {
 
   polygon.onMouseDown = function (e) {
     e.preventDefault(); // Find annotation and make it active
+    // if (this.left_control_active)
 
     activateAnnotation(type);
-    if (e.event.which === 3) _this.activateContextMenu();
   };
 
   var self = this;
@@ -57015,7 +56931,7 @@ function confirmAnnotation() {
   return annotation;
 }
 function activeRegionChangedHandler(next, prev) {
-  var _this2 = this;
+  var _this = this;
 
   // Active row
   if (!(this.active_row && this.active_region && this.active_row.region_annotation_uuid === this.active_region.uuid)) this.active_row = null;
@@ -57024,12 +56940,12 @@ function activeRegionChangedHandler(next, prev) {
     next.view.path.selected = true; // Open region rows
 
     this.$nextTick(function () {
-      var region_idx = _this2.annotations.regions.findIndex(function (item) {
+      var region_idx = _this.annotations.regions.findIndex(function (item) {
         return item === next;
       }); // Click on region in Annotation_list_component
 
 
-      if (_this2.$refs.annotation_list_component) _this2.$refs.annotation_list_component.clickRegion(region_idx);
+      if (_this.$refs.annotation_list_component) _this.$refs.annotation_list_component.clickRegion(region_idx);
     }); // Emit event
 
     this.$emit('region-selected-event', serializeAnnotation(next));
@@ -57040,7 +56956,7 @@ function activeRegionChangedHandler(next, prev) {
   }
 }
 function activeRowChangedHandler(next, prev) {
-  var _this3 = this;
+  var _this2 = this;
 
   if (next) {
     // Select row
@@ -57051,11 +56967,11 @@ function activeRowChangedHandler(next, prev) {
     if (this.canvasIsToolActive(this.join_rows_tool)) this.join_rows_tool.row_selected(next);
     this.$nextTick(function () {
       //
-      var parent_region = _this3.annotations.regions.find(function (item) {
+      var parent_region = _this2.annotations.regions.find(function (item) {
         return item.uuid === next.region_annotation_uuid;
       });
 
-      _this3.active_region = parent_region ? parent_region : null; // this.$refs['input-transcription-text'].focus(); // Disabled (shadowing focus on scrol text)
+      _this2.active_region = parent_region ? parent_region : null; // this.$refs['input-transcription-text'].focus(); // Disabled (shadowing focus on scrol text)
     }); // Emit event
 
     this.$emit('row-selected-event', serializeAnnotation(next));
@@ -57120,6 +57036,17 @@ function createBaselineTool(annotator_component) {
   var down = null;
   var polygon = null;
 
+  function changeStateBaselineHeights() {
+    if (baseline && baseline.segments.length >= 2) {
+      if (!up) {
+        // Baseline -> Up
+        baseline.selected = false;
+        up = new paper.Path([baseline.lastSegment, baseline.lastSegment]);
+        up.selected = true;
+      }
+    }
+  }
+
   tool.onKeyDown = function (event) {
     if (event.key === "escape") {
       // Remove currently created annotation
@@ -57129,6 +57056,8 @@ function createBaselineTool(annotator_component) {
       }
 
       baseline = up = down = polygon = null;
+    } else if (event.key === "enter") {
+      changeStateBaselineHeights();
     }
   };
 
@@ -57137,14 +57066,7 @@ function createBaselineTool(annotator_component) {
 
     if (event.event.which !== 1) {
       // Right click
-      if (baseline.segments.length >= 2) {
-        if (!up) {
-          // Baseline -> Up
-          baseline.selected = false;
-          up = new paper.Path([baseline.lastSegment, baseline.lastSegment]);
-          up.selected = true;
-        }
-      }
+      changeStateBaselineHeights();
     } else {
       // Left click
       if (!baseline) {
@@ -57181,7 +57103,9 @@ function createBaselineTool(annotator_component) {
         down.remove();
         baseline.remove();
         polygon.remove();
-        up = down = baseline = polygon = false;
+        up = down = baseline = polygon = false; // Select default tool
+
+        annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
       }
     }
   };
@@ -57194,13 +57118,9 @@ function createBaselineTool(annotator_component) {
       var pp = annotator_component.scope.view.projectToView(baseline.lastSegment.point);
       var canvasMousePosition = new paper.Point(pp.x, event.event.offsetY);
       var viewPosition = annotator_component.scope.view.viewToProject(canvasMousePosition);
-      var point = new paper.Point(viewPosition); // Check up above baseline or down below baseline
-
-      if (direction === up && point.y < baseline.lastSegment.point.y || direction === down && point.y > baseline.lastSegment.point.y) {
-        direction.lastSegment.remove();
-        direction.add(point);
-      } // Make tmp polygon
-
+      var point = new paper.Point(viewPosition);
+      direction.lastSegment.remove();
+      direction.add(point); // Make tmp polygon
 
       if (polygon) polygon.remove();
       polygon = makePolygonFromBaseline(Object(_annotations__WEBPACK_IMPORTED_MODULE_0__["getPathPoints"])(baseline), up ? up.length : 0, down ? down.length : 0);
@@ -57281,7 +57201,9 @@ function createBboxTool(annotator_component) {
     }
 
     bbox.start = null;
-    bbox.path = null;
+    bbox.path = null; // Select default tool
+
+    annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
   };
 
   return tool;
@@ -57468,7 +57390,7 @@ function canvasInit() {
       _this.bbox = {
         start: null,
         path: null
-      }; // Reset bbox tool
+      }; // Reset bbox tool // TODO: remove?
 
       _this.$forceUpdate();
     } else if (event.code === "Space") {
@@ -57666,7 +57588,8 @@ function createJoinRowsTool(annotator_component) {
       annotator_component.removeAnnotation(base_row.uuid);
       annotator_component.removeAnnotation(to_join_row.uuid); // Init
 
-      base_row = null;
+      base_row = null; // Select default tool
+
       annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
     } else base_row = to_join_row;
   };
@@ -57732,7 +57655,9 @@ function createPolygonTool(annotator_component) {
         polygon.path.lastSegment.remove();
         annotator_component.confirmAnnotation(polygon); // Remove tmp path
 
-        polygon.path.remove();
+        polygon.path.remove(); // Select default tool
+
+        annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
       }
     } else {
       //
@@ -57804,6 +57729,26 @@ Rok: 2021
 
 function createScaleMoveViewTool(annotator_component) {
   var tool = new paper.Tool();
+  /**
+   * Removes point from baseline which are not ordered by x coord
+   * @param baseline_path
+   */
+
+  function reorderBaselinePoints(baseline_path) {
+    var min_x = baseline_path.firstSegment.point.x;
+    var to_del = [];
+
+    for (var i = 1; i < baseline_path.segments.length; i++) {
+      var segm = baseline_path.segments[i];
+      if (segm.point.x <= min_x) to_del.push(segm);else min_x = segm.point.x;
+    }
+
+    for (var _i = 0, _to_del = to_del; _i < _to_del.length; _i++) {
+      var _segm = _to_del[_i];
+
+      _segm.remove();
+    }
+  }
 
   tool.onMouseDrag = function (event) {
     if (!annotator_component.left_control_active) {
@@ -57822,21 +57767,10 @@ function createScaleMoveViewTool(annotator_component) {
           var oposite_path = annotator_component.last_segm_type === 'left_path' ? annotator_component.last_baseline.baseline_right_path : annotator_component.last_baseline.baseline_left_path;
           var second_segm = annotator_component.last_segm === path.segments[0] ? path.segments[1] : path.segments[0];
 
-          if (Math.abs(event.delta.x) > Math.abs(event.delta.y)) {// Move both points
-            // // Move baseline left/right path
-            // annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta);
-            // second_segm.point = second_segm.point.add(event.delta);
-            //
-            // // Move baseline left/right point
-            // let idx = annotator_component.last_segm_type === 'left_path'? 0: annotator_component.last_baseline.baseline_path.segments.length - 1;
-            // annotator_component.last_baseline.baseline_path.segments[idx].point = annotator_component.last_baseline.baseline_path.segments[idx].point.add(event.delta)
-          } else {
+          if (Math.abs(event.delta.x) < Math.abs(event.delta.y)) {
             // Move one point vertically
             var is_up_segm = annotator_component.last_segm.point.y > second_segm.point.y;
-            var oposite_segm = oposite_path.segments[0].point.y > oposite_path.segments[1].point.y === is_up_segm ? oposite_path.segments[0] : oposite_path.segments[1]; // let baseline_y = annotator_component.last_baseline.baseline_path.firstSegment.point.y;
-            // let next_y = oposite_segm.point.y + event.delta.y;
-            // if ((is_up_segm && next_y < baseline_y) || (!is_up_segm && next_y > baseline_y)) {
-
+            var oposite_segm = oposite_path.segments[0].point.y > oposite_path.segments[1].point.y === is_up_segm ? oposite_path.segments[0] : oposite_path.segments[1];
             oposite_segm.point = oposite_segm.point.add({
               x: 0,
               y: event.delta.y
@@ -57844,11 +57778,11 @@ function createScaleMoveViewTool(annotator_component) {
             annotator_component.last_segm.point = annotator_component.last_segm.point.add({
               x: 0,
               y: event.delta.y
-            }); // }
+            });
           }
-        } else {
+        } else if (annotator_component.last_segm_type === 'baseline_path') {
           // Baseline/region path
-          // Move baseline/region point
+          // Move baseline point
           annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta); // Move baseline left/right path (if moving first or last baseline point)
 
           if (annotator_component.last_segm_type === 'baseline_path') {
@@ -57860,6 +57794,11 @@ function createScaleMoveViewTool(annotator_component) {
               p.lastSegment.point = p.lastSegment.point.add(event.delta);
             }
           }
+
+          reorderBaselinePoints(annotator_component.last_baseline.baseline_path);
+        } else {
+          // Move region point
+          annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta);
         } // Make polygon
 
 
@@ -57942,7 +57881,8 @@ function canvasMouseMoveEv(event) {}
  */
 
 function canvasMouseDownEv(event) {
-  this.deactivateContextMenu(); //
+  // Context menu
+  if (event.which === 3 && (this.active_row || this.active_region)) this.activateContextMenu();else this.deactivateContextMenu(); //
 
   if (!this.active_region && !this.active_row) return; //
 
@@ -57975,8 +57915,8 @@ function canvasMouseDownEv(event) {
 
   var min_dist = 500;
 
-  for (var _i = 0, _checks = checks; _i < _checks.length; _i++) {
-    var check = _checks[_i];
+  for (var _i2 = 0, _checks = checks; _i2 < _checks.length; _i2++) {
+    var check = _checks[_i2];
 
     var _iterator = _createForOfIteratorHelper(check.path.segments),
         _step;
