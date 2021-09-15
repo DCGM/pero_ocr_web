@@ -181,7 +181,7 @@ export function removeAnnotationSegm() {
  */
 function setPathColor(path, annotation_type, annotation) {
     if (annotation_type === 'row' || annotation_type === 'rows') {
-        path.strokeWidth = 2;
+        path.strokeWidth = 1;
         path.strokeColor = 'rgba(34,43,68,0.8)';
         // path.strokeColor = 'rgb(162,160,146)';
         // path.fillColor = 'rgba(219,200,28, 0.1)';
@@ -208,7 +208,7 @@ function setPathColor(path, annotation_type, annotation) {
 
     }
     else { // Region
-        path.strokeWidth = 3;
+        path.strokeWidth = 2;
         path.strokeColor = 'rgba(34,43,68, 0.9)';
         // path.fillColor = 'rgba(34,43,68,1)';
         // path.fillColor = 'rgba(34,43,68,0.2)';
