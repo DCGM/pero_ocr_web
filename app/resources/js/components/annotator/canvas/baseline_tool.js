@@ -41,6 +41,16 @@ export function createBaselineTool(annotator_component) {
     let down = null;
     let polygon = null;
 
+    function changeStateBaselineHeights() {
+        if (baseline && baseline.segments.length >= 2) {
+            if (!up) { // Baseline -> Up
+                baseline.selected = false;
+                up = new paper.Path([baseline.lastSegment, baseline.lastSegment]);
+                up.selected = true;
+            }
+        }
+    }
+
     tool.onKeyDown = (event) => {
         if (event.key === "escape") {
             // Remove currently created annotation
@@ -50,19 +60,16 @@ export function createBaselineTool(annotator_component) {
             }
             baseline = up = down = polygon = null;
         }
+        else if (event.key === "enter") {
+            changeStateBaselineHeights();
+        }
     }
 
     tool.onMouseDown = (event) => {
         event.preventDefault();
 
         if (event.event.which !== 1) { // Right click
-            if (baseline.segments.length >= 2) {
-                if (!up) { // Baseline -> Up
-                    baseline.selected = false;
-                    up = new paper.Path([baseline.lastSegment, baseline.lastSegment]);
-                    up.selected = true;
-                }
-            }
+            changeStateBaselineHeights();
         }
         else { // Left click
             if (!baseline) { // Baseline create
