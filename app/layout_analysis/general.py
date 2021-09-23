@@ -83,21 +83,21 @@ def change_layout_request_and_document_state(request, request_state, document_st
     db_session.commit()
 
 
-def change_layout_request_and_document_state_in_progress(request):
+def change_layout_request_and_document_state_in_progress_handler(request):
     change_layout_request_and_document_state(request, RequestState.IN_PROGRESS, DocumentState.RUNNING_LAYOUT_ANALYSIS)
     return
 
 
-def change_layout_request_and_document_state_on_success(request):
+def change_layout_request_and_document_state_on_success_handler(request):
     change_layout_request_and_document_state(request, RequestState.SUCCESS, DocumentState.COMPLETED_LAYOUT_ANALYSIS)
     return
 
 
-def change_layout_request_to_fail_and_document_state_to_new(request):
+def change_layout_request_to_fail_and_document_state_to_new_handler(request):
     change_layout_request_and_document_state(request, RequestState.FAILURE, DocumentState.NEW)
 
 
-def change_document_state_on_complete_layout_analysis(document):
+def change_document_state_on_complete_layout_analysis_handler(document):
     document.state = DocumentState.COMPLETED_LAYOUT_ANALYSIS
     db_session.commit()
 

@@ -18,11 +18,12 @@ from app.db.general import get_document_by_id, get_request_by_id, get_image_by_i
 from app.db import DocumentState, OCR, Document, Image, TextRegion, Baseline, LanguageModel, User, OCRTrainingDocuments
 from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
-                            insert_lines_to_db, change_ocr_request_and_document_state_on_success, insert_annotations_to_db, \
-                            update_text_lines, get_page_annotated_lines, change_ocr_request_and_document_state_in_progress, \
-                            post_files_to_folder, change_ocr_request_to_fail_and_document_state_to_success, \
-                            change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis, set_delete_flag, \
+                            insert_lines_to_db, change_ocr_request_and_document_state_on_success_handler, insert_annotations_to_db, \
+                            update_text_lines, get_page_annotated_lines, change_ocr_request_and_document_state_in_progress_handler, \
+                            post_files_to_folder, change_ocr_request_to_fail_and_document_state_to_success_handler, \
+                            change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis_handler, set_delete_flag, \
                             set_training_flag
+from app.mail.mail import send_ocr_failed_mail
 
 from app.document.general import get_document_images
 from app import db_session, engine
@@ -133,6 +134,7 @@ def ocr_training_documents():
     return render_template('ocr/ocr_training_documents.html',
                            documents=db_documents, ocr_engines=db_ocr_engines, previews=previews,
                            engine_names=engine_names, selected_documents=selected_documents)
+
 
 @bp.route('/set_ocr_training_document/<string:document_id>/<string:ocr_id>/<string:state>', methods=['GET'])
 @login_required
@@ -424,34 +426,38 @@ def post_result(image_id):
 
 @bp.route('/change_ocr_request_and_document_state_on_success/<string:request_id>', methods=['POST'])
 @login_required
-def success_request(request_id):
+def change_ocr_request_and_document_state_on_success(request_id):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights!', 'danger')
         return redirect(url_for('main.index'))
     ocr_request = get_request_by_id(request_id)
-    change_ocr_request_and_document_state_on_success(ocr_request)
+    change_ocr_request_and_document_state_on_success_handler(ocr_request)
     return 'OK'
 
 
 @bp.route('/change_ocr_request_to_fail_and_document_state_to_success/<string:request_id>', methods=['POST'])
 @login_required
-def fail_completed_request(request_id):
+def change_ocr_request_to_fail_and_document_state_to_success(request_id):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights!', 'danger')
         return redirect(url_for('main.index'))
     ocr_request = get_request_by_id(request_id)
-    change_ocr_request_to_fail_and_document_state_to_success(ocr_request)
+    change_ocr_request_to_fail_and_document_state_to_success_handler(ocr_request)
+    if 'EMAIL_NOTIFICATION_ADDRESSES' in current_app.config and current_app.config['EMAIL_NOTIFICATION_ADDRESSES']:
+        send_ocr_failed_mail(ocr_request, request)
     return 'OK'
 
 
 @bp.route('/change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis/<string:request_id>', methods=['POST'])
 @login_required
-def fail_layout_request(request_id):
+def change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis(request_id):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights!', 'danger')
         return redirect(url_for('main.index'))
     ocr_request = get_request_by_id(request_id)
-    change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis(ocr_request)
+    change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis_handler(ocr_request)
+    if 'EMAIL_NOTIFICATION_ADDRESSES' in current_app.config and current_app.config['EMAIL_NOTIFICATION_ADDRESSES']:
+        send_ocr_failed_mail(ocr_request, request)
     return 'OK'
 
 
@@ -466,7 +472,7 @@ def get_ocr_request():
         return redirect(url_for('main.index'))
     ocr_request = get_first_ocr_request()
     if ocr_request:
-        change_ocr_request_and_document_state_in_progress(ocr_request)
+        change_ocr_request_and_document_state_in_progress_handler(ocr_request)
         return create_json_from_request(ocr_request)
     else:
         return jsonify({})
@@ -566,3 +572,4 @@ def concatenate_text_files_and_save(text_files, output_text_file):
         for f in text_files:
             with open(f, 'rb') as fd:
                 shutil.copyfileobj(fd, wfd)
+

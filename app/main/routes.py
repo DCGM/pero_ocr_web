@@ -26,3 +26,4 @@ def add_log_to_request(request_id):
     my_request.log = request.json['log']
     db_session.commit()
     return 'OK'
+

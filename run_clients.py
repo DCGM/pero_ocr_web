@@ -40,6 +40,7 @@ def main():
                               layout_config['SERVER']['authentification'], layout_config['SERVER']['login_page']):
                     print('Unable to log into server')
                     time.sleep(timeout)
+                    continue
 
                 while True:
                     nothing = True
@@ -57,3 +58,4 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
+

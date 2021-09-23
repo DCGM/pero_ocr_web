@@ -636,4 +636,3 @@ def search_bar():
 
     return render_template('document/search_lines.html', query=query, lines=lines, documents=enumerate(user_documents), selected=selected)
 
-
