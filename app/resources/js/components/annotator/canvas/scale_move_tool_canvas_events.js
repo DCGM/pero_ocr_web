@@ -40,10 +40,11 @@ export function createScaleMoveViewTool(annotator_component) {
         if (!annotator_component.left_control_active) {  // Move camera
             let offset = event.point.subtract(event.downPoint);
             annotator_component.scope.view.center = annotator_component.scope.view.center.subtract(offset);
+            annotator_component.camera_move = true;
         }
-        else {  // Move baseline point
+        else {
             if (annotator_component.last_segm) {
-                annotator_component.mouse_drag = true;
+                annotator_component.point_move = true;
 
                 if (annotator_component.last_segm_type === 'left_path' || annotator_component.last_segm_type === 'right_path') { // Baseline left/right path
                     let path = annotator_component.last_segm_type === 'left_path'? annotator_component.last_baseline.baseline_left_path: annotator_component.last_baseline.baseline_right_path;  // Currently moving
@@ -167,6 +168,8 @@ export function canvasMouseMoveEv(event) {
  * @param event
  */
 export function canvasMouseDownEv(event) {
+    this.camera_move = false;
+
     // Context menu
     if (event.which === 3 && (this.active_row || this.active_region))
         this.activateContextMenu();
@@ -212,12 +215,12 @@ export function canvasMouseDownEv(event) {
  */
 export function canvasMouseUpEv(event) {
     // Finish editing annotation
-    if (this.mouse_drag) {
-        this.mouse_drag = false;
+    if (this.point_move) {
         this.last_segm = null;
         this.last_baseline = null;
         this.last_segm_type = null;
-        this.emitAnnotationEditedEvent(this.last_active_annotation);
+        this.emitAnnotationEditedEvent(this.last_active_annotation); // TODO: not always
+        this.point_move = false;
     }
 }
 

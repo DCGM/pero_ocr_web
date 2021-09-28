@@ -165,6 +165,8 @@ export default {
             join_rows_tool: null,
 
             creating_annotation_type: 'regions',
+            camera_move: false,
+            point_move: false,
 
             // COMPONENT:
             dataset: null

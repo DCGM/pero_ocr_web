@@ -7418,6 +7418,8 @@ __webpack_require__.r(__webpack_exports__);
       baseline_tool: null,
       join_rows_tool: null,
       creating_annotation_type: 'regions',
+      camera_move: false,
+      point_move: false,
       // COMPONENT:
       dataset: null
     };
@@ -56820,6 +56822,8 @@ function getNearestPathSegment(path, point) {
 
 
 function createAnnotationView(annotation, type) {
+  var _this = this;
+
   // Create new group
   var group = new paper.Group();
   var polygon = new paper.Path();
@@ -56876,11 +56880,10 @@ function createAnnotationView(annotation, type) {
 
   polygon = setPathColor(polygon, type, annotation);
 
-  polygon.onMouseDown = function (e) {
+  polygon.onMouseUp = function (e) {
     e.preventDefault(); // Find annotation and make it active
-    // if (this.left_control_active)
 
-    activateAnnotation(type);
+    if (!_this.camera_move) activateAnnotation(type);
   };
 
   var self = this;
@@ -56931,7 +56934,7 @@ function confirmAnnotation() {
   return annotation;
 }
 function activeRegionChangedHandler(next, prev) {
-  var _this = this;
+  var _this2 = this;
 
   // Active row
   if (!(this.active_row && this.active_region && this.active_row.region_annotation_uuid === this.active_region.uuid)) this.active_row = null;
@@ -56940,12 +56943,12 @@ function activeRegionChangedHandler(next, prev) {
     next.view.path.selected = true; // Open region rows
 
     this.$nextTick(function () {
-      var region_idx = _this.annotations.regions.findIndex(function (item) {
+      var region_idx = _this2.annotations.regions.findIndex(function (item) {
         return item === next;
       }); // Click on region in Annotation_list_component
 
 
-      if (_this.$refs.annotation_list_component) _this.$refs.annotation_list_component.clickRegion(region_idx);
+      if (_this2.$refs.annotation_list_component) _this2.$refs.annotation_list_component.clickRegion(region_idx);
     }); // Emit event
 
     this.$emit('region-selected-event', serializeAnnotation(next));
@@ -56956,7 +56959,7 @@ function activeRegionChangedHandler(next, prev) {
   }
 }
 function activeRowChangedHandler(next, prev) {
-  var _this2 = this;
+  var _this3 = this;
 
   if (next) {
     // Select row
@@ -56967,11 +56970,11 @@ function activeRowChangedHandler(next, prev) {
     if (this.canvasIsToolActive(this.join_rows_tool)) this.join_rows_tool.row_selected(next);
     this.$nextTick(function () {
       //
-      var parent_region = _this2.annotations.regions.find(function (item) {
+      var parent_region = _this3.annotations.regions.find(function (item) {
         return item.uuid === next.region_annotation_uuid;
       });
 
-      _this2.active_region = parent_region ? parent_region : null; // this.$refs['input-transcription-text'].focus(); // Disabled (shadowing focus on scrol text)
+      _this3.active_region = parent_region ? parent_region : null; // this.$refs['input-transcription-text'].focus(); // Disabled (shadowing focus on scrol text)
     }); // Emit event
 
     this.$emit('row-selected-event', serializeAnnotation(next));
@@ -57755,10 +57758,10 @@ function createScaleMoveViewTool(annotator_component) {
       // Move camera
       var offset = event.point.subtract(event.downPoint);
       annotator_component.scope.view.center = annotator_component.scope.view.center.subtract(offset);
+      annotator_component.camera_move = true;
     } else {
-      // Move baseline point
       if (annotator_component.last_segm) {
-        annotator_component.mouse_drag = true;
+        annotator_component.point_move = true;
 
         if (annotator_component.last_segm_type === 'left_path' || annotator_component.last_segm_type === 'right_path') {
           // Baseline left/right path
@@ -57881,7 +57884,8 @@ function canvasMouseMoveEv(event) {}
  */
 
 function canvasMouseDownEv(event) {
-  // Context menu
+  this.camera_move = false; // Context menu
+
   if (event.which === 3 && (this.active_row || this.active_region)) this.activateContextMenu();else this.deactivateContextMenu(); //
 
   if (!this.active_region && !this.active_row) return; //
@@ -57948,12 +57952,13 @@ function canvasMouseDownEv(event) {
 
 function canvasMouseUpEv(event) {
   // Finish editing annotation
-  if (this.mouse_drag) {
-    this.mouse_drag = false;
+  if (this.point_move) {
     this.last_segm = null;
     this.last_baseline = null;
     this.last_segm_type = null;
-    this.emitAnnotationEditedEvent(this.last_active_annotation);
+    this.emitAnnotationEditedEvent(this.last_active_annotation); // TODO: not always
+
+    this.point_move = false;
   }
 }
 /**
