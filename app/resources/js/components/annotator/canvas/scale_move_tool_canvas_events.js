@@ -171,7 +171,7 @@ export function canvasMouseDownEv(event) {
     this.camera_move = false;
 
     // Context menu
-    if (event.which === 3 && (this.active_row || this.active_region))
+    if (event.which === 3 && (this.active_row || this.active_region) && this.canvasIsToolActive(this.scale_move_tool))
         this.activateContextMenu();
     else
         this.deactivateContextMenu();

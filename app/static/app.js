@@ -56883,7 +56883,7 @@ function createAnnotationView(annotation, type) {
   polygon.onMouseUp = function (e) {
     e.preventDefault(); // Find annotation and make it active
 
-    if (!_this.camera_move) activateAnnotation(type);
+    if (!_this.camera_move && _this.canvasIsToolActive(_this.scale_move_tool)) activateAnnotation(type);
   };
 
   var self = this;
@@ -57521,7 +57521,8 @@ function canvasIsToolActive(tool) {
 
 function canvasSelectTool(tool) {
   this.selected_tool = tool;
-  this.selected_tool.activate(); // Disable focus if not creating new row
+  this.selected_tool.activate();
+  this.active_row = null; // Disable focus if not creating new row
 
   if (tool !== this.baseline_tool) this.active_row = this.active_region = this.last_active_annotation = null;
   this.$forceUpdate();
@@ -57886,7 +57887,7 @@ function canvasMouseMoveEv(event) {}
 function canvasMouseDownEv(event) {
   this.camera_move = false; // Context menu
 
-  if (event.which === 3 && (this.active_row || this.active_region)) this.activateContextMenu();else this.deactivateContextMenu(); //
+  if (event.which === 3 && (this.active_row || this.active_region) && this.canvasIsToolActive(this.scale_move_tool)) this.activateContextMenu();else this.deactivateContextMenu(); //
 
   if (!this.active_region && !this.active_row) return; //
 

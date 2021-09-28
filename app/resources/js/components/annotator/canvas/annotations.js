@@ -343,7 +343,7 @@ export function createAnnotationView(annotation, type) {
         e.preventDefault();
 
         // Find annotation and make it active
-        if (!this.camera_move)
+        if (!this.camera_move && this.canvasIsToolActive(this.scale_move_tool))
             activateAnnotation(type);
     }
 
