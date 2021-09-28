@@ -7381,6 +7381,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
 
 
 
@@ -7396,6 +7397,7 @@ __webpack_require__.r(__webpack_exports__);
         path: null
       },
       left_control_active: false,
+      left_alt_active: false,
       // Edit annotation
       last_segm: null,
       last_baseline: null,
@@ -7441,6 +7443,7 @@ __webpack_require__.r(__webpack_exports__);
     canvasSelectRowAnnotation: _helpers__WEBPACK_IMPORTED_MODULE_0__["canvasSelectRowAnnotation"],
     canvasClean: _helpers__WEBPACK_IMPORTED_MODULE_0__["canvasClean"],
     canvasInit: _helpers__WEBPACK_IMPORTED_MODULE_0__["canvasInit"],
+    setPathColor: _annotations__WEBPACK_IMPORTED_MODULE_2__["setPathColor"],
     emitAnnotationEditedEvent: _annotations__WEBPACK_IMPORTED_MODULE_2__["emitAnnotationEditedEvent"],
     serializeAnnotation: _annotations__WEBPACK_IMPORTED_MODULE_2__["serializeAnnotation"],
     getAnnotations: _annotations__WEBPACK_IMPORTED_MODULE_2__["getAnnotations"],
@@ -43814,7 +43817,9 @@ var render = function() {
                 _vm._v(" "),
                 _vm._m(1),
                 _vm._v(" "),
-                _vm._m(2)
+                _vm._m(2),
+                _vm._v(" "),
+                _vm._m(3)
               ])
             : _vm._e()
         ]),
@@ -43857,10 +43862,17 @@ var staticRenderFns = [
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("span", { staticClass: "pr-3" }, [
-      _c("span", { staticClass: "badge badge-primary" }, [
-        _vm._v("Levý Ctrl + táhnutí")
-      ]),
-      _vm._v(" - Posuv bodů")
+      _c("span", { staticClass: "badge badge-primary" }, [_vm._v("Levý Ctrl")]),
+      _vm._v(" - Editace bodů aktivního řádku")
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("span", { staticClass: "pr-3" }, [
+      _c("span", { staticClass: "badge badge-primary" }, [_vm._v("Levý Alt")]),
+      _vm._v(" - Editace bodů aktivního regionu")
     ])
   },
   function() {
@@ -56470,7 +56482,7 @@ __webpack_require__.r(__webpack_exports__);
 /*!*****************************************************************!*\
   !*** ./resources/js/components/annotator/canvas/annotations.js ***!
   \*****************************************************************/
-/*! exports provided: emitAnnotationEditedEvent, loadAnnotations, validateRowAnnotation, getAnnotations, serializeAnnotation, getPathPoints, removeAnnotation, removeAnnotationSegm, createAnnotation, createAnnotationView, confirmAnnotation, activeRegionChangedHandler, activeRowChangedHandler */
+/*! exports provided: emitAnnotationEditedEvent, loadAnnotations, validateRowAnnotation, getAnnotations, serializeAnnotation, getPathPoints, removeAnnotation, removeAnnotationSegm, setPathColor, createAnnotation, createAnnotationView, confirmAnnotation, activeRegionChangedHandler, activeRowChangedHandler */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -56483,6 +56495,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getPathPoints", function() { return getPathPoints; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeAnnotation", function() { return removeAnnotation; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeAnnotationSegm", function() { return removeAnnotationSegm; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setPathColor", function() { return setPathColor; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createAnnotation", function() { return createAnnotation; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createAnnotationView", function() { return createAnnotationView; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "confirmAnnotation", function() { return confirmAnnotation; });
@@ -56507,13 +56520,14 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
 /**
  * Emit edit event
+ * this: annotator_component
  * @param annotation_type
  * @param annotation
  */
 
 function emitAnnotationEditedEvent(annotation) {
   var annotation_type = annotation.hasOwnProperty('text') ? 'row' : 'region';
-  annotation.view.path = setPathColor(annotation.view.path, annotation_type, annotation);
+  annotation.view.path = this.setPathColor(annotation.view.path, annotation_type, annotation);
   this.$emit(annotation_type + '-edited-event', this.serializeAnnotation(annotation));
 }
 /**
@@ -56541,6 +56555,7 @@ function loadAnnotations(annotations) {
 }
 /**
  * Validate row annotation (mark annotated, change polygon color)
+ * this: annotator_component
  * @param uuid - row uuid
  */
 
@@ -56551,7 +56566,7 @@ function validateRowAnnotation(uuid) {
 
   if (row) {
     row.annotated = true;
-    row.view.path = setPathColor(row.view.path, 'row', row);
+    row.view.path = this.setPathColor(row.view.path, 'row', row);
   }
 }
 /**
@@ -56710,6 +56725,7 @@ function removeAnnotationSegm() {
 }
 /**
  * Set path's color
+ * this: annotator_component
  * @param path
  * @param annotation_type
  * @param annotation
@@ -56717,25 +56733,40 @@ function removeAnnotationSegm() {
 
 function setPathColor(path, annotation_type, annotation) {
   if (annotation_type === 'row' || annotation_type === 'rows') {
-    path.strokeWidth = 1;
-    path.strokeColor = 'rgba(34,43,68,0.8)'; // path.strokeColor = 'rgb(162,160,146)';
-    // path.fillColor = 'rgba(219,200,28, 0.1)';
     // Set background color
-
     var worst_confidence = 0.394;
     var conf = (annotation.confidence - worst_confidence) / (1 - worst_confidence);
     var color = "rgba(".concat((1 - conf) * 255, ", ", 16, ", ").concat(conf * 255, ", 0.1)");
     if (!annotation.is_valid) color = 'rgba(16, 16, 16, 0.1)';else if (annotation.edited) color = 'rgba(255,204,84,0.1)';else if (annotation.annotated) color = "rgba(2,135,0,0.1)";
-    path.fillColor = color; // OLD
+    path.fillColor = color; // Stroke
+
+    path.strokeWidth = 1;
+
+    if (this.active_row && annotation.uuid === this.active_row.uuid) {
+      // Active
+      path.strokeColor = 'rgba(231,224,8,0.8)';
+    } else {
+      // In-active
+      path.strokeColor = 'rgba(34,43,68,0.8)';
+    } // OLD
     // if (line.focus)
     //     line.polygon.setStyle({color: color, opacity: 1, fillColor: color, fillOpacity: 0.15, weight: 2});
     // else
     //     line.polygon.setStyle({color: color, opacity: 0.5, fillColor: color, fillOpacity: 0.1, weight: 1});
+
   } else {
     // Region
-    path.strokeWidth = 2;
-    path.strokeColor = 'rgba(34,43,68, 0.9)'; // path.fillColor = 'rgba(34,43,68,1)';
+    path.strokeWidth = 2; // Stroke
+
+    if (this.active_region && annotation.uuid === this.active_region.uuid) {
+      // Active
+      path.strokeColor = 'rgba(231,160,8,0.8)';
+    } else {
+      // In-active
+      path.strokeColor = 'rgba(34,43,68,0.8)';
+    } // path.fillColor = 'rgba(34,43,68,1)';
     // path.fillColor = 'rgba(34,43,68,0.2)';
+
   }
 
   return path;
@@ -56748,7 +56779,6 @@ function setPathColor(path, annotation_type, annotation) {
  * @param parent_region_uuid
  * @returns {{view: *, uuid: *, points: []}}
  */
-
 
 function createAnnotation(view, type) {
   var parent_region_uuid = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
@@ -56878,7 +56908,7 @@ function createAnnotationView(annotation, type) {
   } // Color polygon
 
 
-  polygon = setPathColor(polygon, type, annotation);
+  polygon = this.setPathColor(polygon, type, annotation);
 
   polygon.onMouseUp = function (e) {
     e.preventDefault(); // Find annotation and make it active
@@ -56940,8 +56970,7 @@ function activeRegionChangedHandler(next, prev) {
   if (!(this.active_row && this.active_region && this.active_row.region_annotation_uuid === this.active_region.uuid)) this.active_row = null;
 
   if (next) {
-    next.view.path.selected = true; // Open region rows
-
+    // Open region rows
     this.$nextTick(function () {
       var region_idx = _this2.annotations.regions.findIndex(function (item) {
         return item === next;
@@ -56949,24 +56978,21 @@ function activeRegionChangedHandler(next, prev) {
 
 
       if (_this2.$refs.annotation_list_component) _this2.$refs.annotation_list_component.clickRegion(region_idx);
-    }); // Emit event
+    });
+    next.view.path = this.setPathColor(next.view.path, 'region', next); // Emit event
 
     this.$emit('region-selected-event', serializeAnnotation(next));
   }
 
   if (prev) {
-    prev.view.path.selected = false;
+    prev.view.path = this.setPathColor(prev.view.path, 'region', prev);
   }
 }
 function activeRowChangedHandler(next, prev) {
   var _this3 = this;
 
   if (next) {
-    // Select row
-    next.view.baseline.baseline_path.selected = true;
-    next.view.baseline.baseline_left_path.selected = true;
-    next.view.baseline.baseline_right_path.selected = true; // Notify join rows tool
-
+    // Notify join rows tool
     if (this.canvasIsToolActive(this.join_rows_tool)) this.join_rows_tool.row_selected(next);
     this.$nextTick(function () {
       //
@@ -56975,16 +57001,14 @@ function activeRowChangedHandler(next, prev) {
       });
 
       _this3.active_region = parent_region ? parent_region : null; // this.$refs['input-transcription-text'].focus(); // Disabled (shadowing focus on scrol text)
-    }); // Emit event
+    });
+    next.view.path = this.setPathColor(next.view.path, 'row', next); // Emit event
 
     this.$emit('row-selected-event', serializeAnnotation(next));
   }
 
   if (prev) {
-    prev.view.path = setPathColor(prev.view.path, 'row', prev);
-    prev.view.baseline.baseline_path.selected = false;
-    prev.view.baseline.baseline_left_path.selected = false;
-    prev.view.baseline.baseline_right_path.selected = false;
+    prev.view.path = this.setPathColor(prev.view.path, 'row', prev);
   }
 }
 
@@ -57340,11 +57364,19 @@ function canvasInit() {
 
   $(document).keydown(function (event) {
     if (event.code === "ControlLeft") {
-      _this.left_control_active = true;
-    } else if (event.code === "AltLeft") {
-      _this.scale_move_tool.activate();
+      _this.left_control_active = true; // View points of selected row
 
-      _this.$forceUpdate();
+      if (_this.active_row && _this.canvasIsToolActive(_this.scale_move_tool)) {
+        _this.active_row.view.baseline.baseline_path.selected = true;
+        _this.active_row.view.baseline.baseline_left_path.selected = true;
+        _this.active_row.view.baseline.baseline_right_path.selected = true;
+      }
+    } else if (event.code === "AltLeft") {
+      _this.left_alt_active = true; // View points of selected region
+
+      if (_this.active_region && _this.canvasIsToolActive(_this.scale_move_tool)) {
+        _this.active_region.view.path.selected = true;
+      }
     } else if (event.code === "Enter" || event.code === "NumpadEnter") {
       if (_this.active_row && _this.active_row.text.length) {
         _this.active_row.is_valid = true;
@@ -57386,16 +57418,19 @@ function canvasInit() {
   });
   $(document).keyup(function (event) {
     if (event.code === "ControlLeft") {
-      _this.left_control_active = false;
+      _this.left_control_active = false; // Hide points of selected row
+
+      if (_this.active_row && _this.canvasIsToolActive(_this.scale_move_tool)) {
+        _this.active_row.view.baseline.baseline_path.selected = false;
+        _this.active_row.view.baseline.baseline_left_path.selected = false;
+        _this.active_row.view.baseline.baseline_right_path.selected = false;
+      }
     } else if (event.code === "AltLeft") {
-      _this.selected_tool.activate();
+      _this.left_alt_active = false; // Hide points of selected region
 
-      _this.bbox = {
-        start: null,
-        path: null
-      }; // Reset bbox tool // TODO: remove?
-
-      _this.$forceUpdate();
+      if (_this.active_region && _this.canvasIsToolActive(_this.scale_move_tool)) {
+        _this.active_region.view.path.selected = false;
+      }
     } else if (event.code === "Space") {
       event.preventDefault();
     }
@@ -57755,7 +57790,7 @@ function createScaleMoveViewTool(annotator_component) {
   }
 
   tool.onMouseDrag = function (event) {
-    if (!annotator_component.left_control_active) {
+    if (!annotator_component.left_control_active && !annotator_component.left_alt_active) {
       // Move camera
       var offset = event.point.subtract(event.downPoint);
       annotator_component.scope.view.center = annotator_component.scope.view.center.subtract(offset);
@@ -57764,64 +57799,72 @@ function createScaleMoveViewTool(annotator_component) {
       if (annotator_component.last_segm) {
         annotator_component.point_move = true;
 
-        if (annotator_component.last_segm_type === 'left_path' || annotator_component.last_segm_type === 'right_path') {
-          // Baseline left/right path
-          var path = annotator_component.last_segm_type === 'left_path' ? annotator_component.last_baseline.baseline_left_path : annotator_component.last_baseline.baseline_right_path; // Currently moving
+        if (annotator_component.left_control_active) {
+          var edited = false;
 
-          var oposite_path = annotator_component.last_segm_type === 'left_path' ? annotator_component.last_baseline.baseline_right_path : annotator_component.last_baseline.baseline_left_path;
-          var second_segm = annotator_component.last_segm === path.segments[0] ? path.segments[1] : path.segments[0];
+          if (annotator_component.last_segm_type === 'left_path' || annotator_component.last_segm_type === 'right_path') {
+            // Baseline left/right path
+            var path = annotator_component.last_segm_type === 'left_path' ? annotator_component.last_baseline.baseline_left_path : annotator_component.last_baseline.baseline_right_path; // Currently moving
 
-          if (Math.abs(event.delta.x) < Math.abs(event.delta.y)) {
-            // Move one point vertically
-            var is_up_segm = annotator_component.last_segm.point.y > second_segm.point.y;
-            var oposite_segm = oposite_path.segments[0].point.y > oposite_path.segments[1].point.y === is_up_segm ? oposite_path.segments[0] : oposite_path.segments[1];
-            oposite_segm.point = oposite_segm.point.add({
-              x: 0,
-              y: event.delta.y
-            });
-            annotator_component.last_segm.point = annotator_component.last_segm.point.add({
-              x: 0,
-              y: event.delta.y
-            });
-          }
-        } else if (annotator_component.last_segm_type === 'baseline_path') {
-          // Baseline/region path
-          // Move baseline point
-          annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta); // Move baseline left/right path (if moving first or last baseline point)
+            var oposite_path = annotator_component.last_segm_type === 'left_path' ? annotator_component.last_baseline.baseline_right_path : annotator_component.last_baseline.baseline_left_path;
+            var second_segm = annotator_component.last_segm === path.segments[0] ? path.segments[1] : path.segments[0];
 
-          if (annotator_component.last_segm_type === 'baseline_path') {
-            var p = null;
-            if (annotator_component.last_segm === annotator_component.last_baseline.baseline_path.firstSegment) p = annotator_component.last_baseline.baseline_left_path;else if (annotator_component.last_segm === annotator_component.last_baseline.baseline_path.lastSegment) p = annotator_component.last_baseline.baseline_right_path;
-
-            if (p) {
-              p.firstSegment.point = p.firstSegment.point.add(event.delta);
-              p.lastSegment.point = p.lastSegment.point.add(event.delta);
+            if (Math.abs(event.delta.x) < Math.abs(event.delta.y)) {
+              // Move one point vertically
+              var is_up_segm = annotator_component.last_segm.point.y > second_segm.point.y;
+              var oposite_segm = oposite_path.segments[0].point.y > oposite_path.segments[1].point.y === is_up_segm ? oposite_path.segments[0] : oposite_path.segments[1];
+              oposite_segm.point = oposite_segm.point.add({
+                x: 0,
+                y: event.delta.y
+              });
+              annotator_component.last_segm.point = annotator_component.last_segm.point.add({
+                x: 0,
+                y: event.delta.y
+              });
             }
+
+            edited = true;
+          } else if (annotator_component.last_segm_type === 'baseline_path') {
+            // Baseline/region path
+            // Move baseline point
+            annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta); // Move baseline left/right path (if moving first or last baseline point)
+
+            if (annotator_component.last_segm_type === 'baseline_path') {
+              var p = null;
+              if (annotator_component.last_segm === annotator_component.last_baseline.baseline_path.firstSegment) p = annotator_component.last_baseline.baseline_left_path;else if (annotator_component.last_segm === annotator_component.last_baseline.baseline_path.lastSegment) p = annotator_component.last_baseline.baseline_right_path;
+
+              if (p) {
+                p.firstSegment.point = p.firstSegment.point.add(event.delta);
+                p.lastSegment.point = p.lastSegment.point.add(event.delta);
+              }
+            }
+
+            reorderBaselinePoints(annotator_component.last_baseline.baseline_path);
+            edited = true;
+          } // Make polygon
+
+
+          if (edited) {
+            var left_baseline_point = _.pick(annotator_component.last_baseline.baseline_path.firstSegment.point, ['x', 'y']);
+
+            var up_point = _.pick(annotator_component.last_baseline.baseline_left_path.lastSegment.point, ['x', 'y']);
+
+            var down_point = _.pick(annotator_component.last_baseline.baseline_left_path.firstSegment.point, ['x', 'y']);
+
+            var up_height = pointDistance(left_baseline_point, up_point);
+            var down_height = pointDistance(left_baseline_point, down_point);
+            var polygon = Object(_baseline_tool__WEBPACK_IMPORTED_MODULE_0__["makePolygonFromBaseline"])(Object(_annotations__WEBPACK_IMPORTED_MODULE_1__["getPathPoints"])(annotator_component.last_baseline.baseline_path), up_height, down_height);
+            annotator_component.active_row.view.path.clear();
+            annotator_component.active_row.view.path.segments = polygon.segments;
+            polygon.remove();
+            annotator_component.last_active_annotation = annotator_component.active_row;
           }
-
-          reorderBaselinePoints(annotator_component.last_baseline.baseline_path);
-        } else {
-          // Move region point
-          annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta);
-        } // Make polygon
-
-
-        if (annotator_component.last_segm_type !== 'region_path') {
-          var left_baseline_point = _.pick(annotator_component.last_baseline.baseline_path.firstSegment.point, ['x', 'y']);
-
-          var up_point = _.pick(annotator_component.last_baseline.baseline_left_path.lastSegment.point, ['x', 'y']);
-
-          var down_point = _.pick(annotator_component.last_baseline.baseline_left_path.firstSegment.point, ['x', 'y']);
-
-          var up_height = pointDistance(left_baseline_point, up_point);
-          var down_height = pointDistance(left_baseline_point, down_point);
-          var polygon = Object(_baseline_tool__WEBPACK_IMPORTED_MODULE_0__["makePolygonFromBaseline"])(Object(_annotations__WEBPACK_IMPORTED_MODULE_1__["getPathPoints"])(annotator_component.last_baseline.baseline_path), up_height, down_height);
-          annotator_component.active_row.view.path.clear();
-          annotator_component.active_row.view.path.segments = polygon.segments;
-          polygon.remove();
-          annotator_component.last_active_annotation = annotator_component.active_row;
-        } else {
-          annotator_component.last_active_annotation = annotator_component.active_region;
+        } else if (annotator_component.left_alt_active) {
+          if (annotator_component.last_segm_type === 'region_path') {
+            // Move region point
+            annotator_component.last_segm.point = annotator_component.last_segm.point.add(event.delta);
+            annotator_component.last_active_annotation = annotator_component.active_region;
+          }
         }
       }
     }
@@ -57894,12 +57937,10 @@ function canvasMouseDownEv(event) {
   var canvasMousePosition = new paper.Point(event.offsetX, event.offsetY);
   var viewPosition = this.scope.view.viewToProject(canvasMousePosition);
   var checks = [];
-  if (this.active_region) checks.push({
+  if (this.active_region && this.left_alt_active) checks.push({
     path: this.active_region.view.path,
     segm_type: 'region_path'
-  });
-
-  if (this.active_row) {
+  });else if (this.active_row && this.left_control_active) {
     checks.push({
       path: this.active_row.view.baseline.baseline_path,
       segm_type: 'baseline_path',
@@ -57917,8 +57958,7 @@ function canvasMouseDownEv(event) {
     });
   } //
 
-
-  var min_dist = 500;
+  var min_dist = 2000;
 
   for (var _i2 = 0, _checks = checks; _i2 < _checks.length; _i2++) {
     var check = _checks[_i2];

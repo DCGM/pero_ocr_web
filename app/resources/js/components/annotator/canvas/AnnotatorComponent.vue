@@ -67,7 +67,8 @@ Rok: 2021
                 <span v-if="active_row">
 <!--                    <span class="pr-3"><span class="badge badge-success">Enter</span> - Potvrzení správnosti přepisu</span>-->
 <!--                    <span class="pr-3"><span class="badge badge-danger">Levý Ctrl + Del</span> - Smazání anotace</span>-->
-                    <span class="pr-3"><span class="badge badge-primary">Levý Ctrl + táhnutí</span> - Posuv bodů</span>
+                    <span class="pr-3"><span class="badge badge-primary">Levý Ctrl</span> - Editace bodů aktivního řádku</span>
+                    <span class="pr-3"><span class="badge badge-primary">Levý Alt</span> - Editace bodů aktivního regionu</span>
 <!--                    <span class="pr-3"><span class="badge badge-primary">Esc</span> - Zrušení přepisu</span>-->
                     <span class="pr-3"><span class="badge badge-primary">Šipka nahoru</span> - Předchozí řádek</span>
                     <span class="pr-3"><span class="badge badge-primary">Šipka dolů</span> - Následující řádek</span>
@@ -134,7 +135,7 @@ Rok: 2021
 <script>
 import {canvasZoomAnnotation, canvasSelectRowAnnotation, canvasSelectImage, canvasSelectDataset, canvasClean, canvasInit, canvasZoomImage, canvasIsToolActive, canvasSelectTool} from './helpers';
 import {activateContextMenu, deactivateContextMenu, canvasContextMenuEv} from './context_menu';
-import {emitAnnotationEditedEvent, serializeAnnotation, getAnnotations, loadAnnotations, removeAnnotation, removeAnnotationSegm, createAnnotation, createAnnotationView, activeRegionChangedHandler, activeRowChangedHandler, confirmAnnotation, validateRowAnnotation} from './annotations';
+import {setPathColor, emitAnnotationEditedEvent, serializeAnnotation, getAnnotations, loadAnnotations, removeAnnotation, removeAnnotationSegm, createAnnotation, createAnnotationView, activeRegionChangedHandler, activeRowChangedHandler, confirmAnnotation, validateRowAnnotation} from './annotations';
 import {canvasMouseWheelEv, canvasMouseMoveEv, canvasMouseDownEv, canvasMouseUpEv, canvasMouseDblClickEv} from './scale_move_tool_canvas_events';
 
 export default {
@@ -144,6 +145,7 @@ export default {
             scope: null, // PaperJs scope
             image: {raster: null, path: null},
             left_control_active: false,
+            left_alt_active: false,
 
             // Edit annotation
             last_segm: null,
@@ -180,7 +182,7 @@ export default {
         canvasIsToolActive, canvasSelectTool,
 
         canvasZoomAnnotation, canvasSelectDataset, canvasSelectImage, canvasSelectRowAnnotation, canvasClean, canvasInit,
-        emitAnnotationEditedEvent, serializeAnnotation, getAnnotations, loadAnnotations, removeAnnotation, removeAnnotationSegm, createAnnotation, createAnnotationView, confirmAnnotation, validateRowAnnotation,
+        setPathColor, emitAnnotationEditedEvent, serializeAnnotation, getAnnotations, loadAnnotations, removeAnnotation, removeAnnotationSegm, createAnnotation, createAnnotationView, confirmAnnotation, validateRowAnnotation,
         activateContextMenu, deactivateContextMenu, canvasContextMenuEv,
         activeRegionChangedHandler, activeRowChangedHandler,
     },

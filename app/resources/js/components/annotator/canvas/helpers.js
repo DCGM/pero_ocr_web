@@ -55,10 +55,21 @@ export function canvasInit() {
     $(document).keydown((event) => {
         if (event.code === "ControlLeft") {
             this.left_control_active = true;
+
+            // View points of selected row
+            if (this.active_row && this.canvasIsToolActive(this.scale_move_tool)) {
+                this.active_row.view.baseline.baseline_path.selected = true;
+                this.active_row.view.baseline.baseline_left_path.selected = true;
+                this.active_row.view.baseline.baseline_right_path.selected = true;
+            }
         }
         else if (event.code === "AltLeft") {
-            this.scale_move_tool.activate();
-            this.$forceUpdate();
+           this.left_alt_active = true;
+
+            // View points of selected region
+            if (this.active_region && this.canvasIsToolActive(this.scale_move_tool)) {
+                this.active_region.view.path.selected = true;
+            }
         }
         else if(event.code === "Enter" || event.code === "NumpadEnter") {
             if (this.active_row && this.active_row.text.length) {
@@ -100,11 +111,19 @@ export function canvasInit() {
     $(document).keyup((event) => {
         if (event.code === "ControlLeft") {
             this.left_control_active = false;
+            // Hide points of selected row
+            if (this.active_row && this.canvasIsToolActive(this.scale_move_tool)) {
+                this.active_row.view.baseline.baseline_path.selected = false;
+                this.active_row.view.baseline.baseline_left_path.selected = false;
+                this.active_row.view.baseline.baseline_right_path.selected = false;
+            }
         }
         else if (event.code === "AltLeft") {
-            this.selected_tool.activate();
-            this.bbox = {start: null, path: null}; // Reset bbox tool // TODO: remove?
-            this.$forceUpdate();
+            this.left_alt_active = false;
+            // Hide points of selected region
+            if (this.active_region && this.canvasIsToolActive(this.scale_move_tool)) {
+                this.active_region.view.path.selected = false;
+            }
         }
         else if (event.code === "Space") {
             event.preventDefault();

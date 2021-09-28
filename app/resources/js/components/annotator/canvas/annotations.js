@@ -11,12 +11,13 @@ import {makePolygonFromBaseline} from "./baseline_tool";
 
 /**
  * Emit edit event
+ * this: annotator_component
  * @param annotation_type
  * @param annotation
  */
 export function emitAnnotationEditedEvent(annotation) {
     let annotation_type = annotation.hasOwnProperty('text')? 'row': 'region';
-    annotation.view.path = setPathColor(annotation.view.path, annotation_type, annotation);
+    annotation.view.path = this.setPathColor(annotation.view.path, annotation_type, annotation);
     this.$emit(annotation_type+'-edited-event', this.serializeAnnotation(annotation));
 }
 
@@ -35,13 +36,14 @@ export function loadAnnotations(annotations) {
 
 /**
  * Validate row annotation (mark annotated, change polygon color)
+ * this: annotator_component
  * @param uuid - row uuid
  */
 export function validateRowAnnotation(uuid) {
     let row = this.annotations.rows.find((item) => item.uuid === uuid);
     if (row) {
         row.annotated = true;
-        row.view.path = setPathColor(row.view.path, 'row', row);
+        row.view.path = this.setPathColor(row.view.path, 'row', row);
     }
 }
 
@@ -175,17 +177,13 @@ export function removeAnnotationSegm() {
 
 /**
  * Set path's color
+ * this: annotator_component
  * @param path
  * @param annotation_type
  * @param annotation
  */
-function setPathColor(path, annotation_type, annotation) {
+export function setPathColor(path, annotation_type, annotation) {
     if (annotation_type === 'row' || annotation_type === 'rows') {
-        path.strokeWidth = 1;
-        path.strokeColor = 'rgba(34,43,68,0.8)';
-        // path.strokeColor = 'rgb(162,160,146)';
-        // path.fillColor = 'rgba(219,200,28, 0.1)';
-
         // Set background color
         let worst_confidence = 0.394;
         let conf = (annotation.confidence - worst_confidence) / (1 - worst_confidence);
@@ -200,6 +198,15 @@ function setPathColor(path, annotation_type, annotation) {
 
         path.fillColor = color;
 
+        // Stroke
+        path.strokeWidth = 1;
+        if (this.active_row && annotation.uuid === this.active_row.uuid) {  // Active
+            path.strokeColor = 'rgba(231,224,8,0.8)';
+        }
+        else {  // In-active
+            path.strokeColor = 'rgba(34,43,68,0.8)';
+        }
+
         // OLD
         // if (line.focus)
         //     line.polygon.setStyle({color: color, opacity: 1, fillColor: color, fillOpacity: 0.15, weight: 2});
@@ -209,7 +216,14 @@ function setPathColor(path, annotation_type, annotation) {
     }
     else { // Region
         path.strokeWidth = 2;
-        path.strokeColor = 'rgba(34,43,68, 0.9)';
+
+        // Stroke
+        if (this.active_region && annotation.uuid === this.active_region.uuid) {  // Active
+            path.strokeColor = 'rgba(231,160,8,0.8)';
+        }
+        else {  // In-active
+            path.strokeColor = 'rgba(34,43,68,0.8)';
+        }
         // path.fillColor = 'rgba(34,43,68,1)';
         // path.fillColor = 'rgba(34,43,68,0.2)';
     }
@@ -337,7 +351,7 @@ export function createAnnotationView(annotation, type) {
     }
 
     // Color polygon
-    polygon = setPathColor(polygon, type, annotation);
+    polygon = this.setPathColor(polygon, type, annotation);
 
     polygon.onMouseUp = (e) => {
         e.preventDefault();
@@ -397,8 +411,6 @@ export function activeRegionChangedHandler(next, prev) {
         this.active_row = null;
 
     if (next) {
-        next.view.path.selected = true;
-
         // Open region rows
         this.$nextTick(() => {
             let region_idx = this.annotations.regions.findIndex((item) => item === next);
@@ -408,21 +420,19 @@ export function activeRegionChangedHandler(next, prev) {
                 this.$refs.annotation_list_component.clickRegion(region_idx);
         });
 
+        next.view.path = this.setPathColor(next.view.path, 'region', next);
+
         // Emit event
         this.$emit('region-selected-event', serializeAnnotation(next))
     }
 
     if (prev) {
-        prev.view.path.selected = false;
+        prev.view.path = this.setPathColor(prev.view.path, 'region', prev);
     }
 }
 
 export function activeRowChangedHandler(next, prev) {
     if (next) {
-        // Select row
-        next.view.baseline.baseline_path.selected = true;
-        next.view.baseline.baseline_left_path.selected = true;
-        next.view.baseline.baseline_right_path.selected = true;
 
         // Notify join rows tool
         if (this.canvasIsToolActive(this.join_rows_tool))
@@ -436,13 +446,12 @@ export function activeRowChangedHandler(next, prev) {
             // this.$refs['input-transcription-text'].focus(); // Disabled (shadowing focus on scrol text)
         });
 
+        next.view.path = this.setPathColor(next.view.path, 'row', next);
+
         // Emit event
         this.$emit('row-selected-event', serializeAnnotation(next))
     }
     if (prev) {
-        prev.view.path = setPathColor(prev.view.path, 'row', prev);
-        prev.view.baseline.baseline_path.selected = false;
-        prev.view.baseline.baseline_left_path.selected = false;
-        prev.view.baseline.baseline_right_path.selected = false;
+        prev.view.path = this.setPathColor(prev.view.path, 'row', prev);
     }
 }
