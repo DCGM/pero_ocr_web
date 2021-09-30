@@ -110,6 +110,7 @@ export function canvasInit() {
 
     });
     $(document).keyup((event) => {
+        event.preventDefault();
         if (event.code === "ControlLeft") {
             this.left_control_active = false;
             // Hide points of selected row
@@ -127,7 +128,6 @@ export function canvasInit() {
             }
         }
         else if (event.code === "Space") {
-            event.preventDefault();
         }
     });
 
