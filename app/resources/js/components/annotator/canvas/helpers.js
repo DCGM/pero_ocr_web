@@ -53,6 +53,7 @@ export function canvasInit() {
 
     /** Register events **/
     $(document).keydown((event) => {
+        event.preventDefault();
         if (event.code === "ControlLeft") {
             this.left_control_active = true;
 
