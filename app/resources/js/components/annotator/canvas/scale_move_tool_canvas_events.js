@@ -20,17 +20,32 @@ export function createScaleMoveViewTool(annotator_component) {
      * Removes point from baseline which are not ordered by x coord
      * @param baseline_path
      */
-    function reorderBaselinePoints(baseline_path) {
-        let min_x = baseline_path.firstSegment.point.x;
+    function reorderBaselinePoints(baseline_path, moving_segment) {
+        if (baseline_path.segments.length <= 2)
+            return;
+
         let to_del = [];
-        for (let i = 1; i < baseline_path.segments.length; i++) {
-            let segm = baseline_path.segments[i];
-            if (segm.point.x <= min_x)
-                to_del.push(segm);
-            else
-                min_x = segm.point.x;
+        let moving_segm_idx = baseline_path.segments.indexOf(moving_segment);
+
+        // Select segments to remove
+        for (let i = 0; i < baseline_path.segments.length; i++) {
+             let segm = baseline_path.segments[i];
+             let segm_idx = baseline_path.segments.indexOf(segm);
+
+             if (segm === moving_segment)
+                 continue;
+
+             if (segm_idx < moving_segm_idx) {  // Left
+                if (segm.point.x > moving_segment.point.x)
+                    to_del.push(segm);
+             }
+             else {  // Right
+                if (segm.point.x < moving_segment.point.x)
+                    to_del.push(segm);
+             }
         }
 
+        // Delete segments
         for (let segm of to_del) {
             segm.remove();
         }
@@ -83,7 +98,7 @@ export function createScaleMoveViewTool(annotator_component) {
                             }
                         }
 
-                        reorderBaselinePoints(annotator_component.last_baseline.baseline_path);
+                        reorderBaselinePoints(annotator_component.last_baseline.baseline_path, annotator_component.last_segm);
                         edited = true;
                     }
 
