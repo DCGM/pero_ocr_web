@@ -113,22 +113,6 @@ Rok: 2021
 <!--                </div>-->
             </div>
         </div>
-
-<!--        <aside id="canvas-right-bar" class="d-flex flex-column">-->
-<!--            &lt;!&ndash; Right section (Images select list) &ndash;&gt;-->
-<!--            <image-select-component-->
-<!--                :dataset="dataset"-->
-<!--                :current_image_path="image.path"-->
-<!--            />-->
-
-<!--            &lt;!&ndash; Right section (Annotation list) &ndash;&gt;-->
-<!--            <annotation-list-component-->
-<!--                ref="annotation_list_component"-->
-<!--                :annotations="annotations"-->
-<!--                :active_region="active_region"-->
-<!--                :active_row="active_row"-->
-<!--            />-->
-<!--        </aside>-->
     </div>
 </template>
 
