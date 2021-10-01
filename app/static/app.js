@@ -56203,7 +56203,7 @@ function createAnnotationView(annotation, type) {
   polygon.onMouseUp = function (e) {
     e.preventDefault(); // Find annotation and make it active
 
-    if (!_this.camera_move && _this.canvasIsToolActive(_this.scale_move_tool)) activateAnnotation(type);
+    if (!_this.camera_move && _this.canvasIsToolActive(_this.scale_move_tool) && !_this.left_control_active && !_this.left_alt_active) activateAnnotation(type);
   };
 
   var self = this;
