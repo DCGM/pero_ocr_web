@@ -56167,17 +56167,11 @@ function createAnnotationView(annotation, type) {
     var baseline_left = annotation.baseline[0];
     var baseline_right = annotation.baseline[annotation.baseline.length - 1]; // Left path
 
-    baseline.baseline_left_path = new paper.Path([[baseline_left.x, baseline_left.y + heights.down], [baseline_left.x, baseline_left.y - heights.up]]);
-    baseline.baseline_left_path.strokeWidth = 2;
-    baseline.baseline_left_path.strokeColor = 'rgba(34,43,68,0.1)'; // Right path
+    baseline.baseline_left_path = new paper.Path([[baseline_left.x, baseline_left.y + heights.down], [baseline_left.x, baseline_left.y - heights.up]]); // Right path
 
-    baseline.baseline_right_path = new paper.Path([[baseline_right.x, baseline_right.y + heights.down], [baseline_right.x, baseline_right.y - heights.up]]);
-    baseline.baseline_right_path.strokeWidth = 2;
-    baseline.baseline_right_path.strokeColor = 'rgba(34,43,68,0.1)'; // Baseline path
+    baseline.baseline_right_path = new paper.Path([[baseline_right.x, baseline_right.y + heights.down], [baseline_right.x, baseline_right.y - heights.up]]); // Baseline path
 
     baseline.baseline_path = new paper.Path(annotation.baseline);
-    baseline.baseline_path.strokeWidth = 2;
-    baseline.baseline_path.strokeColor = 'rgba(34,43,68,0.1)';
     group.addChild(baseline.baseline_path);
     group.addChild(baseline.baseline_left_path);
     group.addChild(baseline.baseline_right_path);
