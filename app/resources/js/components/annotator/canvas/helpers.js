@@ -53,7 +53,6 @@ export function canvasInit() {
 
     /** Register events **/
     $(document).keydown((event) => {
-        event.preventDefault();
         if (event.code === "ControlLeft") {
             this.left_control_active = true;
 
@@ -63,6 +62,7 @@ export function canvasInit() {
                 this.active_row.view.baseline.baseline_left_path.selected = true;
                 this.active_row.view.baseline.baseline_right_path.selected = true;
             }
+            event.preventDefault();
         }
         else if (event.code === "AltLeft") {
            this.left_alt_active = true;
@@ -71,6 +71,7 @@ export function canvasInit() {
             if (this.active_region && this.canvasIsToolActive(this.scale_move_tool)) {
                 this.active_region.view.path.selected = true;
             }
+            event.preventDefault();
         }
         else if(event.code === "Enter" || event.code === "NumpadEnter") {
             if (this.active_row && this.active_row.text.length) {
@@ -110,7 +111,6 @@ export function canvasInit() {
 
     });
     $(document).keyup((event) => {
-        event.preventDefault();
         if (event.code === "ControlLeft") {
             this.left_control_active = false;
             // Hide points of selected row
@@ -119,6 +119,7 @@ export function canvasInit() {
                 this.active_row.view.baseline.baseline_left_path.selected = false;
                 this.active_row.view.baseline.baseline_right_path.selected = false;
             }
+            event.preventDefault();
         }
         else if (event.code === "AltLeft") {
             this.left_alt_active = false;
@@ -126,6 +127,7 @@ export function canvasInit() {
             if (this.active_region && this.canvasIsToolActive(this.scale_move_tool)) {
                 this.active_region.view.path.selected = false;
             }
+            event.preventDefault();
         }
         else if (event.code === "Space") {
         }

@@ -56203,7 +56203,7 @@ function createAnnotationView(annotation, type) {
   polygon.onMouseUp = function (e) {
     e.preventDefault(); // Find annotation and make it active
 
-    if (!_this.camera_move && _this.canvasIsToolActive(_this.scale_move_tool) && !_this.left_control_active && !_this.left_alt_active) activateAnnotation(type);
+    if (!_this.camera_move && (_this.canvasIsToolActive(_this.scale_move_tool) || _this.canvasIsToolActive(_this.join_rows_tool)) && !_this.left_control_active && !_this.left_alt_active) activateAnnotation(type);
   };
 
   var self = this;
@@ -56283,7 +56283,13 @@ function activeRowChangedHandler(next, prev) {
 
   if (next) {
     // Notify join rows tool
-    if (this.canvasIsToolActive(this.join_rows_tool)) this.join_rows_tool.row_selected(next);
+    console.log('lo');
+
+    if (this.canvasIsToolActive(this.join_rows_tool)) {
+      this.join_rows_tool.row_selected(next);
+      console.log('o');
+    }
+
     this.$nextTick(function () {
       //
       var parent_region = _this3.annotations.regions.find(function (item) {
