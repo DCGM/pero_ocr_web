@@ -56990,7 +56990,8 @@ function createPolygonTool(annotator_component) {
         polygon.path.lastSegment.remove();
         annotator_component.confirmAnnotation(polygon); // Remove tmp path
 
-        polygon.path.remove(); // Select default tool
+        polygon.path.remove();
+        polygon.path = null; // Select default tool
 
         annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
       }

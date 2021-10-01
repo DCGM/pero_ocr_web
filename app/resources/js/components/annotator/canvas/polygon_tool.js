@@ -43,6 +43,7 @@ export function createPolygonTool(annotator_component) {
 
                 // Remove tmp path
                 polygon.path.remove();
+                polygon.path = null;
 
                 // Select default tool
                 annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
