@@ -14,8 +14,8 @@ class TextLinesEditor {
     constructor(container) {
         this.abort_controller = new AbortController();
         this.container = container;
-        this.container.innerHTML = "<div class='editor-map'></div><div class='status'></div>";
-        this.map_element = this.container.getElementsByClassName("editor-map")[0];
+        // this.container.innerHTML = "<div class='editor-map'></div><div class='status'></div>";  // OLD COMPONENT
+        // this.map_element = this.container.getElementsByClassName("editor-map")[0];  // OLD COMPONENT
         this.active_line = false;
         this.focus_to = null;
         this.save_btn = document.getElementsByClassName('save-btn');
@@ -229,33 +229,33 @@ class TextLinesEditor {
         this.active_line = false;
         this.lines = [];
 
-        // Init map
-        if (this.map) {
-            this.map.off();
-            this.map.remove();
-        }
-        this.map = L.map(this.map_element, {
-            crs: L.CRS.Simple,
-            minZoom: -3,
-            maxZoom: 3,
-            center: [this.width / 2, this.height / 2],
-            zoom: 0,
-            editable: true,
-            fadeAnimation: false,
-            zoomAnimation: true,
-            zoomSnap: 0
-        });
+        // Init map  // OLD COMPONENT
+        // if (this.map) {
+        //     this.map.off();
+        //     this.map.remove();
+        // }
+        // this.map = L.map(this.map_element, {
+        //     crs: L.CRS.Simple,
+        //     minZoom: -3,
+        //     maxZoom: 3,
+        //     center: [this.width / 2, this.height / 2],
+        //     zoom: 0,
+        //     editable: true,
+        //     fadeAnimation: false,
+        //     zoomAnimation: true,
+        //     zoomSnap: 0
+        // });
 
         let bounds = [xy(0, -this.height), xy(this.width, 0)];
-        //this.map.setView(xy(this.width / 2, -this.height / 2), -2);
-        this.map.fitBounds(bounds);
+        //this.map.setView(xy(this.width / 2, -this.height / 2), -2);  // OLD COMPONENT
+        // this.map.fitBounds(bounds);  // OLD COMPONENT
 
-        // Set map background image
+        /** Get background image url **/
         let image_url = Flask.url_for('document.get_image', {'image_id': this.image_id}); // Get image url
-        L.imageOverlay(image_url, bounds).addTo(this.map);
-        if (abort_signal.aborted) {
-            return;
-        }
+        // L.imageOverlay(image_url, bounds).addTo(this.map);  // OLD COMPONENT
+        // if (abort_signal.aborted) {
+        //     return;
+        // }
 
         /** Annotator component: Load image **/
         this.annotator_wrapper_component.load_image(image_url);
@@ -379,7 +379,7 @@ class TextLinesEditor {
         }
         line.polygon = L.polygon(points);
 
-        line.polygon.addTo(this.map);
+        // line.polygon.addTo(this.map);  // OLD COMPONENT
         line.polygon.on('click', this.polygon_click.bind(this, line));
 
         line.container.setAttribute("id", i);
@@ -435,9 +435,10 @@ class TextLinesEditor {
         }
 
         let focus_line_points = get_focus_line_points(line);
-        this.map.stop();
-        this.map.flyToBounds([xy(focus_line_points[0], -focus_line_points[2]), xy(focus_line_points[1], -focus_line_points[2])],
-            {animate: true, duration: 0.5});
+        // OLD COMPONENT
+        // this.map.stop();
+        // this.map.flyToBounds([xy(focus_line_points[0], -focus_line_points[2]), xy(focus_line_points[1], -focus_line_points[2])],
+        //     {animate: true, duration: 0.5});
         this.active_line = line;
         line.focus = true;
         this.set_line_style(line)

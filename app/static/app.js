@@ -57371,12 +57371,16 @@ function canvasInit() {
         _this.active_row.view.baseline.baseline_left_path.selected = true;
         _this.active_row.view.baseline.baseline_right_path.selected = true;
       }
+
+      event.preventDefault();
     } else if (event.code === "AltLeft") {
       _this.left_alt_active = true; // View points of selected region
 
       if (_this.active_region && _this.canvasIsToolActive(_this.scale_move_tool)) {
         _this.active_region.view.path.selected = true;
       }
+
+      event.preventDefault();
     } else if (event.code === "Enter" || event.code === "NumpadEnter") {
       if (_this.active_row && _this.active_row.text.length) {
         _this.active_row.is_valid = true;
@@ -57425,15 +57429,17 @@ function canvasInit() {
         _this.active_row.view.baseline.baseline_left_path.selected = false;
         _this.active_row.view.baseline.baseline_right_path.selected = false;
       }
+
+      event.preventDefault();
     } else if (event.code === "AltLeft") {
       _this.left_alt_active = false; // Hide points of selected region
 
       if (_this.active_region && _this.canvasIsToolActive(_this.scale_move_tool)) {
         _this.active_region.view.path.selected = false;
       }
-    } else if (event.code === "Space") {
+
       event.preventDefault();
-    }
+    } else if (event.code === "Space") {}
   });
   this.$on('imageSelectedEv', function (id) {
     _this.canvasSelectImage(id);
@@ -57773,14 +57779,25 @@ function createScaleMoveViewTool(annotator_component) {
    * @param baseline_path
    */
 
-  function reorderBaselinePoints(baseline_path) {
-    var min_x = baseline_path.firstSegment.point.x;
+  function reorderBaselinePoints(baseline_path, moving_segment) {
+    if (baseline_path.segments.length <= 2) return;
     var to_del = [];
+    var moving_segm_idx = baseline_path.segments.indexOf(moving_segment); // Select segments to remove
 
-    for (var i = 1; i < baseline_path.segments.length; i++) {
+    for (var i = 0; i < baseline_path.segments.length; i++) {
       var segm = baseline_path.segments[i];
-      if (segm.point.x <= min_x) to_del.push(segm);else min_x = segm.point.x;
-    }
+      var segm_idx = baseline_path.segments.indexOf(segm);
+      if (segm === moving_segment) continue;
+
+      if (segm_idx < moving_segm_idx) {
+        // Left
+        if (segm.point.x > moving_segment.point.x) to_del.push(segm);
+      } else {
+        // Right
+        if (segm.point.x < moving_segment.point.x) to_del.push(segm);
+      }
+    } // Delete segments
+
 
     for (var _i = 0, _to_del = to_del; _i < _to_del.length; _i++) {
       var _segm = _to_del[_i];
@@ -57839,7 +57856,7 @@ function createScaleMoveViewTool(annotator_component) {
               }
             }
 
-            reorderBaselinePoints(annotator_component.last_baseline.baseline_path);
+            reorderBaselinePoints(annotator_component.last_baseline.baseline_path, annotator_component.last_segm);
             edited = true;
           } // Make polygon
 
@@ -57958,7 +57975,7 @@ function canvasMouseDownEv(event) {
     });
   } //
 
-  var min_dist = 2000;
+  var min_dist = 200;
 
   for (var _i2 = 0, _checks = checks; _i2 < _checks.length; _i2++) {
     var check = _checks[_i2];
