@@ -14,6 +14,16 @@ input[type=checkbox] {
 {% endblock %}
 
 {% block content %}
+    <form action="/ocr/ocr_training_documents">
+        <label for="ocr_id">OCR ENGINE:</label>
+        <select id="ocr" name="ocr" multiple>
+            {% for ocr in all_ocr_engines %}
+                <option value="{{ ocr.id }}">{{ocr.name}} {{ocr.active}}</option>
+            {% endfor  %}
+        </select>
+        <input type="submit">
+    </form>
+
     <div class="row">
         <div class="offset-xl-1 col-xl-10">
 <table id="training_doc_table" class="table table-hover">

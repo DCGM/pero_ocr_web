@@ -116,8 +116,12 @@ def ocr_training_documents():
         flash(u'You do not have sufficient rights!', 'danger')
         return redirect(url_for('main.index'))
 
-    db_ocr_engines = db_session.query(OCR).filter(OCR.active).all()
-    ocr_id = request.args.get('ocr_id', default=db_ocr_engines[0].id)
+    db_all_ocr_engines = db_session.query(OCR).all()
+    ocr_id = request.args.getlist('ocr')
+    if ocr_id:
+        db_ocr_engines = db_session.query(OCR).filter(OCR.id.in_(ocr_id)).all()
+    else:
+        db_ocr_engines = db_session.query(OCR).filter(OCR.active).all()
 
     db_documents = db_session.query(Document).filter(Document.state == DocumentState.COMPLETED_OCR)\
         .options(sqlalchemy.orm.joinedload(Document.requests_lazy)).filter(Document.name.notlike('revert_backup_%')).all()
@@ -132,8 +136,8 @@ def ocr_training_documents():
         selected_documents[ocr_document.ocr_id].add(ocr_document.document_id)
 
     return render_template('ocr/ocr_training_documents.html',
-                           documents=db_documents, ocr_engines=db_ocr_engines, previews=previews,
-                           engine_names=engine_names, selected_documents=selected_documents)
+                           documents=db_documents, ocr_engines=db_ocr_engines, all_ocr_engines=db_all_ocr_engines,
+                           previews=previews, engine_names=engine_names, selected_documents=selected_documents)
 
 
 @bp.route('/set_ocr_training_document/<string:document_id>/<string:ocr_id>/<string:state>', methods=['GET'])
