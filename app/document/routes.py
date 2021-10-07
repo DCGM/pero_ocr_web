@@ -26,6 +26,7 @@ import time
 import os
 import json
 import re
+from natsort import natsorted
 
 
 @bp.route('/documents')
@@ -228,8 +229,7 @@ def get_document_image_ids(document_id):
         return redirect(url_for('main.index'))
 
     document = get_document_by_id(document_id)
-    images = [x for x in document.images if not x.deleted]
-    images = sorted(images, key=lambda x: x.filename)
+    images = natsorted(get_document_images(document).all(), key=lambda x: x.filename)
     return jsonify([str(x.id) for x in images])
 
 
