@@ -228,7 +228,9 @@ def get_document_image_ids(document_id):
         return redirect(url_for('main.index'))
 
     document = get_document_by_id(document_id)
-    return jsonify([str(x.id) for x in document.images if not x.deleted])
+    images = [x for x in document.images if not x.deleted]
+    images = sorted(images, key=lambda x: x.filename)
+    return jsonify([str(x.id) for x in images])
 
 
 @bp.route('/get_page_xml_regions/<string:image_id>')
