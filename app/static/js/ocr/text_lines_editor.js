@@ -170,6 +170,16 @@ class TextLinesEditor {
                     }
                     text_lines_editor.swap_delete_line_button_blueprint();
                     text_lines_editor.delete_btn.disabled = false;
+
+                    // Remove line from text_container
+                    let to_del = [];
+                    for (let line_container of text_lines_editor.text_container.children) {
+                        if ($(line_container).attr('data-uuid') === uuid)
+                            to_del.push(line_container);
+                    }
+
+                    for (let x of to_del)
+                        x.remove();
                 }
             });
             if (!uuid)
@@ -246,7 +256,7 @@ class TextLinesEditor {
         //     zoomSnap: 0
         // });
 
-        let bounds = [xy(0, -this.height), xy(this.width, 0)];
+        // let bounds = [xy(0, -this.height), xy(this.width, 0)];
         //this.map.setView(xy(this.width / 2, -this.height / 2), -2);  // OLD COMPONENT
         // this.map.fitBounds(bounds);  // OLD COMPONENT
 

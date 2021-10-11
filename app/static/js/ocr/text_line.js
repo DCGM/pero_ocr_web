@@ -22,6 +22,7 @@ class TextLine
         this.container = document.createElement("span");
         this.container.setAttribute("class", "text-line");
         this.container.setAttribute("contentEditable", "true");
+        this.container.setAttribute("data-uuid", id);
         this.container.style.display = "block";
         this.container.style.lineHeight = "220%";
 
@@ -74,6 +75,7 @@ class TextLine
         this.for_training_checkbox = document.createElement("input");
 
         this.checkbox_span.setAttribute("style", "float: right;");
+        this.checkbox_span.setAttribute("data-uuid", this.id);
 
         this.for_training_checkbox.setAttribute("type", "checkbox");
         this.for_training_checkbox.setAttribute("tabindex", "-1");
