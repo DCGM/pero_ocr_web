@@ -193,6 +193,7 @@ class LayoutDetector(Base):
     name = Column(String(), nullable=False)
     description = Column(String())
     active = Column(Boolean(), default=True, nullable=False)
+    order = Column(Integer())
 
     requests = relationship('Request')
 
@@ -203,6 +204,7 @@ class OCR(Base):
     name = Column(String(), nullable=False)
     description = Column(String())
     active = Column(Boolean(), default=True, nullable=False)
+    order = Column(Integer())
 
     requests = relationship('Request')
 
@@ -220,6 +222,7 @@ class Baseline(Base):
     name = Column(String(), nullable=False)
     description = Column(String())
     active = Column(Boolean(), default=True, nullable=False)
+    order = Column(Integer())
 
     requests = relationship('Request')
 
@@ -230,6 +233,7 @@ class LanguageModel(Base):
     name = Column(String(), nullable=False)
     description = Column(String())
     active = Column(Boolean(), default=True, nullable=False)
+    order = Column(Integer())
 
     requests = relationship('Request')
 

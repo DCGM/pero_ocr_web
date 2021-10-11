@@ -84,7 +84,7 @@ def select_layout(document_id):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
     document = get_document_by_id(document_id)
-    layout_engines = db_session.query(LayoutDetector).filter(LayoutDetector.active).all()
+    layout_engines = db_session.query(LayoutDetector).filter(LayoutDetector.active).order_by(LayoutDetector.order).all()
     return render_template('layout_analysis/layout_select.html', document=document, layout_engines=layout_engines)
 
 
