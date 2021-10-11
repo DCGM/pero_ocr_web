@@ -56283,13 +56283,7 @@ function activeRowChangedHandler(next, prev) {
 
   if (next) {
     // Notify join rows tool
-    console.log('lo');
-
-    if (this.canvasIsToolActive(this.join_rows_tool)) {
-      this.join_rows_tool.row_selected(next);
-      console.log('o');
-    }
-
+    if (this.canvasIsToolActive(this.join_rows_tool)) this.join_rows_tool.row_selected(next);
     this.$nextTick(function () {
       //
       var parent_region = _this3.annotations.regions.find(function (item) {
@@ -57242,7 +57236,9 @@ function canvasMouseMoveEv(event) {}
  */
 
 function canvasMouseDownEv(event) {
-  this.camera_move = false; // Context menu
+  this.camera_move = false; //
+
+  if (this.active_region && this.last_active_annotation !== this.active_region) this.last_active_annotation = this.active_region; // Context menu
 
   if (event.which === 3 && (this.active_row || this.active_region) && this.canvasIsToolActive(this.scale_move_tool)) this.activateContextMenu();else this.deactivateContextMenu(); //
 

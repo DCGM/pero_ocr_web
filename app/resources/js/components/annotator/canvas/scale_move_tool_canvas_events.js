@@ -194,6 +194,10 @@ export function canvasMouseMoveEv(event) {
 export function canvasMouseDownEv(event) {
     this.camera_move = false;
 
+    //
+    if (this.active_region && this.last_active_annotation !== this.active_region)
+        this.last_active_annotation = this.active_region;
+
     // Context menu
     if (event.which === 3 && (this.active_row || this.active_region) && this.canvasIsToolActive(this.scale_move_tool))
         this.activateContextMenu();
