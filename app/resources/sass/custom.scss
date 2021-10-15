@@ -140,6 +140,14 @@ button.active {
 }
 */
 
+#annotator_component {
+    //height: 60vh;
+}
+
+#text_scroll_editor {
+    //height: 20vh;
+}
+
 #app #wrapper {
 
     #content-wrapper {
@@ -337,7 +345,7 @@ button.active {
             color: $primary !important;
 
             i {
-                color: $cyan;
+                color: white;
                 background: $navbar-bg;
                 border-radius: 5px;
             }
