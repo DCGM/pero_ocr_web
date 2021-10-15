@@ -56928,43 +56928,49 @@ function createJoinRowsTool(annotator_component) {
 
   tool.row_selected = function (to_join_row) {
     if (base_row && base_row !== to_join_row) {
-      // Join baselines and create new row
-      var _iterator = _createForOfIteratorHelper(to_join_row.view.baseline.baseline_path.segments),
-          _step;
+      // Rows need to be in same region
+      if (to_join_row.region_annotation_uuid === base_row.region_annotation_uuid) {
+        // Join baselines and create new row
+        var _iterator = _createForOfIteratorHelper(to_join_row.view.baseline.baseline_path.segments),
+            _step;
 
-      try {
-        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-          var segment = _step.value;
-          base_row.view.baseline.baseline_path.add(segment);
-        } // base_row.view.baseline.baseline_path.segments.sort((a,b) => {a.point.x > b.point.x});
+        try {
+          for (_iterator.s(); !(_step = _iterator.n()).done;) {
+            var segment = _step.value;
+            base_row.view.baseline.baseline_path.add(segment);
+          } // base_row.view.baseline.baseline_path.segments.sort((a,b) => {a.point.x > b.point.x});
 
-      } catch (err) {
-        _iterator.e(err);
-      } finally {
-        _iterator.f();
-      }
+        } catch (err) {
+          _iterator.e(err);
+        } finally {
+          _iterator.f();
+        }
 
-      var up = new paper.Path([base_row.view.baseline.baseline_path.firstSegment.point, base_row.view.baseline.baseline_left_path.lastSegment.point]);
-      var down = new paper.Path([base_row.view.baseline.baseline_path.firstSegment.point, base_row.view.baseline.baseline_left_path.firstSegment.point]);
-      var baseline = {
-        baseline: base_row.view.baseline.baseline_path,
-        up: up,
-        down: down
-      };
-      annotator_component.creating_annotation_type = 'rows';
-      var new_row = annotator_component.confirmAnnotation(null, baseline);
-      up.remove();
-      down.remove(); // Join texts
+        var up = new paper.Path([base_row.view.baseline.baseline_path.firstSegment.point, base_row.view.baseline.baseline_left_path.lastSegment.point]);
+        var down = new paper.Path([base_row.view.baseline.baseline_path.firstSegment.point, base_row.view.baseline.baseline_left_path.firstSegment.point]);
+        var baseline = {
+          baseline: base_row.view.baseline.baseline_path,
+          up: up,
+          down: down
+        };
+        annotator_component.creating_annotation_type = 'rows';
+        var new_row = annotator_component.confirmAnnotation(null, baseline);
+        up.remove();
+        down.remove(); // Join texts
 
-      new_row.text = base_row.text + to_join_row.text; // Delete both rows
+        new_row.text = base_row.text + to_join_row.text; // Delete both rows
 
-      annotator_component.removeAnnotation(base_row.uuid);
-      annotator_component.removeAnnotation(to_join_row.uuid); // Init
+        annotator_component.removeAnnotation(base_row.uuid);
+        annotator_component.removeAnnotation(to_join_row.uuid);
+      } // Init
+
 
       base_row = null; // Select default tool
 
       annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
-    } else base_row = to_join_row;
+    } else {
+      base_row = to_join_row;
+    }
   };
 
   tool.onKeyDown = function (event) {
