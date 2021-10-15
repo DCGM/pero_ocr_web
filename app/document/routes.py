@@ -321,7 +321,6 @@ def get_text(image_id):
         flash(u'You do not have sufficient rights to download text!', 'danger')
         return redirect(url_for('main.index'))
 
-
     page_layout = get_page_layout(db_image, only_regions=False, only_annotated=False)
     file_name = "{}.txt".format(os.path.splitext(page_layout.id)[0])
     return create_string_response(file_name, get_page_layout_text(page_layout), minetype='text/plain')
@@ -339,9 +338,9 @@ def get_image(image_id):
         flash(u'You do not have sufficient rights to download image!', 'danger')
         return redirect(url_for('main.index'))
 
-    image_path = os.path.join(current_app.config['UPLOADED_IMAGES_FOLDER'], str(image_db.document_id), image_db.path)
+    image_path = os.path.join(current_app.config['UPLOADED_IMAGES_FOLDER'], image_db.path)
     if not os.path.isfile(image_path):
-        print('ERRPR: Could not find image on disk', image_id, image_path)
+        print("ERROR: Could not find image on disk. image id: {}, image path: {}.".format(image_id, image_path))
         raise NotFound()
 
     return send_file(image_path, as_attachment=True, attachment_filename=image_db.filename)

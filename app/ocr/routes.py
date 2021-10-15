@@ -88,7 +88,6 @@ def revert_ocr(document_id):
     db_session.add(backup_document)
     new_regions = []
     for img in document.images:
-        print(str(img.id))
         backup_img = Image(filename=img.filename, path=img.path, width=img.width, height=img.height,
                            deleted=img.deleted, imagehash=img.imagehash)
         backup_document.images.append(backup_img)
