@@ -56410,7 +56410,9 @@ function createBaselineTool(annotator_component) {
         if (item) item.remove();
       }
 
-      baseline = up = down = polygon = null;
+      baseline = up = down = polygon = null; // Select default tool
+
+      annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
     } else if (event.key === "enter") {
       changeStateBaselineHeights();
     }
@@ -56717,12 +56719,10 @@ function canvasInit() {
       }
     } else if (event.code === "Backspace") {// Remove last
       // this.active_row.text = this.active_row.text.slice(0, -1);
-    } else if (event.code === "Escape") {
-      // Remove annotation text
-      _this.active_row.is_valid = false;
-      _this.active_row.text = "";
-
-      _this.emitAnnotationEditedEvent(_this.active_row);
+    } else if (event.code === "Escape") {// Remove annotation text
+      // this.active_row.is_valid = false;
+      // this.active_row.text = "";
+      // this.emitAnnotationEditedEvent(this.active_row);
     } else if (event.code === "Delete") {
       if (_this.left_control_active) {
         // Remove last
@@ -56968,9 +56968,7 @@ function createJoinRowsTool(annotator_component) {
       base_row = null; // Select default tool
 
       annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
-    } else {
-      base_row = to_join_row;
-    }
+    } else base_row = to_join_row;
   };
 
   tool.onKeyDown = function (event) {
@@ -57001,6 +56999,16 @@ Tento soubor byl převzat z diplomové práce "Active Learning pro zpracování 
 Autor práce: David Hříbek
 Rok: 2021
 **/
+function confirm(polygon, annotator_component) {
+  polygon.path.lastSegment.remove();
+  annotator_component.confirmAnnotation(polygon); // Remove tmp path
+
+  polygon.path.remove();
+  polygon.path = null; // Select default tool
+
+  annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
+}
+
 function createPolygonTool(annotator_component) {
   var tool = new paper.Tool(); // Create bbox tmp variables
 
@@ -57018,10 +57026,7 @@ function createPolygonTool(annotator_component) {
     } else if (event.key === "enter") {
       // Remove currently created rectangle
       if (polygon.path && polygon.path.segments.length >= 4) {
-        polygon.path.lastSegment.remove();
-        annotator_component.confirmAnnotation(polygon); // Remove tmp path
-
-        polygon.path.remove();
+        confirm(polygon, annotator_component);
       }
     }
   };
@@ -57031,13 +57036,7 @@ function createPolygonTool(annotator_component) {
 
     if (event.event.which !== 1) {
       if (polygon.path.segments.length >= 4) {
-        polygon.path.lastSegment.remove();
-        annotator_component.confirmAnnotation(polygon); // Remove tmp path
-
-        polygon.path.remove();
-        polygon.path = null; // Select default tool
-
-        annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
+        confirm(polygon, annotator_component);
       }
     } else {
       //

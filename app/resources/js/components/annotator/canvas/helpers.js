@@ -85,9 +85,9 @@ export function canvasInit() {
         }
         else if (event.code === "Escape") {
             // Remove annotation text
-            this.active_row.is_valid = false;
-            this.active_row.text = "";
-            this.emitAnnotationEditedEvent(this.active_row);
+            // this.active_row.is_valid = false;
+            // this.active_row.text = "";
+            // this.emitAnnotationEditedEvent(this.active_row);
         }
         else if (event.code === "Delete") {
             if (this.left_control_active) {

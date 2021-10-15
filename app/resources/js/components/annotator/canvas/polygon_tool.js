@@ -5,6 +5,18 @@ Autor práce: David Hříbek
 Rok: 2021
 **/
 
+function confirm (polygon, annotator_component) {
+    polygon.path.lastSegment.remove();
+    annotator_component.confirmAnnotation(polygon);
+
+    // Remove tmp path
+    polygon.path.remove();
+    polygon.path = null;
+
+    // Select default tool
+    annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
+}
+
 
 export function createPolygonTool(annotator_component) {
     let tool = new paper.Tool();
@@ -24,11 +36,7 @@ export function createPolygonTool(annotator_component) {
         } else if (event.key === "enter") {
             // Remove currently created rectangle
             if (polygon.path && polygon.path.segments.length >= 4) {
-                polygon.path.lastSegment.remove();
-                annotator_component.confirmAnnotation(polygon);
-
-                // Remove tmp path
-                polygon.path.remove();
+                confirm(polygon, annotator_component);
             }
         }
     }
@@ -38,15 +46,7 @@ export function createPolygonTool(annotator_component) {
         // Check if right click
         if (event.event.which !== 1) {
             if (polygon.path.segments.length >= 4) {
-                polygon.path.lastSegment.remove();
-                annotator_component.confirmAnnotation(polygon);
-
-                // Remove tmp path
-                polygon.path.remove();
-                polygon.path = null;
-
-                // Select default tool
-                annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
+                confirm(polygon, annotator_component);
             }
         }
         else {

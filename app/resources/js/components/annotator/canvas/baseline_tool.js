@@ -59,6 +59,8 @@ export function createBaselineTool(annotator_component) {
                     item.remove();
             }
             baseline = up = down = polygon = null;
+            // Select default tool
+            annotator_component.canvasSelectTool(annotator_component.scale_move_tool);
         }
         else if (event.key === "enter") {
             changeStateBaselineHeights();
