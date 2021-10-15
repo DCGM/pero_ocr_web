@@ -12,24 +12,31 @@ export function createJoinRowsTool(annotator_component) {
 
     tool.row_selected = (to_join_row) => {
         if (base_row && base_row !== to_join_row) {
-            // Join baselines and create new row
-            for (let segment of to_join_row.view.baseline.baseline_path.segments)
-                base_row.view.baseline.baseline_path.add(segment);
 
-            let up = new paper.Path([base_row.view.baseline.baseline_path.firstSegment.point, base_row.view.baseline.baseline_left_path.lastSegment.point]);
-            let down = new paper.Path([base_row.view.baseline.baseline_path.firstSegment.point, base_row.view.baseline.baseline_left_path.firstSegment.point]);
-            let baseline = {baseline: base_row.view.baseline.baseline_path, up: up, down: down};
-            annotator_component.creating_annotation_type = 'rows';
-            let new_row = annotator_component.confirmAnnotation(null, baseline);
-            up.remove();
-            down.remove();
+            // Rows need to be in same region
+            if (to_join_row.region_annotation_uuid === base_row.region_annotation_uuid) {
 
-            // Join texts
-            new_row.text = base_row.text + to_join_row.text;
+                // Join baselines and create new row
+                for (let segment of to_join_row.view.baseline.baseline_path.segments)
+                    base_row.view.baseline.baseline_path.add(segment);
 
-            // Delete both rows
-            annotator_component.removeAnnotation(base_row.uuid);
-            annotator_component.removeAnnotation(to_join_row.uuid);
+                // base_row.view.baseline.baseline_path.segments.sort((a,b) => {a.point.x > b.point.x});
+
+                let up = new paper.Path([base_row.view.baseline.baseline_path.firstSegment.point, base_row.view.baseline.baseline_left_path.lastSegment.point]);
+                let down = new paper.Path([base_row.view.baseline.baseline_path.firstSegment.point, base_row.view.baseline.baseline_left_path.firstSegment.point]);
+                let baseline = {baseline: base_row.view.baseline.baseline_path, up: up, down: down};
+                annotator_component.creating_annotation_type = 'rows';
+                let new_row = annotator_component.confirmAnnotation(null, baseline);
+                up.remove();
+                down.remove();
+
+                // Join texts
+                new_row.text = base_row.text + to_join_row.text;
+
+                // Delete both rows
+                annotator_component.removeAnnotation(base_row.uuid);
+                annotator_component.removeAnnotation(to_join_row.uuid);
+            }
 
             // Init
             base_row = null;
