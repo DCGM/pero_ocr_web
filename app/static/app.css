@@ -157,17 +157,17 @@ button.active {
 */
 
 #app #wrapper #content-wrapper {
-  background-color: #151a30;
+  background-color: #6a757e;
 }
 
 #app #wrapper .card {
-  background-color: #222b44;
+  background-color: #32373c;
   color: white;
-  border-color: #222b44;
+  border-color: #32373c;
 }
 
 #app #wrapper .card .card-header {
-  background-color: #222b44;
+  background-color: #32373c;
   height: 200px;
   overflow: hidden;
 }
@@ -183,7 +183,7 @@ button.active {
 }
 
 #app #wrapper .list-group-item {
-  background: #222b44;
+  background: #32373c;
   color: #a5abbd;
 }
 
@@ -192,7 +192,7 @@ button.active {
 }
 
 #app #wrapper .modal-content {
-  background: #222b44;
+  background: #32373c;
 }
 
 #app #wrapper .close {
@@ -204,7 +204,7 @@ button.active {
 }
 
 #app #wrapper #modal input.form-control {
-  background: #151a30;
+  background: #6a757e;
   color: white;
 }
 
@@ -217,7 +217,7 @@ button.active {
 }
 
 #annotator .navbar {
-  background-color: #222b44;
+  background-color: #32373c;
 }
 
 #annotator .navbar a {
@@ -253,7 +253,7 @@ button.active {
   padding: 5px;
   cursor: -webkit-grab;
   cursor: grab;
-  background-color: #222b44;
+  background-color: #32373c;
 }
 
 #annotator #canvas-wrapper #canvas-contextmenu div {
@@ -261,7 +261,7 @@ button.active {
 }
 
 #annotator #canvas-wrapper #canvas-contextmenu div:hover {
-  background-color: #151a30;
+  background-color: #6a757e;
 }
 
 #annotator #canvas-wrapper #canvas-contextmenu.active {
@@ -281,7 +281,7 @@ button.active {
   width: fit-content;
   margin: auto;
   border-radius: 0 0 15px 15px;
-  background-color: #151a30;
+  background-color: #6a757e;
   opacity: 0.8;
 }
 
@@ -292,7 +292,7 @@ button.active {
 }
 
 #annotator #canvas-wrapper #canvas {
-  background: #343640;
+  background: #e9eaed;
   cursor: crosshair;
   width: 100% !important;
   height: 100% !important;
@@ -300,7 +300,7 @@ button.active {
 }
 
 #annotator #canvas-wrapper #tutorial {
-  background: #151a30;
+  background: #6a757e;
   color: white;
   font-weight: normal;
   font-size: 14px;
@@ -308,7 +308,7 @@ button.active {
 
 #annotator #canvas-right-bar {
   width: 350px;
-  background-color: #151a30;
+  background-color: #6a757e;
 }
 
 #annotator #canvas-right-bar ::-moz-placeholder {
@@ -335,7 +335,7 @@ button.active {
 }
 
 #annotator #tool-bar {
-  background-color: #151a30;
+  background-color: #6a757e;
 }
 
 #annotator #tool-bar div {
@@ -356,8 +356,8 @@ button.active {
 }
 
 #annotator #tool-bar div.active i {
-  color: #6cb2eb;
-  background: #222b44;
+  color: white;
+  background: #32373c;
   border-radius: 5px;
 }
 

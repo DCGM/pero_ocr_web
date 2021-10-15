@@ -43177,7 +43177,7 @@ var render = function() {
           [_c("i", { staticClass: "fas fa-draw-polygon" })]
         ),
         _vm._v(" "),
-        _c("div", { staticClass: "text-small pt-5" }, [_vm._v("Řádek")]),
+        _c("div", { staticClass: "text-small pt-5" }, [_vm._v("Row")]),
         _vm._v(" "),
         _c(
           "div",
@@ -43212,7 +43212,7 @@ var render = function() {
           [_c("i", { staticClass: "fab fa-confluence" })]
         ),
         _vm._v(" "),
-        _c("div", { staticClass: "text-small pt-5" }, [_vm._v("Ostatní")]),
+        _c("div", { staticClass: "text-small pt-5" }, [_vm._v("Other")]),
         _vm._v(" "),
         _c(
           "div",
@@ -43282,8 +43282,8 @@ var render = function() {
                 _c("i", { staticClass: "fas fa-trash-alt text-muted pr-2" }),
                 _vm._v(" "),
                 _vm.last_active_annotation === _vm.active_region
-                  ? _c("span", [_vm._v("Smazat odstavec")])
-                  : _c("span", [_vm._v("Smazat řádek")])
+                  ? _c("span", [_vm._v("Delete region")])
+                  : _c("span", [_vm._v("Delete row")])
               ]
             )
           ]
@@ -43298,8 +43298,8 @@ var staticRenderFns = [
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("span", { staticClass: "pr-3" }, [
-      _c("span", { staticClass: "badge badge-primary" }, [_vm._v("Levý Ctrl")]),
-      _vm._v(" - Editace bodů aktivního řádku")
+      _c("span", { staticClass: "badge badge-primary" }, [_vm._v("Left Ctrl")]),
+      _vm._v(" - Edit active row")
     ])
   },
   function() {
@@ -43307,8 +43307,17 @@ var staticRenderFns = [
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("span", { staticClass: "pr-3" }, [
-      _c("span", { staticClass: "badge badge-primary" }, [_vm._v("Levý Alt")]),
-      _vm._v(" - Editace bodů aktivního regionu")
+      _c("span", { staticClass: "badge badge-primary" }, [_vm._v("Left Alt")]),
+      _vm._v(" - Edit active region")
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("span", { staticClass: "pr-3" }, [
+      _c("span", { staticClass: "badge badge-primary" }, [_vm._v("Arrow Up")]),
+      _vm._v(" - Previous row")
     ])
   },
   function() {
@@ -43317,20 +43326,9 @@ var staticRenderFns = [
     var _c = _vm._self._c || _h
     return _c("span", { staticClass: "pr-3" }, [
       _c("span", { staticClass: "badge badge-primary" }, [
-        _vm._v("Šipka nahoru")
+        _vm._v("Arrow Down")
       ]),
-      _vm._v(" - Předchozí řádek")
-    ])
-  },
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("span", { staticClass: "pr-3" }, [
-      _c("span", { staticClass: "badge badge-primary" }, [
-        _vm._v("Šipka dolů")
-      ]),
-      _vm._v(" - Následující řádek")
+      _vm._v(" - Next row")
     ])
   }
 ]
