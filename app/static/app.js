@@ -7142,6 +7142,16 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -43128,6 +43138,11 @@ var render = function() {
           {
             staticClass: "p-2 text-center",
             class: { active: _vm.canvasIsToolActive(_vm.scale_move_tool) },
+            attrs: {
+              "data-toggle": "tooltip",
+              "data-placement": "top",
+              title: "Scale/move image"
+            },
             on: {
               click: function($event) {
                 return _vm.canvasSelectTool(_vm.scale_move_tool)
@@ -43148,6 +43163,11 @@ var render = function() {
                 _vm.canvasIsToolActive(_vm.bbox_tool) &&
                 _vm.creating_annotation_type === "regions"
             },
+            attrs: {
+              "data-toggle": "tooltip",
+              "data-placement": "top",
+              title: "Create new region (bbox)"
+            },
             on: {
               click: function($event) {
                 _vm.canvasSelectTool(_vm.bbox_tool)
@@ -43166,6 +43186,11 @@ var render = function() {
               active:
                 _vm.canvasIsToolActive(_vm.polygon_tool) &&
                 _vm.creating_annotation_type === "regions"
+            },
+            attrs: {
+              "data-toggle": "tooltip",
+              "data-placement": "top",
+              title: "Create new region (polygon)"
             },
             on: {
               click: function($event) {
@@ -43188,6 +43213,11 @@ var render = function() {
                 _vm.canvasIsToolActive(_vm.baseline_tool) &&
                 _vm.creating_annotation_type === "rows"
             },
+            attrs: {
+              "data-toggle": "tooltip",
+              "data-placement": "top",
+              title: "Create new row (baseline)"
+            },
             on: {
               click: function($event) {
                 _vm.canvasSelectTool(_vm.baseline_tool)
@@ -43203,6 +43233,11 @@ var render = function() {
           {
             staticClass: "p-2 text-center",
             class: { active: _vm.canvasIsToolActive(_vm.join_rows_tool) },
+            attrs: {
+              "data-toggle": "tooltip",
+              "data-placement": "top",
+              title: "Join two rows into one"
+            },
             on: {
               click: function($event) {
                 return _vm.canvasSelectTool(_vm.join_rows_tool)
@@ -43218,6 +43253,11 @@ var render = function() {
           "div",
           {
             staticClass: "p-2 text-center",
+            attrs: {
+              "data-toggle": "tooltip",
+              "data-placement": "top",
+              title: "Default zoom"
+            },
             on: { click: _vm.canvasZoomImage }
           },
           [_c("i", { staticClass: "fas fa-compress-arrows-alt" })]

@@ -10,29 +10,34 @@ Rok: 2021
         <!-- Left section (Toolbar) -->
         <aside id="tool-bar" class="d-flex flex-column">
             <div class="p-2 text-center" :class="{'active': canvasIsToolActive(scale_move_tool)}"
+                 data-toggle="tooltip" data-placement="top" title="Scale/move image"
                  @click="canvasSelectTool(scale_move_tool)"><i class="fas fa-arrows-alt"></i>
             </div>
 
             <div class="text-small pt-3">Region</div>
             <div class="p-2 text-center"
                  :class="{'active': canvasIsToolActive(bbox_tool) && creating_annotation_type === 'regions'}"
+                 data-toggle="tooltip" data-placement="top" title="Create new region (bbox)"
                  @click="canvasSelectTool(bbox_tool); creating_annotation_type='regions';"><i
                 class="far fa-square"></i>
             </div>
             <div class="p-2 text-center"
                  :class="{'active': canvasIsToolActive(polygon_tool) && creating_annotation_type === 'regions'}"
+                 data-toggle="tooltip" data-placement="top" title="Create new region (polygon)"
                  @click="canvasSelectTool(polygon_tool); creating_annotation_type='regions';"><i class="fas fa-draw-polygon"></i>
             </div>
 
             <div class="text-small pt-5">Row</div>
             <div class="p-2 text-center"
                  :class="{'active': canvasIsToolActive(baseline_tool) && creating_annotation_type === 'rows'}"
+                 data-toggle="tooltip" data-placement="top" title="Create new row (baseline)"
                  @click="canvasSelectTool(baseline_tool); creating_annotation_type='rows';"
             >
                 <i class="fas fa-grip-lines"></i>
             </div>
             <div class="p-2 text-center"
                  :class="{'active': canvasIsToolActive(join_rows_tool)}"
+                 data-toggle="tooltip" data-placement="top" title="Join two rows into one"
                  @click="canvasSelectTool(join_rows_tool)"
             >
               <i class="fab fa-confluence"></i>
@@ -41,7 +46,12 @@ Rok: 2021
             <div class="text-small pt-5">Other</div>
 
             <!-- Zoom to image -->
-            <div class="p-2 text-center" @click="canvasZoomImage"><i class="fas fa-compress-arrows-alt"></i></div>
+            <div class="p-2 text-center"
+                 @click="canvasZoomImage"
+                 data-toggle="tooltip" data-placement="top" title="Default zoom"
+            >
+              <i class="fas fa-compress-arrows-alt"></i>
+            </div>
 
         </aside>
 
