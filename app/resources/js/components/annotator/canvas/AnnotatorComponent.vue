@@ -24,7 +24,7 @@ Rok: 2021
                  @click="canvasSelectTool(polygon_tool); creating_annotation_type='regions';"><i class="fas fa-draw-polygon"></i>
             </div>
 
-            <div class="text-small pt-5">Řádek</div>
+            <div class="text-small pt-5">Row</div>
             <div class="p-2 text-center"
                  :class="{'active': canvasIsToolActive(baseline_tool) && creating_annotation_type === 'rows'}"
                  @click="canvasSelectTool(baseline_tool); creating_annotation_type='rows';"
@@ -38,7 +38,7 @@ Rok: 2021
               <i class="fab fa-confluence"></i>
             </div>
 
-            <div class="text-small pt-5">Ostatní</div>
+            <div class="text-small pt-5">Other</div>
 
             <!-- Zoom to image -->
             <div class="p-2 text-center" @click="canvasZoomImage"><i class="fas fa-compress-arrows-alt"></i></div>
@@ -67,11 +67,11 @@ Rok: 2021
                 <span v-if="active_row">
 <!--                    <span class="pr-3"><span class="badge badge-success">Enter</span> - Potvrzení správnosti přepisu</span>-->
 <!--                    <span class="pr-3"><span class="badge badge-danger">Levý Ctrl + Del</span> - Smazání anotace</span>-->
-                    <span class="pr-3"><span class="badge badge-primary">Levý Ctrl</span> - Editace bodů aktivního řádku</span>
-                    <span class="pr-3"><span class="badge badge-primary">Levý Alt</span> - Editace bodů aktivního regionu</span>
+                    <span class="pr-3"><span class="badge badge-primary">Left Ctrl</span> - Edit active row</span>
+                    <span class="pr-3"><span class="badge badge-primary">Left Alt</span> - Edit active region</span>
 <!--                    <span class="pr-3"><span class="badge badge-primary">Esc</span> - Zrušení přepisu</span>-->
-                    <span class="pr-3"><span class="badge badge-primary">Šipka nahoru</span> - Předchozí řádek</span>
-                    <span class="pr-3"><span class="badge badge-primary">Šipka dolů</span> - Následující řádek</span>
+                    <span class="pr-3"><span class="badge badge-primary">Arrow Up</span> - Previous row</span>
+                    <span class="pr-3"><span class="badge badge-primary">Arrow Down</span> - Next row</span>
                 </span>
             </div>
 
@@ -91,7 +91,7 @@ Rok: 2021
             <div id="canvas-contextmenu" class="d-flex flex-column">
                 <div class="p-2 text-primary" @click="removeAnnotation(last_active_annotation.uuid, true); deactivateContextMenu();">
                     <i class="fas fa-trash-alt text-muted pr-2"></i>
-                    <span v-if="last_active_annotation === active_region">Smazat odstavec</span><span v-else>Smazat řádek</span>
+                    <span v-if="last_active_annotation === active_region">Delete region</span><span v-else>Delete row</span>
                 </div>
 <!--                <div class="p-2 text-primary"-->
 <!--                     v-if="last_active_annotation && last_active_annotation.is_valid"-->
