@@ -151,7 +151,7 @@
                 element.onload = resolve;
                 element.onerror = reject;
                 {% if not public_view %}
-                    element.src  = element.dataset.src.replace('get_image_preview', 'get_public_image_preview');
+                    element.src  = element.dataset.src.replace('get_image_preview', 'get_image_preview');
                 {% else %}
                     element.src  = element.dataset.src.replace('get_image_preview', 'get_public_image_preview');
                 {% endif %}
