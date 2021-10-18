@@ -1,8 +1,9 @@
 
 class ImageList
 {
-    constructor(objects_to_change)
+    constructor(objects_to_change, page_name = 'show_results')
     {
+        this.page_name = page_name
         this.objects_to_change = objects_to_change;
         this.images = $('.scrolling-wrapper .figure');
 
@@ -126,10 +127,10 @@ class ImageList
         }
 
         if (this.line_id == null){
-            window.history.replaceState({}, '','/'+results_type+'/show_results/'+this.document_id+'/'+this.image_id);
+            window.history.replaceState({}, '','/'+results_type+'/'+this.page_name+'/'+this.document_id+'/'+this.image_id);
         }
         else{
-            window.history.replaceState({}, '','/'+results_type+'/show_results/'+this.document_id+'/'+this.image_id+'/'+this.line_id);
+            window.history.replaceState({}, '','/'+results_type+'/'+this.page_name+'/'+this.document_id+'/'+this.image_id+'/'+this.line_id);
         }
     }
 
@@ -137,7 +138,7 @@ class ImageList
          let parsed_url = window.location.href.split('/').reverse();
          let counter = 0;
          for (let part of parsed_url) {
-            if (part == 'show_results'){
+            if (part == this.page_name ){
                 break;
             }
             else{
