@@ -131,7 +131,7 @@ def save_image(file, document_id):
     file_path = os.path.join(directory_path, image_name)
     with open(file_path, 'wb') as f:
         f.write(file_data)
-        image_db.path = image_name
+        image_db.path = os.path.join(document_id, image_name)
         image_db.width = image.shape[1]
         image_db.height = image.shape[0]
         image_db.imagehash = img_hash
@@ -142,7 +142,7 @@ def save_image(file, document_id):
 
 def make_image_preview(image_db):
     if image_db is not None:
-        image_path = os.path.join(current_app.config['UPLOADED_IMAGES_FOLDER'], str(image_db.document_id), image_db.path)
+        image_path = os.path.join(current_app.config['UPLOADED_IMAGES_FOLDER'], image_db.path)
         image_id = str(image_db.id)
         image = cv2.imread(image_path, 1)
         if image is None:
