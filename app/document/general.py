@@ -55,6 +55,19 @@ def create_document(name, user):
     return document
 
 
+def check_and_change_public_document(document_id, user, public):
+    if is_document_owner(document_id, user):
+        document = get_document_by_id(document_id)
+        document.is_public = public
+        db_session.commit()
+        return document.name
+    return False
+
+
+def is_document_public(document_id):
+    return get_document_by_id(document_id).is_public
+
+
 def check_and_remove_document(document_id, user):
     if is_document_owner(document_id, user):
         remove_document_by_id(document_id)

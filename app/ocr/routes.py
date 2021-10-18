@@ -63,7 +63,29 @@ def show_results(document_id, image_id=None, line_id=None):
 
     images = natsorted(get_document_images(document).all(), key=lambda x: x.filename)
     return render_template('ocr/ocr_results.html', document=document, images=images,
-                           trusted_user=is_user_trusted(current_user), computed_scores=True)
+                           trusted_user=is_user_trusted(current_user), computed_scores=True, public_view=False)
+
+
+@bp.route('/show_public_results/<string:document_id>', methods=['GET'])
+@bp.route('/show_public_results/<string:document_id>/<string:image_id>', methods=['GET'])
+@bp.route('/show_public_results/<string:document_id>/<string:image_id>/<string:line_id>', methods=['GET'])
+def show_public_results(document_id, image_id=None, line_id=None):
+    if not document_exists(document_id):
+        flash(u'This document does not exist or it is not public at the moment!', 'danger')
+        return redirect(url_for('document.public_documents'))
+
+    document = get_document_by_id(document_id)
+    if not document.is_public:
+        flash(u'This document does not exist or it is not public at the moment!', 'danger')
+        return redirect(url_for('document.public_documents'))
+
+    if document.state != DocumentState.COMPLETED_OCR:
+        flash(u'This public document has not been processed by OCR and it is not viewable.', 'danger')
+        return redirect(url_for('document.public_documents'))
+
+    images = natsorted(get_document_images(document).all(), key=lambda x: x.filename)
+    return render_template('ocr/ocr_results.html', document=document, images=images,
+                           trusted_user=False, computed_scores=True, public_view=True)
 
 
 @bp.route('/revert_ocr/<string:document_id>', methods=['GET'])
@@ -219,15 +241,11 @@ def start_ocr(document_id):
 ########################################################################################################################
 
 @bp.route('/get_image_annotation_statistics/<string:image_id>', methods=['GET'])
-@login_required
 def get_image_annotation_statistics(image_id):
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
         return "Image does not exist.", 404
-
-    if not is_granted_acces_for_page(image_id, current_user):
-        return "Access denied.", 401
 
     line_count, annotated_count = get_image_annotation_statistics_db(image_id)
     response = {'image_id': image_id, 'line_count': line_count, 'annotated_count': annotated_count}
@@ -253,17 +271,18 @@ def get_document_annotation_statistics(document_id):
     return jsonify(response)
 
 
-@bp.route('/get_lines/<string:image_id>', methods=['GET'])
-@login_required
-def get_lines(image_id):
+def get_lines_common(image_id, public=False):
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
         return "Image does not exist.", 404
 
-    if not is_granted_acces_for_page(image_id, current_user):
-        flash(u'You do not have sufficient rights to get lines!', 'danger')
-        return redirect(url_for('main.index'))
+    if public:
+        if not db_image.document.is_public:
+            return "The requested document is not public at the moment.", 403
+    else:
+        if not is_granted_acces_for_page(image_id, current_user):
+            return "You do not have sufficient rights to get lines from the requested document!", 403
 
     lines_dict = {'image_id': image_id, 'lines': []}
     lines_dict['height'] = db_image.height
@@ -292,7 +311,7 @@ def get_lines(image_id):
             confidences = line.np_confidences.tolist()
             if len(text) != len(confidences):
                 confidences = []
-            if arabic_helper.is_arabic_line(line.text):
+            if line.text and arabic_helper.is_arabic_line(line.text):
                 arabic = True
                 text_to_detect_ligatures = arabic_helper._reverse_transcription(copy.deepcopy(text))
             else:
@@ -319,7 +338,6 @@ def get_lines(image_id):
                             'for_training': line.for_training
                         })
 
-
     for l in lines_dict['lines']:
         if arabic:
             l['arabic'] = True
@@ -327,6 +345,17 @@ def get_lines(image_id):
             l['arabic'] = False
 
     return jsonify(lines_dict)
+
+
+@bp.route('/get_lines/<string:image_id>', methods=['GET'])
+@login_required
+def get_lines(image_id):
+    return get_lines_common(image_id, False)
+
+
+@bp.route('/get_public_lines/<string:image_id>', methods=['GET'])
+def get_public_lines(image_id):
+    return get_lines_common(image_id, True)
 
 
 @bp.route('/get_arabic_label_form/<string:text>', methods=['GET'])
