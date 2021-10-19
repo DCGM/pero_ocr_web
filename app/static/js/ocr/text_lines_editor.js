@@ -305,6 +305,7 @@ class TextLinesEditor {
         this.annotator_wrapper_component.$refs.annotator_component.$on('row-edited-event', (annotation) => annotationCreatedEditedEventHandler(annotation, 'row'));
         this.annotator_wrapper_component.$refs.annotator_component.$on('region-edited-event', (annotation) => annotationCreatedEditedEventHandler(annotation, 'region'));
 
+        let self = this;
         function annotationCreatedEditedEventHandler(annotation, annotation_type, image_id=null) {
             console.log('creating/editing', annotation, annotation_type, image_id);
             axios
@@ -313,6 +314,29 @@ class TextLinesEditor {
                     annotation_type: annotation_type,
                     image_id: image_id,
                 })
+                .then((response) => {
+                    if (image_id) {  // Creating new annotation
+                        let debug_line_container = document.getElementById('debug-line-container');
+                        let debug_line_container_2 = document.getElementById('debug-line-container-2');
+
+                        let line = new TextLine(
+                            annotation.uuid,
+                            annotation.annotated,
+                            annotation.text, [], [], false, false, debug_line_container, debug_line_container_2
+                        )
+
+                        line.np_points = [];
+                        line.np_heights = [];
+                        line.focus = false;
+                        self.add_line_to_map(annotation.uuid, line);
+                        self.lines.push(line);
+
+                        /** Line saved successfully event handler **/
+                        line.notify_line_validated = () => {
+                            self.annotator_wrapper_component.validate_row_annotation(line.id);
+                        }
+                    }
+                })
                 .catch((errors) => console.log(errors));
         }
 
@@ -320,7 +344,6 @@ class TextLinesEditor {
         this.annotator_wrapper_component.$refs.annotator_component.$on('row-deleted-event', (annotation) => annotationDeletedEventHandler(annotation.uuid, 'row'));
         this.annotator_wrapper_component.$refs.annotator_component.$on('region-deleted-event', (annotation) => annotationDeletedEventHandler(annotation.uuid, 'region'));
 
-        let self = this;
         function annotationDeletedEventHandler(uuid, type) {
             // console.log(uuid, type);
             self.delete_line_btn_action(uuid);
@@ -430,7 +453,12 @@ class TextLinesEditor {
     press_text_container(e) {
         if (e.keyCode == 13) {
             let line_number = parseInt(this.active_line.container.getAttribute("id"), 10);
-            document.getElementById((line_number + 1).toString()).focus();
+            try {
+                document.getElementById((line_number + 1).toString()).focus();
+            }
+            catch (e) {
+
+            }
         }
     }
 

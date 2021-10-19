@@ -43,6 +43,8 @@ export function validateRowAnnotation(uuid) {
     let row = this.annotations.rows.find((item) => item.uuid === uuid);
     if (row) {
         row.annotated = true;
+        row.is_valid = true;
+        console.log(row);
         row.view.path = this.setPathColor(row.view.path, 'row', row);
     }
 }

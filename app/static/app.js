@@ -55900,6 +55900,8 @@ function validateRowAnnotation(uuid) {
 
   if (row) {
     row.annotated = true;
+    row.is_valid = true;
+    console.log(row);
     row.view.path = this.setPathColor(row.view.path, 'row', row);
   }
 }
@@ -56954,14 +56956,19 @@ function createJoinRowsTool(annotator_component) {
           down: down
         };
         annotator_component.creating_annotation_type = 'rows';
-        var new_row = annotator_component.confirmAnnotation(null, baseline);
+        var new_row = annotator_component.confirmAnnotation(null, baseline); // console.log(new_row.uuid);
+        // console.log(annotator_component.active_row);
+
         up.remove();
         down.remove(); // Join texts
 
         new_row.text = base_row.text + to_join_row.text; // Delete both rows
 
         annotator_component.removeAnnotation(base_row.uuid);
-        annotator_component.removeAnnotation(to_join_row.uuid);
+        annotator_component.removeAnnotation(to_join_row.uuid); //
+        // annotator_component.canvasSelectRowAnnotation(new_row.uuid);
+        // console.log('ok');
+        // annotator_component.active_row = new_row;
       } // Init
 
 

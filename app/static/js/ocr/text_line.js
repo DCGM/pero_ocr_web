@@ -796,7 +796,7 @@ class TextLine
                     self.annotated = true;
                     self.clear_confidence_colors();
                     self.mutate();
-                    this_text_line.notify_line_validated();  // Notify text line editor -> line validated by user and saved successfully
+                    self.notify_line_validated();  // Notify text line editor -> line validated by user and saved successfully
                 }
             },
             error: function(xhr, ajaxOptions, ThrownError){
