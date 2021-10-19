@@ -218,6 +218,7 @@ export function setPathColor(path, annotation_type, annotation) {
     }
     else { // Region
         path.strokeWidth = 2;
+        path.fillColor = 'rgba(0,0,0,0.01)';
 
         // Stroke
         if (this.active_region && annotation.uuid === this.active_region.uuid) {  // Active
