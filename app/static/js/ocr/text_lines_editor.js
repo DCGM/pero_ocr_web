@@ -315,7 +315,7 @@ class TextLinesEditor {
                     image_id: image_id,
                 })
                 .then((response) => {
-                    if (image_id) {  // Creating new annotation
+                    if (image_id && annotation_type === 'row') {  // Creating new line
                         let debug_line_container = document.getElementById('debug-line-container');
                         let debug_line_container_2 = document.getElementById('debug-line-container-2');
 
@@ -400,7 +400,7 @@ class TextLinesEditor {
         if (this.focus_to != null) {
             this.focus_to = null;
         } else {
-            this.map_element.focus();
+            // this.map_element.focus();
         }
     }
 
