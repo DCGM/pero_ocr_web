@@ -414,7 +414,8 @@ def is_granted_acces_for_document(document_id, user):
 def get_line_image_by_id(line_id):
     line = TextLine.query.filter_by(id=line_id).first()
     region = TextRegion.query.filter_by(id=line.region_id).first()
-    image = cv2.imread(region.image.path)
+    image_path = os.path.join(current_app.config['UPLOADED_IMAGES_FOLDER'], region.image.path)
+    image = cv2.imread(image_path)
 
     # coords
     min_x = int(np.min(line.np_points[:,0])) - 15
