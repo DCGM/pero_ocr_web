@@ -46,11 +46,24 @@
             {% endif %}
         </div>
 
+        <!-- Annotator -->
+        <div class="row" id="annotator_type_0">
+            <div class="col-sm-12">
+                <div id="map-container">
+                    <div class="editor-map" style="height: 500px">
+                    </div>
+                    <div class="status">
+                    </div>
+                </div>
+                <p id="status"></p>
+            </div>
+        </div>
+
         <!-- Annotator Component -->
         <div class="row" id="annotator_component">
             <div class="col-12">
                 <div id="app_app">
-                    <annotator-wrapper-component ref="annotator_wrapper_component"></annotator-wrapper-component>
+{#                    <annotator-wrapper-component ref="annotator_wrapper_component"></annotator-wrapper-component>#}
                 </div>
             </div>
         </div>
@@ -62,6 +75,7 @@
             </div>
         </div>
 
+        <!-- Buttons -->
         {% if not public_view %}
         <div class="row mt-2">
             <div class="col-sm-11 d-xl-none text-center">

@@ -87,11 +87,11 @@ def show_public_results(document_id, image_id=None, line_id=None):
     return render_template('ocr/ocr_results.html', document=document, images=images,
                            trusted_user=False, computed_scores=True, public_view=True)
 
-@bp.route('/show_results_classic/<string:document_id>', methods=['GET'])
-@bp.route('/show_results_classic/<string:document_id>/<string:image_id>', methods=['GET'])
-@bp.route('/show_results_classic/<string:document_id>/<string:image_id>/<string:line_id>', methods=['GET'])
+@bp.route('/show_results_new/<string:document_id>', methods=['GET'])
+@bp.route('/show_results_new/<string:document_id>/<string:image_id>', methods=['GET'])
+@bp.route('/show_results_new/<string:document_id>/<string:image_id>/<string:line_id>', methods=['GET'])
 @login_required
-def show_results_classic(document_id, image_id=None, line_id=None):
+def show_results_new(document_id, image_id=None, line_id=None):
     if not document_exists(document_id):
         flash(u'Document with this id does not exist!', 'danger')
         return redirect(url_for('main.index'))
@@ -103,13 +103,13 @@ def show_results_classic(document_id, image_id=None, line_id=None):
     if document.state == DocumentState.NEW:
         return redirect(url_for('document.upload_images_to_document', document_id=document.id))
     elif document.state == DocumentState.COMPLETED_LAYOUT_ANALYSIS:
-        return redirect(url_for('layout_analysis.show_results_classic', document_id=document.id))
+        return redirect(url_for('layout_analysis.show_results_new', document_id=document.id))
     elif document.state != DocumentState.COMPLETED_OCR:
         flash(u'Document can not be edited int its current state.', 'danger')
         return redirect(url_for('main.index'))
 
     images = natsorted(get_document_images(document).all(), key=lambda x: x.filename)
-    return render_template('ocr/ocr_results_classic.html', document=document, images=images,
+    return render_template('ocr/ocr_results_new.html', document=document, images=images,
                            trusted_user=is_user_trusted(current_user), computed_scores=True)
 
 @bp.route('/revert_ocr/<string:document_id>', methods=['GET'])

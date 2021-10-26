@@ -46,24 +46,11 @@
             {% endif %}
         </div>
 
-        <!-- Annotator -->
-        <div class="row" id="annotator_type_0">
-            <div class="col-sm-12">
-                <div id="map-container">
-                    <div class="editor-map" style="height: 500px">
-                    </div>
-                    <div class="status">
-                    </div>
-                </div>
-                <p id="status"></p>
-            </div>
-        </div>
-
         <!-- Annotator Component -->
         <div class="row" id="annotator_component">
             <div class="col-12">
                 <div id="app_app">
-{#                    <annotator-wrapper-component ref="annotator_wrapper_component"></annotator-wrapper-component>#}
+                    <annotator-wrapper-component ref="annotator_wrapper_component"></annotator-wrapper-component>
                 </div>
             </div>
         </div>
@@ -75,7 +62,6 @@
             </div>
         </div>
 
-        <!-- Buttons -->
         {% if not public_view %}
         <div class="row mt-2">
             <div class="col-sm-11 d-xl-none text-center">
@@ -200,8 +186,8 @@
     <script src="/static/leaflet/Path.Drag.js"></script>
     <script src="/static/js/arabic_reshaper.js?version=1.4.21"></script>
     <script src="/static/js/ocr/ocr_export_buttons.js?version=1.4.2"></script>
-    <script src="/static/js/ocr/text_line_classic.js?version=1.4.26"></script>
-    <script src="/static/js/ocr/text_lines_editor_classic.js?version=1.4.25"></script>
+    <script src="/static/js/ocr/text_line_new.js?version=1.4.26"></script>
+    <script src="/static/js/ocr/text_lines_editor_new.js?version=1.4.25"></script>
     <script src="/static/js/ocr/keyboard.js?version=1.4.6"></script>
     <script src="/static/js/image_list.js?version=1.4.9"></script>
     <script>
@@ -218,7 +204,7 @@
             let image_list = new ImageList([text_lines_editor], 'show_public_results');
         {% else %}
             let ocr_export_buttons = new OCRExportButtons(public_view);
-            let image_list = new ImageList([ocr_export_buttons, text_lines_editor], 'show_results_classic');
+            let image_list = new ImageList([ocr_export_buttons, text_lines_editor], 'show_results_new');
             let keyboard = new Keyboard(document.getElementById('keyboard'), text_lines_editor);
         {% endif %}
 
