@@ -124,12 +124,18 @@ class ImageList
         else{
             results_type = 'layout_analysis';
         }
+        let classic = false;
+        if (window.location.href.includes("classic")){
+            classic = true;
+        }
+
+        let show_results_url = classic? 'show_results_classic': 'show_results';
 
         if (this.line_id == null){
-            window.history.replaceState({}, '','/'+results_type+'/show_results/'+this.document_id+'/'+this.image_id);
+            window.history.replaceState({}, '','/'+results_type+'/'+ show_results_url +'/'+this.document_id+'/'+this.image_id);
         }
         else{
-            window.history.replaceState({}, '','/'+results_type+'/show_results/'+this.document_id+'/'+this.image_id+'/'+this.line_id);
+            window.history.replaceState({}, '','/'+results_type+'/'+ show_results_url +'/'+this.document_id+'/'+this.image_id+'/'+this.line_id);
         }
     }
 
@@ -137,7 +143,7 @@ class ImageList
          let parsed_url = window.location.href.split('/').reverse();
          let counter = 0;
          for (let part of parsed_url) {
-            if (part == 'show_results'){
+            if (part == 'show_results' || part == 'show_results_classic'){
                 break;
             }
             else{

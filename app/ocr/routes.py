@@ -64,6 +64,30 @@ def show_results(document_id, image_id=None, line_id=None):
     return render_template('ocr/ocr_results.html', document=document, images=images,
                            trusted_user=is_user_trusted(current_user), computed_scores=True)
 
+@bp.route('/show_results_classic/<string:document_id>', methods=['GET'])
+@bp.route('/show_results_classic/<string:document_id>/<string:image_id>', methods=['GET'])
+@bp.route('/show_results_classic/<string:document_id>/<string:image_id>/<string:line_id>', methods=['GET'])
+@login_required
+def show_results_classic(document_id, image_id=None, line_id=None):
+    if not document_exists(document_id):
+        flash(u'Document with this id does not exist!', 'danger')
+        return redirect(url_for('main.index'))
+    if not is_user_owner_or_collaborator(document_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
+
+    document = get_document_by_id(document_id)
+    if document.state == DocumentState.NEW:
+        return redirect(url_for('document.upload_images_to_document', document_id=document.id))
+    elif document.state == DocumentState.COMPLETED_LAYOUT_ANALYSIS:
+        return redirect(url_for('layout_analysis.show_results_classic', document_id=document.id))
+    elif document.state != DocumentState.COMPLETED_OCR:
+        flash(u'Document can not be edited int its current state.', 'danger')
+        return redirect(url_for('main.index'))
+
+    images = natsorted(get_document_images(document).all(), key=lambda x: x.filename)
+    return render_template('ocr/ocr_results_classic.html', document=document, images=images,
+                           trusted_user=is_user_trusted(current_user), computed_scores=True)
 
 @bp.route('/revert_ocr/<string:document_id>', methods=['GET'])
 @login_required
