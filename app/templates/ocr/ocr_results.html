@@ -153,6 +153,7 @@
 {% endblock %}
 
 {% block styles %}
+    <link rel="stylesheet" href="/static/annotator_component.css"/> <!-- Main css file -->
     <link rel="stylesheet" href="/static/leaflet/leaflet.css">
     <link rel="stylesheet" href="/static/css/ocr_results.css">
     <style>
@@ -164,6 +165,7 @@
 
 {% block scripts %}
     <script src="{{ url_for('static', filename='js/lazy_image.js') + '?version=0.0.1' }}"></script>
+    <script src="/static/annotator_component.js"></script> <!-- Main js file -->
     <script>
         function my_lazy_callback(element){
             let image_fetch = new Promise((resolve, reject) => {
