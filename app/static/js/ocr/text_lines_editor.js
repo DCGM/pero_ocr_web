@@ -134,7 +134,7 @@ class TextLinesEditor {
         }
     }
 
-    delete_line_btn_action(uuid=null) {  // TODO: old code working only for lines
+    delete_line_btn_action(uuid=null, type='row') {
         let delete_uuid = uuid? uuid: this.active_line.id;
 
         if (this.active_line !== false || uuid) {
@@ -150,7 +150,13 @@ class TextLinesEditor {
                 delete_flag = 1;
 
             let text_lines_editor = this;
-            let route = Flask.url_for('ocr.delete_line', {'line_or_region_id': delete_uuid, 'delete_flag': delete_flag});
+            let route;
+            if (type === 'row')
+                route = Flask.url_for('ocr.delete_line', {'line_id': delete_uuid, 'delete_flag': delete_flag});
+            else
+                route = Flask.url_for('ocr.delete_region', {'region_id': delete_uuid, 'delete_flag': delete_flag});
+
+
             this.delete_btn.disabled = true;
             $.ajax({
                 type: "POST",
@@ -346,7 +352,7 @@ class TextLinesEditor {
 
         function annotationDeletedEventHandler(uuid, type) {
             // console.log(uuid, type);
-            self.delete_line_btn_action(uuid);
+            self.delete_line_btn_action(uuid, type);
         }
 
         let observer = new MutationObserver(function (mutations) {
