@@ -27,6 +27,10 @@ export function createJoinRowsTool(annotator_component) {
                 let baseline = {baseline: base_row.view.baseline.baseline_path, up: up, down: down};
                 annotator_component.creating_annotation_type = 'rows';
                 let new_row = annotator_component.confirmAnnotation(null, baseline);
+
+                // console.log(new_row.uuid);
+                // console.log(annotator_component.active_row);
+
                 up.remove();
                 down.remove();
 
@@ -36,6 +40,12 @@ export function createJoinRowsTool(annotator_component) {
                 // Delete both rows
                 annotator_component.removeAnnotation(base_row.uuid);
                 annotator_component.removeAnnotation(to_join_row.uuid);
+
+                //
+                // annotator_component.canvasSelectRowAnnotation(new_row.uuid);
+
+                // console.log('ok');
+                // annotator_component.active_row = new_row;
             }
 
             // Init
