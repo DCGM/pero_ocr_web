@@ -9,14 +9,15 @@ from app.document.general import create_document, check_and_remove_document, sav
     remove_image, get_document_images, get_page_layout, get_page_layout_text, update_confidences, is_user_trusted,\
     is_granted_acces_for_page, is_granted_acces_for_document, get_line_image_by_id, get_sucpect_lines_ids, \
     compute_scores_of_doc, skip_textline, get_line, is_granted_acces_for_line, create_string_response, \
-    update_baselines, make_image_preview, find_textlines, get_documents_with_granted_acces
+    update_baselines, make_image_preview, find_textlines, get_documents_with_granted_acces, \
+    check_and_change_public_document, is_document_public
 
 from werkzeug.exceptions import NotFound
 
 from app.db.general import get_requests
 
 from app.db.general import get_user_documents, get_document_by_id, get_user_by_email, get_all_documents,\
-                           get_previews_for_documents, get_image_by_id
+                           get_previews_for_documents, get_image_by_id, get_public_documents
 from app.document.forms import CreateDocumentForm
 from app.document.annotation_statistics import get_document_annotation_statistics, get_user_annotation_statistics, get_document_annotation_statistics_by_day
 from io import BytesIO
@@ -26,6 +27,7 @@ import time
 import os
 import json
 import re
+from natsort import natsorted
 
 
 @bp.route('/documents')
@@ -45,6 +47,19 @@ def documents():
             previews[d.id] = ""
 
     return render_template('document/documents.html', documents=user_documents, previews=previews)
+
+
+@bp.route('/public_documents')
+def public_documents():
+    db_documents = get_public_documents()
+    document_ids = [d.id for d in db_documents]
+    previews = dict([(im.document_id, im) for im in get_previews_for_documents(document_ids)])
+
+    for d in db_documents:
+        if d.id not in previews:
+            previews[d.id] = ""
+
+    return render_template('document/public_documents.html', documents=db_documents, previews=previews)
 
 
 @bp.route('/annotation_statistics/<string:document_id>')
@@ -159,6 +174,30 @@ def new_document():
         return render_template('document/new_document.html', form=form)
 
 
+@bp.route('/make_public/<string:document_id>')
+@login_required
+def make_public(document_id):
+    document_name = check_and_change_public_document(document_id, current_user, True)
+    if document_name:
+        flash(f'Document "{document_name}" in now public!', 'success')
+        return document_id
+    else:
+        flash(u'You do not have sufficient rights to make this document public!', 'danger')
+        return None
+
+
+@bp.route('/make_private/<string:document_id>')
+@login_required
+def make_private(document_id):
+    document_name = check_and_change_public_document(document_id, current_user, False)
+    if document_name:
+        flash(f'Document "{document_name}" in now private!', 'success')
+        return document_id
+    else:
+        flash(u'You do not have sufficient rights to make this document public!', 'danger')
+        return None
+
+
 @bp.route('/delete_document/<string:document_id>')
 @login_required
 def delete_document(document_id):
@@ -197,27 +236,41 @@ def upload_image_to_document(document_id):
         return status, 409
 
 
-@bp.route('/get_image_preview/<string:image_id>')
-@bp.route('/get_image_preview/')
-@login_required
-def get_image_preview(image_id=None):
+def image_preview(image_id=None, public_access=False):
     if image_id is None:
         return send_file('static/img/missing_page.png', cache_timeout=10000000)
 
     try:
         db_image = get_image_by_id(image_id)
-    except sqlalchemy.exc.StatementError:
+    except (sqlalchemy.exc.StatementError, sqlalchemy.orm.exc.NoResultFound):
         return "Image does not exist.", 404
 
     document_id = db_image.document_id
-    if not is_granted_acces_for_document(document_id, current_user):
-        flash(u'You do not have sufficient rights to this document!', 'danger')
-        return redirect(url_for('main.index'))
+    if public_access:
+        db_document = get_document_by_id(db_image.document_id)
+        if not db_document.is_public:
+            return send_file('static/img/missing_page.png', cache_timeout=10000000)
+    else:
+        if not is_granted_acces_for_document(document_id, current_user):
+            return send_file('static/img/missing_page.png', cache_timeout=10000000)
 
     image_preview_path = os.path.join(current_app.config['PREVIEW_IMAGES_FOLDER'], str(document_id), str(image_id) + '.jpg')
     if not os.path.isfile(image_preview_path):
         make_image_preview(db_image)
     return send_file(image_preview_path, cache_timeout=0)
+
+
+@bp.route('/get_image_preview/<string:image_id>')
+@bp.route('/get_image_preview/')
+@login_required
+def get_image_preview(image_id=None):
+    return image_preview(image_id=image_id, public_access=False)
+
+
+@bp.route('/get_public_image_preview/<string:image_id>')
+@bp.route('/get_public_image_preview/')
+def get_public_image_preview(image_id=None):
+    return image_preview(image_id=image_id, public_access=True)
 
 
 @bp.route('/get_document_image_ids/<string:document_id>')
@@ -228,7 +281,8 @@ def get_document_image_ids(document_id):
         return redirect(url_for('main.index'))
 
     document = get_document_by_id(document_id)
-    return jsonify([str(x.id) for x in document.images if not x.deleted])
+    images = natsorted(get_document_images(document).all(), key=lambda x: x.filename)
+    return jsonify([str(x.id) for x in images])
 
 
 @bp.route('/get_page_xml_regions/<string:image_id>')
@@ -319,30 +373,40 @@ def get_text(image_id):
         flash(u'You do not have sufficient rights to download text!', 'danger')
         return redirect(url_for('main.index'))
 
-
     page_layout = get_page_layout(db_image, only_regions=False, only_annotated=False)
     file_name = "{}.txt".format(os.path.splitext(page_layout.id)[0])
     return create_string_response(file_name, get_page_layout_text(page_layout), minetype='text/plain')
 
 
-@bp.route('/get_image/<string:image_id>')
-@login_required
-def get_image(image_id):
+def get_image_common(image_id, public=False):
     try:
         image_db = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
         return "Image does not exist.", 404
 
-    if not is_granted_acces_for_page(image_id, current_user):
-        flash(u'You do not have sufficient rights to download image!', 'danger')
-        return redirect(url_for('main.index'))
+    if public:
+        if not image_db.document.is_public:
+            return "Image is not public.", 403
+    elif not is_granted_acces_for_page(image_id, current_user):
+        return "You do not have access to the requested images.", 403
 
-    image_path = os.path.join(current_app.config['UPLOADED_IMAGES_FOLDER'], str(image_db.document_id), image_db.path)
+    image_path = os.path.join(current_app.config['UPLOADED_IMAGES_FOLDER'], image_db.path)
     if not os.path.isfile(image_path):
-        print('ERRPR: Could not find image on disk', image_id, image_path)
+        print("ERROR: Could not find image on disk. image id: {}, image path: {}.".format(image_id, image_path))
         raise NotFound()
 
-    return send_file(image_path, as_attachment=True, attachment_filename=image_db.filename)
+    return send_file(image_path, as_attachment=True, attachment_filename=image_db.filename, cache_timeout=10000000)
+
+
+@bp.route('/get_image/<string:image_id>')
+@login_required
+def get_image(image_id):
+    return get_image_common(image_id, False)
+
+
+@bp.route('/get_public_image/<string:image_id>')
+def get_public_image(image_id):
+    return get_image_common(image_id, True)
 
 
 @bp.route('/download_document_pages/<string:document_id>')
@@ -635,5 +699,4 @@ def search_bar():
         lines = find_textlines(query, current_user, user_document_ids)
 
     return render_template('document/search_lines.html', query=query, lines=lines, documents=enumerate(user_documents), selected=selected)
-
 

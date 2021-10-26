@@ -135,10 +135,11 @@ def main():
                               config['SERVER']['authentification'], config['SERVER']['login_page']):
                     print('Unable to log into server')
                     time.sleep(timeout)
+                    continue
 
                 while True:
                     print("CHECK REQUEST")
-                    if check_and_process_layout_request(config):
+                    if check_and_process_layout_request(config, session):
                         print("REQUEST COMPLETED")
                     else:
                         print("NO REQUEST")
@@ -151,3 +152,4 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
+

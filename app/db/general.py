@@ -35,6 +35,11 @@ def get_all_documents():
     return all_documents
 
 
+def get_public_documents():
+    all_documents = Document.query.filter_by(is_public=True).filter_by(deleted=False).filter_by(state='COMPLETED_OCR').order_by(Document.created_date).all()
+    return all_documents
+
+
 def get_user_documents(user):
     user_created_documents = user.documents.filter_by(deleted=False).order_by(Document.created_date).all()
     collaborators_documents = user.collaborator_documents.filter_by(deleted=False).order_by(Document.created_date).all()
@@ -43,8 +48,9 @@ def get_user_documents(user):
 
 def get_requests(document_ids=None):
     db_requests = db_session.query(Request)
-    if document_ids:
+    if document_ids is not None:
         db_requests = db_requests.join(Document).filter(Document.id.in_(document_ids))
+
     db_requests = db_requests.order_by(Request.created_date)
     db_requests = db_requests.all()[::-1]
 

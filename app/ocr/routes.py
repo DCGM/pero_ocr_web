@@ -18,11 +18,12 @@ from app.db.general import get_document_by_id, get_request_by_id, get_image_by_i
 from app.db import DocumentState, OCR, Document, Image, TextRegion, Baseline, LanguageModel, User, OCRTrainingDocuments
 from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
-                            insert_lines_to_db, change_ocr_request_and_document_state_on_success, insert_annotations_to_db, \
-                            update_text_lines, get_page_annotated_lines, change_ocr_request_and_document_state_in_progress, \
-                            post_files_to_folder, change_ocr_request_to_fail_and_document_state_to_success, \
-                            change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis, set_delete_flag, \
+                            insert_lines_to_db, change_ocr_request_and_document_state_on_success_handler, insert_annotations_to_db, \
+                            update_text_lines, get_page_annotated_lines, change_ocr_request_and_document_state_in_progress_handler, \
+                            post_files_to_folder, change_ocr_request_to_fail_and_document_state_to_success_handler, \
+                            change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis_handler, set_delete_flag, \
                             set_training_flag
+from app.mail.mail import send_ocr_failed_mail
 
 from app.document.general import get_document_images
 from app import db_session, engine
@@ -62,7 +63,29 @@ def show_results(document_id, image_id=None, line_id=None):
 
     images = natsorted(get_document_images(document).all(), key=lambda x: x.filename)
     return render_template('ocr/ocr_results.html', document=document, images=images,
-                           trusted_user=is_user_trusted(current_user), computed_scores=True)
+                           trusted_user=is_user_trusted(current_user), computed_scores=True, public_view=False)
+
+
+@bp.route('/show_public_results/<string:document_id>', methods=['GET'])
+@bp.route('/show_public_results/<string:document_id>/<string:image_id>', methods=['GET'])
+@bp.route('/show_public_results/<string:document_id>/<string:image_id>/<string:line_id>', methods=['GET'])
+def show_public_results(document_id, image_id=None, line_id=None):
+    if not document_exists(document_id):
+        flash(u'This document does not exist or it is not public at the moment!', 'danger')
+        return redirect(url_for('document.public_documents'))
+
+    document = get_document_by_id(document_id)
+    if not document.is_public:
+        flash(u'This document does not exist or it is not public at the moment!', 'danger')
+        return redirect(url_for('document.public_documents'))
+
+    if document.state != DocumentState.COMPLETED_OCR:
+        flash(u'This public document has not been processed by OCR and it is not viewable.', 'danger')
+        return redirect(url_for('document.public_documents'))
+
+    images = natsorted(get_document_images(document).all(), key=lambda x: x.filename)
+    return render_template('ocr/ocr_results.html', document=document, images=images,
+                           trusted_user=False, computed_scores=True, public_view=True)
 
 @bp.route('/show_results_classic/<string:document_id>', methods=['GET'])
 @bp.route('/show_results_classic/<string:document_id>/<string:image_id>', methods=['GET'])
@@ -111,7 +134,6 @@ def revert_ocr(document_id):
     db_session.add(backup_document)
     new_regions = []
     for img in document.images:
-        print(str(img.id))
         backup_img = Image(filename=img.filename, path=img.path, width=img.width, height=img.height,
                            deleted=img.deleted, imagehash=img.imagehash)
         backup_document.images.append(backup_img)
@@ -189,8 +211,12 @@ def ocr_training_documents():
         flash(u'You do not have sufficient rights!', 'danger')
         return redirect(url_for('main.index'))
 
-    db_ocr_engines = db_session.query(OCR).filter(OCR.active).all()
-    ocr_id = request.args.get('ocr_id', default=db_ocr_engines[0].id)
+    db_all_ocr_engines = db_session.query(OCR).all()
+    ocr_id = request.args.getlist('ocr')
+    if ocr_id:
+        db_ocr_engines = db_session.query(OCR).filter(OCR.id.in_(ocr_id)).all()
+    else:
+        db_ocr_engines = db_session.query(OCR).filter(OCR.active).all()
 
     db_documents = db_session.query(Document).filter(Document.state == DocumentState.COMPLETED_OCR)\
         .options(sqlalchemy.orm.joinedload(Document.requests_lazy)).filter(Document.name.notlike('revert_backup_%')).all()
@@ -205,8 +231,9 @@ def ocr_training_documents():
         selected_documents[ocr_document.ocr_id].add(ocr_document.document_id)
 
     return render_template('ocr/ocr_training_documents.html',
-                           documents=db_documents, ocr_engines=db_ocr_engines, previews=previews,
-                           engine_names=engine_names, selected_documents=selected_documents)
+                           documents=db_documents, ocr_engines=db_ocr_engines, all_ocr_engines=db_all_ocr_engines,
+                           previews=previews, engine_names=engine_names, selected_documents=selected_documents)
+
 
 @bp.route('/set_ocr_training_document/<string:document_id>/<string:ocr_id>/<string:state>', methods=['GET'])
 @login_required
@@ -251,9 +278,9 @@ def select_ocr(document_id):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
     document = get_document_by_id(document_id)
-    ocr_engines = db_session.query(OCR).filter(OCR.active).all()
-    baseline_engines = db_session.query(Baseline).filter(Baseline.active).all()
-    language_model_engines = db_session.query(LanguageModel).filter(LanguageModel.active).all()
+    ocr_engines = db_session.query(OCR).filter(OCR.active).order_by(OCR.order).all()
+    baseline_engines = db_session.query(Baseline).filter(Baseline.active).order_by(Baseline.order).all()
+    language_model_engines = db_session.query(LanguageModel).filter(LanguageModel.active).order_by(LanguageModel.order).all()
     return render_template('ocr/ocr_select.html', document=document, document_state=DocumentState, ocr_engines=ocr_engines,
                            baseline_engines=baseline_engines, language_model_engines=language_model_engines)
 
@@ -287,15 +314,11 @@ def start_ocr(document_id):
 ########################################################################################################################
 
 @bp.route('/get_image_annotation_statistics/<string:image_id>', methods=['GET'])
-@login_required
 def get_image_annotation_statistics(image_id):
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
         return "Image does not exist.", 404
-
-    if not is_granted_acces_for_page(image_id, current_user):
-        return "Access denied.", 401
 
     line_count, annotated_count = get_image_annotation_statistics_db(image_id)
     response = {'image_id': image_id, 'line_count': line_count, 'annotated_count': annotated_count}
@@ -321,17 +344,18 @@ def get_document_annotation_statistics(document_id):
     return jsonify(response)
 
 
-@bp.route('/get_lines/<string:image_id>', methods=['GET'])
-@login_required
-def get_lines(image_id):
+def get_lines_common(image_id, public=False):
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
         return "Image does not exist.", 404
 
-    if not is_granted_acces_for_page(image_id, current_user):
-        flash(u'You do not have sufficient rights to get lines!', 'danger')
-        return redirect(url_for('main.index'))
+    if public:
+        if not db_image.document.is_public:
+            return "The requested document is not public at the moment.", 403
+    else:
+        if not is_granted_acces_for_page(image_id, current_user):
+            return "You do not have sufficient rights to get lines from the requested document!", 403
 
     lines_dict = {'image_id': image_id, 'lines': []}
     lines_dict['height'] = db_image.height
@@ -367,7 +391,7 @@ def get_lines(image_id):
             confidences = line.np_confidences.tolist()
             if len(text) != len(confidences):
                 confidences = []
-            if arabic_helper.is_arabic_line(line.text):
+            if line.text and arabic_helper.is_arabic_line(line.text):
                 arabic = True
                 text_to_detect_ligatures = arabic_helper._reverse_transcription(copy.deepcopy(text))
             else:
@@ -395,7 +419,6 @@ def get_lines(image_id):
                             'for_training': line.for_training
                         })
 
-
     for l in lines_dict['lines']:
         if arabic:
             l['arabic'] = True
@@ -403,6 +426,17 @@ def get_lines(image_id):
             l['arabic'] = False
 
     return jsonify(lines_dict)
+
+
+@bp.route('/get_lines/<string:image_id>', methods=['GET'])
+@login_required
+def get_lines(image_id):
+    return get_lines_common(image_id, False)
+
+
+@bp.route('/get_public_lines/<string:image_id>', methods=['GET'])
+def get_public_lines(image_id):
+    return get_lines_common(image_id, True)
 
 
 @bp.route('/get_arabic_label_form/<string:text>', methods=['GET'])
@@ -537,34 +571,38 @@ def post_result(image_id):
 
 @bp.route('/change_ocr_request_and_document_state_on_success/<string:request_id>', methods=['POST'])
 @login_required
-def success_request(request_id):
+def change_ocr_request_and_document_state_on_success(request_id):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights!', 'danger')
         return redirect(url_for('main.index'))
     ocr_request = get_request_by_id(request_id)
-    change_ocr_request_and_document_state_on_success(ocr_request)
+    change_ocr_request_and_document_state_on_success_handler(ocr_request)
     return 'OK'
 
 
 @bp.route('/change_ocr_request_to_fail_and_document_state_to_success/<string:request_id>', methods=['POST'])
 @login_required
-def fail_completed_request(request_id):
+def change_ocr_request_to_fail_and_document_state_to_success(request_id):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights!', 'danger')
         return redirect(url_for('main.index'))
     ocr_request = get_request_by_id(request_id)
-    change_ocr_request_to_fail_and_document_state_to_success(ocr_request)
+    change_ocr_request_to_fail_and_document_state_to_success_handler(ocr_request)
+    if 'EMAIL_NOTIFICATION_ADDRESSES' in current_app.config and current_app.config['EMAIL_NOTIFICATION_ADDRESSES']:
+        send_ocr_failed_mail(ocr_request, request)
     return 'OK'
 
 
 @bp.route('/change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis/<string:request_id>', methods=['POST'])
 @login_required
-def fail_layout_request(request_id):
+def change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis(request_id):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights!', 'danger')
         return redirect(url_for('main.index'))
     ocr_request = get_request_by_id(request_id)
-    change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis(ocr_request)
+    change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis_handler(ocr_request)
+    if 'EMAIL_NOTIFICATION_ADDRESSES' in current_app.config and current_app.config['EMAIL_NOTIFICATION_ADDRESSES']:
+        send_ocr_failed_mail(ocr_request, request)
     return 'OK'
 
 
@@ -579,7 +617,7 @@ def get_ocr_request():
         return redirect(url_for('main.index'))
     ocr_request = get_first_ocr_request()
     if ocr_request:
-        change_ocr_request_and_document_state_in_progress(ocr_request)
+        change_ocr_request_and_document_state_in_progress_handler(ocr_request)
         return create_json_from_request(ocr_request)
     else:
         return jsonify({})
@@ -679,3 +717,4 @@ def concatenate_text_files_and_save(text_files, output_text_file):
         for f in text_files:
             with open(f, 'rb') as fd:
                 shutil.copyfileobj(fd, wfd)
+

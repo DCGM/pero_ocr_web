@@ -127,22 +127,22 @@ def change_ocr_request_and_document_state(request, request_state, document_state
     db_session.commit()
 
 
-def change_ocr_request_and_document_state_on_success(request):
+def change_ocr_request_and_document_state_on_success_handler(request):
     change_ocr_request_and_document_state(request, RequestState.SUCCESS, DocumentState.COMPLETED_OCR)
     return
 
 
-def change_ocr_request_and_document_state_in_progress(request):
+def change_ocr_request_and_document_state_in_progress_handler(request):
     change_ocr_request_and_document_state(request, RequestState.IN_PROGRESS, DocumentState.RUNNING_OCR)
     return
 
 
-def change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis(request):
+def change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis_handler(request):
     change_ocr_request_and_document_state(request, RequestState.FAILURE, DocumentState.COMPLETED_LAYOUT_ANALYSIS)
     return
 
 
-def change_ocr_request_to_fail_and_document_state_to_success(request):
+def change_ocr_request_to_fail_and_document_state_to_success_handler(request):
     change_ocr_request_and_document_state(request, RequestState.FAILURE, DocumentState.COMPLETED_OCR)
     return
 
@@ -178,3 +178,4 @@ def get_first_ocr_request():
     if False:
         requests = requests.join(Document).join(User).filter(User.trusted > 0)
     return requests.first()
+

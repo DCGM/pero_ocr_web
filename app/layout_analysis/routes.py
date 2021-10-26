@@ -4,11 +4,12 @@ from flask import render_template, url_for, redirect, flash, request, current_ap
 from flask_login import login_required, current_user
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_layout_detector_by_id
 from app.layout_analysis.general import create_layout_analysis_request, can_start_layout_analysis, \
-    add_layout_request_and_change_document_state, get_first_layout_request, change_layout_request_and_document_state_in_progress, \
-    create_json_from_request, change_layout_request_and_document_state_on_success, \
-    change_document_state_on_complete_layout_analysis, post_files_to_folder, insert_regions_to_db, \
-    set_whole_page_region_layout_to_document, change_layout_request_to_fail_and_document_state_to_new, \
+    add_layout_request_and_change_document_state, get_first_layout_request, change_layout_request_and_document_state_in_progress_handler, \
+    create_json_from_request, change_layout_request_and_document_state_on_success_handler, \
+    change_document_state_on_complete_layout_analysis_handler, post_files_to_folder, insert_regions_to_db, \
+    set_whole_page_region_layout_to_document, change_layout_request_to_fail_and_document_state_to_new_handler, \
     not_deleted_images_in_document
+from app.mail.mail import send_layout_failed_mail
 import os
 import sys
 import sqlalchemy
@@ -83,7 +84,7 @@ def select_layout(document_id):
         flash(u'You do not have sufficient rights to this document!', 'danger')
         return redirect(url_for('main.index'))
     document = get_document_by_id(document_id)
-    layout_engines = db_session.query(LayoutDetector).filter(LayoutDetector.active).all()
+    layout_engines = db_session.query(LayoutDetector).filter(LayoutDetector.active).order_by(LayoutDetector.order).all()
     return render_template('layout_analysis/layout_select.html', document=document, layout_engines=layout_engines)
 
 
@@ -101,10 +102,10 @@ def start_layout(document_id):
     layout_detector = get_layout_detector_by_id(layout_detector_id)
     layout_detector_name = get_layout_detector_folder_name(layout_detector.name)
     if layout_detector_name == "none":
-        change_document_state_on_complete_layout_analysis(document)
+        change_document_state_on_complete_layout_analysis_handler(document)
     elif layout_detector_name == "whole_page_region":
         set_whole_page_region_layout_to_document(document)
-        change_document_state_on_complete_layout_analysis(document)
+        change_document_state_on_complete_layout_analysis_handler(document)
     else:
         layout_request = create_layout_analysis_request(document, layout_detector_id)
         if can_start_layout_analysis(document):
@@ -186,20 +187,22 @@ def post_result(image_id):
 
 @bp.route('/change_layout_request_and_document_state_on_success/<string:request_id>', methods=['POST'])
 @login_required
-def success_request(request_id):
+def change_layout_request_and_document_state_on_success(request_id):
     layout_analysis_request = get_request_by_id(request_id)
-    change_layout_request_and_document_state_on_success(layout_analysis_request)
+    change_layout_request_and_document_state_on_success_handler(layout_analysis_request)
     return 'OK'
 
 
 @bp.route('/change_layout_request_to_fail_and_document_state_to_new/<string:request_id>', methods=['POST'])
 @login_required
-def fail_request(request_id):
+def change_layout_request_to_fail_and_document_state_to_new(request_id):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights!', 'danger')
         return redirect(url_for('main.index'))
     layout_request = get_request_by_id(request_id)
-    change_layout_request_to_fail_and_document_state_to_new(layout_request)
+    change_layout_request_to_fail_and_document_state_to_new_handler(layout_request)
+    if 'EMAIL_NOTIFICATION_ADDRESSES' in current_app.config and current_app.config['EMAIL_NOTIFICATION_ADDRESSES']:
+        send_layout_failed_mail(layout_request, request)
     return 'OK'
 
 
@@ -239,7 +242,7 @@ def get_request():
         return redirect(url_for('main.index'))
     analysis_request = get_first_layout_request()
     if analysis_request:
-        change_layout_request_and_document_state_in_progress(analysis_request)
+        change_layout_request_and_document_state_in_progress_handler(analysis_request)
         return create_json_from_request(analysis_request)
     else:
         return jsonify({})
@@ -260,3 +263,4 @@ def get_layout_detector(layout_detector_id):
 
 def get_layout_detector_folder_name(layout_detector_name):
     return layout_detector_name.replace(" ", "_").lower()
+

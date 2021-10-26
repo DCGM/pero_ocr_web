@@ -6,6 +6,7 @@ from flask_login import LoginManager
 from flask_bootstrap import Bootstrap
 from flask_jsglue import JSGlue
 from flask_dropzone import Dropzone
+from app.mail.mail import send_internal_server_error_mail
 
 from config import *
 from .db import Base
@@ -68,6 +69,12 @@ def create_app():
     def shutdown_session(exception=None):
         db_session.remove()
 
+    @app.errorhandler(500)
+    def internal_error(error):
+        if 'EMAIL_NOTIFICATION_ADDRESSES' in app.config and app.config['EMAIL_NOTIFICATION_ADDRESSES']:
+            send_internal_server_error_mail()
+        return error, 500
+
     return app
 
 
@@ -84,3 +91,4 @@ def add_delete_user_for_deleted_documents():
                         "#revert_OCR_backup#")
         except sqlalchemy.exc.IntegrityError as err:
             db_session.rollback()
+

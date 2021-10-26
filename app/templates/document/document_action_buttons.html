@@ -117,3 +117,23 @@
     </a>
 {% endif %}
 
+{% if document.user.id == current_user.id %}
+    {% if document.is_public%}
+        <a class="document-action-btn btn btn-secondary text-white make-private-button"
+           data-toggle="tooltip"
+           data-placement="right"
+           title="Make document private"
+           data-document="{{ document.id }}">
+            <i class="fas fa-user-times fa-fw"></i>
+        </a>
+    {% else %}
+      <a class="document-action-btn btn btn-secondary text-white make-public-button"
+           data-toggle="tooltip"
+           data-placement="right"
+           title="Make document public"
+           data-document="{{ document.id }}">
+            <i class="fas fa-user-plus fa-fw"></i>
+        </a>
+    {% endif %}
+{% endif %}
+

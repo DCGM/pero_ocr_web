@@ -40,6 +40,9 @@
     padding-bottom: 400px;
 }
 
+@font-face { font-family: tinos-regular;
+			 src: url('../fonts/Tinos-Regular.ttf'); }
+
 .text-line {
-    font-family: "Verdana", "Times New Roman", Times, serif;
+    font-family: tinos-regular;
 }
