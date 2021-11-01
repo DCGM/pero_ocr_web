@@ -65,6 +65,13 @@ def send_ocr_failed_mail(ocr_request, request):
     ocr = ocr_request.ocr
     language_model = ocr_request.language_model
 
+    if baseline is None:
+        baseline_id = "NONE"
+        baseline_name = "NONE"
+    else:
+        baseline_id = baseline.id
+        baseline_name = baseline.name
+
     if language_model is None:
         language_model_id = "NONE"
         language_model_name = "NONE"
@@ -95,8 +102,8 @@ def send_ocr_failed_mail(ocr_request, request):
                 user.first_name,
                 user.last_name,
                 user.email,
-                baseline.id,
-                baseline.name,
+                baseline_id,
+                baseline_name,
                 ocr.id,
                 ocr.name,
                 language_model_id,
