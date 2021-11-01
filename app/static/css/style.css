@@ -31,3 +31,11 @@ footer img {
 .table td, .table th {
   vertical-align: middle;
 }
+
+.fa-smile {
+  color: green;
+}
+
+.fa-frown {
+  color: gray;
+}

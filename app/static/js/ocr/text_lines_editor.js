@@ -13,28 +13,30 @@ function rgb(r, g, b){
 
 class TextLinesEditor
 {
-    constructor(container)
+    constructor(container, public_view)
     {
+        this.public_view = public_view;
         this.abort_controller = new AbortController();
         this.container = container;
         this.container.innerHTML = "<div class='editor-map'></div><div class='status'></div>";
         this.map_element = this.container.getElementsByClassName("editor-map")[0];
         this.active_line = false;
         this.focus_to = null;
-        this.save_btn = document.getElementsByClassName('save-btn');
-        this.delete_btn = document.getElementById('deletebutton');
-        this.ignore_btn = document.getElementById('ignorebutton');
-        this.next_suspect_btn = document.getElementById('nextsucpectline');
-        this.compute_scores_btn = document.getElementById('btn-compute-scores');
+        if(!this.public_view) {
+            this.save_btn = document.getElementsByClassName('save-btn');
+            this.delete_btn = document.getElementById('deletebutton');
+            this.ignore_btn = document.getElementById('ignorebutton');
+            this.next_suspect_btn = document.getElementById('nextsucpectline');
+            this.compute_scores_btn = document.getElementById('btn-compute-scores');
+            for (let btn of this.save_btn) {
+                btn.addEventListener('click', this.save_annotations.bind(this));
+            }
+            this.next_suspect_btn.addEventListener('click', this.show_next_line.bind(this));
+            this.delete_btn.addEventListener('click', this.delete_line_btn_action.bind(this));
+            this.ignore_btn.addEventListener('click', this.ignore_line_btn_action.bind(this), true);
+        }
         this.show_line_height = document.getElementById('show-line-height');
         this.show_bottom_pad = document.getElementById('show-bottom-pad');
-        for (let btn of this.save_btn)
-        {
-            btn.addEventListener('click', this.save_annotations.bind(this));
-        }
-        this.next_suspect_btn.addEventListener('click', this.show_next_line.bind(this));
-        this.delete_btn.addEventListener('click', this.delete_line_btn_action.bind(this));
-        this.ignore_btn.addEventListener('click', this.ignore_line_btn_action.bind(this), true);
         this.show_line_height.addEventListener('input', this.show_line_change.bind(this));
         this.show_bottom_pad.addEventListener('input', this.show_line_change.bind(this));
         this.text_container = document.getElementById('text-container');
@@ -46,6 +48,9 @@ class TextLinesEditor
     }
 
     swap_ignore_line_button_blueprint(){
+        if(this.public_view){
+            return;
+        }
         if (this.active_line.for_training_checkbox.checked){
             this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Ignore line';
         }
@@ -60,6 +65,9 @@ class TextLinesEditor
     }
 
     swap_delete_line_button_blueprint(){
+        if(this.public_view){
+            return;
+        }
         if (this.active_line.valid){
             this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
             this.delete_btn.className  = 'btn btn-danger';
@@ -76,6 +84,9 @@ class TextLinesEditor
     }
 
     ignore_line_btn_action(button=false){
+        if(this.public_view){
+            return;
+        }
         if (this.active_line != false){
             if (button) {
                 this.active_line.for_training_checkbox.checked = !this.active_line.for_training_checkbox.checked;
@@ -111,9 +122,6 @@ class TextLinesEditor
 
     set_line_style(line){
         var conf = (line.line_confidence-this.worst_confidence) / (1-this.worst_confidence);
-        console.log('X ' + conf + ' ' + this.worst_confidence + ' ' + line.annotated);
-        console.log(line.edited);
-        console.log(line.valid);
 
         var color = '';
         if( !line.valid){
@@ -133,6 +141,9 @@ class TextLinesEditor
     }
 
     delete_line_btn_action(){
+        if(this.public_view){
+            return;
+        }
         if (this.active_line != false){
             this.active_line.valid = !this.active_line.valid;
 
@@ -176,7 +187,7 @@ class TextLinesEditor
                     unsaved_lines = true;
                 }
             }
-            if (unsaved_lines)
+            if (unsaved_lines && !this.public_view)
             {
                 if (confirm("Save changes?"))
                 {
@@ -187,7 +198,9 @@ class TextLinesEditor
         this.focus_to = line_id;
         this.get_image(image_id);
         this.swap_delete_line_button_blueprint();
-        this.ignore_btn.innerHTML  = '<i class="fas fa-minus-circle"></i> Ignore line';
+        if(!this.public_view) {
+            this.ignore_btn.innerHTML = '<i class="fas fa-minus-circle"></i> Ignore line';
+        }
         this.change_url = change_url_callback;
     }
 
@@ -199,7 +212,12 @@ class TextLinesEditor
         await new Promise(resolve => setTimeout(resolve, 150));
         if( abort_signal.aborted){ return;}
 
-        let route = Flask.url_for('ocr.get_lines', {'image_id': image_id});
+        let route = '';
+        if(this.public_view) {
+            route = Flask.url_for('ocr.get_public_lines', {'image_id': image_id});
+        } else{
+            route = Flask.url_for('ocr.get_lines', {'image_id': image_id});
+        }
         while (this.text_container.firstChild)
         {
             this.text_container.firstChild.remove();
@@ -241,7 +259,11 @@ class TextLinesEditor
         let bounds = [xy(0, -this.height), xy(this.width, 0)];
         //this.map.setView(xy(this.width / 2, -this.height / 2), -2);
         this.map.fitBounds(bounds);
-        L.imageOverlay(Flask.url_for('document.get_image', {'image_id': this.image_id}), bounds).addTo(this.map);
+        if(this.public_view) {
+            L.imageOverlay(Flask.url_for('document.get_public_image', {'image_id': this.image_id}), bounds).addTo(this.map);
+        } else {
+            L.imageOverlay(Flask.url_for('document.get_image', {'image_id': this.image_id}), bounds).addTo(this.map);
+        }
         if( abort_signal.aborted){ return;}
 
         let self = this;
@@ -258,7 +280,7 @@ class TextLinesEditor
         for (let l of data['lines'])
         {
             let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic, l.for_training,
-                                    debug_line_container, debug_line_container_2)
+                                    debug_line_container, debug_line_container_2, !self.public_view);
             line.np_points = l.np_points;
             line.np_heights = l.np_heights;
             line.focus = false;
@@ -324,6 +346,10 @@ class TextLinesEditor
     }
 
     ignore_action_from_checkbox(line) {
+        if(this.public_view){
+            return;
+        }
+
         this.line_focus_from_checkbox(line);
         this.ignore_line_btn_action();
     }
@@ -422,6 +448,10 @@ class TextLinesEditor
 
     save_annotations()
     {
+        if(this.public_view){
+            return;
+        }
+
         for (let l of this.lines)
         {
             if (l.edited)
@@ -432,6 +462,10 @@ class TextLinesEditor
     }
 
     compute_scores(){
+        if(this.public_view){
+            return;
+        }
+
         let route_ = Flask.url_for('document.compute_scores', {'document_id': document.querySelector('#document-id').textContent});
         $.get(route_);
     }

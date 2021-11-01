@@ -55,6 +55,19 @@ def create_document(name, user):
     return document
 
 
+def check_and_change_public_document(document_id, user, public):
+    if is_document_owner(document_id, user):
+        document = get_document_by_id(document_id)
+        document.is_public = public
+        db_session.commit()
+        return document.name
+    return False
+
+
+def is_document_public(document_id):
+    return get_document_by_id(document_id).is_public
+
+
 def check_and_remove_document(document_id, user):
     if is_document_owner(document_id, user):
         remove_document_by_id(document_id)
@@ -401,7 +414,8 @@ def is_granted_acces_for_document(document_id, user):
 def get_line_image_by_id(line_id):
     line = TextLine.query.filter_by(id=line_id).first()
     region = TextRegion.query.filter_by(id=line.region_id).first()
-    image = cv2.imread(region.image.path)
+    image_path = os.path.join(current_app.config['UPLOADED_IMAGES_FOLDER'], region.image.path)
+    image = cv2.imread(image_path)
 
     # coords
     min_x = int(np.min(line.np_points[:,0])) - 15

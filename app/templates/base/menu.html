@@ -22,6 +22,9 @@
               <li class="nav-item{%- if request.path == "/document/documents" %} active{% endif %}" >
                   <a class="nav-link my-2" href="{{ url_for('document.documents') }}"><strong>Documents</strong></a>
               </li>
+              <li class="nav-item{%- if request.path == "/document/public_documents" %} active{% endif %}" >
+                  <a class="nav-link my-2" href="{{ url_for('document.public_documents') }}"><strong>Public documents</strong></a>
+              </li>
               <li class="nav-item{%- if request.path == "/document/requests" %} active{% endif %}" >
                   <a class="nav-link my-2" href="{{ url_for('document.requests') }}"><strong>Job history</strong></a>
               </li>

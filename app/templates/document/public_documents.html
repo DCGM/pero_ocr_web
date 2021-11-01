@@ -1,0 +1,42 @@
+{% extends "base/base.html" %}
+{% block content %}
+    <section class="jumbotron text-center">
+        <div class="container">
+          <h1 class="jumbotron-heading">Public documents</h1>
+          <p class="lead text-muted">These documents were uploaded by the users of pero-ocr.</p>
+        </div>
+    </section>
+    <div class="album py-5 bg-light">
+        <div class="container">
+          <div class="row">
+            {% for document in documents %}
+            <div class="col-md-4">
+                <div class="card mb-4 box-shadow">
+                    <img data-src="{{url_for('document.get_public_image_preview', image_id=previews[document.id].id)}}" class="card-img-top lazy-img" src="" onerror="this.src='/static/img/missing_page.png'"/>
+                  <div class="card-body">
+                    <h5 class="card-title">{{ document.name }}</h5>
+                    <!-- p class="card-text">
+                    </p -->
+                    <a href="{{ url_for('ocr.show_public_results', document_id=document.id) }}" class="btn btn-primary">View document</a>
+                  </div>
+                </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+{% endblock %}
+
+{% block styles %}
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/lazy_image.js') + '?version=0.0.1' }}"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded",
+            function () {
+                manage_lazy_images(template_set_url_callback)
+            });
+    </script>
+{% endblock %}

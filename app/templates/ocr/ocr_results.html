@@ -8,9 +8,11 @@
                 <h3 class="text-left">Document name: {{ document.name }}</h3>
                 <h3 id="document-id" style="display: None">{{ document.id }}</h3>
             </div>
+            {% if not public_view %}
             <div class="col-sm-4 text-right" >
                 {% include '/document/document_action_buttons.html' %}
             </div>
+            {% endif %}
         </div>
 
         <div class="row mb-4">
@@ -26,6 +28,7 @@
                 <button id="next-btn" type="button" class="btn btn-secondary mb-2" data-toggle="tooltip"
                         data-placement="top" title="ALT + RIGHT">Next&nbsp;&nbsp;<i class="fas fa-arrow-right"></i></button>
             </div>
+            {% if not public_view %}
             <div class="col-lg-6 col-md-7 text-md-right">
                 <a id="btn-export-page-xml" class="btn btn-info mb-2" role="button"  download><i class="far fa-file-code fa-lg"></i>&nbsp;&nbsp;Export PAGE</a>
                 <a id="btn-export-alto-xml" class="btn btn-info mb-2" role="button" download><i class="far fa-file-code fa-lg"></i>&nbsp;&nbsp;Export ALTO</a>
@@ -38,6 +41,7 @@
                     <a class="btn btn-info mb-2" role="button" style="color:white" href="/document/lines_check/{{ document.id }}">Show Suspect Lines</a>
                 {% endif  %}
             </div>
+            {% endif %}
         </div>
 
         <div class="row">
@@ -58,30 +62,18 @@
             </div>
         </div>
 
+        {% if not public_view %}
         <div class="row mt-2">
             <div class="col-sm-11 d-xl-none text-center">
-                <button type="button" class="save-btn btn btn-success"><i class="far fa-save fa-lg"></i>&nbsp;&nbsp;Save</button>
+                <button type="button" class="save-btn btn btn-success"><i class="far fa-save fa-lg"></i>Save</button>
             </div>
             <div class="col-sm-1 d-xl-none text-right">
                 <button type="button" class="keyboard-btn btn btn-secondary" data-toggle="tooltip"
-                        data-placement="top" title="ALT + K"><i class="far fa-keyboard fa-lg"></i></i></button>
+                        data-placement="top" title="ALT + K"><i class="far fa-keyboard fa-lg"></i></button>
             </div>
         </div>
+        {% endif %}
 
-        <!--
-        <div id="debug-container" class="row my-2" style="display: none">
-            <div class="col-sm-12 text-center">
-                <div id="debug-line-container" class="text-line"></div>
-            </div>
-        </div>
-
-        <div id="debug-container-2" class="row my-2" style="display: none">
-            <div class="col-sm-12 text-center">
-                <div id="debug-line-container-2" class="text-line"></div>
-            </div>
-        </div>
-        -->
- 
         <div class="row my-2">
             <div class="col-xl-4">
                 <div class="d-flex flex-row">
@@ -99,6 +91,7 @@
                     </div>
                 </div>
             </div>
+            {% if not public_view %}
             <div class="col-xl-4 d-none d-xl-block text-center">
                 <button type="button" data-toggle="tooltip" data-placement="top" title="ALT + V" class="save-btn btn btn-success"><i class="far fa-save fa-lg"></i>&nbsp;&nbsp;Save</button>
                 <button type="button" data-toggle="tooltip" data-placement="top" title="ALT + B" id="deletebutton" class="btn btn-danger"><i class="far fa-trash-alt"></i> Delete line</button>
@@ -109,8 +102,9 @@
                 <button type="button" class="keyboard-btn btn btn-secondary" data-toggle="tooltip"
                         data-placement="top" title="ALT + K"><i class="far fa-keyboard fa-lg"></i></button>
             </div>
+            {% endif %}
         </div>
-
+        {% if not public_view %}
         <div id="keyboard" class="d-none">
             <div class=" text-right pb-2">
                 <button type="button" class="keyboard-btn btn btn-link"><i class="fas fa-times fa-lg"></i></i></button>
@@ -134,6 +128,7 @@
                 <div id="remove-custom-letters-btn" class="btn btn-danger">Remove custom letters</div>
             </div>
         </div>
+        {% endif %}
 
     </div>
 {% endblock %}
@@ -155,7 +150,11 @@
             let image_fetch = new Promise((resolve, reject) => {
                 element.onload = resolve;
                 element.onerror = reject;
-                element.src = element.dataset.src;
+                {% if not public_view %}
+                    element.src  = element.dataset.src.replace('get_image_preview', 'get_image_preview');
+                {% else %}
+                    element.src  = element.dataset.src.replace('get_image_preview', 'get_public_image_preview');
+                {% endif %}
             });
             let figure = element.parentElement;
             let state_fetch = fetch("/ocr/get_image_annotation_statistics/" + figure.dataset['image'])
@@ -183,18 +182,32 @@
     <script src="/static/leaflet/leaflet.js"></script>
     <script src="/static/leaflet/Leaflet.Editable.js"></script>
     <script src="/static/leaflet/Path.Drag.js"></script>
-    <script src="/static/js/arabic_reshaper.js?version=1.4.20"></script>
+    <script src="/static/js/arabic_reshaper.js?version=1.4.21"></script>
     <script src="/static/js/ocr/ocr_export_buttons.js?version=1.4.2"></script>
-    <script src="/static/js/ocr/text_line.js?version=1.4.25"></script>
-    <script src="/static/js/ocr/text_lines_editor.js?version=1.4.24"></script>
+    <script src="/static/js/ocr/text_line.js?version=1.4.26"></script>
+    <script src="/static/js/ocr/text_lines_editor.js?version=1.4.25"></script>
     <script src="/static/js/ocr/keyboard.js?version=1.4.6"></script>
-    <script src="/static/js/image_list.js?version=1.4.8"></script>
+    <script src="/static/js/image_list.js?version=1.4.9"></script>
     <script>
-        let ocr_export_buttons = new OCRExportButtons();
-        let text_lines_editor = new TextLinesEditor(document.getElementById('map-container'));
-        let keyboard = new Keyboard(document.getElementById('keyboard'), text_lines_editor);
-        let image_list = new ImageList([ocr_export_buttons, text_lines_editor]);
+        {% if public_view %}
+            let public_view = true;
+        {% else %}
+            let public_view = false;
+        {% endif %}
 
+
+
+        let text_lines_editor = new TextLinesEditor(document.getElementById('map-container'), public_view);
+        {% if public_view %}
+            let image_list = new ImageList([text_lines_editor], 'show_public_results');
+        {% else %}
+            let ocr_export_buttons = new OCRExportButtons(public_view);
+            let image_list = new ImageList([ocr_export_buttons, text_lines_editor], 'show_results');
+            let keyboard = new Keyboard(document.getElementById('keyboard'), text_lines_editor);
+        {% endif %}
+
+
+        {% if not public_view %}
         document.querySelector('body').addEventListener('keydown', shortcut);
         function shortcut(e) {
             // ALT + V
@@ -225,5 +238,6 @@
                 text_lines_editor.show_next_line();
             }
         }
+        {% endif %}
     </script>
 {% endblock %}

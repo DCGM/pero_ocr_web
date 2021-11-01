@@ -71,6 +71,55 @@
             </div>
         </div>
 
+        <div class="modal fade" id="make-public-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Make document public</h5>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to make this document public? It will be visible to everyone. Only collaborators will be able to make changes.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button id="make-public-modal-button" type="button" class="btn btn-danger">Make public</button>
+                    </div>
+                    <div id="make-public-loader" class="container py-5">
+                        <div class="row">
+                            <div class="col" align="center">
+                                <div class="loader"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="make-private-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Make document private</h5>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to make this document private? It will still be visible to collaborators.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button id="make-private-modal-button" type="button" class="btn btn-danger">Make private</button>
+                    </div>
+                    <div id="make-private-loader" class="container py-5">
+                        <div class="row">
+                            <div class="col" align="center">
+                                <div class="loader"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
         <div class="row my-3">
             <div class="offset-xl-1 col-xl-10">
                 <a class="btn btn-primary add-document-button" href="{{ url_for('document.new_document') }}">
@@ -87,6 +136,7 @@
                     <tr role="row">
                         <th scope="col" class="image_column">Page</th>
                         <th scope="col">Name</th>
+                        <th scope="col">Public</th>
                         <th scope="col">Lines</th>
                         <th scope="col">Revised</th>
                         <th scope="col">Owner</th>
@@ -103,6 +153,13 @@
                                 </div>
                             </td>
                             <td><a href="{{ url_for('ocr.show_results', document_id=document.id) }}">{{ document.name }}</a></td>
+                            <td td data-sort="{{document.is_public}}">
+                                {% if document.is_public %}
+                                    <i class="fa fa-smile fa-4"></i>
+                                {% else %}
+                                    <i class="fa fa-frown-o fa-4"></i>
+                                {% endif %}
+                            </td>
                             <td>{{ document.line_count }}</td>
                             <td>{{ document.annotated_line_count }}</td>
                             <td>{{ document.user.first_name }} {{ document.user.last_name }}</td>
@@ -121,7 +178,7 @@
 
 {% block styles %}
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
-    <link rel="stylesheet" href="/static/css/loader.css?v=1.0">
+    <link rel="stylesheet" href="/static/css/loader.css?v=1.1">
     <style>
         .document-action-btn{
             min-height: 25px;
@@ -157,7 +214,7 @@
                 } catch(err){
                     console.log('ERROR')
                 }
-                if (title != 'Actions' && title != 'Page' && title != 'Lines' && title != 'Revised') {
+                if (title != 'Actions' && title != 'Page' && title != 'Lines' && title != 'Revised' && title != 'Public') {
                     $(this).html('<input type="text" placeholder="Search" width="100%" value="' + input_value + '"/>');
                     $('input', this).on('keyup change', function () {
                         if (table.column(i).search() !== this.value) {
@@ -174,6 +231,8 @@
         let $modal_delete = $('#exampleModal');
         let $modal_revert_layout = $('#revert-layout-modal');
         let $modal_revert_OCR = $('#revert-OCR-modal');
+        let $modal_make_public = $('#make-public-modal');
+        let $modal_make_private = $('#make-private-modal');
         let last_document_id = null;
         $('[data-toggle="tooltip"]').tooltip();
         $modal_delete.modal({
@@ -185,6 +244,16 @@
             show: false
         });
         $modal_revert_OCR.modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: false
+        });
+        $modal_make_public.modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: false
+        });
+        $modal_make_private.modal({
             backdrop: 'static',
             keyboard: false,
             show: false
@@ -219,6 +288,44 @@
             $("#revert-OCR-loader").hide();
             $modal_revert_OCR.modal('show');
         });
+
+        $('.make-public-button').on('click', function (event) {
+            event.preventDefault();
+            last_document_id = $(this).data('document');
+            $("#make-public-loader").hide();
+            $modal_make_public.modal('show');
+        });
+        $('#make-public-modal-button').on('click', function (event) {
+            event.preventDefault();
+            console.log(last_document_id);
+            $.get("/document/make_public/" + last_document_id).done(function (document_id) {
+                $modal_make_public.modal('hide');
+                location.reload();
+            });
+            $("#make-public-modal .modal-body").hide();
+            $("#make-public-modal .modal-footer").hide();
+            $("#make-public-loader").show();
+        });
+
+        $('.make-private-button').on('click', function (event) {
+            event.preventDefault();
+            last_document_id = $(this).data('document');
+            $("#make-private-loader").hide();
+            $modal_make_private.modal('show');
+        });
+        $('#make-private-modal-button').on('click', function (event) {
+            event.preventDefault();
+            console.log(last_document_id);
+            $.get("/document/make_private/" + last_document_id).done(function (document_id) {
+                $modal_make_private.modal('hide');
+                location.reload();
+            });
+            $("#make-private-modal .modal-body").hide();
+            $("#make-private-modal .modal-footer").hide();
+            $("#make-private-loader").show();
+        });
+
+
 
         $('#revert-layout-modal-remove-button').on('click', function (event) {
             event.preventDefault();
