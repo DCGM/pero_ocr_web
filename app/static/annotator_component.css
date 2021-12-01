@@ -1,0 +1,363 @@
+@charset "UTF-8";
+
+/**
+Tento soubor byl převzat z diplomové práce "Active Learning pro zpracování archivních pramenů"
+
+Autor práce: David Hříbek
+Rok: 2021
+**/
+
+/**
+Tento soubor byl převzat z diplomové práce "Active Learning pro zpracování archivních pramenů"
+
+Autor práce: David Hříbek
+Rok: 2021
+**/
+
+/**
+Tento soubor byl převzat z diplomové práce "Active Learning pro zpracování archivních pramenů"
+
+Autor práce: David Hříbek
+Rok: 2021
+**/
+
+/*
+//.content-wrapper {
+//    background: $body-bg;
+//}
+//
+//.main-sidebar {
+//    background-color: $sidebar-bg;
+//}
+//
+//.main-header {
+//    background-color: $sidebar-bg;
+//}
+
+footer.sticky-footer {
+    padding: 0 !important;
+}
+
+button.active {
+    background: $cyan;
+}
+
+//.navbar {
+//    background: $navbar-bg;
+//
+//    ul#navbar-nav-main li a {
+//        color: white;
+//        &.active {
+//            color: $cyan !important;
+//        }
+//    }
+//}
+//.scroll {
+//    //position: absolute;
+//    height: 300px;
+//    overflow-y: scroll;
+//}
+
+#accordionSidebar {
+    background: $navbar-bg;
+}
+
+.text-primary {color:white !important;}
+
+//body {
+//    color: white;
+//}
+
+::placeholder {
+    color: white !important;
+}
+
+.table {
+    color: white;
+    text-align: center;
+
+    &.table-striped tbody tr:nth-of-type(odd) {
+        background-color: $table-stripped-color !important;
+    }
+
+    &.table-no-padding {
+        tr, td {
+            padding: 0 !important;
+            white-space:nowrap;
+        }
+    }
+}
+
+.page-link {
+    background: transparent;
+    border: none !important;
+}
+
+.page-link:hover {
+    background: white;
+    color: $body-bg;
+}
+
+.topbar {
+    height: 3rem !important;
+}
+
+
+.btn-primary {
+    color: black;
+}
+
+.input-group-text {
+    background: #0b0e1d;
+    color: white;
+    border: none;
+}
+
+.form-control {
+    border: none;
+    color: white !important;
+    background: $form-control !important;
+}
+
+.form-control:disabled {
+    background: $navbar-bg;
+}
+
+.bg-login-image {
+    background: url('/front.svg');
+    background-size: 100% 100%;
+}
+
+.card-header-register {
+    height: 200px;
+    overflow: hidden;
+    background: url('/reset.svg');
+    background-size: 100% 100%;
+}
+
+.input-group {
+    padding: 2px;
+}
+
+.dropdown-menu {
+    background: $navbar-bg;
+    .dropdown-item {
+        color: white;
+        border: none !important;
+    }
+    .dropdown-item:hover {
+        background: $body-bg !important;
+    }
+
+    .dropdown-header {
+        background: $body-bg !important;
+        border: none !important;;
+    }
+}
+*/
+
+#app #wrapper #content-wrapper {
+  background-color: #6a757e;
+}
+
+#app #wrapper .card {
+  background-color: #32373c;
+  color: white;
+  border-color: #32373c;
+}
+
+#app #wrapper .card .card-header {
+  background-color: #32373c;
+  height: 200px;
+  overflow: hidden;
+}
+
+#app #wrapper .card .card-header img {
+  height: 100%;
+  width: auto;
+  margin: auto;
+}
+
+#app #wrapper .badge {
+  color: black;
+}
+
+#app #wrapper .list-group-item {
+  background: #32373c;
+  color: #a5abbd;
+}
+
+#app #wrapper .list-group-item span.active {
+  color: white !important;
+}
+
+#app #wrapper .modal-content {
+  background: #32373c;
+}
+
+#app #wrapper .close {
+  color: #fff;
+}
+
+#app #wrapper .input-group-text {
+  width: auto;
+}
+
+#app #wrapper #modal input.form-control {
+  background: #6a757e;
+  color: white;
+}
+
+#app #wrapper .dropzone {
+  background: transparent;
+}
+
+#annotator {
+  width: 100%;
+}
+
+#annotator .navbar {
+  background-color: #32373c;
+}
+
+#annotator .navbar a {
+  color: white !important;
+}
+
+#annotator #canvas-wrapper {
+  width: 100% !important;
+  height: 100% !important;
+  position: relative;
+}
+
+#annotator #canvas-wrapper input.input-transcription-text {
+  width: 85%;
+  background: transparent;
+  color: white;
+  border: none;
+  text-align: center;
+}
+
+#annotator #canvas-wrapper input.input-transcription-text:focus {
+  outline: none;
+}
+
+#annotator #canvas-wrapper #canvas-contextmenu {
+  transform: scale(0);
+  transform-origin: top left;
+  position: fixed;
+  z-index: 1000;
+  width: -webkit-fit-content;
+  width: -moz-fit-content;
+  width: fit-content;
+  padding: 5px;
+  cursor: -webkit-grab;
+  cursor: grab;
+  background-color: #32373c;
+}
+
+#annotator #canvas-wrapper #canvas-contextmenu div {
+  color: white !important;
+}
+
+#annotator #canvas-wrapper #canvas-contextmenu div:hover {
+  background-color: #6a757e;
+}
+
+#annotator #canvas-wrapper #canvas-contextmenu.active {
+  transform: scale(1);
+  transition: transform 150ms ease-in-out;
+}
+
+#annotator #canvas-wrapper #canvas-row-text {
+  position: absolute;
+  right: 0;
+  top: 0;
+  left: 0;
+  text-align: center;
+  min-width: 40%;
+  width: -webkit-fit-content;
+  width: -moz-fit-content;
+  width: fit-content;
+  margin: auto;
+  border-radius: 0 0 15px 15px;
+  background-color: #6a757e;
+  opacity: 0.8;
+}
+
+#annotator #canvas-wrapper #canvas-coordinates {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+#annotator #canvas-wrapper #canvas {
+  background: #e9eaed;
+  cursor: crosshair;
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+
+#annotator #canvas-wrapper #tutorial {
+  background: #6a757e;
+  color: white;
+  font-weight: normal;
+  font-size: 14px;
+}
+
+#annotator #canvas-right-bar {
+  width: 350px;
+  background-color: #6a757e;
+}
+
+#annotator #canvas-right-bar ::-moz-placeholder {
+  color: #8a8a8a !important;
+}
+
+#annotator #canvas-right-bar :-ms-input-placeholder {
+  color: #8a8a8a !important;
+}
+
+#annotator #canvas-right-bar ::placeholder {
+  color: #8a8a8a !important;
+}
+
+#annotator #canvas-right-bar hr {
+  border-top: 1px solid white;
+}
+
+#annotator #canvas-right-bar #annotations-container input {
+  background-color: transparent;
+  border: none;
+  color: white;
+  width: 100%;
+}
+
+#annotator #tool-bar {
+  background-color: #6a757e;
+}
+
+#annotator #tool-bar div {
+  color: #cacaca;
+  text-align: center;
+}
+
+#annotator #tool-bar div i {
+  padding: 7px;
+}
+
+#annotator #tool-bar .text-small {
+  font-size: 0.7em;
+}
+
+#annotator #tool-bar div.active {
+  color: white !important;
+}
+
+#annotator #tool-bar div.active i {
+  color: white;
+  background: #32373c;
+  border-radius: 5px;
+}
+

@@ -1,0 +1,356 @@
+/**
+Tento soubor byl převzat z diplomové práce "Active Learning pro zpracování archivních pramenů"
+
+Autor práce: David Hříbek
+Rok: 2021
+**/
+
+/*
+//.content-wrapper {
+//    background: $body-bg;
+//}
+//
+//.main-sidebar {
+//    background-color: $sidebar-bg;
+//}
+//
+//.main-header {
+//    background-color: $sidebar-bg;
+//}
+
+footer.sticky-footer {
+    padding: 0 !important;
+}
+
+button.active {
+    background: $cyan;
+}
+
+//.navbar {
+//    background: $navbar-bg;
+//
+//    ul#navbar-nav-main li a {
+//        color: white;
+//        &.active {
+//            color: $cyan !important;
+//        }
+//    }
+//}
+//.scroll {
+//    //position: absolute;
+//    height: 300px;
+//    overflow-y: scroll;
+//}
+
+#accordionSidebar {
+    background: $navbar-bg;
+}
+
+.text-primary {color:white !important;}
+
+//body {
+//    color: white;
+//}
+
+::placeholder {
+    color: white !important;
+}
+
+.table {
+    color: white;
+    text-align: center;
+
+    &.table-striped tbody tr:nth-of-type(odd) {
+        background-color: $table-stripped-color !important;
+    }
+
+    &.table-no-padding {
+        tr, td {
+            padding: 0 !important;
+            white-space:nowrap;
+        }
+    }
+}
+
+.page-link {
+    background: transparent;
+    border: none !important;
+}
+
+.page-link:hover {
+    background: white;
+    color: $body-bg;
+}
+
+.topbar {
+    height: 3rem !important;
+}
+
+
+.btn-primary {
+    color: black;
+}
+
+.input-group-text {
+    background: #0b0e1d;
+    color: white;
+    border: none;
+}
+
+.form-control {
+    border: none;
+    color: white !important;
+    background: $form-control !important;
+}
+
+.form-control:disabled {
+    background: $navbar-bg;
+}
+
+.bg-login-image {
+    background: url('/front.svg');
+    background-size: 100% 100%;
+}
+
+.card-header-register {
+    height: 200px;
+    overflow: hidden;
+    background: url('/reset.svg');
+    background-size: 100% 100%;
+}
+
+.input-group {
+    padding: 2px;
+}
+
+.dropdown-menu {
+    background: $navbar-bg;
+    .dropdown-item {
+        color: white;
+        border: none !important;
+    }
+    .dropdown-item:hover {
+        background: $body-bg !important;
+    }
+
+    .dropdown-header {
+        background: $body-bg !important;
+        border: none !important;;
+    }
+}
+*/
+
+#annotator_component {
+    //height: 60vh;
+}
+
+#text_scroll_editor {
+    //height: 20vh;
+}
+
+#app #wrapper {
+
+    #content-wrapper {
+        background-color: $body-bg;
+    }
+
+    .card {
+        background-color: $navbar-bg;
+        color: white;
+        border-color: $navbar-bg;
+        .card-header {
+            background-color: $navbar-bg;
+            height: 200px;
+            overflow: hidden;
+
+            img {
+                height: 100%;
+                width: auto;
+                margin: auto;
+            }
+        }
+        //.card-image {
+        //
+        //}
+    }
+
+    .badge {
+        color: black;
+    }
+
+    .list-group-item {
+        background: $navbar-bg;
+        color: #a5abbd;
+        span.active {
+            color: white !important;
+        }
+    }
+
+    .modal-content {
+        background: $navbar-bg;
+    }
+
+    .close {
+        color: #fff;
+    }
+
+    .input-group-text {
+        width: auto;
+    }
+
+    #modal input.form-control {
+        background: $body-bg;
+        color: white;
+    }
+
+    .dropzone {
+        background: transparent;
+        //&.dz-started > div {
+        //    display: block !important;
+        //}
+    }
+}
+
+#annotator {
+    width: 100%;
+
+    .navbar {
+        background-color: $navbar-bg;
+
+        a {
+            color: white !important;
+        }
+    }
+
+    #canvas-wrapper {
+        width: 100% !important;
+        height: 100% !important;
+        position: relative;
+
+        input.input-transcription-text {
+            width: 85%;
+            background: transparent;
+            color: white;
+            border: none;
+            text-align: center;
+
+            &:focus {
+                outline: none;
+            }
+        }
+
+        #canvas-contextmenu {
+            transform: scale(0);
+            transform-origin: top left;
+            position: fixed;
+            z-index: 1000;
+            width: fit-content;
+            padding: 5px;
+            cursor: grab;
+            background-color: $navbar-bg;
+            div {
+                color: white !important;
+            }
+
+            div:hover {
+                background-color: $body-bg;
+            }
+
+            &.active {
+                transform: scale(1);
+                transition: transform 150ms ease-in-out;
+            }
+        }
+
+        #canvas-row-text {
+            position: absolute;
+            right: 0;
+            top: 0;
+            left: 0;
+            text-align: center;
+            min-width: 40%;
+            width: fit-content;
+            margin: auto;
+            border-radius: 0 0 15px 15px;
+            background-color: $body-bg;
+            opacity: 0.8;
+        }
+
+        #canvas-coordinates {
+            position: absolute;
+            right: 0;
+            top: 0;
+            //background-color: $navbar-bg;
+        }
+
+        #canvas {
+            background: $canvas-bg;
+            cursor: crosshair;
+            width: 100% !important;
+            height: 100% !important;
+            display: block !important;
+            //border-radius: 5px !important;
+        }
+
+        #tutorial {
+            background: $body-bg;
+            color: white;
+            font-weight: normal;
+            font-size: 14px;
+        }
+    }
+
+    #canvas-right-bar {
+        width: 350px;
+        background-color: $annotationsbar-bg;
+        //background: linear-gradient(180deg, rgba(43, 43, 43, 1) 0%, rgba(37, 37, 37, 1) 100%);
+
+
+        ::placeholder {
+            color: $tool-disabled !important;
+        }
+
+        hr {
+            border-top: 1px solid white;
+        }
+
+        #annotations-container {
+            input {
+                background-color: transparent;
+                border: none;
+                color: white;
+                width: 100%;
+            }
+        }
+    }
+
+    #tool-bar {
+        background-color: $toolbar-bg;
+        //background: linear-gradient(180deg, rgba(43, 43, 43, 1) 0%, rgba(37, 37, 37, 1) 100%);
+
+        div {
+            color: $white-muted;
+            text-align: center;
+
+            i {
+                padding: 7px;
+            }
+        }
+
+        .text-small {
+            font-size: 0.7em;
+        }
+
+        div.active {
+            color: $primary !important;
+
+            i {
+                color: white;
+                background: $navbar-bg;
+                border-radius: 5px;
+            }
+        }
+    }
+}
+
+
