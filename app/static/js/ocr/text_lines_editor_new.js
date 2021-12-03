@@ -1,3 +1,4 @@
+
 yx = L.latLng;
 xy = function (x, y) {
     if (L.Util.isArray(x)) {    // When doing xy([x, y]);
@@ -15,8 +16,6 @@ class TextLinesEditor {
         this.public_view = public_view;
         this.abort_controller = new AbortController();
         this.container = container;
-        this.container.innerHTML = "<div class='editor-map'></div><div class='status'></div>";  // OLD COMPONENT
-        this.map_element = this.container.getElementsByClassName("editor-map")[0];  // OLD COMPONENT
         this.active_line = false;
         this.focus_to = null;
         if(!this.public_view) {
@@ -43,10 +42,12 @@ class TextLinesEditor {
         }
         this.worst_confidence = 0;
 
+        /** Annotator component: get reference **/
+        this.annotator_wrapper_component = vue_app.$refs.annotator_wrapper_component;
     }
 
     swap_ignore_line_button_blueprint(){
-        if(this.public_view) {
+        if(this.public_view){
             return;
         }
         if (this.active_line.for_training_checkbox.checked){
@@ -62,10 +63,10 @@ class TextLinesEditor {
     }
 
     swap_delete_line_button_blueprint(){
-        if(this.public_view) {
+        if(this.public_view){
             return;
         }
-        if (this.active_line.valid) {
+        if (this.active_line.valid){
             this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
             this.delete_btn.className  = 'btn btn-danger';
         }
@@ -79,11 +80,11 @@ class TextLinesEditor {
         }
     }
 
-    ignore_line_btn_action(button= false) {
-        if(this.public_view) {
+    ignore_line_btn_action(button=false){
+        if(this.public_view){
             return;
         }
-        if (this.active_line != false) {
+        if (this.active_line != false){
             if (button) {
                 this.active_line.for_training_checkbox.checked = !this.active_line.for_training_checkbox.checked;
             }
@@ -120,8 +121,8 @@ class TextLinesEditor {
         }
     }
 
-    set_line_style(line) {
-        var conf = (line.line_confidence-this.worst_confidence) / (1 - this.worst_confidence);
+    set_line_style(line){
+        var conf = (line.line_confidence-this.worst_confidence) / (1-this.worst_confidence);
 
         var color = '';
         if (!line.valid) {
@@ -164,7 +165,6 @@ class TextLinesEditor {
                 route = Flask.url_for('ocr.delete_line', {'line_id': delete_uuid, 'delete_flag': delete_flag});
             else
                 route = Flask.url_for('ocr.delete_region', {'region_id': delete_uuid, 'delete_flag': delete_flag});
-
 
             this.delete_btn.disabled = true;
             $.ajax({
@@ -210,8 +210,10 @@ class TextLinesEditor {
                     unsaved_lines = true;
                 }
             }
-            if (unsaved_lines && !this.public_view) {
-                if (confirm("Save changes?")) {
+            if (unsaved_lines && !this.public_view)
+            {
+                if (confirm("Save changes?"))
+                {
                     this.save_annotations();
                 }
             }
@@ -219,8 +221,9 @@ class TextLinesEditor {
         this.focus_to = line_id;
         this.get_image(image_id);
         this.swap_delete_line_button_blueprint();
-        if(!this.public_view)
+        if(!this.public_view) {
             this.ignore_btn.innerHTML = '<i class="fas fa-minus-circle"></i> Ignore line';
+        }
         this.change_url = change_url_callback;
     }
 
@@ -234,11 +237,11 @@ class TextLinesEditor {
         }
 
         let route = '';
-        if(this.public_view)
+        if(this.public_view) {
             route = Flask.url_for('ocr.get_public_lines', {'image_id': image_id});
-        else
+        } else{
             route = Flask.url_for('ocr.get_lines', {'image_id': image_id});
-
+        }
         while (this.text_container.firstChild)
         {
             this.text_container.firstChild.remove();
@@ -258,27 +261,6 @@ class TextLinesEditor {
         this.active_line = false;
         this.lines = [];
 
-        // Init map  // OLD COMPONENT
-        if (this.map) {
-            this.map.off();
-            this.map.remove();
-        }
-        this.map = L.map(this.map_element, {
-            crs: L.CRS.Simple,
-            minZoom: -3,
-            maxZoom: 3,
-            center: [this.width / 2, this.height / 2],
-            zoom: 0,
-            editable: true,
-            fadeAnimation: false,
-            zoomAnimation: true,
-            zoomSnap: 0
-        });
-
-        let bounds = [xy(0, -this.height), xy(this.width, 0)];
-        this.map.setView(xy(this.width / 2, -this.height / 2), -2);  // OLD COMPONENT
-        this.map.fitBounds(bounds);  // OLD COMPONENT
-
         /** Get background image url **/
         let image_url;
         if(this.public_view) {
@@ -286,11 +268,89 @@ class TextLinesEditor {
         } else {
             image_url = Flask.url_for('document.get_image', {'image_id': this.image_id});
         }
-        L.imageOverlay(image_url, bounds).addTo(this.map);  // OLD COMPONENT
-        if (abort_signal.aborted) {
-            return;
-        }
+
+        /** Annotator component: Load image **/
+        this.annotator_wrapper_component.load_image(image_url);
+
+        /** Annotator component: Load region annotations **/
+        let region_annotations = get_annotations(data, 'region');
+        this.annotator_wrapper_component.load_annotations(region_annotations);
+
+        /** Annotator component: Load row annotations **/
+        let row_annotations = get_annotations(data, 'row');
+        this.annotator_wrapper_component.load_annotations(row_annotations);
+
+        /** Annotator component: Event listener -> Row selected event **/
+        this.annotator_wrapper_component.$refs.annotator_component.$on('row-selected-event', (annotation) => {
+            console.log('selected row', annotation)
+            // Find line
+            let selected_line = this.lines.find(item => item.id === annotation.uuid);
+
+            // Zoom annotation
+            // this.annotator_wrapper_component.zoom_row(annotation.uuid);
+
+            // Text Scroll: Select line
+            if (selected_line)
+                this.polygon_click(selected_line);
+        });
+
+        /** Annotator component: Event listener -> Region selected event **/
+        this.annotator_wrapper_component.$refs.annotator_component.$on('region-selected-event', (annotation) => {
+            console.log('selected region', annotation)
+        });
+
+        /** Annotator component: Event listener -> Row/region created event **/
+        this.annotator_wrapper_component.$refs.annotator_component.$on('row-created-event', (annotation) => annotationCreatedEditedEventHandler(annotation, 'row', this.image_id));
+        this.annotator_wrapper_component.$refs.annotator_component.$on('region-created-event', (annotation) => annotationCreatedEditedEventHandler(annotation, 'region', this.image_id));
+
+        /** Annotator component: Event listener -> Row/region edited event **/
+        this.annotator_wrapper_component.$refs.annotator_component.$on('row-edited-event', (annotation) => annotationCreatedEditedEventHandler(annotation, 'row'));
+        this.annotator_wrapper_component.$refs.annotator_component.$on('region-edited-event', (annotation) => annotationCreatedEditedEventHandler(annotation, 'region'));
+
         let self = this;
+        function annotationCreatedEditedEventHandler(annotation, annotation_type, image_id=null) {
+            console.log('creating/editing', annotation, annotation_type, image_id);
+            axios
+                .post('/ocr/create_edit_annotation', {
+                    annotation: annotation,
+                    annotation_type: annotation_type,
+                    image_id: image_id,
+                })
+                .then((response) => {
+                    if (image_id && annotation_type === 'row') {  // Creating new line
+                        let debug_line_container = document.getElementById('debug-line-container');
+                        let debug_line_container_2 = document.getElementById('debug-line-container-2');
+
+                        let line = new TextLine(
+                            annotation.uuid,
+                            annotation.annotated,
+                            annotation.text, [], [], false, false, debug_line_container, debug_line_container_2
+                        )
+
+                        line.np_points = [];
+                        line.np_heights = [];
+                        line.focus = false;
+                        self.add_line_to_map(annotation.uuid, line);
+                        self.lines.push(line);
+
+                        /** Line saved successfully event handler **/
+                        line.notify_line_validated = () => {
+                            self.annotator_wrapper_component.validate_row_annotation(line.id);
+                        }
+                    }
+                })
+                .catch((errors) => console.log(errors));
+        }
+
+        /** Annotator component: Event listener -> Row/region deleted event **/
+        this.annotator_wrapper_component.$refs.annotator_component.$on('row-deleted-event', (annotation) => annotationDeletedEventHandler(annotation.uuid, 'row'));
+        this.annotator_wrapper_component.$refs.annotator_component.$on('region-deleted-event', (annotation) => annotationDeletedEventHandler(annotation.uuid, 'region'));
+
+        function annotationDeletedEventHandler(uuid, type) {
+            // console.log(uuid, type);
+            self.delete_line_btn_action(uuid, type);
+        }
+
         let observer = new MutationObserver(function (mutations) {
             mutations.forEach(function (m) {
                 self.set_line_style(self.lines[m.target.id]);
@@ -304,7 +364,8 @@ class TextLinesEditor {
 
         // Add annotations to map
         for (let l of data['lines']) {
-            let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic, l.for_training, debug_line_container, debug_line_container_2, !self.public_view);
+            let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic, l.for_training,
+                                    debug_line_container, debug_line_container_2, !self.public_view);
             line.np_points = l.np_points;
             line.np_heights = l.np_heights;
             line.focus = false;
@@ -325,6 +386,10 @@ class TextLinesEditor {
                 }
             }
 
+            /** Line saved successfully event handler **/
+            line.notify_line_validated = () => {
+                this.annotator_wrapper_component.validate_row_annotation(line.id);
+            }
         }
         this.worst_confidence = 0.95;
         for (let l of this.lines) {
@@ -337,7 +402,8 @@ class TextLinesEditor {
         if (this.focus_to != null) {
             this.focus_to = null;
         } else {
-            this.map_element.focus();
+            // this.map_element.focus();
+            // TODO: zoom to line on start
         }
     }
 
@@ -349,7 +415,6 @@ class TextLinesEditor {
         }
         line.polygon = L.polygon(points);
 
-        line.polygon.addTo(this.map);  // OLD COMPONENT
         line.polygon.on('click', this.polygon_click.bind(this, line));
 
         line.container.setAttribute("id", i);
@@ -357,6 +422,15 @@ class TextLinesEditor {
         line.container.addEventListener('focus', () => {
             /** Select line (old) **/
             this.line_focus(line);
+
+            /** Select line **/
+            let active_row = this.annotator_wrapper_component.$refs.annotator_component.active_row;
+            let old_uuid = active_row? active_row.uuid: null;
+            this.annotator_wrapper_component.select_row(line.id);
+
+            /** Zoom line **/
+            if (old_uuid !== line.id)
+                this.annotator_wrapper_component.zoom_row(line.id);
         });
 
         line.container.addEventListener('focusout', this.line_focus_out.bind(this, line));
@@ -405,10 +479,6 @@ class TextLinesEditor {
         }
 
         let focus_line_points = get_focus_line_points(line);
-        // OLD COMPONENT
-        this.map.stop();
-        this.map.flyToBounds([xy(focus_line_points[0], -focus_line_points[2]), xy(focus_line_points[1], -focus_line_points[2])],
-            {animate: true, duration: 0.5});
         this.active_line = line;
         line.focus = true;
         this.set_line_style(line)
@@ -469,13 +539,16 @@ class TextLinesEditor {
         }
     }
 
-    save_annotations() {
+    save_annotations()
+    {
         if(this.public_view){
             return;
         }
 
-        for (let l of this.lines) {
-            if (l.edited) {
+        for (let l of this.lines)
+        {
+            if (l.edited)
+            {
                 l.save();
             }
         }

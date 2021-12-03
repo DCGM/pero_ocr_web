@@ -13,8 +13,8 @@ from flask import url_for, redirect, flash, jsonify
 from flask_login import login_required, current_user
 from app.ocr import bp
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_baseline_by_id, get_ocr_by_id, \
-                           get_language_model_by_id, get_text_line_by_id, get_image_annotation_statistics_db, \
-                           get_document_annotation_statistics_db, get_previews_for_documents
+                           get_language_model_by_id, get_text_line_by_id, get_text_region_by_id, get_image_annotation_statistics_db, \
+                           get_document_annotation_statistics_db, get_previews_for_documents, TextLine
 from app.db import DocumentState, OCR, Document, Image, TextRegion, Baseline, LanguageModel, User, OCRTrainingDocuments
 from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
@@ -87,6 +87,30 @@ def show_public_results(document_id, image_id=None, line_id=None):
     return render_template('ocr/ocr_results.html', document=document, images=images,
                            trusted_user=False, computed_scores=True, public_view=True)
 
+@bp.route('/show_results_new/<string:document_id>', methods=['GET'])
+@bp.route('/show_results_new/<string:document_id>/<string:image_id>', methods=['GET'])
+@bp.route('/show_results_new/<string:document_id>/<string:image_id>/<string:line_id>', methods=['GET'])
+@login_required
+def show_results_new(document_id, image_id=None, line_id=None):
+    if not document_exists(document_id):
+        flash(u'Document with this id does not exist!', 'danger')
+        return redirect(url_for('main.index'))
+    if not is_user_owner_or_collaborator(document_id, current_user):
+        flash(u'You do not have sufficient rights to this document!', 'danger')
+        return redirect(url_for('main.index'))
+
+    document = get_document_by_id(document_id)
+    if document.state == DocumentState.NEW:
+        return redirect(url_for('document.upload_images_to_document', document_id=document.id))
+    elif document.state == DocumentState.COMPLETED_LAYOUT_ANALYSIS:
+        return redirect(url_for('layout_analysis.show_results_new', document_id=document.id))
+    elif document.state != DocumentState.COMPLETED_OCR:
+        flash(u'Document can not be edited int its current state.', 'danger')
+        return redirect(url_for('main.index'))
+
+    images = natsorted(get_document_images(document).all(), key=lambda x: x.filename)
+    return render_template('ocr/ocr_results_new.html', document=document, images=images,
+                           trusted_user=is_user_trusted(current_user), computed_scores=True)
 
 @bp.route('/revert_ocr/<string:document_id>', methods=['GET'])
 @login_required
@@ -126,6 +150,56 @@ def revert_ocr(document_id):
     print("##################################################################")
     return document_id
 
+
+@bp.route('/create_edit_annotation', methods=['POST'])
+@login_required
+def create_edit_annotation():
+    data = request.get_json()
+    annotation = data['annotation']
+    annotation_type = data['annotation_type']
+    image_id = data['image_id']
+    points = ' '.join(map(lambda p: f'{int(p["x"])},{int(p["y"])}', annotation['points']))
+
+    baseline = None
+    heights = None
+    if annotation_type == 'row':
+        baseline = ' '.join(map(lambda p: f'{int(p["x"])},{int(p["y"])}', annotation['baseline']))
+        heights = f"{annotation['heights'][0]} {annotation['heights'][1]}"
+
+    if image_id:  # Create new row/region
+        insert_data = None
+        if annotation_type == 'row':  # Row
+            insert_data = TextLine(
+                id=annotation['uuid'],
+                region_id=annotation['region_annotation_uuid'],
+                text=annotation['text'],
+                points=points,
+                baseline=baseline,
+                heights=heights,
+                order=1  # TODO
+            )
+        elif annotation_type == 'region':  # Region
+            insert_data = TextRegion(
+                id=annotation['uuid'],
+                points=points,
+                image_id=image_id,
+                order=42  # TODO
+            )
+        db_session.add(insert_data)
+        db_session.commit()
+        return 'created', 200
+    else:  # Edit existing row/region
+        if annotation_type == 'row':
+            text_line = get_text_line_by_id(annotation['uuid'])
+            #
+            text_line.points = points
+            text_line.baseline = baseline
+            text_line.heights = heights
+        elif annotation_type == 'region':
+            text_region = get_text_region_by_id(annotation['uuid'])
+            text_region.points = points
+        db_session.commit()
+        return 'edited', 200
 
 # SELECT PAGE
 ########################################################################################################################
@@ -294,11 +368,18 @@ def get_lines_common(image_id, public=False):
         text_regions = sorted(list(db_image.textregions), key=lambda x: x.order)
     else:
         text_regions = db_image.textregions
+    text_regions = list(filter(lambda region: not region.deleted, text_regions))
 
     annotated_lines = set(get_page_annotated_lines(image_id))
 
     arabic_helper = ArabicHelper()
     arabic = False
+
+    # Add regions
+    lines_dict['regions'] = list(map(lambda r: {
+        'uuid': r.id,
+        'np_points': r.np_points.tolist()
+    }, text_regions))
 
     for text_region in text_regions:
         text_lines = sorted(list(text_region.textlines), key=lambda x: x.order)
@@ -326,6 +407,7 @@ def get_lines_common(image_id, public=False):
 
             lines_dict['lines'].append({
                             'id': line.id,
+                            'region_id': line.region_id,
                             'np_points':  line.np_points.tolist(),
                             'np_baseline':  line.np_baseline.tolist(),
                             'np_heights':  line.np_heights.tolist(),
@@ -393,8 +475,12 @@ def save_annotations():
 @bp.route('/delete_line/<string:line_id>/<int:delete_flag>', methods=['POST'])
 @login_required
 def delete_line(line_id, delete_flag):
+    # Get text_line
     text_line = get_text_line_by_id(line_id)
-    document = text_line.region.image.document
+    if text_line:
+        document = text_line.region.image.document
+
+    #
     if not is_user_owner_or_collaborator(document.id, current_user):
         flash(u'You do not have sufficient rights to add annotations to the document!', 'danger')
         return jsonify({'status': 'redirect', 'href': url_for('document.documents')})
@@ -402,7 +488,34 @@ def delete_line(line_id, delete_flag):
         flash(u'You cannot add annotations to unprocessed document!', 'danger')
         return jsonify({'status': 'redirect', 'href': url_for('document.documents')})
 
-    set_delete_flag(text_line, delete_flag)
+    # Delete text_line
+    if text_line:
+        set_delete_flag(text_line, delete_flag)
+
+    return jsonify({'status': 'success'})
+
+@bp.route('/delete_region/<string:region_id>/<int:delete_flag>', methods=['POST'])
+@login_required
+def delete_region(region_id, delete_flag):
+    # Get text_region
+    text_region = get_text_region_by_id(region_id)
+    if text_region:
+        document = text_region.image.document
+
+    #
+    if not is_user_owner_or_collaborator(document.id, current_user):
+        flash(u'You do not have sufficient rights to add annotations to the document!', 'danger')
+        return jsonify({'status': 'redirect', 'href': url_for('document.documents')})
+    if document.state != DocumentState.COMPLETED_OCR:
+        flash(u'You cannot add annotations to unprocessed document!', 'danger')
+        return jsonify({'status': 'redirect', 'href': url_for('document.documents')})
+
+    # Delete text_line / text_region + nested text_lines
+    if text_region:
+        set_delete_flag(text_region, delete_flag)
+        # Delete all nested text_lines after deleting text_region
+        for text_line_child in text_region.textlines:
+            set_delete_flag(text_line_child, delete_flag)
 
     return jsonify({'status': 'success'})
 
