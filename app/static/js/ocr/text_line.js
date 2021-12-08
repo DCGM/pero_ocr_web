@@ -347,28 +347,48 @@ class TextLine
         // LEFT ARROW
         if (e.keyCode == 37 && !e.ctrlKey && !e.shiftKey && !empty_text_line_element)
         {
-            e.preventDefault();
+            let selection = document.getSelection();
             if (!this.arabic)
             {
-                this.move_caret_to_the_left();
+                // moving caret to the left but caret is on the first char in span
+                if (selection.anchorOffset <= 1)
+                {
+                    e.preventDefault();
+                    this.move_caret_to_the_left();
+                }
             }
             else
             {
-                this.move_caret_to_the_right();
+                // moving caret to the right but caret is on the last char in span
+                if (selection.anchorNode.length - selection.anchorOffset <= 0)
+                {
+                    e.preventDefault();
+                    this.move_caret_to_the_right();
+                }
             }
         }
 
         // RIGHT ARROW
         if (e.keyCode == 39 && !e.ctrlKey && !e.shiftKey && !empty_text_line_element)
         {
-            e.preventDefault();
+            let selection = document.getSelection();
             if (!this.arabic)
             {
-                this.move_caret_to_the_right();
+                // moving caret to the right but caret is on the last char in span
+                if (selection.anchorNode.length - selection.anchorOffset <= 0)
+                {
+                    e.preventDefault();
+                    this.move_caret_to_the_right();
+                }
             }
             else
             {
-                this.move_caret_to_the_left();
+                // moving caret to the left but caret is on the first char in span
+                if (selection.anchorOffset <= 1)
+                {
+                    e.preventDefault();
+                    this.move_caret_to_the_left();
+                }
             }
         }
 
@@ -534,12 +554,6 @@ class TextLine
     move_caret_to_the_left()
     {
         let selection = document.getSelection();
-        // moving caret to the left but caret is not on the first char in span (just move the caret normally)
-        if (selection.anchorOffset > 1)
-        {
-            selection.collapse(selection.anchorNode, selection.anchorOffset - 1);
-            return;
-        }
         let caret_span = this.get_caret_span();
         let previous_span = this.get_previous_valid_span();
         if (previous_span)
@@ -565,12 +579,6 @@ class TextLine
     move_caret_to_the_right()
     {
         let selection = document.getSelection();
-        // moving caret to the right but caret is not on the last char in span (just move the caret normally)
-        if (selection.anchorNode.length - selection.anchorOffset > 0)
-        {
-            selection.collapse(selection.anchorNode, selection.anchorOffset + 1);
-            return;
-        }
         let caret_span = this.get_caret_span();
         let caret_at_the_beginning_of_the_first_span = this.check_caret_is_at_the_beginning_of_the_first_span(caret_span);
         let valid_current_span = false;
@@ -762,7 +770,7 @@ class TextLine
     }
 
     get_range() {
-        var sel = document.getSelection()
+        var sel = document.getSelection();
         if (sel && sel.rangeCount > 0) {
             return sel.getRangeAt(0);
         }
