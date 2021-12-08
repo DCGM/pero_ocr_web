@@ -3,8 +3,9 @@
 class TextLine
 {
     constructor(id, annotated, text, confidences, ligatures_mapping, arabic, for_training, debug_line_container,
-                debug_line_container_2)
+                debug_line_container_2, editable)
     {
+        this.editable = editable;
         this.id = id;
         this.text = text;
         this.confidences = confidences;
@@ -770,6 +771,9 @@ class TextLine
 
     save()
     {
+        if(!this.editable){
+            return;
+        }
         let annotations = [];
         let annotation_dict = {};
         let new_text = this.get_text_content();
