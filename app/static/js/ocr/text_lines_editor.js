@@ -29,7 +29,7 @@ class TextLinesEditor {
                 btn.addEventListener('click', this.save_annotations.bind(this));
             }
             this.next_suspect_btn.addEventListener('click', this.show_next_line.bind(this));
-            this.delete_btn.addEventListener('click', this.delete_line_btn_action.bind(this));
+            this.delete_btn.addEventListener('click', this.delete_line_btn_action.bind(this, null, 'row'));
             this.ignore_btn.addEventListener('click', this.ignore_line_btn_action.bind(this), true);
         }
         this.show_line_height = document.getElementById('show-line-height');
