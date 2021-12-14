@@ -48,12 +48,21 @@
                     <a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a>
                   </div>
                 </li>
-          {% elif request.path == '/' or request.path == '/index' %}
-              <li class="nav-item">
-              {{ wtf.quick_form(form_login, action= url_for('auth.login'), extra_classes="form-inline my-2 my-lg-0 login-form") }}
-              </li>
-              <li class="nav-item">
+          {% else %}
+              {% if request.path == "/" or request.path == "/index"%}
+                  <li class="nav-item">
+                  {{ wtf.quick_form(form_login, action= url_for('auth.login'), extra_classes="form-inline my-2 my-lg-0 login-form") }}
+                  </li>
+              {% else %}
+                  <li class="nav-item">
+                    <a href="{{ url_for('main.index') }}" class="btn btn-primary ml-3">Home</a>
+                  </li>
+              {% endif %}
+              <li class="nav-item {%- if request.path == "/auth/signup" %} active{% endif %} ">
                 <a href="{{ url_for('auth.signup') }}" class="btn btn-primary ml-3">Sign Up</a>
+              </li>
+              <li class="nav-item {%- if request.path == "/document/public_documents" %} active{% endif %} ">
+                  <a class="btn btn-primary ml-3" href="{{ url_for('document.public_documents') }}">Public documents</a>
               </li>
           {% endif %}
       </ul>
