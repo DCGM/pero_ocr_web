@@ -303,8 +303,9 @@ def get_page_xml_regions(image_id):
 
 
 @bp.route('/get_page_xml_lines/<string:image_id>')
+@bp.route('/get_page_xml_lines/<string:image_id>/<int:valid>')
 @login_required
-def get_page_xml_lines(image_id):
+def get_page_xml_lines(image_id, valid=False):
     try:
         db_image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
@@ -316,7 +317,7 @@ def get_page_xml_lines(image_id):
 
     page_layout = get_page_layout(db_image, only_regions=False)
     filename = "{}.xml".format(os.path.splitext(page_layout.id)[0])
-    return create_string_response(filename, page_layout.to_pagexml_string(), minetype='text/xml')
+    return create_string_response(filename, page_layout.to_pagexml_string(validate_id=valid), minetype='text/xml')
 
 
 @bp.route('/get_annotated_page_xml_lines/<string:image_id>')
