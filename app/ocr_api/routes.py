@@ -27,7 +27,7 @@ def require_user_api_key(f):
     return decorated
 
 
-# curl  $SERVER_URL/ocr_api/new_document/test_document/someone@somewhere.com,someone@somewhere.com' --request POST --header "api-key: $API_KEY"
+# curl  "$SERVER_URL/ocr_api/new_document/test_document/someone@somewhere.com,someone@somewhere.com" --request POST --header "api-key: $API_KEY"
 @bp.route('/new_document/<string:document_name>/<string:user_list>', methods=['POST'])
 @require_user_api_key
 def new_document(db_user, document_name, user_list):
@@ -55,7 +55,7 @@ def new_document(db_user, document_name, user_list):
     return jsonify(result), 200
 
 
-# curl $SERVER_URL/ocr_api/upload_image/cf8473d0-1a20-4f8e-9f2f-ce70dd5e4d08 --request POST --header "api-key: $API_KEY" -F file=@00000003.xml
+# curl $SERVER_URL/ocr_api/upload_image/$DOCUMENT_ID --request POST --header "api-key: $API_KEY" -F file=@00000003.jpg
 @bp.route('/upload_image/<string:document_id>', methods=['POST'])
 @require_user_api_key
 def upload_image(db_user, document_id):
@@ -82,7 +82,7 @@ def list_documents(db_user):
     return jsonify(results), 200
 
 
-# curl $SERVER_URL/ocr_api/document_images/cf8473d0-1a20-4f8e-9f2f-ce70dd5e4d08 --request GET --header "api-key: $API_KEY"
+# curl $SERVER_URL/ocr_api/document_images/$DOCUMENT_ID --request GET --header "api-key: $API_KEY"
 @bp.route('/document_images/<string:document_id>', methods=['GET'])
 @require_user_api_key
 def document_images(db_user, document_id):
@@ -99,9 +99,9 @@ def document_images(db_user, document_id):
     return jsonify(results), 200
 
 
-# curl  $SERVER_URL/ocr_api/get_results/text/cf8473d0-1a20-4f8e-9f2f-ce70dd5e4d08/8e4939a3-e295-4017-9df2-9084103c17ad --request GET --header "api-key: $API_KEY"
-# curl  $SERVER_URL/ocr_api/get_results/page/cf8473d0-1a20-4f8e-9f2f-ce70dd5e4d08/8e4939a3-e295-4017-9df2-9084103c17ad --request GET --header "api-key: $API_KEY"
-# curl  $SERVER_URL/ocr_api/get_results/alto/cf8473d0-1a20-4f8e-9f2f-ce70dd5e4d08/8e4939a3-e295-4017-9df2-9084103c17ad --request GET --header "api-key: $API_KEY"
+# curl  $SERVER_URL/ocr_api/get_results/text/$DOCUMENT_ID/$IMAGE_ID --request GET --header "api-key: $API_KEY"
+# curl  $SERVER_URL/ocr_api/get_results/page/$DOCUMENT_ID/$IMAGE_ID --request GET --header "api-key: $API_KEY"
+# curl  $SERVER_URL/ocr_api/get_results/alto/$DOCUMENT_ID/$IMAGE_ID --request GET --header "api-key: $API_KEY"
 @bp.route('/get_results/<string:output_type>/<string:document_id>/<string:image_id>', methods=['GET'])
 @require_user_api_key
 def get_results(db_user, output_type, document_id, image_id):
@@ -137,7 +137,7 @@ def get_results(db_user, output_type, document_id, image_id):
     return create_string_response(file_name, output_string, minetype=mime_type)
 
 
-# curl  $SERVER_URL/ocr_api/delete_document/cf8473d0-1a20-4f8e-9f2f-ce70dd5e4d08 --request POST --header "api-key: $API_KEY"
+# curl  $SERVER_URL/ocr_api/delete_document/$DOCUMENT_ID --request POST --header "api-key: $API_KEY"
 @bp.route('/delete_document/<string:document_id>', methods=['POST'])
 @require_user_api_key
 def delete_document(db_user, document_id):
