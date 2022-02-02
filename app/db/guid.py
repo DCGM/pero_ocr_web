@@ -27,14 +27,17 @@ class GUID(TypeDecorator):
     def process_bind_param(self, value, dialect):
         """ When using Postgres database, no conversion.
             Otherwise, convert to string before storing to database. """
-        if dialect.name == 'postgres':
+        if dialect.name == 'postgresql':
             return value
 
         if value is None:
             return value
 
         if not isinstance(value, uuid.UUID):
-            return "%.32x" % uuid.UUID(value).int
+            try:
+                return "%.32x" % uuid.UUID(value).int
+            except ValueError:
+                return 0
         else:
             # hexstring
             return "%.32x" % value.int
