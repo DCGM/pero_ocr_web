@@ -280,7 +280,7 @@ def get_document_image_ids(document_id):
         flash(u'You do not have sufficient rights to document!', 'danger')
         return redirect(url_for('main.index'))
 
-    document = get_document_by_id(document_id)
+    document = get_document_by_id(document_id, with_deleted=True)
     images = natsorted(get_document_images(document).all(), key=lambda x: x.filename)
     return jsonify([str(x.id) for x in images])
 
