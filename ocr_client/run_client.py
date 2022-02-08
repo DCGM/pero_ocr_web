@@ -7,6 +7,7 @@ import requests
 import configparser
 import subprocess
 import traceback
+import json
 
 from client_helper import join_url
 from client_helper import unzip_response_to_dir
@@ -35,6 +36,8 @@ def check_and_process_ocr_request(config, session):
     document_get_image_route = config['SERVER']['document_get_image_route']
     document_get_xml_regions_route = config['SERVER']['document_get_xml_regions_route']
     document_get_xml_lines_route = config['SERVER']['document_get_xml_lines_route']
+    document_get_annotated_xml_lines_route = config['SERVER']['document_get_annotated_xml_lines_route']
+    ocr_get_document_annotation_statistics_route = config['SERVER']['ocr_get_document_annotation_statistics_route']
     main_add_log_to_request_route = config['SERVER']['main_add_log_to_request_route']
     ocr_post_result_route = config['SERVER']['ocr_post_result_route']
     ocr_change_ocr_request_and_document_state_on_success_route = config['SERVER']['ocr_change_ocr_request_and_document_state_on_success_route']
@@ -46,6 +49,7 @@ def check_and_process_ocr_request(config, session):
     ocr_id = request_json['ocr_id']
     language_model_id = request_json['language_model_id']
     document = request_json['document']
+    document_id = document['id']
     image_ids = document['images']
 
     print()
@@ -61,6 +65,7 @@ def check_and_process_ocr_request(config, session):
 
     working_dir = os.path.join(config['SETTINGS']['working_directory'], request_id)
     parse_folder_path = config['SETTINGS']['parse_folder_path']
+    select_embed_id_path = config['SETTINGS']['select_embed_id_path']
 
     models_folder = os.path.join(working_dir, "models")
     images_folder = os.path.join(working_dir, "images")
@@ -90,12 +95,50 @@ def check_and_process_ocr_request(config, session):
     number_of_images = len(os.listdir(images_folder))
     print("##############################################################")
 
-    print()
     if baseline_id is None:
+        response = session.get(join_url(base_url, ocr_get_document_annotation_statistics_route, document_id))
+        annotated_count = int(response.json()['annotated_count'])
+        min_annotated_lines_for_embed_selection = 50
+        print()
+        print("MIN ANNOTATED LINES FOR EMBED SELECTION: {}".format(min_annotated_lines_for_embed_selection))
+        print("ANNOTATED LINES: {}".format(annotated_count))
+        model_config = configparser.ConfigParser()
+        model_config.read(os.path.join(working_dir, "models", "config.ini"))
+        with open(os.path.join(working_dir, "models", model_config['OCR']['OCR_JSON']), 'r', encoding='utf8') as f:
+            ocr_config = json.load(f)
+        print("EMBED MODEL: {}".format("embed_id" in ocr_config))
+        if annotated_count >= min_annotated_lines_for_embed_selection and "embed_id" in ocr_config:
+            annotated_xmls_folder = os.path.join(working_dir, "annotated_xmls")
+            os.makedirs(annotated_xmls_folder)
+            print()
+            print("GETTING XMLS WITH ANNOTATED LINES")
+            print("##############################################################")
+            get_xmls(session, base_url, document_get_annotated_xml_lines_route, image_ids,
+                     annotated_xmls_folder)
+            print("##############################################################")
+            print()
+            print("STARTING SELECT EMBED ID:", select_embed_id_path)
+            print("##############################################################")
+            parse_folder_process = subprocess.Popen(['python', select_embed_id_path, '-c', "./models/config.ini",
+                                                     '-i', images_folder, '-x', annotated_xmls_folder],
+                                                    cwd=working_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            log = []
+            while True:
+                line = parse_folder_process.stdout.readline()
+                if not line:
+                    break
+                line = line.decode("utf-8")
+                log.append(line)
+                print(line, end='')
+            parse_folder_process.wait()
+            print("##############################################################")
+
+        print()
         print("GETTING XMLS WITH DETECTED LINES")
         print("##############################################################")
         get_xmls(session, base_url, document_get_xml_lines_route, image_ids, xmls_folder)
     else:
+        print()
         print("GETTING XMLS WITH DETECTED LAYOUT")
         print("##############################################################")
         get_xmls(session, base_url, document_get_xml_regions_route, image_ids, xmls_folder)
