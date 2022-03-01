@@ -49,6 +49,10 @@ def show_results(document_id, image_id=None):
         return redirect(url_for('main.index'))
 
     images = natsorted(get_document_images(document).all(), key=lambda x: x.filename)
+    if len(images) == 0:
+        flash(u'Document has not images and thus can not be viewed and edited.', 'danger')
+        return redirect(url_for('main.index'))
+
     return render_template('layout_analysis/layout_results.html', document=document, images=images)
 
 
