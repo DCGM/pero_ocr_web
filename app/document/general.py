@@ -275,6 +275,7 @@ def get_page_layout(db_image, only_regions=False, only_annotated=False, alto=Fal
                             if text_line.np_confidences != []:
                                 transcription_confidence = np.quantile(text_line.np_confidences, .15)
                             region_layout.lines.append(layout.TextLine(id=str(text_line.id),
+                                                                       index=text_line.order,
                                                                        baseline=text_line.np_baseline,
                                                                        polygon=text_line.np_points,
                                                                        heights=text_line.np_heights,
