@@ -3,9 +3,10 @@
 class TextLine
 {
     constructor(id, annotated, text, confidences, ligatures_mapping, arabic, for_training, debug_line_container,
-                debug_line_container_2, editable)
+                debug_line_container_2, editable, text_lines_editor)
     {
         this.editable = editable;
+        this.text_lines_editor = text_lines_editor;
         this.id = id;
         this.text = text;
         this.confidences = confidences;
@@ -69,6 +70,8 @@ class TextLine
         let config = { attributes: false, childList: true, characterData: true , subtree: true};
         this.observer.observe(this.container, config);
         this.mutate();
+
+        this.current_horizontal_focus = 0;
     }
 
     set_training_checkbox(){
@@ -339,6 +342,54 @@ class TextLine
         }
     }
 
+    move_view()
+    {
+        let focus_line_points = get_focus_line_points(this);
+        let width_boundary = get_line_width_boundary(this);
+        if ((focus_line_points[0] <= width_boundary[0]) && (focus_line_points[1] >= width_boundary[1]))
+        {
+            return;
+        }
+        let caret_position = this.get_caret_position();
+        let horizontal_caret_position_in_line_image = get_horizontal_caret_position_in_line_image(this, caret_position);
+        let view_range = (focus_line_points[1] - focus_line_points[0]) / 1.5;
+        let offset = 250;
+        if ((horizontal_caret_position_in_line_image < this.current_horizontal_focus + offset) && this.current_horizontal_focus > 0)
+        {
+            let final_offset = horizontal_caret_position_in_line_image - view_range;
+            this.text_lines_editor.map.flyToBounds([xy(focus_line_points[0] + final_offset, -focus_line_points[2]),
+                                                    xy(focus_line_points[1] + final_offset, -focus_line_points[2])],
+                                                    {animate: false, duration: 0.5});
+            this.current_horizontal_focus = final_offset;
+        }
+        if (horizontal_caret_position_in_line_image > this.current_horizontal_focus + view_range)
+        {
+            let final_offset = horizontal_caret_position_in_line_image - offset;
+            this.text_lines_editor.map.flyToBounds([xy(focus_line_points[0] + final_offset, -focus_line_points[2]),
+                                                    xy(focus_line_points[1] + final_offset, -focus_line_points[2])],
+                                                    {animate: false, duration: 0.5});
+            this.current_horizontal_focus = final_offset;
+        }
+    }
+
+    get_caret_position()
+    {
+        let caret_span = this.get_caret_span();
+        if (this.check_caret_is_at_the_beginning_of_the_first_span(caret_span))
+        {
+            return 0;
+        }
+        let selection = document.getSelection();
+        let caret_position = selection.anchorOffset;
+        caret_span = caret_span.previousSibling;
+        while (caret_span != null)
+        {
+            caret_position += caret_span.textContent.length;
+            caret_span = caret_span.previousSibling;
+        }
+        return caret_position;
+    }
+
     keydown(e)
     {
         let empty_text_line_element = this.empty_text_line_element();
@@ -366,6 +417,7 @@ class TextLine
                     this.move_caret_to_the_right();
                 }
             }
+            this.move_view();
         }
 
         // RIGHT ARROW
@@ -390,6 +442,7 @@ class TextLine
                     this.move_caret_to_the_left();
                 }
             }
+            this.move_view();
         }
 
         // BACKSPACE
@@ -515,7 +568,6 @@ class TextLine
         }
         if (caret_span.getAttribute("class") != "user-input")
         {
-            console.log("huhuhuh");
             // Create new span for new char
             // Set it's content to &#8203; special empty char so caret can be set inside
             let new_span = document.createElement('span');
@@ -910,4 +962,76 @@ class TextLine
             b: parseInt(result[3], 16)
             } : null;
     }
+}
+
+
+// HELPER FUNCTIONS
+// #############################################################################
+
+function get_horizontal_caret_position_in_line_image(line, caret_position) {
+    let text_length = line.text.length;
+    let width_boundary = get_line_width_boundary(line);
+    let start_x = width_boundary[0];
+    let end_x = width_boundary[1];
+    let line_width = end_x - start_x;
+    let horizontal_caret_position_in_image = (line_width / text_length) * caret_position;
+    console.log(horizontal_caret_position_in_image);
+    return horizontal_caret_position_in_image
+}
+
+function get_focus_line_points(line) {
+    let show_line_height = $('#show-line-height').val();
+    let show_bottom_pad = $('#show-bottom-pad').val();
+    let width_boundary = get_line_width_boundary(line);
+    let height_boundary = get_line_height_boundary(line);
+    let start_x = width_boundary[0];
+    let end_x = width_boundary[1];
+    let start_y = height_boundary[0];
+    let end_y = height_boundary[1];
+    let line_height = line.np_heights[0] + line.np_heights[1];
+    let y = start_y + line_height;
+    let line_width = end_x - start_x;
+    let container = $('.editor-map');
+    let container_width = container.width();
+    let container_height = container.height();
+    let expected_show_line_height = line_height * (container_width / line_width);
+    let new_line_width = (line_height * container_width) / show_line_height;
+    if (expected_show_line_height > show_line_height) {
+        start_x -= (new_line_width - line_width) / 2;
+        end_x += (new_line_width - line_width) / 2;
+    }
+    if (expected_show_line_height < show_line_height) {
+        end_x -= line_width - new_line_width;
+    }
+    let show_height_offset = (container_height / 2) - show_bottom_pad;
+    let height_offset = (show_height_offset / (container_width / new_line_width));
+    return [start_x, end_x, y - height_offset];
+}
+
+function get_line_height_boundary(line) {
+    let height_min = 100000000000000000000000;
+    let height_max = 0;
+    for (let coord of line.np_points) {
+        if (coord[1] < height_min) {
+            height_min = coord[1];
+        }
+        if (coord[1] > height_max) {
+            height_max = coord[1];
+        }
+    }
+    return [height_min, height_max];
+}
+
+function get_line_width_boundary(line) {
+    let width_min = 100000000000000000000000;
+    let width_max = 0;
+    for (let coord of line.np_points) {
+        if (coord[0] < width_min) {
+            width_min = coord[0];
+        }
+        if (coord[0] > width_max) {
+            width_max = coord[0];
+        }
+    }
+    return [width_min, width_max];
 }

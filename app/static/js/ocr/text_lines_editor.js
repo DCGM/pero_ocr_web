@@ -304,7 +304,9 @@ class TextLinesEditor {
 
         // Add annotations to map
         for (let l of data['lines']) {
-            let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic, l.for_training, debug_line_container, debug_line_container_2, !self.public_view);
+            let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic,
+                                    l.for_training, debug_line_container, debug_line_container_2, !self.public_view,
+                                    this);
             line.np_points = l.np_points;
             line.np_heights = l.np_heights;
             line.focus = false;
@@ -495,62 +497,6 @@ class TextLinesEditor {
 // HELPER FUNCTIONS
 // #############################################################################
 
-function get_focus_line_points(line) {
-    let show_line_height = $('#show-line-height').val();
-    let show_bottom_pad = $('#show-bottom-pad').val();
-    let width_boundary = get_line_width_boundary(line);
-    let height_boundary = get_line_height_boundary(line);
-    let start_x = width_boundary[0];
-    let end_x = width_boundary[1];
-    let start_y = height_boundary[0];
-    let end_y = height_boundary[1];
-    let line_height = line.np_heights[0] + line.np_heights[1];
-    let y = start_y + line_height;
-    let line_width = end_x - start_x;
-    let container = $('.editor-map');
-    let container_width = container.width();
-    let container_height = container.height();
-    let expected_show_line_height = line_height * (container_width / line_width);
-    let new_line_width = (line_height * container_width) / show_line_height;
-    if (expected_show_line_height > show_line_height) {
-        start_x -= (new_line_width - line_width) / 2;
-        end_x += (new_line_width - line_width) / 2;
-    }
-    if (expected_show_line_height < show_line_height) {
-        end_x -= line_width - new_line_width;
-    }
-    let show_height_offset = (container_height / 2) - show_bottom_pad;
-    let height_offset = (show_height_offset / (container_width / new_line_width));
-    return [start_x, end_x, y - height_offset];
-}
-
-function get_line_height_boundary(line) {
-    let height_min = 100000000000000000000000;
-    let height_max = 0;
-    for (let coord of line.np_points) {
-        if (coord[1] < height_min) {
-            height_min = coord[1];
-        }
-        if (coord[1] > height_max) {
-            height_max = coord[1];
-        }
-    }
-    return [height_min, height_max];
-}
-
-function get_line_width_boundary(line) {
-    let width_min = 100000000000000000000000;
-    let width_max = 0;
-    for (let coord of line.np_points) {
-        if (coord[0] < width_min) {
-            width_min = coord[0];
-        }
-        if (coord[0] > width_max) {
-            width_max = coord[0];
-        }
-    }
-    return [width_min, width_max];
-}
 
 function componentToHex(c) {
     let hex = c.toString(16);
