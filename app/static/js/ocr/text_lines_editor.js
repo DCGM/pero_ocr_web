@@ -19,6 +19,7 @@ class TextLinesEditor {
         this.map_element = this.container.getElementsByClassName("editor-map")[0];  // OLD COMPONENT
         this.active_line = false;
         this.focus_to = null;
+        this.focus_fired = false;
         if(!this.public_view) {
             this.save_btn = document.getElementsByClassName('save-btn');
             this.delete_btn = document.getElementById('deletebutton');
@@ -42,7 +43,6 @@ class TextLinesEditor {
             this.compute_scores_btn.addEventListener('click', this.compute_scores.bind(this));
         }
         this.worst_confidence = 0;
-
     }
 
     swap_ignore_line_button_blueprint(){
@@ -341,6 +341,24 @@ class TextLinesEditor {
         } else {
             this.map_element.focus();
         }
+
+        this.map.addEventListener('zoomend', this.set_line_height.bind(this));
+    }
+
+    set_line_height()
+    {
+        console.log("ZOOM");
+        if (this.active_line)
+        {
+            let view_port_line_height = this.active_line.np_heights[0] + this.active_line.np_heights[1];
+            let view_port_y0 = this.map.getBounds()._northEast.lat;
+            let view_port_y1 = this.map.getBounds()._southWest.lat;
+            let view_port_height = - view_port_y1 + view_port_y0;
+            let container = $('.editor-map');
+            let container_height = container.height();
+            let current_line_container_height = (view_port_line_height / view_port_height) * container_height;
+            $('#show-line-height').val(current_line_container_height.toFixed(0));
+        }
     }
 
     add_line_to_map(i, line) {
@@ -362,6 +380,8 @@ class TextLinesEditor {
         });
 
         line.container.addEventListener('focusout', this.line_focus_out.bind(this, line));
+        line.container.addEventListener('keyup', this.keydown_text_line_container.bind(this, line));
+        line.container.addEventListener('click', this.click_text_line_container.bind(this, line));
 
         line.checkbox_span.addEventListener('click', this.line_focus_from_checkbox.bind(this, line));
         line.for_training_checkbox.addEventListener('click', this.ignore_action_from_checkbox.bind(this, line));
@@ -396,21 +416,93 @@ class TextLinesEditor {
         }
     }
 
+    keydown_text_line_container(line, e) {
+        if (!this.focus_fired)
+        {
+            // Skip
+            // TAB (9)
+            // ENTER (13)
+            // CTRL+S (19)
+            // CTRL+Y (25)
+            // CTRL+Z (26)
+            if (e.keyCode != 9 &&
+                e.keyCode != 13 &&
+                e.keyCode != 19 &&
+                e.keyCode != 25 &&
+                e.keyCode != 26)
+            {
+                this.move_view_port_according_to_caret_position(line);
+            }
+        }
+        else
+        {
+            this.focus_fired = false;
+        }
+    }
+
+    click_text_line_container(line, e) {
+        if (!this.focus_fired)
+        {
+        this.move_view_port_according_to_caret_position(line);
+        }
+        else
+        {
+            this.focus_fired = false;
+        }
+    }
+
     polygon_click(line) {
         line.container.focus();
     }
 
     line_focus(line) {
+        this.focus_fired = true;
         if (this.active_line) {
             this.active_line.focus = false;
             this.set_line_style(this.active_line);
         }
 
-        let focus_line_points = get_focus_line_points(line);
         // OLD COMPONENT
+        //let view_port_x0 = this.map.getBounds()._southWest.lng;
+        //let view_port_y0 = this.map.getBounds()._northEast.lat;
+        //let view_port_x1 = this.map.getBounds()._northEast.lng;
+        //let view_port_y1 = this.map.getBounds()._southWest.lat;
+
+        //let width_boundary = get_line_width_boundary(line);
+        //let line_x0 = width_boundary[0];
+        //let line_x1 = width_boundary[1];
+        //let line_width = line_x1 - line_x0;
+        //let view_port_width = view_port_x1 - view_port_x0;
+        //if (line_width < view_port_width)
+        //{
+        //    view_port_x0 = line_x0 + line_width / 2  - view_port_width / 2;
+        //    view_port_x1 = view_port_x0 + view_port_width;
+        //}
+        //else
+        //{
+        //    view_port_x0 = line_x0;
+        //    view_port_x1 = line_x0 + view_port_width;
+        //}
+
+        //let height_boundary = get_line_height_boundary(line);
+        //let line_y0 = height_boundary[0];
+        //let line_y1 = height_boundary[1];
+        //let container = $('.editor-map');
+        //let container_bottom_pad = $('#show-bottom-pad').val();
+        //let container_height = container.height();
+        //let view_port_height = - view_port_y1 + view_port_y0;
+        //let view_port_bottom_pad = (view_port_height / container_height) * container_bottom_pad
+        //view_port_y0 = - (line_y1 + view_port_bottom_pad - view_port_height);
+        //view_port_y1 = - (line_y1 + view_port_bottom_pad);
+        let focus_line_points = get_focus_line_points(line);
+        let view_port_x0 = focus_line_points[0];
+        let view_port_y0 = -focus_line_points[2];
+        let view_port_x1 = focus_line_points[1];
+        let view_port_y1 = -focus_line_points[2];
         this.map.stop();
-        this.map.flyToBounds([xy(focus_line_points[0], -focus_line_points[2]), xy(focus_line_points[1], -focus_line_points[2])],
-            {animate: true, duration: 0.5});
+        this.map.flyToBounds([xy(view_port_x0, view_port_y0),
+                              xy(view_port_x1, view_port_y1)],
+                              {animate: true, duration: 0.5});
         this.active_line = line;
         line.focus = true;
         this.set_line_style(line)
@@ -423,6 +515,63 @@ class TextLinesEditor {
 
     line_focus_out(line) {
         this.set_line_style(line)
+    }
+
+    move_view_port_according_to_caret_position(line) {
+        let focus_line_points = get_focus_line_points(line);
+
+        let view_port_x0 = this.map.getBounds()._southWest.lng;
+        let view_port_y0 = this.map.getBounds()._northEast.lat;
+        let view_port_x1 = this.map.getBounds()._northEast.lng;
+        let view_port_y1 = this.map.getBounds()._southWest.lat;
+
+        let width_boundary = get_line_width_boundary(line);
+        let line_x0 = width_boundary[0];
+        let line_x1 = width_boundary[1];
+
+        // line in view port
+        if ((view_port_x0 <= line_x0) && (view_port_x1 >= line_x1))
+        {
+            return;
+        }
+
+        let line_width = line_x1 - line_x0;
+        let normalized_caret_position = line.get_normalized_caret_position();
+        let image_caret_position = line_x0 + line_width * normalized_caret_position;
+
+        let view_port_width = view_port_x1 - view_port_x0;
+        let half_view_port_width = view_port_width / 2;
+        let offset = view_port_width / 8;
+        let current_focus = view_port_x0 + half_view_port_width;
+
+        let container = $('.editor-map');
+        let container_x_pad = 25;
+        let view_port_x_pad = (container_x_pad / container.width()) * view_port_width;
+
+        let new_focus = current_focus
+        // center focus according to caret position
+        if ((image_caret_position > current_focus + half_view_port_width - offset) ||
+            (image_caret_position < current_focus - half_view_port_width + offset))
+        {
+            new_focus = image_caret_position;
+        }
+        // clip focus
+        if (new_focus + half_view_port_width > line_x1)
+        {
+            new_focus = line_x1 - half_view_port_width + view_port_x_pad;
+        }
+        if (new_focus - half_view_port_width < line_x0)
+        {
+            new_focus = line_x0 + half_view_port_width - view_port_x_pad;
+        }
+        // refocus
+        if (new_focus != current_focus)
+        {
+            this.map.stop();
+            this.map.flyToBounds([xy(new_focus - half_view_port_width, view_port_y0),
+                                  xy(new_focus + half_view_port_width, view_port_y1)],
+                                  {animate: true, duration: 0.5});
+        }
     }
 
     show_line_change() {
@@ -568,4 +717,66 @@ function get_confidence(confidences) {
         line_confidence = 1 - (line_confidence / confidences.length) ** (1.0/power_const)
     }
     return line_confidence;
+}
+
+
+
+function get_focus_line_points(line) {
+    let show_line_height = $('#show-line-height').val();
+    let show_bottom_pad = $('#show-bottom-pad').val();
+    let width_boundary = get_line_width_boundary(line);
+    let height_boundary = get_line_height_boundary(line);
+    let start_x = width_boundary[0];
+    let end_x = width_boundary[1];
+    let start_y = height_boundary[0];
+    let end_y = height_boundary[1];
+    let line_height = line.np_heights[0] + line.np_heights[1];
+    let y = start_y + line_height;
+    let line_width = end_x - start_x;
+    let container = $('.editor-map');
+    let container_width = container.width();
+    let container_height = container.height();
+    let expected_show_line_height = line_height * (container_width / line_width);
+    let new_line_width = (line_height * container_width) / show_line_height;
+    if (expected_show_line_height > show_line_height) {
+        start_x -= (new_line_width - line_width) / 2;
+        end_x += (new_line_width - line_width) / 2;
+    }
+    if (expected_show_line_height < show_line_height) {
+        let container_left_pad = 25;
+        let left_pad = (line_height * container_left_pad) / show_line_height;
+        start_x -= left_pad;
+        end_x -= line_width - new_line_width + left_pad;
+    }
+    let show_height_offset = (container_height / 2) - show_bottom_pad;
+    let height_offset = (show_height_offset / (container_width / new_line_width));
+    return [start_x, end_x, y - height_offset];
+}
+
+function get_line_height_boundary(line) {
+    let height_min = 100000000000000000000000;
+    let height_max = 0;
+    for (let coord of line.np_points) {
+        if (coord[1] < height_min) {
+            height_min = coord[1];
+        }
+        if (coord[1] > height_max) {
+            height_max = coord[1];
+        }
+    }
+    return [height_min, height_max];
+}
+
+function get_line_width_boundary(line) {
+    let width_min = 100000000000000000000000;
+    let width_max = 0;
+    for (let coord of line.np_points) {
+        if (coord[0] < width_min) {
+            width_min = coord[0];
+        }
+        if (coord[0] > width_max) {
+            width_max = coord[0];
+        }
+    }
+    return [width_min, width_max];
 }
