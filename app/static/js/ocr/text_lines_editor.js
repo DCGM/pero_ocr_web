@@ -20,6 +20,8 @@ class TextLinesEditor {
         this.active_line = false;
         this.focus_to = null;
         this.focus_fired = false;
+        this.animation_in_progress = false;
+        this.animation_interrupted = false;
         if(!this.public_view) {
             this.save_btn = document.getElementsByClassName('save-btn');
             this.delete_btn = document.getElementById('deletebutton');
@@ -342,7 +344,23 @@ class TextLinesEditor {
             this.map_element.focus();
         }
 
-        this.map.addEventListener('zoomend', this.set_line_height.bind(this));
+        this.map.addEventListener('zoomend', this.zoomend.bind(this));
+        this.map.addEventListener('zoomstart', this.zoomstart.bind(this));
+    }
+
+    zoomstart()
+    {
+        this.animation_in_progress = true;
+    }
+
+    zoomend()
+    {
+        if (!this.animation_interrupted)
+        {
+            this.set_line_height();
+        }
+        this.animation_interrupted = false;
+        this.animation_in_progress = false;
     }
 
     set_line_height()
@@ -380,7 +398,7 @@ class TextLinesEditor {
         });
 
         line.container.addEventListener('focusout', this.line_focus_out.bind(this, line));
-        line.container.addEventListener('keyup', this.keydown_text_line_container.bind(this, line));
+        line.container.addEventListener('keyup', this.keyup_text_line_container.bind(this, line));
         line.container.addEventListener('click', this.click_text_line_container.bind(this, line));
 
         line.checkbox_span.addEventListener('click', this.line_focus_from_checkbox.bind(this, line));
@@ -416,8 +434,8 @@ class TextLinesEditor {
         }
     }
 
-    keydown_text_line_container(line, e) {
-        if (!this.focus_fired)
+    keyup_text_line_container(line, e) {
+        if (!this.focus_fired && !this.animation_in_progress)
         {
             // Skip
             // TAB (9)
@@ -441,9 +459,9 @@ class TextLinesEditor {
     }
 
     click_text_line_container(line, e) {
-        if (!this.focus_fired)
+        if (!this.focus_fired && !this.animation_in_progress)
         {
-        this.move_view_port_according_to_caret_position(line);
+            this.move_view_port_according_to_caret_position(line);
         }
         else
         {
