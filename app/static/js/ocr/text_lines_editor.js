@@ -365,7 +365,6 @@ class TextLinesEditor {
 
     set_line_height()
     {
-        console.log("ZOOM");
         if (this.active_line)
         {
             let view_port_line_height = this.active_line.np_heights[0] + this.active_line.np_heights[1];
@@ -375,7 +374,12 @@ class TextLinesEditor {
             let container = $('.editor-map');
             let container_height = container.height();
             let current_line_container_height = (view_port_line_height / view_port_height) * container_height;
-            $('#show-line-height').val(current_line_container_height.toFixed(0));
+            current_line_container_height = current_line_container_height.toFixed(0);
+            let show_line_height = $('#show-line-height').val();
+            if (!(this.map._zoom >= this.map.getMaxZoom() && current_line_container_height < show_line_height))
+            {
+                $('#show-line-height').val(current_line_container_height);
+            }
         }
     }
 
