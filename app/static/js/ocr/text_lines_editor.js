@@ -517,7 +517,11 @@ class TextLinesEditor {
         let view_port_y0 = -focus_line_points[2];
         let view_port_x1 = focus_line_points[1];
         let view_port_y1 = -focus_line_points[2];
-        this.map.stop();
+        if (this.animation_in_progress)
+        {
+            this.animation_interrupted = true;
+            this.map.stop();
+        }
         this.map.flyToBounds([xy(view_port_x0, view_port_y0),
                               xy(view_port_x1, view_port_y1)],
                               {animate: true, duration: 0.5});
@@ -585,7 +589,11 @@ class TextLinesEditor {
         // refocus
         if (new_focus != current_focus)
         {
-            this.map.stop();
+            if (this.animation_in_progress)
+            {
+                this.animation_interrupted = true;
+                this.map.stop();
+            }
             this.map.flyToBounds([xy(new_focus - half_view_port_width, view_port_y0),
                                   xy(new_focus + half_view_port_width, view_port_y1)],
                                   {animate: true, duration: 0.5});
@@ -595,7 +603,11 @@ class TextLinesEditor {
     show_line_change() {
         if (this.active_line) {
             let focus_line_points = get_focus_line_points(this.active_line);
-            this.map.stop();
+            if (this.animation_in_progress)
+            {
+                this.animation_interrupted = true;
+                this.map.stop();
+            }
             this.map.flyToBounds([xy(focus_line_points[0], -focus_line_points[2]), xy(focus_line_points[1], -focus_line_points[2])],
                 {animate: false, duration: 0});
         }
