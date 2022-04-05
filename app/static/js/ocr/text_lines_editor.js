@@ -765,7 +765,6 @@ function get_focus_line_points(line) {
     let start_y = height_boundary[0];
     let end_y = height_boundary[1];
     let line_height = line.np_heights[0] + line.np_heights[1];
-    let y = start_y + line_height;
     let line_width = end_x - start_x;
     let container = $('.editor-map');
     let container_width = container.width();
@@ -782,9 +781,10 @@ function get_focus_line_points(line) {
         start_x -= left_pad;
         end_x -= line_width - new_line_width + left_pad;
     }
-    let show_height_offset = (container_height / 2) - show_bottom_pad;
-    let height_offset = (show_height_offset / (container_width / new_line_width));
-    return [start_x, end_x, y - height_offset];
+    let view_port_container_height = (line_height * container_height) / show_line_height
+    let bottom_pad = (line_height * show_bottom_pad) / show_line_height;
+    let y = end_y - view_port_container_height / 2 + bottom_pad;
+    return [start_x, end_x, y];
 }
 
 function get_line_height_boundary(line) {
