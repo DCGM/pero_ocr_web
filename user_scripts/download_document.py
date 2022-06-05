@@ -26,7 +26,7 @@ def get_args():
 def get_document_ids(session, base_url, document_ids, document_id):
     r = session.get(join_url(base_url, document_ids, document_id), stream=True)
     if r.status_code == 200:
-        print("SUCCESFUL")
+        print("SUCCESSFUL")
         return True, json.loads(r.text)
     else:
         print("FAILED")
@@ -52,7 +52,7 @@ def download_results(page_uuid, session, server_url, output_path, alto, page, tx
     for url, extension in requested_formats:
         r = session.get(url, stream=True)
         if r.status_code != 200:
-            print(f"ERROR {r.status_code} OCCURED DURING XML {page_uuid} DOWNLOAD. URL {url}")
+            print(f"ERROR {r.status_code} OCCURRED DURING XML {page_uuid} DOWNLOAD. URL {url}")
             continue
 
         output_file_name, _ = os.path.splitext(cgi.parse_header(r.headers['Content-Disposition'])[-1]['filename'])

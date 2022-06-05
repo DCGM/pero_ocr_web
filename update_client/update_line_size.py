@@ -29,7 +29,7 @@ def get_args():
     parser.add_argument("--update-type", choices=["baselines_compute", "restore_baselines", "update_heights"], help="Update method.")
     parser.add_argument("-l", "--login", help="Username of superuser on remote server.")
     parser.add_argument("-p", "--password", help="Password of superuser on remote server.")
-    parser.add_argument("--working-directory", help="Work in this directory. All downloded and resultsing files will be here.")
+    parser.add_argument("--working-directory", help="Work in this directory. All downloaded and resulting files will be here.")
     parser.add_argument("-r", "--render", default=True, type=bool, help="Render original page_xml and output page_xml as images.")
     parser.add_argument("-u", "--upload-results", action='store_true', help="Upload results to server. No processing is done in this case.")
 
@@ -46,7 +46,7 @@ def download_xmls(session, base_url, type, working_directory, page_uuids):
                 r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
         else:
-            print("ERROR {} OCCURED DURING XML {} DOWNLOAD.".format(r.status_code, uuid))
+            print("ERROR {} OCCURRED DURING XML {} DOWNLOAD.".format(r.status_code, uuid))
             return False
 
     return True
@@ -60,7 +60,7 @@ def download_images(session, base_url, download_images, working_directory, page_
                 r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
         else:
-            print("ERROR {} OCCURED DURING IMAGE {} DOWNLOAD.".format(r.status_code, uuid))
+            print("ERROR {} OCCURRED DURING IMAGE {} DOWNLOAD.".format(r.status_code, uuid))
             return False
 
     return True
