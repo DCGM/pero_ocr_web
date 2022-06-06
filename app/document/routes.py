@@ -3,7 +3,7 @@ import sqlalchemy
 from app.document import bp
 from flask_login import login_required, current_user
 from flask import render_template, redirect, url_for, request, send_file, flash, jsonify
-from flask import current_app
+from flask import current_app, escape
 from app.document.general import create_document, check_and_remove_document, save_image, \
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
     remove_image, get_document_images, get_page_layout, get_page_layout_text, update_confidences, is_user_trusted,\
@@ -180,7 +180,7 @@ def make_public(document_id):
     document_name = check_and_change_public_document(document_id, current_user, True)
     if document_name:
         flash(f'Document "{document_name}" in now public!', 'success')
-        return document_id
+        return escape(document_id)
     else:
         flash(u'You do not have sufficient rights to make this document public!', 'danger')
         return None
@@ -192,7 +192,7 @@ def make_private(document_id):
     document_name = check_and_change_public_document(document_id, current_user, False)
     if document_name:
         flash(f'Document "{document_name}" in now private!', 'success')
-        return document_id
+        return escape(document_id)
     else:
         flash(u'You do not have sufficient rights to make this document public!', 'danger')
         return None
@@ -203,7 +203,7 @@ def make_private(document_id):
 def delete_document(document_id):
     if check_and_remove_document(document_id, current_user):
         flash(u'Document successfully deleted!', 'success')
-        return document_id
+        return escape(document_id)
     else:
         flash(u'You do not have sufficient rights to remove this document!', 'danger')
         return None
