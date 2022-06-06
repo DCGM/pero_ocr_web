@@ -120,7 +120,6 @@ def main():
                     line.transcription = ''
                     confidences = []
                 else:
-                    pass
                     line.transcription, confidences = apply_rules(line.transcription, replace_rules, weird_characters)
 
                 try:
@@ -146,6 +145,3 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
-
-
-
