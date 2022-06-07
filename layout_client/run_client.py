@@ -29,7 +29,9 @@ def check_and_process_layout_request(config, session):
         return False
     layout_analysis_get_layout_detector_route = config['SERVER']['layout_analysis_get_layout_detector_route']
     document_get_image_route = config['SERVER']['document_get_image_route']
-    main_add_log_to_request_route = config['SERVER']['main_add_log_to_request_route']
+    request_add_log_to_request_route = config['SERVER']['request_add_log_route']
+    request_increment_processed_pages_route = config['SERVER']['request_increment_processed_pages_route']
+    request_get_request_route = config['SERVER']['request_get_request_route']
     layout_analysis_post_result_route = config['SERVER']['layout_analysis_post_result_route']
 
     request_id = request_json['id']
@@ -75,7 +77,7 @@ def check_and_process_layout_request(config, session):
     print()
     print("STARTING PARSE FOLDER:", parse_folder_path)
     print("##############################################################")
-    parse_folder_process = subprocess.Popen(['python', parse_folder_path, '-c', "./layout_detector/config.ini"],
+    parse_folder_process = subprocess.Popen(['python', '-u', parse_folder_path, '-c', "./layout_detector/config.ini"],
                                             cwd=working_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     log = []
     while True:
@@ -83,10 +85,20 @@ def check_and_process_layout_request(config, session):
         if not line:
             break
         line = line.decode("utf-8")
+        if line.startswith("DONE "):
+            session.post(join_url(base_url, request_increment_processed_pages_route, request_id))
         log.append(line)
         print(line, end='')
     parse_folder_process.wait()
     print("##############################################################")
+
+    add_log_to_request(session, base_url, request_add_log_to_request_route, request_id, log)
+
+    canceled_request = False
+    r = session.get(join_url(base_url, request_get_request_route))
+    rj = r.json()
+    if 'state' not in rj.keys() or rj['state'] == 'CANCELED':
+        canceled_request = True
 
     output_xmls_folder = os.path.join(output_folder, "page")
     no_output = False
@@ -95,9 +107,9 @@ def check_and_process_layout_request(config, session):
     else:
         no_output = True
 
-    add_log_to_request(session, base_url, main_add_log_to_request_route, request_id, log)
-
-    if not no_output and parse_folder_process.returncode == 0 and number_of_images == number_of_xmls:
+    if canceled_request:
+        print("REQUEST WAS CANCELED")
+    elif not no_output and parse_folder_process.returncode == 0 and number_of_images == number_of_xmls:
         data_folders = [output_xmls_folder]
         data_types = ["xml"]
         print()

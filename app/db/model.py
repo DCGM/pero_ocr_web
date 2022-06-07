@@ -84,6 +84,9 @@ class Request(Base):
     language_model_id = Column(GUID(), ForeignKey('language_model.id'))
     created_date = Column(DateTime, default=datetime.datetime.utcnow, index=True)
     request_type = Column(Enum(RequestType))
+    processed_pages = Column(Integer(), default=0)
+    last_processed_page = Column(DateTime, default=datetime.datetime.utcnow)
+    previous_attempts = Column(Integer(), default=0)
     state = Column(Enum(RequestState))
     log = Column(String())
     document_id = Column(GUID(), ForeignKey('documents.id'), index=True)
@@ -168,6 +171,7 @@ class TextLine(Base):
 
 def init_character_change_count(context):
     return Levenshtein.distance(context.get_current_parameters()['text_original'], context.get_current_parameters()['text_edited'])
+
 
 def init_character_count(context):
     return len(context.get_current_parameters()['text_edited'])

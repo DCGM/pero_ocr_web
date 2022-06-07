@@ -38,7 +38,9 @@ def check_and_process_ocr_request(config, session):
     document_get_xml_lines_route = config['SERVER']['document_get_xml_lines_route']
     document_get_annotated_xml_lines_route = config['SERVER']['document_get_annotated_xml_lines_route']
     ocr_get_document_annotation_statistics_route = config['SERVER']['ocr_get_document_annotation_statistics_route']
-    main_add_log_to_request_route = config['SERVER']['main_add_log_to_request_route']
+    request_add_log_to_request_route = config['SERVER']['request_add_log_route']
+    request_increment_processed_pages_route = config['SERVER']['request_increment_processed_pages_route']
+    request_get_request_route = config['SERVER']['request_get_request_route']
     ocr_post_result_route = config['SERVER']['ocr_post_result_route']
     ocr_change_ocr_request_and_document_state_on_success_route = config['SERVER']['ocr_change_ocr_request_and_document_state_on_success_route']
     ocr_change_ocr_request_to_fail_and_document_state_to_success_route = config['SERVER']['ocr_change_ocr_request_to_fail_and_document_state_to_success_route']
@@ -119,7 +121,7 @@ def check_and_process_ocr_request(config, session):
             print()
             print("STARTING SELECT EMBED ID:", select_embed_id_path)
             print("##############################################################")
-            parse_folder_process = subprocess.Popen(['python', select_embed_id_path, '-c', "./models/config.ini",
+            parse_folder_process = subprocess.Popen(['python', '-u', select_embed_id_path, '-c', "./models/config.ini",
                                                      '-i', images_folder, '-x', annotated_xmls_folder],
                                                     cwd=working_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             log = []
@@ -147,7 +149,7 @@ def check_and_process_ocr_request(config, session):
     print()
     print("STARTING PARSE FOLDER:", parse_folder_path)
     print("##############################################################")
-    parse_folder_process = subprocess.Popen(['python', parse_folder_path, '-c', "./models/config.ini"],
+    parse_folder_process = subprocess.Popen(['python', '-u', parse_folder_path, '-c', "./models/config.ini"],
                                             cwd=working_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     log = []
     while True:
@@ -155,10 +157,20 @@ def check_and_process_ocr_request(config, session):
         if not line:
             break
         line = line.decode("utf-8")
+        if line.startswith("DONE "):
+            session.post(join_url(base_url, request_increment_processed_pages_route, request_id))
         log.append(line)
         print(line, end='')
     parse_folder_process.wait()
     print("##############################################################")
+
+    add_log_to_request(session, base_url, request_add_log_to_request_route, request_id, log)
+
+    canceled_request = False
+    r = session.get(join_url(base_url, request_get_request_route))
+    rj = r.json()
+    if 'state' not in rj.keys() or rj['state'] == 'CANCELED':
+        canceled_request = True
 
     output_xmls_folder = os.path.join(output_folder, "page")
     output_logits_folder = os.path.join(output_folder, "logits")
@@ -169,9 +181,12 @@ def check_and_process_ocr_request(config, session):
     else:
         no_output = True
 
-    add_log_to_request(session, base_url, main_add_log_to_request_route, request_id, log)
-
-    if not no_output and parse_folder_process.returncode == 0 and number_of_images == number_of_xmls and number_of_images == number_of_logits:
+    if canceled_request:
+        print("REQUEST WAS CANCELED")
+    elif not no_output and \
+        parse_folder_process.returncode == 0 and \
+        number_of_images == number_of_xmls and \
+        number_of_images == number_of_logits:
         data_folders = [output_xmls_folder, output_logits_folder]
         data_types = ["xml", "logits"]
         print()
