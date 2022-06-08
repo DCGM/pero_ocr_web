@@ -5,6 +5,7 @@ from app.auth.forms import LoginForm
 from app.document.general import is_user_trusted
 from app.db.general import get_request_by_id
 from app import db_session
+from app.db import RequestState
 import datetime
 
 
@@ -41,7 +42,17 @@ def get_request_state(request_id):
         return redirect(url_for('main.index'))
     request = get_request_by_id(request_id)
     if request:
-        value = {'id': request.id, 'state': request.state}
+        if request.state == RequestState.PENDING:
+            state = "PENDING"
+        elif request.state == RequestState.FAILURE:
+            state = "FAILURE"
+        elif request.state == RequestState.SUCCESS:
+            state = "SUCCESS"
+        elif request.state == RequestState.IN_PROGRESS:
+            state = "IN_PROGRESS"
+        else:
+            state = "CANCELED"
+        value = {'id': request.id, 'state': state}
         return jsonify(value)
     else:
         return jsonify({})
