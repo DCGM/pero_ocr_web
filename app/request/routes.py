@@ -1,5 +1,5 @@
 from flask import render_template, redirect, url_for, flash, request
-from app.main import bp
+from app.request import bp
 from flask_login import login_required, current_user
 from app.auth.forms import LoginForm
 from app.document.general import is_user_trusted
