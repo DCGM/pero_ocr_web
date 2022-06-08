@@ -56,7 +56,7 @@ def create_app():
     from app.document import bp as document_bp
     app.register_blueprint(document_bp, url_prefix='/document')
 
-    from app.document import bp as request_bp
+    from app.request import bp as request_bp
     app.register_blueprint(request_bp, url_prefix='/request')
 
     from app.profile import bp as profile_bp
