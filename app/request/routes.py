@@ -33,7 +33,7 @@ def increment_processed_pages(request_id):
     return 'OK'
 
 
-@bp.route('/get_request_state/<string:request_id>', methods=['POST'])
+@bp.route('/get_request_state/<string:request_id>')
 @login_required
 def get_request_state(request_id):
     if not is_user_trusted(current_user):
