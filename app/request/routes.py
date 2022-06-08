@@ -15,8 +15,8 @@ def add_log_to_request(request_id):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights to add log to request!', 'danger')
         return redirect(url_for('main.index'))
-    request = get_request_by_id(request_id)
-    request.log = request.json['log']
+    job_request = get_request_by_id(request_id)
+    job_request.log = request.json['log']
     db_session.commit()
     return 'OK'
 
@@ -27,9 +27,9 @@ def increment_processed_pages(request_id):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights to add log to request!', 'danger')
         return redirect(url_for('main.index'))
-    request = get_request_by_id(request_id)
-    request.processed_pages += 1
-    request.last_processed_page = datetime.datetime.utcnow()
+    job_request = get_request_by_id(request_id)
+    job_request.processed_pages += 1
+    job_request.last_processed_page = datetime.datetime.utcnow()
     db_session.commit()
     return 'OK'
 
@@ -40,19 +40,19 @@ def get_request_state(request_id):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights to add log to request!', 'danger')
         return redirect(url_for('main.index'))
-    request = get_request_by_id(request_id)
-    if request:
-        if request.state == RequestState.PENDING:
+    job_request = get_request_by_id(request_id)
+    if job_request:
+        if job_request.state == RequestState.PENDING:
             state = "PENDING"
-        elif request.state == RequestState.FAILURE:
+        elif job_request.state == RequestState.FAILURE:
             state = "FAILURE"
-        elif request.state == RequestState.SUCCESS:
+        elif job_request.state == RequestState.SUCCESS:
             state = "SUCCESS"
-        elif request.state == RequestState.IN_PROGRESS:
+        elif job_request.state == RequestState.IN_PROGRESS:
             state = "IN_PROGRESS"
         else:
             state = "CANCELED"
-        value = {'id': request.id, 'state': state}
+        value = {'id': job_request.id, 'state': state}
         return jsonify(value)
     else:
         return jsonify({})
