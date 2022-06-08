@@ -167,7 +167,7 @@ def check_and_process_ocr_request(config, session):
     add_log_to_request(session, base_url, request_add_log_to_request_route, request_id, log)
 
     canceled_request = False
-    r = session.get(join_url(base_url, request_get_request_state_route))
+    r = session.get(join_url(base_url, request_get_request_state_route, request_id))
     rj = r.json()
     if 'state' not in rj.keys() or rj['state'] == 'CANCELED':
         canceled_request = True
