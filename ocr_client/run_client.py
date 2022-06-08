@@ -8,6 +8,7 @@ import configparser
 import subprocess
 import traceback
 import json
+import torch
 
 from client_helper import join_url
 from client_helper import unzip_response_to_dir
@@ -17,7 +18,11 @@ from client_helper import log_in
 from client_helper import add_log_to_request
 
 
-def check_and_process_ocr_request(config, session):
+def check_and_process_ocr_request(config, session, gpu_mode):
+
+    if gpu_mode and not torch.cuda.is_available():
+        return False
+
     base_url = config['SERVER']['base_url']
     ocr_get_request_route = config['SERVER']['ocr_get_request_route']
 
@@ -271,7 +276,7 @@ def main():
 
                 while True:
                     print("CHECK REQUEST")
-                    if check_and_process_ocr_request(config, session):
+                    if check_and_process_ocr_request(config, session, False):
                         print("REQUEST COMPLETED")
                     else:
                         print("NO REQUEST")

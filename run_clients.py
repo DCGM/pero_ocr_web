@@ -3,7 +3,7 @@ import time
 import sys
 import requests
 import argparse
-import traceback
+import safe_gpu
 
 from client_helper import log_in
 from layout_client.run_client import check_and_process_layout_request
@@ -16,6 +16,7 @@ def get_args():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--time-limit", default=-1, type=float, help="Exit when runing longer than time-limit hours.")
+    parser.add_argument("--gpu-mode", action='store_true', help="If set, jobs will run only if GPU is available.")
     args = parser.parse_args()
 
     return args
@@ -41,9 +42,9 @@ def main():
                 if args.time_limit > 0 and args.time_limit * 3600 < time.time() - start_time:
                     return
                 nothing = True
-                if check_and_process_layout_request(layout_config, session):
+                if check_and_process_layout_request(layout_config, session, args.gpu_mode):
                     nothing = False
-                if check_and_process_ocr_request(ocr_config, session):
+                if check_and_process_ocr_request(ocr_config, session, args.gpu_mode):
                     nothing = False
                 if nothing:
                     time.sleep(timeout)

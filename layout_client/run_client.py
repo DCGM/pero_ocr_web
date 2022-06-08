@@ -6,6 +6,7 @@ import configparser
 import shutil
 import subprocess
 import traceback
+import torch
 
 from client_helper import join_url
 from client_helper import unzip_response_to_dir
@@ -15,7 +16,11 @@ from client_helper import log_in
 from client_helper import add_log_to_request
 
 
-def check_and_process_layout_request(config, session):
+def check_and_process_layout_request(config, session, gpu_mode):
+
+    if gpu_mode and not torch.cuda.is_available():
+        return False
+
     base_url = config['SERVER']['base_url']
     layout_analysis_get_request_route = config['SERVER']['layout_analysis_get_request_route']
     layout_analysis_change_layout_request_and_document_state_on_success_route = config['SERVER']['layout_analysis_change_layout_request_and_document_state_on_success_route']
@@ -151,7 +156,7 @@ def main():
 
                 while True:
                     print("CHECK REQUEST")
-                    if check_and_process_layout_request(config, session):
+                    if check_and_process_layout_request(config, session, False):
                         print("REQUEST COMPLETED")
                     else:
                         print("NO REQUEST")
