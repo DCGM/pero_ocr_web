@@ -29,9 +29,9 @@ def check_and_process_layout_request(config, session):
         return False
     layout_analysis_get_layout_detector_route = config['SERVER']['layout_analysis_get_layout_detector_route']
     document_get_image_route = config['SERVER']['document_get_image_route']
-    request_add_log_to_request_route = config['SERVER']['request_add_log_route']
+    request_add_log_route = config['SERVER']['request_add_log_route']
     request_increment_processed_pages_route = config['SERVER']['request_increment_processed_pages_route']
-    request_get_request_route = config['SERVER']['request_get_request_route']
+    request_get_request_state_route = config['SERVER']['request_get_request_state_route']
     layout_analysis_post_result_route = config['SERVER']['layout_analysis_post_result_route']
 
     request_id = request_json['id']
@@ -92,10 +92,10 @@ def check_and_process_layout_request(config, session):
     parse_folder_process.wait()
     print("##############################################################")
 
-    add_log_to_request(session, base_url, request_add_log_to_request_route, request_id, log)
+    add_log_to_request(session, base_url, request_add_log_route, request_id, log)
 
     canceled_request = False
-    r = session.get(join_url(base_url, request_get_request_route))
+    r = session.get(join_url(base_url, request_get_request_state_route))
     rj = r.json()
     if 'state' not in rj.keys() or rj['state'] == 'CANCELED':
         canceled_request = True

@@ -40,7 +40,7 @@ def check_and_process_ocr_request(config, session):
     ocr_get_document_annotation_statistics_route = config['SERVER']['ocr_get_document_annotation_statistics_route']
     request_add_log_to_request_route = config['SERVER']['request_add_log_route']
     request_increment_processed_pages_route = config['SERVER']['request_increment_processed_pages_route']
-    request_get_request_route = config['SERVER']['request_get_request_route']
+    request_get_request_state_route = config['SERVER']['request_get_request_state_route']
     ocr_post_result_route = config['SERVER']['ocr_post_result_route']
     ocr_change_ocr_request_and_document_state_on_success_route = config['SERVER']['ocr_change_ocr_request_and_document_state_on_success_route']
     ocr_change_ocr_request_to_fail_and_document_state_to_success_route = config['SERVER']['ocr_change_ocr_request_to_fail_and_document_state_to_success_route']
@@ -167,7 +167,7 @@ def check_and_process_ocr_request(config, session):
     add_log_to_request(session, base_url, request_add_log_to_request_route, request_id, log)
 
     canceled_request = False
-    r = session.get(join_url(base_url, request_get_request_route))
+    r = session.get(join_url(base_url, request_get_request_state_route))
     rj = r.json()
     if 'state' not in rj.keys() or rj['state'] == 'CANCELED':
         canceled_request = True

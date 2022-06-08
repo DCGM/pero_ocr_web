@@ -33,14 +33,15 @@ def increment_processed_pages(request_id):
     return 'OK'
 
 
-@bp.route('/get_request/<string:request_id>', methods=['POST'])
+@bp.route('/get_request_state/<string:request_id>', methods=['POST'])
 @login_required
-def increment_processed_pages(request_id):
+def get_request_state(request_id):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights to add log to request!', 'danger')
         return redirect(url_for('main.index'))
     request = get_request_by_id(request_id)
     if request:
-        return create_json_from_request(ocr_request)
+        value = {'id': request.id, 'state': request.state}
+        return jsonify(value)
     else:
         return jsonify({})
