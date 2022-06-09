@@ -55,7 +55,7 @@ export function createPolygonTool(annotator_component) {
                 polygon.path = new paper.Path();
                 polygon.path.closed = true;
                 polygon.path.strokeColor = 'rgb(34 43 68)';
-                polygon.path.fillColor = 'rgba(75,202,172, 0.1)'
+                polygon.path.fillColor = 'rgba(75,202,172, 0.1)';
                 polygon.path.strokeWidth = 1;
                 polygon.path.selected = true;
                 console.log('created');

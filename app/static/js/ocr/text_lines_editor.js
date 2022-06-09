@@ -531,7 +531,7 @@ class TextLinesEditor {
                               {animate: true, duration: 0.5});
         this.active_line = line;
         line.focus = true;
-        this.set_line_style(line)
+        this.set_line_style(line);
 
         this.swap_delete_line_button_blueprint();
         this.swap_ignore_line_button_blueprint();
@@ -574,7 +574,7 @@ class TextLinesEditor {
         let container_x_pad = 25;
         let view_port_x_pad = (container_x_pad / container.width()) * view_port_width;
 
-        let new_focus = current_focus
+        let new_focus = current_focus;
         // center focus according to caret position
         if ((image_caret_position > current_focus + half_view_port_width - offset) ||
             (image_caret_position < current_focus - half_view_port_width + offset))
@@ -781,7 +781,7 @@ function get_focus_line_points(line) {
         start_x -= left_pad;
         end_x -= line_width - new_line_width + left_pad;
     }
-    let view_port_container_height = (line_height * container_height) / show_line_height
+    let view_port_container_height = (line_height * container_height) / show_line_height;
     let bottom_pad = (line_height * show_bottom_pad) / show_line_height;
     let y = end_y - view_port_container_height / 2 + bottom_pad;
     return [start_x, end_x, y];
