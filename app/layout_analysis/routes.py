@@ -1,6 +1,6 @@
 from app.layout_analysis import bp
 from natsort import natsorted
-from flask import render_template, url_for, redirect, flash, request, current_app, send_file, abort
+from flask import escape, render_template, url_for, redirect, flash, request, current_app, send_file, abort
 from flask_login import login_required, current_user
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_layout_detector_by_id
 from app.layout_analysis.general import create_layout_analysis_request, can_start_layout_analysis, \
@@ -75,7 +75,7 @@ def revert_layout(document_id):
     document.state = DocumentState.NEW
     db_session.commit()
     print("##################################################################")
-    return document_id
+    return escape(document_id)
 
 # SELECT PAGE
 ########################################################################################################################

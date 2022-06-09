@@ -46,7 +46,6 @@ def compute_statistics(results, activity_timeout):
     line_lengths = dict()
 
     for user_id, text_line_id, created_date, character_change_count, character_count in results:
-        user_id = user_id
         user_times[user_id].append(created_date)
         user_lines[user_id].add(text_line_id)
         line_lengths[text_line_id] = character_count
