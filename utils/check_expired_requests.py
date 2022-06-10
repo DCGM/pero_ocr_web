@@ -24,7 +24,7 @@ def parseargs():
 def main():
     args = parseargs()
 
-    database_url = 'postgres://{}:{}@localhost:5432/{}'.format(args.user, args.password, args.database)
+    database_url = 'postgresql://{}:{}@localhost:5432/{}'.format(args.user, args.password, args.database)
     engine = create_engine(database_url, convert_unicode=True)
     db_session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
 
