@@ -43,10 +43,10 @@ def main():
     print(to_time)
     new_requests = []
     for expired_request in expired_requests:
-        print("CANCELING", expired_request.id, expired_request.created_date, expired_request.last_processed_page,
-              expired_request.previous_attempts)
-        expired_request.state = RequestState.CANCELED
         if expired_request.previous_attempts < args.job_attempts_limit - 1:
+            print("CANCELING", expired_request.id, expired_request.created_date, expired_request.last_processed_page,
+                  expired_request.previous_attempts)
+            expired_request.state = RequestState.CANCELED
             print("CREATING NEW REQUEST")
             new_request = Request(layout_id=expired_request.layout_id,
                                   baseline_id=expired_request.baseline_id,
@@ -57,6 +57,13 @@ def main():
                                   document_id=expired_request.document_id,
                                   previous_attempts=expired_request.previous_attempts + 1)
             new_requests.append(new_request)
+        elif expired_request.previous_attempts == args.job_attempts_limit - 1:
+            if expired_request.state != RequestState.FAILURE:
+                print("SETTING TO FAILURE", expired_request.id, expired_request.created_date, expired_request.last_processed_page,
+                      expired_request.previous_attempts)
+                expired_request.state = RequestState.FAILURE
+        else:
+            pass
     if expired_requests:
         db_session.add_all(new_requests)
         db_session.commit()
