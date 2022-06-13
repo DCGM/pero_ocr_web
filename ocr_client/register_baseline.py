@@ -23,7 +23,7 @@ baseline_engines = [
 def main():
     args = parseargs()
 
-    database_url = 'postgres://postgres:pero@localhost:5432/' + args.database
+    database_url = 'postgresql://postgres:pero@localhost:5432/' + args.database
     engine = create_engine(database_url, convert_unicode=True)
     db_session = scoped_session(sessionmaker(autocommit=False,
                                              autoflush=False,
