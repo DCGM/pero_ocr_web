@@ -83,5 +83,5 @@ def log_in(session, login, password, base_usr, authentification, login_page):
         print("FAILED")
         return False
     else:
-        print("SUCCESFUL")
+        print("SUCCESSFUL")
         return True

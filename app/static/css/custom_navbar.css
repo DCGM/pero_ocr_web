@@ -145,7 +145,7 @@ ul > li > a.nav-link {
     cursor: pointer;
 }
 
-/* Treshold for changing long name to short */
+/* Threshold for changing long name to short */
 .name-long {
 	display: none;
 }

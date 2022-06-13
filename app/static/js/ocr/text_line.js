@@ -522,7 +522,7 @@ class TextLine
     // Creates new user-input span if needed
     prepare_line_for_insertion()
     {
-        // We can detele line if it has no text - suprisingly, CTRL-Z still works.
+        // We can delete line if it has no text - surprisingly, CTRL-Z still works.
         let empty_text_line_element = this.container.textContent === "";
         let caret_span;
         if (empty_text_line_element)

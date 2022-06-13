@@ -29,7 +29,7 @@ def get_args():
 def get_document_ids(session, base_url, document_ids, document_id):
     r = session.get(join_url(base_url, document_ids, document_id), stream=True)
     if r.status_code == 200:
-        print("SUCCESFUL")
+        print("SUCCESSFUL")
         return True, json.loads(r.text)
     else:
         print("FAILED", document_id)
@@ -99,7 +99,7 @@ def check_and_process_update_request(config, page_parser):
         for page_uuid in page_uuids:
             r = session.get(join_url(base_url, config['SERVER'][config['SETTINGS']['type']], page_uuid), stream=True)
             if r.status_code != 200:
-                print("ERROR {} OCCURED DURING XML {} DOWNLOAD.".format(r.status_code, page_uuid))
+                print("ERROR {} OCCURRED DURING XML {} DOWNLOAD.".format(r.status_code, page_uuid))
                 continue
             page_layout = PageLayout(id=page_uuid, file=r.raw)
             orig_transcriptions = dict([(line.id, line.transcription) for line in page_layout.lines_iterator()])
@@ -108,7 +108,7 @@ def check_and_process_update_request(config, page_parser):
 
             r = session.get(join_url(base_url, download_images, page_uuid), stream=True)
             if r.status_code != 200:
-                print("ERROR {} OCCURED DURING XML {} DOWNLOAD.".format(r.status_code, page_uuid))
+                print("ERROR {} OCCURRED DURING XML {} DOWNLOAD.".format(r.status_code, page_uuid))
                 continue
 
             nparr = np.frombuffer(r.content, np.uint8)

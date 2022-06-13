@@ -9590,7 +9590,7 @@ var DivOverlay = Layer.extend({
 		// set overlay source to this layer
 		this._source = layer;
 
-		// update the overlay (content, layout, ect...)
+		// update the overlay (content, layout, etc...)
 		this.update();
 
 		return latlng;
