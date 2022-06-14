@@ -19,7 +19,7 @@ def get_args():
     parser.add_argument("-d", "--document-id", help="Process document with this ID.")
     parser.add_argument("-l", "--login", help="Username of superuser on remote server.")
     parser.add_argument("-p", "--password", help="Password of superuser on remote server.")
-    parser.add_argument("--working-directory", help="Work in this directory. All downloded and resultsing files will be here.")
+    parser.add_argument("--working-directory", help="Work in this directory. All downloaded and resulting files will be here.")
 
     args = parser.parse_args()
 

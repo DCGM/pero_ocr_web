@@ -1,5 +1,5 @@
 
-# docuements (id) to export
+# documents (id) to export
 DOCUMENTS="3f1ff962d0774b2988dead1a831013c1 91000d1e3fe2413f94e18ce3d5dd270c 094528f36996402d9ddcc05d8b2a2d57 f113b88c63744dfb90a0029eccb48473"
 
 PERO_PATH=/home/ihradis/projects/2018-01-15_PERO/pero-master

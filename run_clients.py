@@ -15,7 +15,7 @@ def get_args():
     method for parsing of arguments
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("--time-limit", default=-1, type=float, help="Exit when runing longer than time-limit hours.")
+    parser.add_argument("--time-limit", default=-1, type=float, help="Exit when running longer than time-limit hours.")
     parser.add_argument("--gpu-mode", action='store_true', help="If set, jobs will run only if GPU is available.")
     args = parser.parse_args()
 
