@@ -132,18 +132,14 @@ def revert_ocr(document_id):
                                user_id=delete_user.id, line_count=document.line_count,
                                annotated_line_count=document.annotated_line_count)
     db_session.add(backup_document)
-    new_regions = []
-    for img in document.images:
-        backup_img = Image(filename=img.filename, path=img.path, width=img.width, height=img.height,
-                           deleted=img.deleted, imagehash=img.imagehash)
+    for original_img in document.images:
+        backup_img = Image(id=uuid.uuid4(), filename=original_img.filename, path=original_img.path, width=original_img.width, height=original_img.height,
+                           deleted=original_img.deleted, imagehash=original_img.imagehash)
         backup_document.images.append(backup_img)
-        for region in img.textregions:
-            backup_region = TextRegion(id=uuid.uuid4(), order=region.order, points=region.points, deleted=region.deleted)
-            backup_img.textregions.append(backup_region)
-            new_regions.append((region.id, backup_region))
-            for line in region.textlines:
-                line.region_id = backup_region.id
-        db_session.commit()
+        for region in original_img.textregions:
+            region.image_id = backup_img.id
+            original_img.textregions.append(
+                TextRegion(order=region.order, points=region.points, deleted=region.deleted))
     document.state = DocumentState.COMPLETED_LAYOUT_ANALYSIS
     document.annotated_line_count = 0
     db_session.commit()
