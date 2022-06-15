@@ -40,12 +40,14 @@ def add_log_to_request(session, base_url, add_request_to_log_route, request_id, 
     session.post(join_url(base_url, add_request_to_log_route, request_id), json={"log": "".join(log)})
 
 
-def post_result(session, base_url, post_result_route, success_route, request_id, image_ids, data_folders, data_types):
+def post_result(session, base_url, post_result_route, request_update_last_processed_page_route, success_route,
+                request_id, image_ids, data_folders, data_types):
     for image_id in image_ids:
         data = dict()
         for data_folder, data_type in zip(data_folders, data_types):
             data["{}.{}".format(image_id, data_type)] = open(os.path.join(data_folder, "{}.{}".format(image_id, data_type)), 'rb')
         session.post(join_url(base_url, post_result_route, image_id), files=data)
+        session.post(join_url(base_url, request_update_last_processed_page_route, request_id))
     session.post(join_url(base_url, success_route, request_id))
 
 
