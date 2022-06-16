@@ -36,7 +36,7 @@ def increment_processed_pages(request_id):
 
 @bp.route('/update_last_processed_page/<string:request_id>', methods=['POST'])
 @login_required
-def increment_processed_pages(request_id):
+def update_last_processed_page(request_id):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights to add log to request!', 'danger')
         return redirect(url_for('main.index'))
