@@ -163,7 +163,7 @@
                             <td>{{ document.line_count }}</td>
                             <td>{{ document.annotated_line_count }}</td>
                             <td>{{ document.user.first_name }} {{ document.user.last_name }}</td>
-                            <td>{{ document.state.value }}</td>
+                            <td>{{ document.state.value }} {{processed_pages_counter[document.id]}}</td>
                             <td>
                                 {% include '/document/document_action_buttons.html' %}
                             </td>

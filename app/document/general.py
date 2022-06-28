@@ -5,7 +5,7 @@ import hashlib
 import sqlalchemy
 from sqlalchemy import and_
 from sqlalchemy.orm import joinedload, contains_eager
-from app.db.model import DocumentState
+from app.db.model import DocumentState, RequestState
 from app.db.general import get_document_by_id, remove_document_by_id, save_document, save_image_to_document,\
                            get_user_by_id, is_image_duplicate, get_user_documents
 import os
@@ -13,7 +13,7 @@ from flask import current_app
 from flask import Response
 from app import db_session
 import uuid
-from app.db import Document, Image, TextLine, Annotation, UserDocument, User, TextRegion
+from app.db import Document, Image, TextLine, Annotation, UserDocument, User, TextRegion, Request
 import datetime
 import pero_ocr.document_ocr.layout as layout
 import unicodedata
@@ -286,6 +286,17 @@ def get_page_layout(db_image, only_regions=False, only_annotated=False, alto=Fal
         page_layout.load_logits(logits_path)
 
     return page_layout
+
+
+def get_processed_pages_counter(document):
+    if document.state == DocumentState.RUNNING_OCR:
+        r = db_session.query(Request).filter(Request.document_id == document.id).order_by(Request.created_date.desc()).first()
+        p = len(db_session.query(Image).filter(Image.document_id == document.id and not Image.deleted).all())
+        if r.processed_pages == p:
+            return "(uploading results)"
+        else:
+            return f"({r.processed_pages}/{p})"
+    return ""
 
 
 def create_string_response(filename, string, minetype):

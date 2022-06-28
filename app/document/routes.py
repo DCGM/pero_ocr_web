@@ -10,7 +10,7 @@ from app.document.general import create_document, check_and_remove_document, sav
     is_granted_acces_for_page, is_granted_acces_for_document, get_line_image_by_id, get_sucpect_lines_ids, \
     compute_scores_of_doc, skip_textline, get_line, is_granted_acces_for_line, create_string_response, \
     update_baselines, make_image_preview, find_textlines, get_documents_with_granted_acces, \
-    check_and_change_public_document, is_document_public
+    check_and_change_public_document, is_document_public, get_processed_pages_counter
 
 from werkzeug.exceptions import NotFound
 
@@ -42,11 +42,14 @@ def documents():
     document_ids = [d.id for d in user_documents]
     previews = dict([(im.document_id, im) for im in get_previews_for_documents(document_ids)])
 
+    processed_pages_counter = {}
     for d in user_documents:
         if d.id not in previews:
             previews[d.id] = ""
+        processed_pages_counter[d.id] = get_processed_pages_counter(d)
 
-    return render_template('document/documents.html', documents=user_documents, previews=previews)
+    return render_template('document/documents.html', documents=user_documents, previews=previews,
+                           processed_pages_counter=processed_pages_counter)
 
 
 @bp.route('/public_documents')
