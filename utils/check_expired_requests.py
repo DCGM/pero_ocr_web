@@ -41,7 +41,7 @@ def main():
     to_time = datetime.datetime.utcnow() - datetime.timedelta(minutes=args.expiration_time)
     expired_requests = []
     for request in newest_requests_for_doc.values():
-        if (request.state == RequestState.IN_PROGRESS and request.last_processed_page <= to_time) or request.state == RequestState.IN_PROGRESS_INTERRUPTED:
+        if (request.last_processed_page is not None and request.state == RequestState.IN_PROGRESS and request.last_processed_page <= to_time) or request.state == RequestState.IN_PROGRESS_INTERRUPTED:
             expired_requests.append(request)
 
     print(to_time)
