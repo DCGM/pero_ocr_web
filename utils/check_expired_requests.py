@@ -1,7 +1,6 @@
 import datetime
 import sys
 import argparse
-import configparser
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -9,13 +8,14 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from app.db import Request, RequestState, DocumentState
 from app.mail.mail import send_layout_failed_mail, send_ocr_failed_mail
 
+from config import Config as pero_config
+
 
 def parseargs():
     parser = argparse.ArgumentParser()
     parser.add_argument('-u', '--user', type=str, default='postgres')
     parser.add_argument('-p', '--password', type=str, default='pero')
     parser.add_argument('-d', '--database', type=str, required=True, help="Database.")
-    parser.add_argument('-c', '--config', type=str, required=True, help="App config.")
     parser.add_argument('-e', '--expiration-time', type=int, default=5, help="Minimal time for expiration.")
     parser.add_argument('-a', '--job-attempts-limit', type=int, default=4, help="Maximum attempts for one job.")
     args = parser.parse_args()
@@ -25,8 +25,7 @@ def parseargs():
 def main():
     args = parseargs()
 
-    config = configparser.ConfigParser()
-    config.read(args.config)
+    pero_ocr_web_config = vars(pero_config)
 
     database_url = 'postgres://{}:{}@localhost:5432/{}'.format(args.user, args.password, args.database)
     engine = create_engine(database_url, convert_unicode=True)
@@ -52,11 +51,11 @@ def main():
             print("CANCELING", expired_request.id, expired_request.created_date, expired_request.last_processed_page,
                   expired_request.previous_attempts)
             expired_request.state = RequestState.CANCELED
-            if 'EMAIL_NOTIFICATION_ADDRESSES' in config and config['EMAIL_NOTIFICATION_ADDRESSES']:
+            if 'EMAIL_NOTIFICATION_ADDRESSES' in pero_ocr_web_config and pero_ocr_web_config['EMAIL_NOTIFICATION_ADDRESSES']:
                 if expired_request.layout_id is not None:
-                    send_layout_failed_mail(config, expired_request, canceled=True)
+                    send_layout_failed_mail(pero_ocr_web_config, expired_request, canceled=True)
                 else:
-                    send_ocr_failed_mail(config, expired_request, canceled=True)
+                    send_ocr_failed_mail(pero_ocr_web_config, expired_request, canceled=True)
             print("CREATING NEW REQUEST")
             new_request = Request(layout_id=expired_request.layout_id,
                                   baseline_id=expired_request.baseline_id,
@@ -74,16 +73,16 @@ def main():
                 expired_request.state = RequestState.FAILURE
                 if expired_request.layout_id is not None:
                     expired_request.document.state = DocumentState.NEW
-                    if 'EMAIL_NOTIFICATION_ADDRESSES' in config and config['EMAIL_NOTIFICATION_ADDRESSES']:
-                        send_layout_failed_mail(config, expired_request)
+                    if 'EMAIL_NOTIFICATION_ADDRESSES' in pero_ocr_web_config and pero_ocr_web_config['EMAIL_NOTIFICATION_ADDRESSES']:
+                        send_layout_failed_mail(pero_ocr_web_config, expired_request)
                 elif expired_request.baseline_id is not None:
                     expired_request.document.state = DocumentState.COMPLETED_LAYOUT_ANALYSIS
-                    if 'EMAIL_NOTIFICATION_ADDRESSES' in config and config['EMAIL_NOTIFICATION_ADDRESSES']:
-                        send_ocr_failed_mail(config, expired_request)
+                    if 'EMAIL_NOTIFICATION_ADDRESSES' in pero_ocr_web_config and pero_ocr_web_config['EMAIL_NOTIFICATION_ADDRESSES']:
+                        send_ocr_failed_mail(pero_ocr_web_config, expired_request)
                 else:
                     expired_request.document.state = DocumentState.COMPLETED_OCR
-                    if 'EMAIL_NOTIFICATION_ADDRESSES' in config and config['EMAIL_NOTIFICATION_ADDRESSES']:
-                        send_ocr_failed_mail(config, expired_request)
+                    if 'EMAIL_NOTIFICATION_ADDRESSES' in pero_ocr_web_config and pero_ocr_web_config['EMAIL_NOTIFICATION_ADDRESSES']:
+                        send_ocr_failed_mail(pero_ocr_web_config, expired_request)
         else:
             pass
 
