@@ -55,9 +55,9 @@ def send_layout_failed_mail(config, layout_request, canceled=False):
                 log)
 
     if canceled:
-        subject = "PERO OCR - WEB Bot - LAYOUT REQUEST CANCELED"
+        subject = "PERO OCR - WEB Bot - LAYOUT REQUEST CANCELED {}".format(layout_request.previous_attempts + 1)
     else:
-        subject = "PERO OCR - WEB Bot - LAYOUT PROCESSING FAILED"
+        subject = "PERO OCR - WEB Bot - LAYOUT PROCESSING FAILED {}".format(layout_request.previous_attempts + 1)
 
     send_mail(subject=subject,
               body=message_body,
@@ -123,9 +123,9 @@ def send_ocr_failed_mail(config, ocr_request, canceled=False):
                 log)
 
     if canceled:
-        subject = "PERO OCR - WEB Bot - OCR REQUEST CANCELED"
+        subject = "PERO OCR - WEB Bot - OCR REQUEST CANCELED {}".format(ocr_request.previous_attempts + 1)
     else:
-        subject = "PERO OCR - WEB Bot - OCR PROCESSING FAILED"
+        subject = "PERO OCR - WEB Bot - OCR PROCESSING FAILED {}".format(ocr_request.previous_attempts + 1)
 
     send_mail(subject=subject,
               body=message_body,
