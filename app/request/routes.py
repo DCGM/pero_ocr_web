@@ -68,3 +68,15 @@ def get_request_state(request_id):
         return jsonify(value)
     else:
         return jsonify({})
+
+
+@bp.route('/change_request_state_to_in_progress_interrupted/<string:request_id>', methods=['POST'])
+@login_required
+def change_request_state_to_in_progress_interrupted(request_id):
+    if not is_user_trusted(current_user):
+        flash(u'You do not have sufficient rights!', 'danger')
+        return redirect(url_for('main.index'))
+    request = get_request_by_id(request_id)
+    request.state = RequestState.IN_PROGRESS_INTERRUPTED
+    db_session.commit()
+    return 'OK'

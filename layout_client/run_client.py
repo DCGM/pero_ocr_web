@@ -32,12 +32,14 @@ def check_and_process_layout_request(config, session, gpu_mode):
 
     if 'document' not in request_json.keys():
         return False
+    host_name = config['HOST']['name']
     layout_analysis_get_layout_detector_route = config['SERVER']['layout_analysis_get_layout_detector_route']
     document_get_image_route = config['SERVER']['document_get_image_route']
     request_add_log_route = config['SERVER']['request_add_log_route']
     request_increment_processed_pages_route = config['SERVER']['request_increment_processed_pages_route']
     request_update_last_processed_page_route = config['SERVER']['request_update_last_processed_page_route']
     request_get_request_state_route = config['SERVER']['request_get_request_state_route']
+    request_change_request_state_to_in_progress_interrupted_route = config['SERVER']['request_change_request_state_to_in_progress_interrupted_route']
     layout_analysis_post_result_route = config['SERVER']['layout_analysis_post_result_route']
 
     request_id = request_json['id']
@@ -86,6 +88,7 @@ def check_and_process_layout_request(config, session, gpu_mode):
     parse_folder_process = subprocess.Popen(['python', '-u', parse_folder_path, '-c', "./layout_detector/config.ini"],
                                             cwd=working_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     log = []
+    log.append("HOST NAME: {}\n\n".format(host_name))
     while True:
         line = parse_folder_process.stdout.readline()
         if not line:
@@ -129,8 +132,8 @@ def check_and_process_layout_request(config, session, gpu_mode):
         print("##############################################################")
         print()
     else:
-        print("PARSE FOLDER FAILED, SETTING REQUEST TO FAILED")
-        session.post(join_url(base_url, layout_analysis_change_layout_request_to_fail_and_document_state_to_new_route, request_id))
+        print("PARSE FOLDER FAILED, SETTING REQUEST TO IN PROGRESS INTERRUPTED")
+        session.post(join_url(base_url, request_change_request_state_to_in_progress_interrupted_route, request_id))
 
     return True
 

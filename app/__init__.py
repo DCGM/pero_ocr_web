@@ -78,7 +78,7 @@ def create_app():
     @app.errorhandler(500)
     def internal_error(error):
         if 'EMAIL_NOTIFICATION_ADDRESSES' in app.config and app.config['EMAIL_NOTIFICATION_ADDRESSES']:
-            send_internal_server_error_mail()
+            send_internal_server_error_mail(app.config)
         return error, 500
 
     return app

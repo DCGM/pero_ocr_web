@@ -34,6 +34,7 @@ def check_and_process_ocr_request(config, session, gpu_mode):
     if 'document' not in request_json.keys():
         return False
 
+    host_name = config['HOST']['name']
     ocr_get_config_route = config['SERVER']['ocr_get_config_route']
     ocr_get_baseline_route = config['SERVER']['ocr_get_baseline_route']
     ocr_get_ocr_route = config['SERVER']['ocr_get_ocr_route']
@@ -47,6 +48,7 @@ def check_and_process_ocr_request(config, session, gpu_mode):
     request_increment_processed_pages_route = config['SERVER']['request_increment_processed_pages_route']
     request_update_last_processed_page_route = config['SERVER']['request_update_last_processed_page_route']
     request_get_request_state_route = config['SERVER']['request_get_request_state_route']
+    request_change_request_state_to_in_progress_interrupted_route = config['SERVER']['request_change_request_state_to_in_progress_interrupted_route']
     ocr_post_result_route = config['SERVER']['ocr_post_result_route']
     ocr_change_ocr_request_and_document_state_on_success_route = config['SERVER']['ocr_change_ocr_request_and_document_state_on_success_route']
     ocr_change_ocr_request_to_fail_and_document_state_to_success_route = config['SERVER']['ocr_change_ocr_request_to_fail_and_document_state_to_success_route']
@@ -158,6 +160,7 @@ def check_and_process_ocr_request(config, session, gpu_mode):
     parse_folder_process = subprocess.Popen(['python', '-u', parse_folder_path, '-c', "./models/config.ini"],
                                             cwd=working_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     log = []
+    log.append("HOST NAME: {}\n\n".format(host_name))
     while True:
         line = parse_folder_process.stdout.readline()
         if not line:
@@ -209,11 +212,9 @@ def check_and_process_ocr_request(config, session, gpu_mode):
         print("##############################################################")
         print()
     else:
-        print("PARSE FOLDER FAILED, SETTING REQUEST TO FAILED")
-        if baseline_id is None:
-            session.post(join_url(base_url, ocr_change_ocr_request_to_fail_and_document_state_to_success_route, request_id))
-        else:
-            session.post(join_url(base_url, ocr_change_ocr_request_to_fail_and_document_state_to_completed_layout_analysis_route, request_id))
+        print("PARSE FOLDER FAILED, SETTING REQUEST TO IN PROGRESS INTERRUPTED")
+        session.post(join_url(base_url, request_change_request_state_to_in_progress_interrupted_route, request_id))
+
     return True
 
 

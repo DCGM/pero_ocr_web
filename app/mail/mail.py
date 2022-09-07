@@ -14,21 +14,20 @@ def send_mail(subject, body, sender, recipients, host):
     client.send(message)
 
 
-def send_internal_server_error_mail():
+def send_internal_server_error_mail(config):
     send_mail(subject="PERO OCR - WEB Bot - INTERNAL SERVER ERROR",
               body=traceback.format_exc().replace("\n", "<br>"),
-              sender=('PERO OCR - WEB Bot', current_app.config['MAIL_SENDER']),
-              recipients=current_app.config['EMAIL_NOTIFICATION_ADDRESSES'],
-              host=current_app.config['MAIL_SERVER'])
+              sender=('PERO OCR - WEB Bot', config['MAIL_SENDER']),
+              recipients=config['EMAIL_NOTIFICATION_ADDRESSES'],
+              host=config['MAIL_SERVER'])
 
 
-def send_layout_failed_mail(layout_request, request):
+def send_layout_failed_mail(config, layout_request, canceled=False):
     document = layout_request.document
     user = document.user
     layout_detector = layout_request.layout_detector
 
-    message_body = "processing_client_hostname: {}<br>" \
-                   "document_id: {}<br>" \
+    message_body = "document_id: {}<br>" \
                    "document_name: {}<br>" \
                    "user_id: {}<br>" \
                    "user_name: {} {}<br>" \
@@ -39,8 +38,7 @@ def send_layout_failed_mail(layout_request, request):
                    "parse_folder.py log<br>" \
                    "########################################<br><br>{}" \
                    "<br>########################################" \
-        .format(request.host,
-                document.id,
+        .format(document.id,
                 document.name,
                 user.id,
                 user.first_name,
@@ -51,14 +49,19 @@ def send_layout_failed_mail(layout_request, request):
                 layout_request.id,
                 layout_request.log.replace("\n", "<br>"))
 
-    send_mail(subject="PERO OCR - WEB Bot - LAYOUT PROCESSING FAILED",
+    if canceled:
+        subject = "PERO OCR - WEB Bot - LAYOUT REQUEST CANCELED"
+    else:
+        subject = "PERO OCR - WEB Bot - LAYOUT PROCESSING FAILED"
+
+    send_mail(subject=subject,
               body=message_body,
-              sender=('PERO OCR - WEB Bot', current_app.config['MAIL_SENDER']),
-              recipients=current_app.config['EMAIL_NOTIFICATION_ADDRESSES'],
-              host=current_app.config['MAIL_SERVER'])
+              sender=('PERO OCR - WEB Bot', config['MAIL_SENDER']),
+              recipients=config['EMAIL_NOTIFICATION_ADDRESSES'],
+              host=config['MAIL_SERVER'])
 
 
-def send_ocr_failed_mail(ocr_request, request):
+def send_ocr_failed_mail(config, ocr_request, canceled=False):
     document = ocr_request.document
     user = document.user
     baseline = ocr_request.baseline
@@ -79,8 +82,7 @@ def send_ocr_failed_mail(ocr_request, request):
         language_model_id = language_model.id
         language_model_name = language_model.name
 
-    message_body = "processing_client_hostname: {}<br>" \
-                   "document_id: {}<br>" \
+    message_body = "document_id: {}<br>" \
                    "document_name: {}<br>" \
                    "user_id: {}<br>" \
                    "user_name: {} {}<br>" \
@@ -95,8 +97,7 @@ def send_ocr_failed_mail(ocr_request, request):
                    "parse_folder.py log<br>" \
                    "########################################<br><br>{}" \
                    "<br>########################################" \
-        .format(request.host,
-                document.id,
+        .format(document.id,
                 document.name,
                 user.id,
                 user.first_name,
@@ -111,9 +112,14 @@ def send_ocr_failed_mail(ocr_request, request):
                 ocr_request.id,
                 ocr_request.log.replace("\n", "<br>"))
 
-    send_mail(subject="PERO OCR - WEB Bot - OCR PROCESSING FAILED",
+    if canceled:
+        subject = "PERO OCR - WEB Bot - OCR REQUEST CANCELED"
+    else:
+        subject = "PERO OCR - WEB Bot - OCR PROCESSING FAILED"
+
+    send_mail(subject=subject,
               body=message_body,
-              sender=('PERO OCR - WEB Bot', current_app.config['MAIL_SENDER']),
-              recipients=current_app.config['EMAIL_NOTIFICATION_ADDRESSES'],
-              host=current_app.config['MAIL_SERVER'])
+              sender=('PERO OCR - WEB Bot', config['MAIL_SENDER']),
+              recipients=config['EMAIL_NOTIFICATION_ADDRESSES'],
+              host=config['MAIL_SERVER'])
 

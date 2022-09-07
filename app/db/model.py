@@ -25,6 +25,7 @@ class RequestState(enum.Enum):
     SUCCESS = 2
     FAILURE = 3
     CANCELED = 4
+    IN_PROGRESS_INTERRUPTED = 5
 
 
 class RequestType(enum.Enum):
