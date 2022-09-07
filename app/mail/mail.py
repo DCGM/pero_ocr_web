@@ -27,6 +27,11 @@ def send_layout_failed_mail(config, layout_request, canceled=False):
     user = document.user
     layout_detector = layout_request.layout_detector
 
+    if layout_request.log is not None:
+        log = layout_request.log.replace("\n", "<br>")
+    else:
+        log = ""
+
     message_body = "document_id: {}<br>" \
                    "document_name: {}<br>" \
                    "user_id: {}<br>" \
@@ -47,7 +52,7 @@ def send_layout_failed_mail(config, layout_request, canceled=False):
                 layout_detector.id,
                 layout_detector.name,
                 layout_request.id,
-                layout_request.log.replace("\n", "<br>"))
+                log)
 
     if canceled:
         subject = "PERO OCR - WEB Bot - LAYOUT REQUEST CANCELED"
@@ -82,6 +87,11 @@ def send_ocr_failed_mail(config, ocr_request, canceled=False):
         language_model_id = language_model.id
         language_model_name = language_model.name
 
+    if ocr_request.log is not None:
+        log = ocr_request.log.replace("\n", "<br>")
+    else:
+        log = ""
+
     message_body = "document_id: {}<br>" \
                    "document_name: {}<br>" \
                    "user_id: {}<br>" \
@@ -110,7 +120,7 @@ def send_ocr_failed_mail(config, ocr_request, canceled=False):
                 language_model_id,
                 language_model_name,
                 ocr_request.id,
-                ocr_request.log.replace("\n", "<br>"))
+                log)
 
     if canceled:
         subject = "PERO OCR - WEB Bot - OCR REQUEST CANCELED"
