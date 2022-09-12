@@ -86,7 +86,7 @@ class Request(Base):
     created_date = Column(DateTime, default=datetime.datetime.utcnow, index=True)
     request_type = Column(Enum(RequestType))
     processed_pages = Column(Integer(), default=0)
-    last_processed_page = Column(DateTime, default=datetime.datetime.utcnow)
+    last_processed_page = Column(DateTime)
     previous_attempts = Column(Integer(), default=0)
     state = Column(Enum(RequestState))
     log = Column(String())

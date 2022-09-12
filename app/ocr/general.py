@@ -8,6 +8,7 @@ from app.db.general import get_text_region_by_id, get_text_line_by_id
 from app import db_session
 from flask import jsonify
 import uuid
+import datetime
 
 from pero_ocr.document_ocr.layout import PageLayout
 from pero_ocr.force_alignment import force_align
@@ -133,7 +134,10 @@ def change_ocr_request_and_document_state_on_success_handler(request):
 
 
 def change_ocr_request_and_document_state_in_progress_handler(request):
-    change_ocr_request_and_document_state(request, RequestState.IN_PROGRESS, DocumentState.RUNNING_OCR)
+    request.state = RequestState.IN_PROGRESS
+    request.document.state = DocumentState.RUNNING_OCR
+    request.last_processed_page = datetime.datetime.utcnow()
+    db_session.commit()
     return
 
 

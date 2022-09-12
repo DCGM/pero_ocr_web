@@ -4,6 +4,7 @@ from app import db_session
 from flask import jsonify
 import numpy as np
 import os
+import datetime
 from app.db.general import get_image_by_id
 from pero_ocr.document_ocr.layout import PageLayout
 
@@ -84,7 +85,10 @@ def change_layout_request_and_document_state(request, request_state, document_st
 
 
 def change_layout_request_and_document_state_in_progress_handler(request):
-    change_layout_request_and_document_state(request, RequestState.IN_PROGRESS, DocumentState.RUNNING_LAYOUT_ANALYSIS)
+    request.state = RequestState.IN_PROGRESS
+    request.document.state = DocumentState.RUNNING_LAYOUT_ANALYSIS
+    request.last_processed_page = datetime.datetime.utcnow()
+    db_session.commit()
     return
 
 
