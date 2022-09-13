@@ -67,10 +67,10 @@ def check_and_process_ocr_request(config, session, gpu_mode):
     module_logger.info("")
     module_logger.info("REQUEST")
     module_logger.info("##############################################################")
-    module_logger.info("REQUEST ID:", request_id)
-    module_logger.info("BASELINE ID:", baseline_id)
-    module_logger.info("OCR ID:", ocr_id)
-    module_logger.info("LANGUAGE MODEL ID:", language_model_id)
+    module_logger.info("REQUEST ID: {}".format(request_id))
+    module_logger.info("BASELINE ID: {}".format(baseline_id))
+    module_logger.info("OCR ID: {}".format(ocr_id))
+    module_logger.info("LANGUAGE MODEL ID: {}".format(language_model_id))
     module_logger.info("IMAGES IDS:")
     module_logger.info("\n".join(image_ids))
     module_logger.info("##############################################################")
@@ -129,7 +129,7 @@ def check_and_process_ocr_request(config, session, gpu_mode):
                      annotated_xmls_folder)
             module_logger.info("##############################################################")
             module_logger.info("")
-            module_logger.info("STARTING SELECT EMBED ID:", select_embed_id_path)
+            module_logger.info("STARTING SELECT EMBED ID: {}".format(select_embed_id_path))
             module_logger.info("##############################################################")
             parse_folder_process = subprocess.Popen(['python', '-u', select_embed_id_path, '-c', "./models/config.ini",
                                                      '-i', images_folder, '-x', annotated_xmls_folder],
@@ -141,7 +141,8 @@ def check_and_process_ocr_request(config, session, gpu_mode):
                     break
                 line = line.decode("utf-8")
                 log.append(line)
-                module_logger.info(line, end='')
+                # -1 ommits new line
+                module_logger.info(line[:-1])
             parse_folder_process.wait()
             module_logger.info("##############################################################")
 
@@ -157,7 +158,7 @@ def check_and_process_ocr_request(config, session, gpu_mode):
     module_logger.info("##############################################################")
 
     module_logger.info("")
-    module_logger.info("STARTING PARSE FOLDER:", parse_folder_path)
+    module_logger.info("STARTING PARSE FOLDER: {}".format(parse_folder_path))
     module_logger.info("##############################################################")
     parse_folder_process = subprocess.Popen(['python', '-u', parse_folder_path, '-c', "./models/config.ini"],
                                             cwd=working_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -171,7 +172,8 @@ def check_and_process_ocr_request(config, session, gpu_mode):
         if line.startswith("DONE "):
             session.post(join_url(base_url, request_increment_processed_pages_route, request_id))
         log.append(line)
-        module_logger.info(line, end='')
+        # -1 ommits new line
+        module_logger.info(line[:-1])
     parse_folder_process.wait()
     module_logger.info("##############################################################")
 
@@ -234,14 +236,14 @@ def get_config_and_models(session, base_url, ocr_get_config_route, ocr_get_basel
     with open(config_path, 'wb') as handle:
         handle.write(config_response.content)
     if baseline_id is not None:
-        module_logger.info("GETTING BASELINE:", baseline_id)
+        module_logger.info("GETTING BASELINE: {}".format(baseline_id))
         baseline_response = session.get(join_url(base_url, ocr_get_baseline_route, baseline_id))
         unzip_model_response(baseline_response, models_folder)
-    module_logger.info("GETTING OCR:", ocr_id)
+    module_logger.info("GETTING OCR: {}".format(ocr_id))
     ocr_response = session.get(join_url(base_url, ocr_get_ocr_route, ocr_id))
     unzip_model_response(ocr_response, models_folder)
     if language_model_id is not None:
-        module_logger.info("GETTING LANGUAGE MODEL:", language_model_id)
+        module_logger.info("GETTING LANGUAGE MODEL: {}".format(language_model_id))
         language_model_response = session.get(join_url(base_url, ocr_get_language_model_route, language_model_id))
         unzip_model_response(language_model_response, models_folder)
 
@@ -249,7 +251,7 @@ def get_config_and_models(session, base_url, ocr_get_config_route, ocr_get_basel
 def get_xmls(session, base_url, get_xml_route, image_ids, xmls_folder):
     number_of_images = len(image_ids)
     for i, image_id in enumerate(image_ids):
-        module_logger.info("{}/{} GETTING XML:".format(i + 1, number_of_images), image_id)
+        module_logger.info("{}/{} GETTING XML: {}".format(i + 1, number_of_images, image_id))
         xml_response = session.get(join_url(base_url, get_xml_route, image_id))
         path = os.path.join(xmls_folder, "{}.xml".format(image_id))
         if xml_response.status_code == 200:

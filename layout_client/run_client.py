@@ -54,8 +54,8 @@ def check_and_process_layout_request(config, session, gpu_mode):
     module_logger.info("")
     module_logger.info("REQUEST")
     module_logger.info("##############################################################")
-    module_logger.info("REQUEST ID:", request_id)
-    module_logger.info("LAYOUT DETECTOR ID:", layout_detector_id)
+    module_logger.info("REQUEST ID: {}".format(request_id))
+    module_logger.info("LAYOUT DETECTOR ID: {}".format(layout_detector_id))
     module_logger.info("IMAGES IDS:")
     module_logger.info("\n".join(image_ids))
     module_logger.info("##############################################################")
@@ -75,7 +75,7 @@ def check_and_process_layout_request(config, session, gpu_mode):
     os.makedirs(layout_detector_folder)
 
     module_logger.info("")
-    module_logger.info("GETTING LAYOUT DETECTOR:", layout_detector_id)
+    module_logger.info("GETTING LAYOUT DETECTOR: {}".format(layout_detector_id))
     get_layout_detector(session, base_url, layout_analysis_get_layout_detector_route, layout_detector_id,
                         layout_detector_folder)
 
@@ -87,7 +87,7 @@ def check_and_process_layout_request(config, session, gpu_mode):
     module_logger.info("##############################################################")
 
     module_logger.info("")
-    module_logger.info("STARTING PARSE FOLDER:", parse_folder_path)
+    module_logger.info("STARTING PARSE FOLDER: {}".format(parse_folder_path))
     module_logger.info("##############################################################")
     parse_folder_process = subprocess.Popen(['python', '-u', parse_folder_path, '-c', "./layout_detector/config.ini"],
                                             cwd=working_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -101,7 +101,8 @@ def check_and_process_layout_request(config, session, gpu_mode):
         if line.startswith("DONE "):
             session.post(join_url(base_url, request_increment_processed_pages_route, request_id))
         log.append(line)
-        module_logger.info(line, end='')
+        # -1 ommits new line
+        module_logger.info(line[:-1])
     parse_folder_process.wait()
     module_logger.info("##############################################################")
 
