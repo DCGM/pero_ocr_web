@@ -131,7 +131,9 @@ def check_and_process_layout_request(config, session, gpu_mode):
         module_logger.info("POSTING RESULT TO SERVER")
         module_logger.info("##############################################################")
         module_logger.info("XMLS")
-        module_logger.info("\n".join(os.listdir(output_xmls_folder)))
+        for xml in sorted(os.listdir(output_xmls_folder)):
+            module_logger.info(xml)
+        module_logger.info("")
         post_result(session, base_url, layout_analysis_post_result_route, request_update_last_processed_page_route,
                     layout_analysis_change_layout_request_and_document_state_on_success_route, request_id,
                     image_ids, data_folders, data_types)

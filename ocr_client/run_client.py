@@ -207,10 +207,13 @@ def check_and_process_ocr_request(config, session, gpu_mode):
         module_logger.info("POSTING RESULT TO SERVER")
         module_logger.info("##############################################################")
         module_logger.info("XMLS")
-        module_logger.info("\n".join(os.listdir(output_xmls_folder)))
+        for xml in sorted(os.listdir(output_xmls_folder)):
+            module_logger.info(xml)
         module_logger.info("")
         module_logger.info("LOGITS")
-        module_logger.info("\n".join(os.listdir(output_logits_folder)))
+        for logit in sorted(os.listdir(output_logits_folder)):
+            module_logger.info(logit)
+        module_logger.info("")
         post_result(session, base_url, ocr_post_result_route, request_update_last_processed_page_route,
                     ocr_change_ocr_request_and_document_state_on_success_route, request_id, image_ids, data_folders,
                     data_types)

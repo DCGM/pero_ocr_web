@@ -30,7 +30,7 @@ def unzip_response_to_dir(response, dir):
 
 def get_images(session, base_url, document_get_image_route, image_ids, image_folder):
     number_of_images = len(image_ids)
-    for i, image_id in enumerate(image_ids):
+    for i, image_id in enumerate(sorted(image_ids)):
         module_logger.info("{}/{} GETTING IMAGE: {}".format(i + 1, number_of_images, image_id))
         image_response = session.get(join_url(base_url, document_get_image_route, image_id))
         file_type = image_response.headers['content-type'].split('/')[-1]
