@@ -13,7 +13,7 @@ from app.mail.mail import send_layout_failed_mail
 import os
 import sys
 import sqlalchemy
-from app.db.model import DocumentState, TextRegion, LayoutDetector, Document
+from app.db.model import DocumentState, RequestState, TextRegion, LayoutDetector, Document
 from app.document.general import is_user_owner_or_collaborator, is_granted_acces_for_document, is_user_trusted, \
                                  document_exists, get_document_images, make_image_preview
 from app import db_session
@@ -166,16 +166,22 @@ def edit_layout(image_id):
 # POST RESPONSE FROM CLIENT, XMLS
 ########################################################################################################################
 
-@bp.route('/post_result/<string:image_id>', methods=['POST'])
+@bp.route('/post_result/<string:request_id>/<string:image_id>', methods=['POST'])
 @login_required
-def post_result(image_id):
+def post_result(request_id, image_id):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights!', 'danger')
         return redirect(url_for('main.index'))
+
+    db_request = get_request_by_id(request_id)
+    if db_request.state != RequestState.IN_PROGRESS:
+        return "Request in wrong state: {}.".format(db_request.state), 406
+
     try:
         image = get_image_by_id(image_id)
     except sqlalchemy.exc.StatementError:
         return "Image does not exist.", 404
+
     if image.document.state != DocumentState.COMPLETED_LAYOUT_ANALYSIS:
         print()
         print("INSERT REGIONS FROM XMLS TO DB")

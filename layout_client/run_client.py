@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import traceback
 import torch
+import logging
 
 from client_helper import join_url
 from client_helper import unzip_response_to_dir
@@ -14,6 +15,10 @@ from client_helper import get_images
 from client_helper import post_result
 from client_helper import log_in
 from client_helper import add_log_to_request
+
+
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
+module_logger = logging.getLogger('pero_ocr_web.layout_client')
 
 
 def check_and_process_layout_request(config, session, gpu_mode):
@@ -24,7 +29,6 @@ def check_and_process_layout_request(config, session, gpu_mode):
     base_url = config['SERVER']['base_url']
     layout_analysis_get_request_route = config['SERVER']['layout_analysis_get_request_route']
     layout_analysis_change_layout_request_and_document_state_on_success_route = config['SERVER']['layout_analysis_change_layout_request_and_document_state_on_success_route']
-    layout_analysis_change_layout_request_to_fail_and_document_state_to_new_route = config['SERVER']['layout_analysis_change_layout_request_to_fail_and_document_state_to_new_route']
 
     r = session.get(join_url(base_url, layout_analysis_get_request_route))
 
@@ -47,14 +51,14 @@ def check_and_process_layout_request(config, session, gpu_mode):
     document = request_json['document']
     image_ids = document['images']
 
-    print()
-    print("REQUEST")
-    print("##############################################################")
-    print("REQUEST ID:", request_id)
-    print("LAYOUT DETECTOR ID:", layout_detector_id)
-    print("IMAGES IDS:")
-    print("\n".join(image_ids))
-    print("##############################################################")
+    module_logger.info()
+    module_logger.info("REQUEST")
+    module_logger.info("##############################################################")
+    module_logger.info("REQUEST ID:", request_id)
+    module_logger.info("LAYOUT DETECTOR ID:", layout_detector_id)
+    module_logger.info("IMAGES IDS:")
+    module_logger.info("\n".join(image_ids))
+    module_logger.info("##############################################################")
 
     working_dir = os.path.join(config['SETTINGS']['working_directory'], request_id)
     parse_folder_path = config['SETTINGS']['parse_folder_path']
@@ -70,21 +74,21 @@ def check_and_process_layout_request(config, session, gpu_mode):
     os.makedirs(output_folder)
     os.makedirs(layout_detector_folder)
 
-    print()
-    print("GETTING LAYOUT DETECTOR:", layout_detector_id)
+    module_logger.info()
+    module_logger.info("GETTING LAYOUT DETECTOR:", layout_detector_id)
     get_layout_detector(session, base_url, layout_analysis_get_layout_detector_route, layout_detector_id,
                         layout_detector_folder)
 
-    print()
-    print("GETTING IMAGES")
-    print("##############################################################")
+    module_logger.info()
+    module_logger.info("GETTING IMAGES")
+    module_logger.info("##############################################################")
     get_images(session, base_url, document_get_image_route, image_ids, images_folder)
     number_of_images = len(os.listdir(images_folder))
-    print("##############################################################")
+    module_logger.info("##############################################################")
 
-    print()
-    print("STARTING PARSE FOLDER:", parse_folder_path)
-    print("##############################################################")
+    module_logger.info()
+    module_logger.info("STARTING PARSE FOLDER:", parse_folder_path)
+    module_logger.info("##############################################################")
     parse_folder_process = subprocess.Popen(['python', '-u', parse_folder_path, '-c', "./layout_detector/config.ini"],
                                             cwd=working_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     log = []
@@ -97,9 +101,9 @@ def check_and_process_layout_request(config, session, gpu_mode):
         if line.startswith("DONE "):
             session.post(join_url(base_url, request_increment_processed_pages_route, request_id))
         log.append(line)
-        print(line, end='')
+        module_logger.info(line, end='')
     parse_folder_process.wait()
-    print("##############################################################")
+    module_logger.info("##############################################################")
 
     add_log_to_request(session, base_url, request_add_log_route, request_id, log)
 
@@ -117,22 +121,22 @@ def check_and_process_layout_request(config, session, gpu_mode):
         no_output = True
 
     if canceled_request:
-        print("REQUEST WAS CANCELED")
+        module_logger.info("REQUEST WAS CANCELED")
     elif not no_output and parse_folder_process.returncode == 0 and number_of_images == number_of_xmls:
         data_folders = [output_xmls_folder]
         data_types = ["xml"]
-        print()
-        print("POSTING RESULT TO SERVER")
-        print("##############################################################")
-        print("XMLS")
-        print("\n".join(os.listdir(output_xmls_folder)))
+        module_logger.info()
+        module_logger.info("POSTING RESULT TO SERVER")
+        module_logger.info("##############################################################")
+        module_logger.info("XMLS")
+        module_logger.info("\n".join(os.listdir(output_xmls_folder)))
         post_result(session, base_url, layout_analysis_post_result_route, request_update_last_processed_page_route,
                     layout_analysis_change_layout_request_and_document_state_on_success_route, request_id,
                     image_ids, data_folders, data_types)
-        print("##############################################################")
-        print()
+        module_logger.info("##############################################################")
+        module_logger.info()
     else:
-        print("PARSE FOLDER FAILED, SETTING REQUEST TO IN PROGRESS INTERRUPTED")
+        module_logger.info("PARSE FOLDER FAILED, SETTING REQUEST TO IN PROGRESS INTERRUPTED")
         session.post(join_url(base_url, request_change_request_state_to_in_progress_interrupted_route, request_id))
 
     return True
@@ -154,19 +158,19 @@ def main():
                 if not log_in(session, config['SETTINGS']['login'], config['SETTINGS']['password'],
                               config['SERVER']['base_url'],
                               config['SERVER']['authentification'], config['SERVER']['login_page']):
-                    print('Unable to log into server')
+                    module_logger.error('Unable to log into server')
                     time.sleep(timeout)
                     continue
 
                 while True:
-                    print("CHECK REQUEST")
+                    module_logger.info("CHECK REQUEST")
                     if check_and_process_layout_request(config, session, False):
-                        print("REQUEST COMPLETED")
+                        module_logger.info("REQUEST COMPLETED")
                     else:
-                        print("NO REQUEST")
+                        module_logger.info("NO REQUEST")
                         time.sleep(timeout)
         except:
-            print('ERROR exception')
+            module_logger.error('ERROR exception')
             traceback.print_exc()
             time.sleep(timeout)
 

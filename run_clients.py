@@ -4,10 +4,14 @@ import sys
 import requests
 import argparse
 import safe_gpu
+import logging
 
 from client_helper import log_in
 from layout_client.run_client import check_and_process_layout_request
 from ocr_client.run_client import check_and_process_ocr_request
+
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
+module_logger = logging.getLogger('pero_ocr_web.run_clients')
 
 
 def get_args():
@@ -36,7 +40,7 @@ def main():
         if not log_in(session, layout_config['SETTINGS']['login'], layout_config['SETTINGS']['password'],
                       layout_config['SERVER']['base_url'],
                       layout_config['SERVER']['authentification'], layout_config['SERVER']['login_page']):
-            print('Unable to log into server')
+            module_logger.error('Unable to log into server')
         else:
             while True:
                 if args.time_limit > 0 and args.time_limit * 3600 < time.time() - start_time:

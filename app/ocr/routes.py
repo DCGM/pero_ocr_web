@@ -15,7 +15,7 @@ from app.ocr import bp
 from app.db.general import get_document_by_id, get_request_by_id, get_image_by_id, get_baseline_by_id, get_ocr_by_id, \
                            get_language_model_by_id, get_text_line_by_id, get_text_region_by_id, get_image_annotation_statistics_db, \
                            get_document_annotation_statistics_db, get_previews_for_documents, TextLine
-from app.db import DocumentState, OCR, Document, Image, TextRegion, Baseline, LanguageModel, User, OCRTrainingDocuments
+from app.db import DocumentState, RequestState, OCR, Document, Image, TextRegion, Baseline, LanguageModel, User, OCRTrainingDocuments
 from app.ocr.general import create_json_from_request, create_ocr_request, \
                             can_start_ocr, add_ocr_request_and_change_document_state, get_first_ocr_request, \
                             insert_lines_to_db, change_ocr_request_and_document_state_on_success_handler, insert_annotations_to_db, \
@@ -540,12 +540,16 @@ def training_line(line_id, training_flag):
 # POST RESPONSE FROM CLIENT, XMLS AND LOGITS
 ########################################################################################################################
 
-@bp.route('/post_result/<string:image_id>', methods=['POST'])
+@bp.route('/post_result/<string:request_id>/<string:image_id>', methods=['POST'])
 @login_required
-def post_result(image_id):
+def post_result(request_id, image_id):
     if not is_user_trusted(current_user):
         flash(u'You do not have sufficient rights!', 'danger')
         return redirect(url_for('main.index'))
+
+    db_request = get_request_by_id(request_id)
+    if db_request.state != RequestState.IN_PROGRESS:
+        return "Request in wrong state: {}.".format(db_request.state), 406
 
     try:
         db_image = get_image_by_id(image_id)
