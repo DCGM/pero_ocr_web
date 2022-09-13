@@ -64,7 +64,7 @@ def check_and_process_ocr_request(config, session, gpu_mode):
     document_id = document['id']
     image_ids = document['images']
 
-    module_logger.info()
+    module_logger.info("")
     module_logger.info("REQUEST")
     module_logger.info("##############################################################")
     module_logger.info("REQUEST ID:", request_id)
@@ -93,14 +93,14 @@ def check_and_process_ocr_request(config, session, gpu_mode):
     os.makedirs(os.path.join(output_folder, "page"))
     os.makedirs(models_folder)
 
-    module_logger.info()
+    module_logger.info("")
     module_logger.info("GETTING CONFIG AND MODELS")
     module_logger.info("##############################################################")
     get_config_and_models(session, base_url, ocr_get_config_route, ocr_get_baseline_route, ocr_get_ocr_route,
                           ocr_get_language_model_route, baseline_id, ocr_id, language_model_id, models_folder)
     module_logger.info("##############################################################")
 
-    module_logger.info()
+    module_logger.info("")
     module_logger.info("GETTING IMAGES")
     module_logger.info("##############################################################")
     get_images(session, base_url, document_get_image_route, image_ids, images_folder)
@@ -111,7 +111,7 @@ def check_and_process_ocr_request(config, session, gpu_mode):
         response = session.get(join_url(base_url, ocr_get_document_annotation_statistics_route, document_id))
         annotated_count = int(response.json()['annotated_count'])
         min_annotated_lines_for_embed_selection = 50
-        module_logger.info()
+        module_logger.info("")
         module_logger.info("MIN ANNOTATED LINES FOR EMBED SELECTION: {}".format(min_annotated_lines_for_embed_selection))
         module_logger.info("ANNOTATED LINES: {}".format(annotated_count))
         model_config = configparser.ConfigParser()
@@ -122,13 +122,13 @@ def check_and_process_ocr_request(config, session, gpu_mode):
         if annotated_count >= min_annotated_lines_for_embed_selection and "embed_id" in ocr_config:
             annotated_xmls_folder = os.path.join(working_dir, "annotated_xmls")
             os.makedirs(annotated_xmls_folder)
-            module_logger.info()
+            module_logger.info("")
             module_logger.info("GETTING XMLS WITH ANNOTATED LINES")
             module_logger.info("##############################################################")
             get_xmls(session, base_url, document_get_annotated_xml_lines_route, image_ids,
                      annotated_xmls_folder)
             module_logger.info("##############################################################")
-            module_logger.info()
+            module_logger.info("")
             module_logger.info("STARTING SELECT EMBED ID:", select_embed_id_path)
             module_logger.info("##############################################################")
             parse_folder_process = subprocess.Popen(['python', '-u', select_embed_id_path, '-c', "./models/config.ini",
@@ -145,18 +145,18 @@ def check_and_process_ocr_request(config, session, gpu_mode):
             parse_folder_process.wait()
             module_logger.info("##############################################################")
 
-        module_logger.info()
+        module_logger.info("")
         module_logger.info("GETTING XMLS WITH DETECTED LINES")
         module_logger.info("##############################################################")
         get_xmls(session, base_url, document_get_xml_lines_route, image_ids, xmls_folder)
     else:
-        module_logger.info()
+        module_logger.info("")
         module_logger.info("GETTING XMLS WITH DETECTED LAYOUT")
         module_logger.info("##############################################################")
         get_xmls(session, base_url, document_get_xml_regions_route, image_ids, xmls_folder)
     module_logger.info("##############################################################")
 
-    module_logger.info()
+    module_logger.info("")
     module_logger.info("STARTING PARSE FOLDER:", parse_folder_path)
     module_logger.info("##############################################################")
     parse_folder_process = subprocess.Popen(['python', '-u', parse_folder_path, '-c', "./models/config.ini"],
@@ -200,19 +200,19 @@ def check_and_process_ocr_request(config, session, gpu_mode):
         number_of_images == number_of_logits:
         data_folders = [output_xmls_folder, output_logits_folder]
         data_types = ["xml", "logits"]
-        module_logger.info()
+        module_logger.info("")
         module_logger.info("POSTING RESULT TO SERVER")
         module_logger.info("##############################################################")
         module_logger.info("XMLS")
         module_logger.info("\n".join(os.listdir(output_xmls_folder)))
-        module_logger.info()
+        module_logger.info("")
         module_logger.info("LOGITS")
         module_logger.info("\n".join(os.listdir(output_logits_folder)))
         post_result(session, base_url, ocr_post_result_route, request_update_last_processed_page_route,
                     ocr_change_ocr_request_and_document_state_on_success_route, request_id, image_ids, data_folders,
                     data_types)
         module_logger.info("##############################################################")
-        module_logger.info()
+        module_logger.info("")
     else:
         module_logger.info("PARSE FOLDER FAILED, SETTING REQUEST TO IN PROGRESS INTERRUPTED")
         session.post(join_url(base_url, request_change_request_state_to_in_progress_interrupted_route, request_id))

@@ -51,7 +51,7 @@ def check_and_process_layout_request(config, session, gpu_mode):
     document = request_json['document']
     image_ids = document['images']
 
-    module_logger.info()
+    module_logger.info("")
     module_logger.info("REQUEST")
     module_logger.info("##############################################################")
     module_logger.info("REQUEST ID:", request_id)
@@ -74,19 +74,19 @@ def check_and_process_layout_request(config, session, gpu_mode):
     os.makedirs(output_folder)
     os.makedirs(layout_detector_folder)
 
-    module_logger.info()
+    module_logger.info("")
     module_logger.info("GETTING LAYOUT DETECTOR:", layout_detector_id)
     get_layout_detector(session, base_url, layout_analysis_get_layout_detector_route, layout_detector_id,
                         layout_detector_folder)
 
-    module_logger.info()
+    module_logger.info("")
     module_logger.info("GETTING IMAGES")
     module_logger.info("##############################################################")
     get_images(session, base_url, document_get_image_route, image_ids, images_folder)
     number_of_images = len(os.listdir(images_folder))
     module_logger.info("##############################################################")
 
-    module_logger.info()
+    module_logger.info("")
     module_logger.info("STARTING PARSE FOLDER:", parse_folder_path)
     module_logger.info("##############################################################")
     parse_folder_process = subprocess.Popen(['python', '-u', parse_folder_path, '-c', "./layout_detector/config.ini"],
@@ -125,7 +125,7 @@ def check_and_process_layout_request(config, session, gpu_mode):
     elif not no_output and parse_folder_process.returncode == 0 and number_of_images == number_of_xmls:
         data_folders = [output_xmls_folder]
         data_types = ["xml"]
-        module_logger.info()
+        module_logger.info("")
         module_logger.info("POSTING RESULT TO SERVER")
         module_logger.info("##############################################################")
         module_logger.info("XMLS")
@@ -134,7 +134,7 @@ def check_and_process_layout_request(config, session, gpu_mode):
                     layout_analysis_change_layout_request_and_document_state_on_success_route, request_id,
                     image_ids, data_folders, data_types)
         module_logger.info("##############################################################")
-        module_logger.info()
+        module_logger.info("")
     else:
         module_logger.info("PARSE FOLDER FAILED, SETTING REQUEST TO IN PROGRESS INTERRUPTED")
         session.post(join_url(base_url, request_change_request_state_to_in_progress_interrupted_route, request_id))
