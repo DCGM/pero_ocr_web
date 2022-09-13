@@ -72,7 +72,8 @@ def check_and_process_ocr_request(config, session, gpu_mode):
     module_logger.info("OCR ID: {}".format(ocr_id))
     module_logger.info("LANGUAGE MODEL ID: {}".format(language_model_id))
     module_logger.info("IMAGES IDS:")
-    module_logger.info("\n".join(image_ids))
+    for image_id in image_ids:
+        module_logger.info(image_id)
     module_logger.info("##############################################################")
 
     working_dir = os.path.join(config['SETTINGS']['working_directory'], request_id)

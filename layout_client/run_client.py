@@ -57,7 +57,8 @@ def check_and_process_layout_request(config, session, gpu_mode):
     module_logger.info("REQUEST ID: {}".format(request_id))
     module_logger.info("LAYOUT DETECTOR ID: {}".format(layout_detector_id))
     module_logger.info("IMAGES IDS:")
-    module_logger.info("\n".join(image_ids))
+    for image_id in image_ids:
+        module_logger.info(image_id)
     module_logger.info("##############################################################")
 
     working_dir = os.path.join(config['SETTINGS']['working_directory'], request_id)

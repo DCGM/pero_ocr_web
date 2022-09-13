@@ -31,7 +31,7 @@ def unzip_response_to_dir(response, dir):
 def get_images(session, base_url, document_get_image_route, image_ids, image_folder):
     number_of_images = len(image_ids)
     for i, image_id in enumerate(image_ids):
-        module_logger.info("{}/{} GETTING IMAGE:".format(i + 1, number_of_images), image_id)
+        module_logger.info("{}/{} GETTING IMAGE: {}".format(i + 1, number_of_images, image_id))
         image_response = session.get(join_url(base_url, document_get_image_route, image_id))
         file_type = image_response.headers['content-type'].split('/')[-1]
         path = os.path.join(image_folder, "{}.{}".format(image_id, file_type))
@@ -50,7 +50,6 @@ def post_result(session, base_url, post_result_route, request_update_last_proces
         data = dict()
         for data_folder, data_type in zip(data_folders, data_types):
             data["{}.{}".format(image_id, data_type)] = open(os.path.join(data_folder, "{}.{}".format(image_id, data_type)), 'rb')
-
         module_logger.info("{}/{} Posting {}".format(i + 1, len(image_ids),
                            ",".join(["{}.{}".format(image_id, data_type) for data_type in data_types])))
         session.post(join_url(base_url, post_result_route, request_id, image_id), files=data)
