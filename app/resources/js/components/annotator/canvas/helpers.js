@@ -151,61 +151,76 @@ export function canvasInit() {
     });
 
     /** Animation handling **/
-    this.scope.view.zoom_page_animation = {on: false,
-                                           start_page_fraction_in_view: 0.75,
+    this.scope.view.zoom_animation = {on: false,
+                                      start_zoom: 0,
+                                      final_zoom: 0,
+                                      total_time: 0.5,
+                                      p: 3,
+                                      time_passed: 0};
+
+    this.scope.view.translate_animation = {on: false,
+                                           start_point: new paper.Point(0, 0),
+                                           end_point: new paper.Point(0, 0),
                                            total_time: 0.5,
                                            p: 3,
-                                           final_zoom: 0,
-                                           time_passed: 0
-                                          };
+                                           time_passed: 0};
+
     let self = this;
     this.scope.view.onFrame = function(event)
     {
-      if (self.scope.view.zoom_page_animation.on)
+      if (self.scope.view.zoom_animation.on)
       {
-        let start_page_fraction_in_view = self.scope.view.zoom_page_animation.start_page_fraction_in_view;
-        let final_zoom = self.scope.view.zoom_page_animation.final_zoom;
-        let total_time = self.scope.view.zoom_page_animation.total_time;
-        let time_passed = self.scope.view.zoom_page_animation.time_passed;
-        let p = self.scope.view.zoom_page_animation.p;
-        if (final_zoom == 0)
+        let start_zoom = self.scope.view.zoom_animation.start_zoom;
+        let final_zoom = self.scope.view.zoom_animation.final_zoom;
+        let total_time = self.scope.view.zoom_animation.total_time;
+        let p = self.scope.view.zoom_animation.p;
+        let time_passed = self.scope.view.zoom_animation.time_passed;
+
+        if (time_passed < total_time)
         {
-          // move image left top corner to 0,0
-          self.image.raster.position = self.image.raster.bounds.size.multiply(1/2);
-          // set view to the center of image
-          self.scope.view.center = self.image.raster.position;
-          // derive zoom, so the image fits into the view
-          let page_width_ratio = self.image.raster.width / self.image.raster.height;
-          let view_width_ratio = self.scope.view.bounds.width / self.scope.view.bounds.height;
-          if (view_width_ratio > page_width_ratio)
+          let actual_zoom = start_zoom + (final_zoom - start_zoom) * reverse_polynomial_trajectory(time_passed, total_time, p);
+          if (actual_zoom > final_zoom)
           {
-            final_zoom = (self.scope.view.bounds.height / self.image.raster.height) * self.scope.view.zoom;
+            self.scope.view.zoom = final_zoom;
           }
           else
           {
-            final_zoom = (self.scope.view.bounds.width / self.image.raster.width) * self.scope.view.zoom;
+            self.scope.view.zoom = actual_zoom;
           }
-          self.scope.view.zoom_page_animation.final_zoom = final_zoom;
-          self.scope.view.zoom = final_zoom * start_page_fraction_in_view;
-        }
-        if (time_passed < total_time)
-        {
-          let actual_page_fraction_in_view = start_page_fraction_in_view + (1 - start_page_fraction_in_view) * reverse_polynomial_trajectory(time_passed, total_time, p);
-          if (actual_page_fraction_in_view > 1)
-          {
-            actual_page_fraction_in_view = 1;
-          }
-          self.scope.view.zoom = final_zoom * actual_page_fraction_in_view;
         }
         else
         {
           self.scope.view.zoom = final_zoom;
-          self.scope.view.zoom_page_animation.on = false;
-          self.scope.view.zoom_page_animation.actual_page_fraction_in_view = 0;
-          self.scope.view.zoom_page_animation.final_zoom = 0;
-          self.scope.view.zoom_page_animation.time_passed = 0;
+          self.scope.view.zoom_animation.on = false;
+          self.scope.view.zoom_animation.start_zoom = 0;
+          self.scope.view.zoom_animation.final_zoom = 0;
+          self.scope.view.zoom_animation.time_passed = 0;
         }
-        self.scope.view.zoom_page_animation.time_passed += event.delta;
+        self.scope.view.zoom_animation.time_passed += event.delta;
+      }
+
+      if (self.scope.view.translate_animation.on)
+      {
+        let start_point = self.scope.view.translate_animation.start_point;
+        let end_point = self.scope.view.translate_animation.end_point;
+        let total_time = self.scope.view.translate_animation.total_time;
+        let p = self.scope.view.translate_animation.p;
+        let time_passed = self.scope.view.translate_animation.time_passed;
+
+        if (time_passed < total_time)
+        {
+          let actual_point = start_point.add(end_point.subtract(start_point).multiply(reverse_polynomial_trajectory(time_passed, total_time, p)));
+          self.scope.view.center = actual_point;
+        }
+        else
+        {
+          self.scope.view.center = end_point;
+          self.scope.view.translate_animation.on = false;
+          self.scope.view.translate_animation.start_zoom = 0;
+          self.scope.view.translate_animation.final_zoom = 0;
+          self.scope.view.translate_animation.time_passed = 0;
+        }
+        self.scope.view.translate_animation.time_passed += event.delta;
       }
     }
 }
@@ -254,29 +269,31 @@ export function canvasSelectRowAnnotation(row_uuid) {
  */
 export function canvasZoomImage() {
 
+    // move image left top corner to 0,0
+    this.image.raster.position = this.image.raster.bounds.size.multiply(1/2);
+    // set view to the center of image
+    this.scope.view.center = this.image.raster.position;
+    // derive zoom, so the image fits into the view
+    let page_width_ratio = this.image.raster.width / this.image.raster.height;
+    let view_width_ratio = this.scope.view.bounds.width / this.scope.view.bounds.height;
+    let final_zoom;
+    if (view_width_ratio > page_width_ratio)
+    {
+      final_zoom = (this.scope.view.bounds.height / this.image.raster.height) * this.scope.view.zoom;
+    }
+    else
+    {
+      final_zoom = (this.scope.view.bounds.width / this.image.raster.width) * this.scope.view.zoom;
+    }
+    let page_fraction_in_view = 0.75
+    this.scope.view.zoom = final_zoom * page_fraction_in_view;
+
     // scale view, so the image fits
     //this.scope.view.viewSize =;
-    this.scope.view.zoom_page_animation.on = true;
-
-
-    /*
-
-    function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    async function scale_view_to_fit_image(view, scale_animation_steps)
-    {
-      for (let i = 1.0; i <= scale_animation_steps; ++i)
-      {
-        view.scale(scale * (i / scale_animation_steps));
-        await sleep(50);
-      }
-    }
-
-    scale_view_to_fit_image(this.scope.view, scale_animation_steps);
-
-    */
+    this.scope.view.zoom_animation.start_zoom = this.scope.view.zoom;
+    this.scope.view.zoom_animation.final_zoom = final_zoom;
+    this.scope.view.zoom_animation.total_time = 10;
+    this.scope.view.zoom_animation.on = true;
 }
 
 
