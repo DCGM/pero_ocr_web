@@ -33,7 +33,7 @@ export function canvasInit() {
 
     // Zero point text
     let text = new paper.PointText(new paper.Point(0, -5));
-    text.fillColor = 'rgb(255, 255, 255)';
+    text.fillColor = 'rgb(0, 0, 0)';
     // text.fontSize = 20;
     text.content = "[0,0]";
 
@@ -149,6 +149,70 @@ export function canvasInit() {
         // Delegate to AnnotatorWrapperComponent
         this.$emit('row-edited-event', this.serializeAnnotation(row));
     });
+
+    /** Animation handling **/
+    this.scope.view.zoom_page_animation = {on: false,
+                                           start_page_fraction_in_view: 0.75,
+                                           total_time: 0.5,
+                                           p: 3,
+                                           final_zoom: 0,
+                                           time_passed: 0
+                                          };
+    let self = this;
+    this.scope.view.onFrame = function(event)
+    {
+      if (self.scope.view.zoom_page_animation.on)
+      {
+        let start_page_fraction_in_view = self.scope.view.zoom_page_animation.start_page_fraction_in_view;
+        let final_zoom = self.scope.view.zoom_page_animation.final_zoom;
+        let total_time = self.scope.view.zoom_page_animation.total_time;
+        let time_passed = self.scope.view.zoom_page_animation.time_passed;
+        let p = self.scope.view.zoom_page_animation.p;
+        if (final_zoom == 0)
+        {
+          // move image left top corner to 0,0
+          self.image.raster.position = self.image.raster.bounds.size.multiply(1/2);
+          // set view to the center of image
+          self.scope.view.center = self.image.raster.position;
+          // derive zoom, so the image fits into the view
+          let page_width_ratio = self.image.raster.width / self.image.raster.height;
+          let view_width_ratio = self.scope.view.bounds.width / self.scope.view.bounds.height;
+          if (view_width_ratio > page_width_ratio)
+          {
+            final_zoom = (self.scope.view.bounds.height / self.image.raster.height) * self.scope.view.zoom;
+          }
+          else
+          {
+            final_zoom = (self.scope.view.bounds.width / self.image.raster.width) * self.scope.view.zoom;
+          }
+          self.scope.view.zoom_page_animation.final_zoom = final_zoom;
+          self.scope.view.zoom = final_zoom * start_page_fraction_in_view;
+        }
+        if (time_passed < total_time)
+        {
+          let actual_page_fraction_in_view = start_page_fraction_in_view + (1 - start_page_fraction_in_view) * reverse_polynomial_trajectory(time_passed, total_time, p);
+          if (actual_page_fraction_in_view > 1)
+          {
+            actual_page_fraction_in_view = 1;
+          }
+          self.scope.view.zoom = final_zoom * actual_page_fraction_in_view;
+        }
+        else
+        {
+          self.scope.view.zoom = final_zoom;
+          self.scope.view.zoom_page_animation.on = false;
+          self.scope.view.zoom_page_animation.actual_page_fraction_in_view = 0;
+          self.scope.view.zoom_page_animation.final_zoom = 0;
+          self.scope.view.zoom_page_animation.time_passed = 0;
+        }
+        self.scope.view.zoom_page_animation.time_passed += event.delta;
+      }
+    }
+}
+
+export function reverse_polynomial_trajectory(t, t_max, p)
+{
+  return Math.max(0, 1 - (Math.pow((1 - (Math.min(1, t / t_max))) * 8.0, p) / Math.pow(8.0, p)));
 }
 
 /**
@@ -189,40 +253,32 @@ export function canvasSelectRowAnnotation(row_uuid) {
  * this: annotator_component
  */
 export function canvasZoomImage() {
-    this.scope.view.zoom = 0.2;
-    // this.image.raster.size = this.scope.view.viewSize.multiply(0.9);
-    // this.image.raster.size.width = this.scope.view.viewSize.width
 
-    // console.log(this.scope.view.bounds);
-    // console.log(this.image.raster.bounds);
-    // console.log(this.image.raster.size);
+    // scale view, so the image fits
+    //this.scope.view.viewSize =;
+    this.scope.view.zoom_page_animation.on = true;
 
-    // this.scope.view.position = this.image.raster.position.add(new paper.Point(100,100));
-    // this.scope.project.activeLayer.fitBounds(this.image.raster.view.bounds);
-    // this.image.raster.fitBounds(this.scope.view.bounds);
-    // this.image.raster.position = this.scope.view.bounds.multiply(1/2);
-    // this.scope.project.activeLayer.fitBounds(this.scope.view.bounds);
-    // this.image.raster.position
 
-    // console.log(this.image.raster.view.bounds.size.multiply(1/2));
+    /*
 
-    // this.scope.view.setCenter(this.image.raster.size.multiply(-1/4));
-    // this.image.raster.position = new paper.Point(0,0).subtract(this.scope.view.viewSize.multiply(-1/2));
-    // this.scope.view.center = this.image.raster.size.multiply(-1/2);
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
 
-    this.image.raster.position = this.image.raster.bounds.size.multiply(1/2);//.add(new paper.Size(0, 30));
-    this.scope.view.center = this.image.raster.bounds.size.multiply(1/2);//.subtract(new paper.Size(0, 30));
-    // this.scope.view.fitBounds(this.image.raster.bounds);
-    // this.scope.project.view.fitBounds(this.scope.view.bounds);
+    async function scale_view_to_fit_image(view, scale_animation_steps)
+    {
+      for (let i = 1.0; i <= scale_animation_steps; ++i)
+      {
+        view.scale(scale * (i / scale_animation_steps));
+        await sleep(50);
+      }
+    }
 
-    // this.scope.project.activeLayer.fitBounds(this.image.raster.bounds);
+    scale_view_to_fit_image(this.scope.view, scale_animation_steps);
 
-    // console.log('zoom');
-    // this.scope.project.activeLayer.fitBounds(this.scope.view.bounds);
-    // this.scope.view.fitBounds(this.scope.project.activeLayer.bounds);
-    // this.scope.project.activeLayer.fitBounds(this.scope.project.activeLayer.children()[0].bounds);
-    // this.scope.project.activeLayer.fitBounds(this.image.raster.bounds);
+    */
 }
+
 
 /**
  * Zoom annotation (row)

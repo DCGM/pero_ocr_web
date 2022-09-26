@@ -528,7 +528,7 @@ def skip_textline(line_id):
 
 def document_exists(document_id):
     try:
-        document = Document.query.filter_by(id=document_id).first()
+        document = Document.query.filter_by(id=document_id, deleted=False).first()
     except sqlalchemy.exc.StatementError:
         return False
     if document is not None:

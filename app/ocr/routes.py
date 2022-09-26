@@ -58,7 +58,7 @@ def show_results(document_id, image_id=None, line_id=None):
     elif document.state == DocumentState.COMPLETED_LAYOUT_ANALYSIS:
         return redirect(url_for('layout_analysis.show_results', document_id=document.id))
     elif document.state != DocumentState.COMPLETED_OCR:
-        flash(u'Document can not be edited int its current state.', 'danger')
+        flash(u'Document can not be edited in its current state.', 'danger')
         return redirect(url_for('main.index'))
 
     images = natsorted(get_document_images(document).all(), key=lambda x: x.filename)
