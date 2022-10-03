@@ -153,76 +153,111 @@ export function canvasInit() {
     /** Animation handling **/
     this.scope.view.zoom_animation = {on: false,
                                       start_zoom: 0,
-                                      final_zoom: 0,
-                                      total_time: 0.5,
-                                      p: 3,
+                                      end_zoom: 0,
+                                      center: this.scope.view.center,
+                                      total_time: 0,
+                                      p: 1,
                                       time_passed: 0};
+    this.scope.view.zoom_animation.reset = function(event)
+    {
+        if (self.scope.view.zoom_animation.on)
+        {
+            self.scope.view.zoom = self.scope.view.zoom_animation.end_zoom;
+            self.scope.view.zoom_animation.on = false;
+        }
+        self.scope.view.zoom_animation.start_zoom = 0;
+        self.scope.view.zoom_animation.end_zoom = 0;
+        self.scope.view.zoom_animation.center = self.scope.view.center;
+        self.scope.view.zoom_animation.total_time = 0;
+        self.scope.view.zoom_animation.p = 1;
+        self.scope.view.zoom_animation.time_passed = 0;
+    }
 
     this.scope.view.translate_animation = {on: false,
                                            start_point: new paper.Point(0, 0),
                                            end_point: new paper.Point(0, 0),
-                                           total_time: 0.5,
-                                           p: 3,
+                                           total_time: 0,
+                                           p: 1,
                                            time_passed: 0};
+    this.scope.view.translate_animation.reset = function(event)
+    {
+        if (self.scope.view.translate_animation.on)
+        {
+            self.scope.view.center = self.scope.view.translate_animation.end_point;
+            self.scope.view.translate_animation.on = false;
+        }
+        self.scope.view.translate_animation.start_point = new paper.Point(0, 0);
+        self.scope.view.translate_animation.end_point = new paper.Point(0, 0);
+        self.scope.view.translate_animation.total_time = 0;
+        self.scope.view.translate_animation.p = 1;
+        self.scope.view.translate_animation.time_passed = 0;
+    }
 
     let self = this;
     this.scope.view.onFrame = function(event)
     {
-      if (self.scope.view.zoom_animation.on)
-      {
-        let start_zoom = self.scope.view.zoom_animation.start_zoom;
-        let final_zoom = self.scope.view.zoom_animation.final_zoom;
-        let total_time = self.scope.view.zoom_animation.total_time;
-        let p = self.scope.view.zoom_animation.p;
-        let time_passed = self.scope.view.zoom_animation.time_passed;
+        if (self.scope.view.zoom_animation.on)
+        {
+            let start_zoom = self.scope.view.zoom_animation.start_zoom;
+            let end_zoom = self.scope.view.zoom_animation.end_zoom;
+            let center = self.scope.view.zoom_animation.center;
+            let total_time = self.scope.view.zoom_animation.total_time;
+            let p = self.scope.view.zoom_animation.p;
+            let time_passed = self.scope.view.zoom_animation.time_passed;
+            let previous_zoom = self.scope.view.zoom
 
-        if (time_passed < total_time)
-        {
-          let actual_zoom = start_zoom + (final_zoom - start_zoom) * reverse_polynomial_trajectory(time_passed, total_time, p);
-          if (actual_zoom > final_zoom)
-          {
-            self.scope.view.zoom = final_zoom;
-          }
-          else
-          {
-            self.scope.view.zoom = actual_zoom;
-          }
+            if (time_passed < total_time)
+            {
+                let new_zoom = start_zoom + (end_zoom - start_zoom) * reverse_polynomial_trajectory(time_passed, total_time, p);
+                if ((new_zoom >= previous_zoom && new_zoom < end_zoom) ||
+                    (new_zoom <= previous_zoom && new_zoom > end_zoom))
+                {
+                    let scale_factor = new_zoom / previous_zoom;
+                    //self.scope.view.zoom = new_zoom;
+                    self.scope.view.scale(scale_factor, center);
+                }
+                else
+                {
+                    let scale_factor = end_zoom / previous_zoom;
+                    //self.scope.view.zoom = end_zoom;
+                    self.scope.view.scale(scale_factor, center);
+                }
+            }
+            else
+            {
+                let scale_factor = end_zoom / previous_zoom;
+                //self.scope.view.zoom = end_zoom;
+                self.scope.view.scale(scale_factor, center);
+                self.scope.view.zoom_animation.reset();
+            }
+            self.scope.view.zoom_animation.time_passed += event.delta;
         }
-        else
-        {
-          self.scope.view.zoom = final_zoom;
-          self.scope.view.zoom_animation.on = false;
-          self.scope.view.zoom_animation.start_zoom = 0;
-          self.scope.view.zoom_animation.final_zoom = 0;
-          self.scope.view.zoom_animation.time_passed = 0;
-        }
-        self.scope.view.zoom_animation.time_passed += event.delta;
-      }
 
-      if (self.scope.view.translate_animation.on)
-      {
-        let start_point = self.scope.view.translate_animation.start_point;
-        let end_point = self.scope.view.translate_animation.end_point;
-        let total_time = self.scope.view.translate_animation.total_time;
-        let p = self.scope.view.translate_animation.p;
-        let time_passed = self.scope.view.translate_animation.time_passed;
+        if (self.scope.view.translate_animation.on)
+        {
+            let start_point = self.scope.view.translate_animation.start_point;
+            let end_point = self.scope.view.translate_animation.end_point;
+            let total_time = self.scope.view.translate_animation.total_time;
+            let p = self.scope.view.translate_animation.p;
+            let time_passed = self.scope.view.translate_animation.time_passed;
 
-        if (time_passed < total_time)
-        {
-          let actual_point = start_point.add(end_point.subtract(start_point).multiply(reverse_polynomial_trajectory(time_passed, total_time, p)));
-          self.scope.view.center = actual_point;
+            if (time_passed < total_time)
+            {
+                let actual_point = start_point.add(end_point.subtract(start_point).multiply(reverse_polynomial_trajectory(time_passed, total_time, p)));
+                self.scope.view.center = actual_point;
+            }
+            else
+            {
+                self.scope.view.center = end_point;
+                self.scope.view.translate_animation.reset();
+            }
+            self.scope.view.translate_animation.time_passed += event.delta;
         }
-        else
-        {
-          self.scope.view.center = end_point;
-          self.scope.view.translate_animation.on = false;
-          self.scope.view.translate_animation.start_zoom = 0;
-          self.scope.view.translate_animation.final_zoom = 0;
-          self.scope.view.translate_animation.time_passed = 0;
-        }
-        self.scope.view.translate_animation.time_passed += event.delta;
-      }
     }
+
+    this.scope.view.onResize = function(event) {
+            console.log(event);
+        };
 }
 
 export function reverse_polynomial_trajectory(t, t_max, p)
@@ -276,24 +311,28 @@ export function canvasZoomImage() {
     // derive zoom, so the image fits into the view
     let page_width_ratio = this.image.raster.width / this.image.raster.height;
     let view_width_ratio = this.scope.view.bounds.width / this.scope.view.bounds.height;
-    let final_zoom;
+    let end_zoom;
     if (view_width_ratio > page_width_ratio)
     {
-      final_zoom = (this.scope.view.bounds.height / this.image.raster.height) * this.scope.view.zoom;
+      end_zoom = (this.scope.view.bounds.height / this.image.raster.height) * this.scope.view.zoom;
     }
     else
     {
-      final_zoom = (this.scope.view.bounds.width / this.image.raster.width) * this.scope.view.zoom;
+      end_zoom = (this.scope.view.bounds.width / this.image.raster.width) * this.scope.view.zoom;
     }
     let page_fraction_in_view = 0.75
-    this.scope.view.zoom = final_zoom * page_fraction_in_view;
+    this.scope.view.zoom = end_zoom * page_fraction_in_view;
 
     // scale view, so the image fits
-    //this.scope.view.viewSize =;
-    this.scope.view.zoom_animation.start_zoom = this.scope.view.zoom;
-    this.scope.view.zoom_animation.final_zoom = final_zoom;
-    this.scope.view.zoom_animation.total_time = 10;
-    this.scope.view.zoom_animation.on = true;
+    if (!this.scope.view.zoom_animation.on && !this.scope.view.translate_animation.on)
+    {
+        this.scope.view.zoom_animation.reset();
+        this.scope.view.zoom_animation.start_zoom = this.scope.view.zoom;
+        this.scope.view.zoom_animation.end_zoom = end_zoom;
+        this.scope.view.zoom_animation.p = 3;
+        this.scope.view.zoom_animation.total_time = 0.5;
+        this.scope.view.zoom_animation.on = true;
+    }
 }
 
 
@@ -302,23 +341,97 @@ export function canvasZoomImage() {
  * * this: annotator_component
  * @param uuid
  */
-export function canvasZoomAnnotation(uuid) {
+export function canvasZoomAnnotation(uuid, show_line_height, show_bottom_pad) {
     let row = this.annotations.rows.find(item => item.uuid === uuid);
     if (!row) return;
 
-    // Inspired by: https://github.com/paperjs/paper.js/issues/1688
-    let item_bounds = row.view.group.bounds;
-    let view = this.scope.project.activeLayer.view;
-    let view_bounds = view.bounds;
+    let focus_line_points = getFocusLinePoints(row, show_line_height, show_bottom_pad, this.scope.view.viewSize);
+    let start_x = focus_line_points[0];
+    let end_x = focus_line_points[1];
+    let y = focus_line_points[2];
 
-    // Zoom
-    let scale_ratio = Math.min(view_bounds.width / item_bounds.width, view_bounds.height / item_bounds.height);
-    view.scale(scale_ratio);
+    if (!this.scope.view.zoom_animation.on && !this.scope.view.translate_animation.on)
+    {
+        this.scope.view.zoom_animation.reset();
+        this.scope.view.zoom_animation.start_zoom = this.scope.view.zoom;
+        this.scope.view.zoom_animation.end_zoom = this.scope.view.zoom * (this.scope.view.bounds.width / (end_x - start_x));
+        this.scope.view.zoom_animation.p = 3;
+        this.scope.view.zoom_animation.total_time = 0.5;
+        this.scope.view.zoom_animation.on = true;
 
-    // Translate
-    let delta = view_bounds.center.subtract(item_bounds.center);
-    view.translate(delta);
+        this.scope.view.translate_animation.reset();
+        this.scope.view.translate_animation.start_point = this.scope.view.center;
+        this.scope.view.translate_animation.end_point = new paper.Point((end_x - start_x) / 2, y);
+        this.scope.view.translate_animation.p = 3;
+        this.scope.view.translate_animation.total_time = 0.5;
+        this.scope.view.translate_animation.on = true;
+    }
 }
+
+
+
+export function getFocusLinePoints(line, show_line_height, show_bottom_pad, show_view_size) {
+
+    let width_boundary = get_line_width_boundary(line);
+    let height_boundary = get_line_height_boundary(line);
+
+    let start_x = width_boundary[0];
+    let end_x = width_boundary[1];
+    let start_y = height_boundary[0];
+    let end_y = height_boundary[1];
+    let line_width = end_x - start_x;
+    let line_height = line.heights.down + line.heights.up;
+    let view_width = show_view_size.width;
+    let view_height = show_view_size.height;
+
+    let expected_show_line_height = line_height * (view_width / line_width);
+    let new_line_width = (line_height * view_width) / show_line_height;
+    if (expected_show_line_height > show_line_height) {
+        start_x -= (new_line_width - line_width) / 2;
+        end_x += (new_line_width - line_width) / 2;
+    }
+    if (expected_show_line_height < show_line_height) {
+        let view_left_pad = 25;
+        let left_pad = (line_height * view_left_pad) / show_line_height;
+        start_x -= left_pad;
+        end_x -= line_width - new_line_width + left_pad;
+    }
+    let view_port_line_height = (line_height * view_height) / show_line_height
+    let bottom_pad = (line_height * show_bottom_pad) / show_line_height;
+    let y = end_y - view_port_line_height / 2 + bottom_pad;
+    return [start_x, end_x, y];
+}
+
+
+export function get_line_height_boundary(line) {
+    let height_min = 100000000000000000000000;
+    let height_max = 0;
+    for (let coord of line.points) {
+        if (coord.y < height_min) {
+            height_min = coord.y;
+        }
+        if (coord.y > height_max) {
+            height_max = coord.y;
+        }
+    }
+    return [height_min, height_max];
+}
+
+
+export function get_line_width_boundary(line) {
+    let width_min = 100000000000000000000000;
+    let width_max = 0;
+    for (let coord of line.points) {
+        if (coord.x < width_min) {
+            width_min = coord.x;
+        }
+        if (coord.x > width_max) {
+            width_max = coord.x;
+        }
+    }
+    return [width_min, width_max];
+}
+
 
 /**
  *

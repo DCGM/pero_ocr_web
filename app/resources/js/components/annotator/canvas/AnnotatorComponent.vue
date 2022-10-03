@@ -56,9 +56,7 @@ Rok: 2021
         </aside>
 
         <!-- Middle section (Canvas) -->
-        <div id="canvas-wrapper"
-             @contextmenu="canvasContextMenuEv"
-        >
+        <div id="canvas-wrapper" @contextmenu="canvasContextMenuEv">
             <canvas
                 @mouseup="canvasMouseUpEv"
                 @wheel="canvasMouseWheelEv"
@@ -67,8 +65,7 @@ Rok: 2021
                 @mousemove="canvasMouseMoveEv"
                 id="canvas"
                 class="float-left"
-                resize
-            />
+                resize/>
             <div id="tutorial">
                 <div>
 <!--                    <span class="pr-3"><span class="badge badge-primary" style="background: #6cb2eb;">Přepsaný řádek</span> - Přepsané řádky jsou barevně zvýrazněny</span>-->
@@ -127,7 +124,7 @@ Rok: 2021
 </template>
 
 <script>
-import {canvasZoomAnnotation, canvasSelectRowAnnotation, canvasSelectImage, canvasSelectDataset, canvasClean, canvasInit, canvasZoomImage, canvasIsToolActive, canvasSelectTool} from './helpers';
+import {canvasZoomAnnotation, getFocusLinePoints, canvasSelectRowAnnotation, canvasSelectImage, canvasSelectDataset, canvasClean, canvasInit, canvasZoomImage, canvasIsToolActive, canvasSelectTool} from './helpers';
 import {activateContextMenu, deactivateContextMenu, canvasContextMenuEv} from './context_menu';
 import {setPathColor, emitAnnotationEditedEvent, serializeAnnotation, getAnnotations, loadAnnotations, removeAnnotation, removeAnnotationSegm, createAnnotation, createAnnotationView, activeRegionChangedHandler, activeRowChangedHandler, confirmAnnotation, validateRowAnnotation} from './annotations';
 import {canvasMouseWheelEv, canvasMouseMoveEv, canvasMouseDownEv, canvasMouseUpEv, canvasMouseDblClickEv} from './scale_move_tool_canvas_events';
@@ -151,6 +148,7 @@ export default {
             active_region: null,
             active_row: null,
             last_active_annotation: null,
+            worst_confidence: null,
 
             // Tools
             selected_tool: null, //
@@ -175,7 +173,7 @@ export default {
         canvasZoomImage,
         canvasIsToolActive, canvasSelectTool,
 
-        canvasZoomAnnotation, canvasSelectDataset, canvasSelectImage, canvasSelectRowAnnotation, canvasClean, canvasInit,
+        canvasZoomAnnotation, getFocusLinePoints, canvasSelectDataset, canvasSelectImage, canvasSelectRowAnnotation, canvasClean, canvasInit,
         setPathColor, emitAnnotationEditedEvent, serializeAnnotation, getAnnotations, loadAnnotations, removeAnnotation, removeAnnotationSegm, createAnnotation, createAnnotationView, confirmAnnotation, validateRowAnnotation,
         activateContextMenu, deactivateContextMenu, canvasContextMenuEv,
         activeRegionChangedHandler, activeRowChangedHandler,

@@ -151,7 +151,6 @@ function pointDistance(p1, p2) {
  * @param event
  */
 export function canvasMouseWheelEv(event) {
-    // Cast kodu funkce byla inspirovana ukazkou: https://codepen.io/hichem147/pen/dExxNK
     event.preventDefault();
 
     // Scale_move tool need to be activated
@@ -160,21 +159,25 @@ export function canvasMouseWheelEv(event) {
 
     if (!this.left_control_active) {
         // Zooming
-        let speed = 0.05;
+        let speed = 1.75;
         let oldZoom = this.scope.view.zoom;
-        let newZoom = this.scope.view.zoom * (1 + ((event.deltaY < 0) ? speed : -speed));
-        this.scope.view.zoom = newZoom;
+        let newZoom = this.scope.view.zoom * ((event.deltaY < 0) ? speed : 1.0 / speed);
 
         // Move view center toward mouse position (zoom to mouse position)
         let canvasMousePosition = new paper.Point(event.offsetX, event.offsetY);
         //viewToProject: gives the coordinates in the Project space from the Screen Coordinates
-        let viewPosition = this.scope.view.viewToProject(canvasMousePosition);
-        let viewCenter = this.scope.view.center;
-        let pc = viewPosition.subtract(viewCenter);
-        let ratio = oldZoom / newZoom;
-        let offset = viewPosition.subtract(pc.multiply(ratio)).subtract(viewCenter);
+        let viewMousePosition = this.scope.view.viewToProject(canvasMousePosition);
 
-        this.scope.view.center = this.scope.view.center.add(offset);
+        if (!this.scope.view.zoom_animation.on && !this.scope.view.translate_animation.on)
+        {
+            this.scope.view.zoom_animation.reset();
+            this.scope.view.zoom_animation.start_zoom = oldZoom;
+            this.scope.view.zoom_animation.end_zoom = newZoom;
+            this.scope.view.zoom_animation.center = viewMousePosition;
+            this.scope.view.zoom_animation.p = 3;
+            this.scope.view.zoom_animation.total_time = 0.3;
+            this.scope.view.zoom_animation.on = true;
+        }
     }
 }
 

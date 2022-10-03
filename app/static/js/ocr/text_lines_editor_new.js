@@ -1,12 +1,4 @@
 
-yx = L.latLng;
-xy = function (x, y) {
-    if (L.Util.isArray(x)) {    // When doing xy([x, y]);
-        return yx(x[1], x[0]);
-    }
-    return yx(y, x);  // When doing xy(x, y);
-};
-
 function rgb(r, g, b) {
     return "rgb(" + r + "," + g + "," + b + ")";
 }
@@ -47,7 +39,7 @@ class TextLinesEditor {
     }
 
     swap_ignore_line_button_blueprint(){
-        if(this.public_view){
+        if(this.public_view) {
             return;
         }
         if (this.active_line.for_training_checkbox.checked){
@@ -63,10 +55,10 @@ class TextLinesEditor {
     }
 
     swap_delete_line_button_blueprint(){
-        if(this.public_view){
+        if(this.public_view) {
             return;
         }
-        if (this.active_line.valid){
+        if (this.active_line.valid) {
             this.delete_btn.innerHTML  = '<i class="far fa-trash-alt"></i> Delete line';
             this.delete_btn.className  = 'btn btn-danger';
         }
@@ -80,11 +72,11 @@ class TextLinesEditor {
         }
     }
 
-    ignore_line_btn_action(button=false){
-        if(this.public_view){
+    ignore_line_btn_action(button=false) {
+        if(this.public_view) {
             return;
         }
-        if (this.active_line != false){
+        if (this.active_line != false) {
             if (button) {
                 this.active_line.for_training_checkbox.checked = !this.active_line.for_training_checkbox.checked;
             }
@@ -121,8 +113,8 @@ class TextLinesEditor {
         }
     }
 
-    set_line_style(line){
-        var conf = (line.line_confidence-this.worst_confidence) / (1-this.worst_confidence);
+    set_line_style(line) {
+        var conf = (line.line_confidence-this.worst_confidence) / (1 - this.worst_confidence);
 
         var color = '';
         if (!line.valid) {
@@ -133,11 +125,6 @@ class TextLinesEditor {
             color = "#028700";
         } else {
             color = rgb((1 - conf) * 255, 16, conf * 255);
-        }
-        if (line.focus) {
-            line.polygon.setStyle({color: color, opacity: 1, fillColor: color, fillOpacity: 0.15, weight: 2});
-        } else {
-            line.polygon.setStyle({color: color, opacity: 0.5, fillColor: color, fillOpacity: 0.1, weight: 1});
         }
     }
 
@@ -210,10 +197,8 @@ class TextLinesEditor {
                     unsaved_lines = true;
                 }
             }
-            if (unsaved_lines && !this.public_view)
-            {
-                if (confirm("Save changes?"))
-                {
+            if (unsaved_lines && !this.public_view) {
+                if (confirm("Save changes?")) {
                     this.save_annotations();
                 }
             }
@@ -221,9 +206,8 @@ class TextLinesEditor {
         this.focus_to = line_id;
         this.get_image(image_id);
         this.swap_delete_line_button_blueprint();
-        if(!this.public_view) {
+        if(!this.public_view)
             this.ignore_btn.innerHTML = '<i class="fas fa-minus-circle"></i> Ignore line';
-        }
         this.change_url = change_url_callback;
     }
 
@@ -237,11 +221,11 @@ class TextLinesEditor {
         }
 
         let route = '';
-        if(this.public_view) {
+        if(this.public_view)
             route = Flask.url_for('ocr.get_public_lines', {'image_id': image_id});
-        } else{
+        else
             route = Flask.url_for('ocr.get_lines', {'image_id': image_id});
-        }
+
         while (this.text_container.firstChild)
         {
             this.text_container.firstChild.remove();
@@ -260,6 +244,47 @@ class TextLinesEditor {
         this.height = data['height'];
         this.active_line = false;
         this.lines = [];
+
+        let self = this;
+        let observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (m) {
+                self.set_line_style(self.lines[m.target.id]);
+            });
+        });
+
+        let i = 0;
+        let debug_line_container = document.getElementById('debug-line-container');
+        let debug_line_container_2 = document.getElementById('debug-line-container-2');
+
+        for (let l of data['lines']) {
+            let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic, l.for_training,
+                                    debug_line_container, debug_line_container_2, !self.public_view);
+            line.np_points = l.np_points;
+            line.np_heights = l.np_heights;
+            line.focus = false;
+            this.init_line(i, line);
+            this.lines.push(line);
+            if (l.id == this.focus_to) {
+                line.focus = true;
+                this.line_focus(line);
+            }
+            observer.observe(line.container, {attributes: true});
+            i += 1;
+            if (i % 50 == 49) {
+                await new Promise(resolve => setTimeout(resolve, 0));
+                if (abort_signal.aborted) {
+                    return;
+                }
+            }
+        }
+        this.worst_confidence = 0.95;
+        for (let l of this.lines) {
+            this.worst_confidence = Math.min(this.worst_confidence, l.line_confidence);
+        }
+        this.annotator_wrapper_component.set_worst_confidence(this.worst_confidence);
+        for (let l of this.lines) {
+            this.set_line_style(l, false);
+        }
 
         /** Get background image url **/
         let image_url;
@@ -280,14 +305,21 @@ class TextLinesEditor {
         let row_annotations = get_annotations(data, 'row');
         this.annotator_wrapper_component.load_annotations(row_annotations);
 
+        for (let line of this.lines) {
+          /** Line saved successfully event handler **/
+          line.notify_line_validated = () => {
+              this.annotator_wrapper_component.validate_row_annotation(line.id);
+          }
+        }
+
         /** Annotator component: Event listener -> Row selected event **/
         this.annotator_wrapper_component.$refs.annotator_component.$on('row-selected-event', (annotation) => {
-            console.log('selected row', annotation)
+            //console.log('selected row', annotation)
             // Find line
             let selected_line = this.lines.find(item => item.id === annotation.uuid);
 
             // Zoom annotation
-            // this.annotator_wrapper_component.zoom_row(annotation.uuid);
+            this.annotator_wrapper_component.zoom_row(annotation.uuid, $('#show-line-height').val(), $('#show-bottom-pad').val());
 
             // Text Scroll: Select line
             if (selected_line)
@@ -296,7 +328,7 @@ class TextLinesEditor {
 
         /** Annotator component: Event listener -> Region selected event **/
         this.annotator_wrapper_component.$refs.annotator_component.$on('region-selected-event', (annotation) => {
-            console.log('selected region', annotation)
+            //console.log('selected region', annotation)
         });
 
         /** Annotator component: Event listener -> Row/region created event **/
@@ -307,7 +339,6 @@ class TextLinesEditor {
         this.annotator_wrapper_component.$refs.annotator_component.$on('row-edited-event', (annotation) => annotationCreatedEditedEventHandler(annotation, 'row'));
         this.annotator_wrapper_component.$refs.annotator_component.$on('region-edited-event', (annotation) => annotationCreatedEditedEventHandler(annotation, 'region'));
 
-        let self = this;
         function annotationCreatedEditedEventHandler(annotation, annotation_type, image_id=null) {
             console.log('creating/editing', annotation, annotation_type, image_id);
             axios
@@ -350,144 +381,100 @@ class TextLinesEditor {
             // console.log(uuid, type);
             self.delete_line_btn_action(uuid, type);
         }
-
-        let observer = new MutationObserver(function (mutations) {
-            mutations.forEach(function (m) {
-                self.set_line_style(self.lines[m.target.id]);
-            });
-        });
-
-        let i = 0;
-        let debug_line_container = document.getElementById('debug-line-container');
-        let debug_line_container_2 = document.getElementById('debug-line-container-2');
-        let focused = false;
-
-        // Add annotations to map
-        for (let l of data['lines']) {
-            let line = new TextLine(l.id, l.annotated, l.text, l.np_confidences, l.ligatures_mapping, l.arabic, l.for_training,
-                                    debug_line_container, debug_line_container_2, !self.public_view);
-            line.np_points = l.np_points;
-            line.np_heights = l.np_heights;
-            line.focus = false;
-            this.add_line_to_map(i, line);
-            this.lines.push(line);
-            if (l.id == this.focus_to) {
-                line.focus = true;
-                this.line_focus(line);
-                this.polygon_click(line);
-                focused = true;
-            }
-            observer.observe(line.container, {attributes: true});
-            i += 1;
-            if (i % 50 == 49) {
-                await new Promise(resolve => setTimeout(resolve, 0));
-                if (abort_signal.aborted) {
-                    return;
-                }
-            }
-
-            /** Line saved successfully event handler **/
-            line.notify_line_validated = () => {
-                this.annotator_wrapper_component.validate_row_annotation(line.id);
-            }
-        }
-        this.worst_confidence = 0.95;
-        for (let l of this.lines) {
-            this.worst_confidence = Math.min(this.worst_confidence, l.line_confidence);
-        }
-        for (let l of this.lines) {
-            this.set_line_style(l, false);
-        }
-
-        if (this.focus_to != null) {
-            this.focus_to = null;
-        } else {
-            // this.map_element.focus();
-            // TODO: zoom to line on start
-        }
     }
 
-    add_line_to_map(i, line) {
-        let points = [];
-
-        for (let point of line.np_points) {
-            points.push(xy(point[0], -point[1]));
-        }
-        line.polygon = L.polygon(points);
-
-        line.polygon.on('click', this.polygon_click.bind(this, line));
-
-        line.container.setAttribute("id", i);
-
-        line.container.addEventListener('focus', () => {
-            /** Select line (old) **/
-            this.line_focus(line);
-
-            /** Select line **/
-            let active_row = this.annotator_wrapper_component.$refs.annotator_component.active_row;
-            let old_uuid = active_row? active_row.uuid: null;
-            this.annotator_wrapper_component.select_row(line.id);
-
-            /** Zoom line **/
-            if (old_uuid !== line.id)
-                this.annotator_wrapper_component.zoom_row(line.id);
-        });
-
-        line.container.addEventListener('focusout', this.line_focus_out.bind(this, line));
-
-        line.checkbox_span.addEventListener('click', this.line_focus_from_checkbox.bind(this, line));
-        line.for_training_checkbox.addEventListener('click', this.ignore_action_from_checkbox.bind(this, line));
-
-        this.text_container.appendChild(line.checkbox_span);
-        this.text_container.appendChild(line.container);
-    }
-
-    line_focus_from_checkbox(line) {
-        this.line_focus(line);
-        line.container.focus();
-    }
-
-    ignore_action_from_checkbox(line) {
-        if(this.public_view){
-            return;
-        }
-
-        this.line_focus_from_checkbox(line);
-        this.ignore_line_btn_action();
-    }
-
-    press_text_container(e) {
-        if (e.keyCode == 13) {
-            let line_number = parseInt(this.active_line.container.getAttribute("id"), 10);
-            try {
-                document.getElementById((line_number + 1).toString()).focus();
-            }
-            catch (e) {
-
-            }
-        }
-    }
-
-    polygon_click(line) {
-        line.container.focus();
+    init_line(i, line) {
+      line.container.setAttribute("id", i);
+      line.container.addEventListener('focus', () => {this.line_focus(line);});
+      line.container.addEventListener('focusout', this.line_focus_out.bind(this, line));
+      line.container.addEventListener('keyup', this.keyup_text_line_container.bind(this, line));
+      line.container.addEventListener('click', this.click_text_line_container.bind(this, line));
+      line.checkbox_span.addEventListener('click', this.line_focus_from_checkbox.bind(this, line));
+      line.for_training_checkbox.addEventListener('click', this.ignore_action_from_checkbox.bind(this, line));
+      this.text_container.appendChild(line.checkbox_span);
+      this.text_container.appendChild(line.container);
     }
 
     line_focus(line) {
-        if (this.active_line) {
-            this.active_line.focus = false;
-            this.set_line_style(this.active_line);
-        }
+      this.focus_fired = true;
 
-        let focus_line_points = get_focus_line_points(line);
-        this.active_line = line;
-        line.focus = true;
-        this.set_line_style(line)
+      // view focus
+      if (this.active_line.id !== line.id) {
+        this.annotator_wrapper_component.select_row(line.id);
+        this.annotator_wrapper_component.zoom_row(line.id, $('#show-line-height').val(), $('#show-bottom-pad').val());
+      }
 
-        this.swap_delete_line_button_blueprint();
-        this.swap_ignore_line_button_blueprint();
-
-        this.change_url(this.active_line.id);
+      // line container focus
+      if (this.active_line) {
+          this.active_line.focus = false;
+          this.set_line_style(this.active_line);
+      }
+      this.active_line = line;
+      line.focus = true;
+      this.set_line_style(line)
+      this.swap_delete_line_button_blueprint();
+      this.swap_ignore_line_button_blueprint();
+      this.change_url(this.active_line.id);
     }
+
+    show_next_line() {
+      var focused = false;
+      if (this.active_line.id == undefined) {
+        for (let line of this.lines) {
+          if (Math.min.apply(Math, line.confidences) < 0.8 && line.text_line_element.style.backgroundColor != 'rgb(208, 255, 207)') {
+            this.line_focus(line);
+            this.polygon_click(line);
+            focused = true;
+            break;
+          }
+          if (focused) {
+            break;
+          }
+        }
+      }
+      else {
+        let index = this.lines.findIndex(x => x.id === this.active_line.id);
+        let rest_of_lines = this.lines.slice(index + 1);
+        if (rest_of_lines.length != 0) {
+          for (let line of rest_of_lines) {
+            if (Math.min.apply(Math, line.confidences) < 0.8 && line.container.style.backgroundColor != 'rgb(208, 255, 207)') {
+              this.line_focus(line);
+              this.polygon_click(line);
+              focused = true;
+              break;
+            }
+            if (focused) {
+              break;
+            }
+          }
+        }
+        else {
+          next_page();
+        }
+      }
+    }
+
+    save_annotations() {
+      if(this.public_view) {
+          return;
+      }
+      for (let l of this.lines) {
+        if (l.edited) {
+          l.save();
+        }
+      }
+    }
+
+    compute_scores() {
+      if(this.public_view) {
+          return;
+      }
+      let route_ = Flask.url_for('document.compute_scores', {'document_id': document.querySelector('#document-id').textContent});
+      $.get(route_);
+    }
+
+    // HELPER METHODS
+    // #############################################################################
 
     line_focus_out(line) {
         this.set_line_style(line)
@@ -495,74 +482,73 @@ class TextLinesEditor {
 
     show_line_change() {
         if (this.active_line) {
-            let focus_line_points = get_focus_line_points(this.active_line);
-            this.map.stop();
-            this.map.flyToBounds([xy(focus_line_points[0], -focus_line_points[2]), xy(focus_line_points[1], -focus_line_points[2])],
-                {animate: false, duration: 0});
+            this.annotator_wrapper_component.zoom_row(annotation.uuid, $('#show-line-height').val(), $('#show-bottom-pad').val());
         }
     }
 
-    show_next_line() {
-        var focused = false;
-        if (this.active_line.id == undefined) {
-            for (let line of this.lines) {
-                if (Math.min.apply(Math, line.confidences) < 0.8 && line.text_line_element.style.backgroundColor != 'rgb(208, 255, 207)') {
-                    this.line_focus(line);
-                    this.polygon_click(line);
-                    focused = true;
-                    break;
-                }
-
-                if (focused) {
-                    break;
-                }
-            }
-        } else {
-            let index = this.lines.findIndex(x => x.id === this.active_line.id);
-            let rest_of_lines = this.lines.slice(index + 1);
-            if (rest_of_lines.length != 0) {
-                for (let line of rest_of_lines) {
-                    if (Math.min.apply(Math, line.confidences) < 0.8 && line.container.style.backgroundColor != 'rgb(208, 255, 207)') {
-                        this.line_focus(line);
-                        this.polygon_click(line);
-                        focused = true;
-                        break;
-                    }
-
-                    if (focused) {
-                        break;
-                    }
-                }
-            } else {
-                next_page();
-            }
-        }
+    line_focus_from_checkbox(line) {
+      this.line_focus(line);
+      line.container.focus();
     }
 
-    save_annotations()
-    {
-        if(this.public_view){
-            return;
+    ignore_action_from_checkbox(line) {
+      if(this.public_view) {
+          return;
         }
+      this.line_focus_from_checkbox(line);
+      this.ignore_line_btn_action();
+    }
 
-        for (let l of this.lines)
-        {
-            if (l.edited)
-            {
-                l.save();
+    press_text_container(e) {
+      if (e.keyCode == 13) {
+        let line_number = parseInt(this.active_line.container.getAttribute("id"), 10);
+        try {
+            document.getElementById((line_number + 1).toString()).focus();
+        }
+        catch (e) {
+        }
+      }
+    }
+
+    keyup_text_line_container(line, e) {
+      if (!this.focus_fired && !this.animation_in_progress)
+      {
+        // Skip
+        // TAB (9)
+        // ENTER (13)
+        // CTRL+S (19)
+        // CTRL+Y (25)
+        // CTRL+Z (26)
+        if (e.keyCode != 9 &&
+            e.keyCode != 13 &&
+            e.keyCode != 19 &&
+            e.keyCode != 25 &&
+            e.keyCode != 26) {
+              this.move_view_port_according_to_caret_position(line);
             }
         }
-    }
-
-    compute_scores(){
-        if(this.public_view){
-            return;
+        else {
+            this.focus_fired = false;
         }
-
-        let route_ = Flask.url_for('document.compute_scores', {'document_id': document.querySelector('#document-id').textContent});
-        $.get(route_);
     }
+
+    click_text_line_container(line, e) {
+      if (!this.focus_fired && !this.animation_in_progress) {
+        this.move_view_port_according_to_caret_position(line);
+      }
+      else {
+        this.focus_fired = false;
+      }
+    }
+
+    polygon_click(line) {
+        line.container.focus();
+    }
+    // #############################################################################
+
 }
+
+
 
 
 // HELPER FUNCTIONS

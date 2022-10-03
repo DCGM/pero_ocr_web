@@ -72,11 +72,14 @@ export default {
         select_row(row_uuid) {
             this.$refs.annotator_component.canvasSelectRowAnnotation(row_uuid);
         },
-        zoom_row(uuid) {
-          this.$refs.annotator_component.canvasZoomAnnotation(uuid);
+        zoom_row(uuid, show_line_height, show_bottom_pad) {
+          this.$refs.annotator_component.canvasZoomAnnotation(uuid, show_line_height, show_bottom_pad);
         },
         validate_row_annotation(uuid) {
           this.$refs.annotator_component.validateRowAnnotation(uuid);
+        },
+        set_worst_confidence(worst_confidence) {
+          this.$refs.annotator_component.worst_confidence = worst_confidence;
         },
     },
 }

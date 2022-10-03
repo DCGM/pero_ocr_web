@@ -186,34 +186,35 @@ export function removeAnnotationSegm() {
  */
 export function setPathColor(path, annotation_type, annotation) {
     if (annotation_type === 'row' || annotation_type === 'rows') {
-        // Set background color
-        let worst_confidence = 0.394;
-        let conf = (annotation.confidence - worst_confidence) / (1 - worst_confidence);
-        let color = `rgba(${(1 - conf) * 255}, ${16}, ${conf * 255}, 0.1)`;
 
-        if (!annotation.is_valid)
-            color = 'rgba(16, 16, 16, 0.1)';
-        else if (annotation.edited)
-            color = 'rgba(255,204,84,0.1)'
-        else if (annotation.annotated)
-            color = "rgba(2,135,0,0.1)";
+        let is_focused = (this.active_row && annotation.uuid === this.active_row.uuid);
 
-        path.fillColor = color;
+        let conf = (annotation.confidence - this.worst_confidence) / (1 - this.worst_confidence);
 
-        // Stroke
-        path.strokeWidth = 1;
-        if (this.active_row && annotation.uuid === this.active_row.uuid) {  // Active
-            path.strokeColor = 'rgba(231,224,8,0.8)';
+        let fill_opacity = 0.1;
+        let stroke_opacity = 0.5;
+        let stroke_width = 2.5 * (1 / this.scope.view.zoom);
+        if (is_focused) {
+            fill_opacity = 0.15;
+            stroke_opacity = 1;
+            stroke_width = 3 * (1 / this.scope.view.zoom);
         }
-        else {  // In-active
-            path.strokeColor = 'rgba(34,43,68,0.8)';
+        let fill_color = `rgba(${(1 - conf) * 255}, ${16}, ${conf * 255}, ${fill_opacity})`;
+        let stroke_color = `rgba(${(1 - conf) * 255}, ${16}, ${conf * 255}, ${stroke_opacity})`;
+        if (!annotation.is_valid) {
+            fill_color = `rgba(16, 16, 16, ${fill_opacity})`;
+            stroke_color = `rgba(16, 16, 16, ${stroke_opacity})`;
+        } else if (annotation.edited) {
+            fill_color = `rgba(255, 204, 84, ${fill_opacity})`;
+            stroke_color = `rgba(255, 204, 84, ${stroke_opacity})`;
+        } else if (annotation.annotated) {
+            fill_color = `rgba(2, 135, 0, ${fill_opacity})`;
+            stroke_color = `rgba(2, 135, 0, ${stroke_opacity})`;
         }
 
-        // OLD
-        // if (line.focus)
-        //     line.polygon.setStyle({color: color, opacity: 1, fillColor: color, fillOpacity: 0.15, weight: 2});
-        // else
-        //     line.polygon.setStyle({color: color, opacity: 0.5, fillColor: color, fillOpacity: 0.1, weight: 1});
+        path.fillColor = fill_color;
+        path.strokeColor = stroke_color;
+        path.strokeWidth = stroke_width;
 
     }
     else { // Region
