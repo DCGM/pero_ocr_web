@@ -15,10 +15,15 @@
                 <p>
                     This application demonstrates capabilities of <a href="https://github.com/DCGM/pero-ocr" target="_blank">pero-ocr</a> python
                     package developed in <a href="https://pero.fit.vutbr.cz/" target="_blank">project PERO</a> at Brno University of Technology.
-                    You can create an account and use the application to transcribe documents. To get an idea how well the OCR works, you can view <a href="{{ url_for('document.public_documents') }}">Public documents</a>.
+                    You can create an account and use the application to transcribe documents. To get an idea how well the OCR works,
+                    you can view <a href="{{ url_for('document.public_documents') }}">Public documents</a>.
+                    If you have any questions or if you experience any problems, contact <a href="https://www.fit.vut.cz/person/ihradis">Michal Hradiš</a>.
                 </p>
-		<p>You can watch videos demonstrating <a href="https://youtu.be/r9aFeKVDyck">document management</a>, <a href="https://youtu.be/-Of2TrjJlwU">page layout editing</a> and <a href="https://youtu.be/mbB4svRmfqA">text recognition, correction and review</a>.
-		</p>
+                <p>
+                    You can watch videos demonstrating <a href="https://youtu.be/r9aFeKVDyck">document management</a>,
+                    <a href="https://youtu.be/-Of2TrjJlwU">page layout editing</a> and
+                    <a href="https://youtu.be/mbB4svRmfqA">text recognition, correction and review</a>.
+                </p>
                 <p>
                     The application allows users to automatically transcribe several types of printed and handwritten documents.
                     The provided OCR engines are able to transcribe even very low-quality printed documents in most european languages including Latin,
@@ -26,13 +31,25 @@
                     The application provides efficient interface for text corrections and several
                     formats of transcriptions for download (ALTO, PAGE XML, plain text).
                 </p>
+
                 <p>
-                    Uploaded images and their corrections will not be shared with anyone outside Brno University of Technology and we have reasonable technical
-                    measures and internal rules in place to prevent any data leaks.
-                    Be aware that the images and corrections you provide may be used for further training and improvement of our systems.
+                    The application is free for personal use and any use which involves manual text correction.
+                    If possible, please give credit to the authors of PERO, for example by citing these publications:
                 </p>
-                <p> 
-                    If you have any questions or experience any problems, contact <a href="https://www.fit.vut.cz/person/ihradis">Michal Hradiš</a>.
+                <ul>
+                    <li> O Kodym, M Hradiš: Page Layout Analysis System for Unconstrained Historic Documents. ICDAR, 2021.</li>
+                    <li> M Kišš, K Beneš, M Hradiš: AT-ST: Self-Training Adaptation Strategy for OCR in Domains with Limited Transcriptions. ICDAR, 2021.</li>
+                    <li> J Kohút, M Hradiš: TS-Net: OCR Trained to Switch Between Text Transcription Styles. ICDAR, 2021.</li>
+                </ul>
+                <p>
+                    If you need to process large volumes of documents, you can use our REST API which can be easily integrated
+                    into digitization pipelines. Have a look at <a href="https://app.swaggerhub.com/apis-docs/LachubCz/PERO-API/1.0.4">API documentation</a>
+                    or request a testing API key by contacting <a href="https://www.fit.vut.cz/person/ihradis">Michal Hradiš</a>.
+                </p>
+                <p>
+                    Uploaded images and their corrections will not be shared with anyone outside Brno University of Technology,
+                    and we have reasonable technical measures and internal rules in place to prevent any data leaks.
+                    Be aware that the images and corrections you provide may be used for further training and improvement of our systems.
                 </p>
             </div>
             <div class="col-md my-3">
