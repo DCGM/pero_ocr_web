@@ -193,11 +193,11 @@ export function setPathColor(path, annotation_type, annotation) {
 
         let fill_opacity = 0.1;
         let stroke_opacity = 0.5;
-        let stroke_width = 2.5 * (1 / this.scope.view.zoom);
+        let stroke_width = 2.5;
         if (is_focused) {
             fill_opacity = 0.15;
             stroke_opacity = 1;
-            stroke_width = 3 * (1 / this.scope.view.zoom);
+            stroke_width = 3;
         }
         let fill_color = `rgba(${(1 - conf) * 255}, ${16}, ${conf * 255}, ${fill_opacity})`;
         let stroke_color = `rgba(${(1 - conf) * 255}, ${16}, ${conf * 255}, ${stroke_opacity})`;
@@ -212,6 +212,7 @@ export function setPathColor(path, annotation_type, annotation) {
             stroke_color = `rgba(2, 135, 0, ${stroke_opacity})`;
         }
 
+        path.strokeScaling = false;
         path.fillColor = fill_color;
         path.strokeColor = stroke_color;
         path.strokeWidth = stroke_width;
