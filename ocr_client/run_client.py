@@ -183,8 +183,9 @@ def check_and_process_ocr_request(config, session, gpu_mode):
                 lines = f.readlines()
             out_lines = []
             for l in lines:
-                id, ann = l.split(" ", 1)
-                out_lines.append("{} {} {}".format(id, 0, ann))
+                if len(l.strip().split()) > 1:
+                    id, ann = l.split(" ", 1)
+                    out_lines.append("{} {} {}".format(id, 0, ann))
             with open(finetuning_data_path, 'w') as f:
                 f.writelines(out_lines)
 
