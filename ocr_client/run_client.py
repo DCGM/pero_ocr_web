@@ -111,6 +111,14 @@ def check_and_process_ocr_request(config, session, gpu_mode):
     number_of_images = len(os.listdir(images_folder))
     module_logger.info("##############################################################")
 
+    model_config = configparser.ConfigParser()
+    model_config.optionxform = lambda option: option
+    model_config.read(os.path.join(working_dir, "models", "config.ini"))
+    ocr_json_path = os.path.join(working_dir, "models", model_config['OCR']['OCR_JSON'])
+    with open(ocr_json_path, 'r', encoding='utf8') as f:
+        ocr_json = json.load(f)
+    model_path = os.path.join(working_dir, "models", "ocr", ocr_json["checkpoint"])
+
     if baseline_id is None:
         response = session.get(join_url(base_url, ocr_get_document_annotation_statistics_route, document_id))
         annotated_count = int(response.json()['annotated_count'])
@@ -119,12 +127,6 @@ def check_and_process_ocr_request(config, session, gpu_mode):
         module_logger.info("")
         module_logger.info("MIN ANNOTATED LINES FOR EMBED SELECTION: {}".format(min_annotated_lines_for_embed_selection))
         module_logger.info("ANNOTATED LINES: {}".format(annotated_count))
-        model_config = configparser.ConfigParser()
-        model_config.optionxform = lambda option: option
-        model_config.read(os.path.join(working_dir, "models", "config.ini"))
-        ocr_json_path = os.path.join(working_dir, "models", model_config['OCR']['OCR_JSON'])
-        with open(ocr_json_path, 'r', encoding='utf8') as f:
-            ocr_json = json.load(f)
         module_logger.info("EMBED MODEL: {}".format("embed_id" in ocr_json))
 
         if (ocr_json["checkpoint"].endswith(".pth") and annotated_count >= min_annotated_lines_for_finetuning) or \
@@ -140,117 +142,13 @@ def check_and_process_ocr_request(config, session, gpu_mode):
             module_logger.info("")
 
         if ocr_json["checkpoint"].endswith(".pth") and annotated_count >= min_annotated_lines_for_finetuning:
-            finetuning_working_dir = os.path.join(working_dir, "models", "finetuning")
-            finetuning_data_dir = os.path.join(finetuning_working_dir, "data")
-            os.makedirs(finetuning_working_dir)
-            os.makedirs(finetuning_data_dir)
-            module_logger.info("CROPPING LINES FOR FINETUNING: {}".format(train_pytorch_ocr_path))
-            module_logger.info("##############################################################")
-            crop_config = configparser.ConfigParser()
-            crop_config.optionxform = lambda option: option
-            crop_config["PAGE_PARSER"] = {'RUN_LAYOUT_PARSER': 'no',
-                                          'RUN_LINE_CROPPER': 'yes',
-                                          'RUN_OCR': 'no',
-                                          'RUN_DECODER': 'no'}
-            crop_config["LINE_CROPPER"] = model_config["LINE_CROPPER"]
-            crop_config_path = os.path.join(finetuning_data_dir, "config.ini")
-            with open(crop_config_path, 'w') as f:
-                crop_config.write(f)
-            finetuning_lmdb_path = os.path.join(finetuning_data_dir, "lines.lmdb")
-            finetuning_data_path = os.path.join(finetuning_data_dir, "lines.trn")
-            parse_folder_process = subprocess.Popen(['python', '-u', parse_folder_path,
-                                                     '-c', "./data/config.ini",
-                                                     '--input-image-path', images_folder,
-                                                     '--input-xml-path', annotated_xmls_folder,
-                                                     '--output-line-path', finetuning_lmdb_path,
-                                                     '--output-transcriptions-file-path', finetuning_data_path,
-                                                     '--process-count', '6'],
-                                                    cwd=finetuning_working_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            log = []
-            while True:
-                line = parse_folder_process.stdout.readline()
-                if not line:
-                    break
-                line = line.decode("utf-8")
-                log.append(line)
-                # -1 ommits new line
-                module_logger.info(line[:-1])
-            parse_folder_process.wait()
-            module_logger.info("##############################################################")
-            module_logger.info("")
-
-            with open(finetuning_data_path) as f:
-                lines = f.readlines()
-            out_lines = []
-            for l in lines:
-                if len(l.strip().split()) > 1:
-                    id, ann = l.split(" ", 1)
-                    out_lines.append("{} {} {}".format(id, 0, ann))
-            with open(finetuning_data_path, 'w') as f:
-                f.writelines(out_lines)
-
-            module_logger.info("STARTING FINETUNING: {}".format(train_pytorch_ocr_path))
-            module_logger.info("##############################################################")
-            model_to_finetune_path = os.path.join(working_dir, "models", "ocr", ocr_json["checkpoint"])
-            finetuned_model_path = os.path.join(finetuning_working_dir, ocr_json["checkpoint"])
-            parse_folder_process = subprocess.Popen(['python', '-u', train_pytorch_ocr_path,
-                                                     '--net', ocr_json["net_name"],
-                                                     '--trn-data',  finetuning_data_path,
-                                                     '--lmdb-path', finetuning_lmdb_path,
-                                                     '--data-manipulator', "UNIVERSAL_HWR",
-                                                     '--max-line-width', "2048",
-                                                     '--max-buffer-size', "2000000000000000",
-                                                     '--max-buffered-lines', "5000",
-                                                     '--learning-rate', "0.00005",
-                                                     '--batch-size', "20",
-                                                     '--max-iterations', "400",
-                                                     '--save-step', "400",
-                                                     '--test-step', "400000000000000000",
-                                                     '--chars-set', "all",
-                                                     '--in-checkpoint', model_to_finetune_path,
-                                                     '--out-checkpoint', finetuned_model_path],
-                                                    cwd=finetuning_working_dir, stdout=subprocess.PIPE,
-                                                    stderr=subprocess.STDOUT)
-            log = []
-            while True:
-                line = parse_folder_process.stdout.readline()
-                if not line:
-                    break
-                line = line.decode("utf-8")
-                log.append(line)
-                # -1 ommits new line
-                module_logger.info(line[:-1])
-            parse_folder_process.wait()
-            module_logger.info("##############################################################")
-            module_logger.info("")
-
-            module_logger.info("STARTING EXPORT MODEL: {}".format(export_model_path))
-            module_logger.info("##############################################################")
-            exported_finetuned_model_path = "{}.pt".format(os.path.splitext(finetuned_model_path)[0])
-            parse_folder_process = subprocess.Popen(['python', '-u', export_model_path,
-                                                     '-n', ocr_json["net_name"],
-                                                     '-p', finetuned_model_path,
-                                                     '-l', crop_config["LINE_CROPPER"]["LINE_HEIGHT"],
-                                                     '-c', "3",
-                                                     '-a', "all",
-                                                     '--output-model-path', exported_finetuned_model_path,
-                                                     '--output-json-path', ocr_json_path,
-                                                     '--device', 'gpu',
-                                                     '--trace'],
-                                                    cwd=finetuning_working_dir, stdout=subprocess.PIPE,
-                                                    stderr=subprocess.STDOUT)
-            log = []
-            while True:
-                line = parse_folder_process.stdout.readline()
-                if not line:
-                    break
-                line = line.decode("utf-8")
-                log.append(line)
-                # -1 ommits new line
-                module_logger.info(line[:-1])
-            parse_folder_process.wait()
-            module_logger.info("##############################################################")
-            module_logger.info("")
+            model_path = finetune_model(working_dir,
+                                        train_pytorch_ocr_path,
+                                        model_config,
+                                        parse_folder_path,
+                                        images_folder,
+                                        annotated_xmls_folder,
+                                        ocr_json)
 
         elif annotated_count >= min_annotated_lines_for_embed_selection and "embed_id" in ocr_json:
             module_logger.info("STARTING SELECT EMBED ID: {}".format(select_embed_id_path))
@@ -280,8 +178,16 @@ def check_and_process_ocr_request(config, session, gpu_mode):
         module_logger.info("##############################################################")
         get_xmls(session, base_url, document_get_xml_regions_route, image_ids, xmls_folder)
     module_logger.info("##############################################################")
-
     module_logger.info("")
+
+    if ocr_json["checkpoint"].endswith(".pth"):
+        export_model(export_model_path,
+                     model_path,
+                     ocr_json["net_name"],
+                     model_config["LINE_CROPPER"]["LINE_HEIGHT"],
+                     ocr_json_path,
+                     working_dir)
+
     module_logger.info("STARTING PARSE FOLDER: {}".format(parse_folder_path))
     module_logger.info("##############################################################")
     parse_folder_process = subprocess.Popen(['python', '-u', parse_folder_path, '-c', "./models/config.ini"],
@@ -391,6 +297,125 @@ def unzip_model_response(response, models_folder):
     model_type_folder_name = os.path.join(models_folder, model_type_folder_name)
     os.makedirs(model_type_folder_name)
     unzip_response_to_dir(response, model_type_folder_name)
+
+
+def finetune_model(working_dir, train_pytorch_ocr_path, model_config, parse_folder_path, images_folder, annotated_xmls_folder,
+                   ocr_json):
+    finetuning_working_dir = os.path.join(working_dir, "models", "finetuning")
+    finetuning_data_dir = os.path.join(finetuning_working_dir, "data")
+    os.makedirs(finetuning_working_dir)
+    os.makedirs(finetuning_data_dir)
+    module_logger.info("CROPPING LINES FOR FINETUNING: {}".format(train_pytorch_ocr_path))
+    module_logger.info("##############################################################")
+    crop_config = configparser.ConfigParser()
+    crop_config.optionxform = lambda option: option
+    crop_config["PAGE_PARSER"] = {'RUN_LAYOUT_PARSER': 'no',
+                                  'RUN_LINE_CROPPER': 'yes',
+                                  'RUN_OCR': 'no',
+                                  'RUN_DECODER': 'no'}
+    crop_config["LINE_CROPPER"] = model_config["LINE_CROPPER"]
+    crop_config_path = os.path.join(finetuning_data_dir, "config.ini")
+    with open(crop_config_path, 'w') as f:
+        crop_config.write(f)
+    finetuning_lmdb_path = os.path.join(finetuning_data_dir, "lines.lmdb")
+    finetuning_data_path = os.path.join(finetuning_data_dir, "lines.trn")
+    parse_folder_process = subprocess.Popen(['python', '-u', parse_folder_path,
+                                             '-c', "./data/config.ini",
+                                             '--input-image-path', images_folder,
+                                             '--input-xml-path', annotated_xmls_folder,
+                                             '--output-line-path', finetuning_lmdb_path,
+                                             '--output-transcriptions-file-path', finetuning_data_path,
+                                             '--process-count', '6'],
+                                            cwd=finetuning_working_dir, stdout=subprocess.PIPE,
+                                            stderr=subprocess.STDOUT)
+    log = []
+    while True:
+        line = parse_folder_process.stdout.readline()
+        if not line:
+            break
+        line = line.decode("utf-8")
+        log.append(line)
+        # -1 ommits new line
+        module_logger.info(line[:-1])
+    parse_folder_process.wait()
+    module_logger.info("##############################################################")
+    module_logger.info("")
+
+    with open(finetuning_data_path) as f:
+        lines = f.readlines()
+    out_lines = []
+    for l in lines:
+        if len(l.strip().split()) > 1:
+            id, ann = l.split(" ", 1)
+            out_lines.append("{} {} {}".format(id, 0, ann))
+    with open(finetuning_data_path, 'w') as f:
+        f.writelines(out_lines)
+
+    module_logger.info("STARTING FINETUNING: {}".format(train_pytorch_ocr_path))
+    module_logger.info("##############################################################")
+    model_to_finetune_path = os.path.join(working_dir, "models", "ocr", ocr_json["checkpoint"])
+    finetuned_model_path = os.path.join(finetuning_working_dir, ocr_json["checkpoint"])
+    parse_folder_process = subprocess.Popen(['python', '-u', train_pytorch_ocr_path,
+                                             '--net', ocr_json["net_name"],
+                                             '--trn-data', finetuning_data_path,
+                                             '--lmdb-path', finetuning_lmdb_path,
+                                             '--data-manipulator', "UNIVERSAL_HWR",
+                                             '--max-line-width', "2048",
+                                             '--max-buffer-size', "2000000000000000",
+                                             '--max-buffered-lines', "5000",
+                                             '--learning-rate', "0.00005",
+                                             '--batch-size', "20",
+                                             '--max-iterations', "400",
+                                             '--save-step', "400",
+                                             '--test-step', "400000000000000000",
+                                             '--chars-set', "all",
+                                             '--in-checkpoint', model_to_finetune_path,
+                                             '--out-checkpoint', finetuned_model_path],
+                                            cwd=finetuning_working_dir, stdout=subprocess.PIPE,
+                                            stderr=subprocess.STDOUT)
+    log = []
+    while True:
+        line = parse_folder_process.stdout.readline()
+        if not line:
+            break
+        line = line.decode("utf-8")
+        log.append(line)
+        # -1 ommits new line
+        module_logger.info(line[:-1])
+    parse_folder_process.wait()
+    module_logger.info("##############################################################")
+    module_logger.info("")
+    return finetuned_model_path
+
+
+def export_model(export_model_path, original_model_path, net_name, line_height, output_ocr_json_path, working_dir):
+    module_logger.info("STARTING EXPORT MODEL: {}".format(export_model_path))
+    module_logger.info("##############################################################")
+    exported_model_path = "{}.pt".format(os.path.splitext(original_model_path)[0])
+    parse_folder_process = subprocess.Popen(['python', '-u', export_model_path,
+                                             '-n', net_name,
+                                             '-p', original_model_path,
+                                             '-l', line_height,
+                                             '-c', "3",
+                                             '-a', "all",
+                                             '--output-model-path', exported_model_path,
+                                             '--output-json-path', output_ocr_json_path,
+                                             '--device', 'gpu',
+                                             '--trace'],
+                                            cwd=working_dir, stdout=subprocess.PIPE,
+                                            stderr=subprocess.STDOUT)
+    log = []
+    while True:
+        line = parse_folder_process.stdout.readline()
+        if not line:
+            break
+        line = line.decode("utf-8")
+        log.append(line)
+        # -1 ommits new line
+        module_logger.info(line[:-1])
+    parse_folder_process.wait()
+    module_logger.info("##############################################################")
+    module_logger.info("")
 
 
 def main():
