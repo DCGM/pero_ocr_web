@@ -164,6 +164,7 @@ export function canvasInit() {
         {
             self.scope.view.zoom = self.scope.view.zoom_animation.end_zoom;
             self.scope.view.zoom_animation.on = false;
+            self.$emit('zoom-end-event');
         }
         self.scope.view.zoom_animation.start_zoom = 0;
         self.scope.view.zoom_animation.end_zoom = 0;
