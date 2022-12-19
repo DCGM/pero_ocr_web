@@ -362,7 +362,7 @@ export function canvasZoomAnnotation(uuid, show_line_height, show_bottom_pad) {
 
         this.scope.view.translate_animation.reset();
         this.scope.view.translate_animation.start_point = this.scope.view.center;
-        this.scope.view.translate_animation.end_point = new paper.Point((end_x - start_x) / 2, y);
+        this.scope.view.translate_animation.end_point = new paper.Point((start_x + end_x) / 2, y);
         this.scope.view.translate_animation.p = 3;
         this.scope.view.translate_animation.total_time = 0.5;
         this.scope.view.translate_animation.on = true;
@@ -371,7 +371,8 @@ export function canvasZoomAnnotation(uuid, show_line_height, show_bottom_pad) {
 
 
 
-export function getFocusLinePoints(line, show_line_height, show_bottom_pad, show_view_size) {
+export function getFocusLinePoints(line, target_view_line_height,
+                                   target_view_bottom_pad, view_size) {
 
     let width_boundary = get_line_width_boundary(line);
     let height_boundary = get_line_height_boundary(line);
@@ -382,24 +383,27 @@ export function getFocusLinePoints(line, show_line_height, show_bottom_pad, show
     let end_y = height_boundary[1];
     let line_width = end_x - start_x;
     let line_height = line.heights.down + line.heights.up;
-    let view_width = show_view_size.width;
-    let view_height = show_view_size.height;
+    let view_width = view_size.width;
+    let view_height = view_size.height;
 
-    let expected_show_line_height = line_height * (view_width / line_width);
-    let new_line_width = (line_height * view_width) / show_line_height;
-    if (expected_show_line_height > show_line_height) {
-        start_x -= (new_line_width - line_width) / 2;
-        end_x += (new_line_width - line_width) / 2;
+    let current_view_line_height = line_height * (view_width / line_width);
+    let target_line_height = (line_height * view_height) / target_view_line_height;
+    let target_width = (line_height * view_width) / target_view_line_height;
+    let target_bottom_pad = (line_height * target_view_bottom_pad) / target_view_line_height;
+    let view_left_pad = 25;
+    let left_pad = (line_height * view_left_pad) / target_view_line_height;
+
+    if (target_width >= (line_width + 2 * left_pad)) {
+        start_x -= (target_width - line_width) / 2;
+        end_x += (target_width - line_width) / 2;
     }
-    if (expected_show_line_height < show_line_height) {
-        let view_left_pad = 25;
-        let left_pad = (line_height * view_left_pad) / show_line_height;
+
+    if (target_width < line_width) {
         start_x -= left_pad;
-        end_x -= line_width - new_line_width + left_pad;
+        end_x -= line_width - target_width + left_pad;
     }
-    let view_port_line_height = (line_height * view_height) / show_line_height
-    let bottom_pad = (line_height * show_bottom_pad) / show_line_height;
-    let y = end_y - view_port_line_height / 2 + bottom_pad;
+
+    let y = end_y - target_line_height / 2 + target_bottom_pad;
     return [start_x, end_x, y];
 }
 

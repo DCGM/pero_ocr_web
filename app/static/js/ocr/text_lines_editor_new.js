@@ -386,22 +386,16 @@ class TextLinesEditor {
 
         function zoomEndEventHandler()
         {
-            console.log("ZOOM END");
             let view_port_line_height = self.active_line.np_heights[0] + self.active_line.np_heights[1];
             let view_port_height = self.annotator_wrapper_component.$refs.annotator_component.scope.view.bounds.height;
             let container = $('#canvas');
             let container_height = container.height();
-            console.log(view_port_line_height, view_port_height, container_height);
             let current_line_container_height = (view_port_line_height / view_port_height) * container_height;
             current_line_container_height = current_line_container_height.toFixed(0);
             let show_line_height = $('#show-line-height').val();
             $('#show-line-height').val(current_line_container_height);
         }
     }
-
-
-
-
 
 
     init_line(i, line) {

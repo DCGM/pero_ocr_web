@@ -56998,6 +56998,7 @@ function canvasZoomAnnotation(uuid, show_line_height, show_bottom_pad) {
   var start_x = focus_line_points[0];
   var end_x = focus_line_points[1];
   var y = focus_line_points[2];
+  console.log(start_x, end_x, y);
 
   if (!this.scope.view.zoom_animation.on && !this.scope.view.translate_animation.on) {
     this.scope.view.zoom_animation.reset();
@@ -57008,13 +57009,14 @@ function canvasZoomAnnotation(uuid, show_line_height, show_bottom_pad) {
     this.scope.view.zoom_animation.on = true;
     this.scope.view.translate_animation.reset();
     this.scope.view.translate_animation.start_point = this.scope.view.center;
-    this.scope.view.translate_animation.end_point = new paper.Point((end_x - start_x) / 2, y);
+    this.scope.view.translate_animation.end_point = new paper.Point((start_x + end_x) / 2, y);
+    console.log(this.scope.view.translate_animation.end_point);
     this.scope.view.translate_animation.p = 3;
     this.scope.view.translate_animation.total_time = 0.5;
     this.scope.view.translate_animation.on = true;
   }
 }
-function getFocusLinePoints(line, show_line_height, show_bottom_pad, show_view_size) {
+function getFocusLinePoints(line, target_view_line_height, target_view_bottom_pad, view_size) {
   var width_boundary = get_line_width_boundary(line);
   var height_boundary = get_line_height_boundary(line);
   var start_x = width_boundary[0];
@@ -57023,26 +57025,28 @@ function getFocusLinePoints(line, show_line_height, show_bottom_pad, show_view_s
   var end_y = height_boundary[1];
   var line_width = end_x - start_x;
   var line_height = line.heights.down + line.heights.up;
-  var view_width = show_view_size.width;
-  var view_height = show_view_size.height;
-  var expected_show_line_height = line_height * (view_width / line_width);
-  var new_line_width = line_height * view_width / show_line_height;
+  var view_width = view_size.width;
+  var view_height = view_size.height;
+  var current_view_line_height = line_height * (view_width / line_width);
+  var target_line_height = line_height * view_height / target_view_line_height;
+  var target_width = line_height * view_width / target_view_line_height;
+  var target_bottom_pad = line_height * target_view_bottom_pad / target_view_line_height;
+  var view_left_pad = 25;
+  var left_pad = line_height * view_left_pad / target_view_line_height;
 
-  if (expected_show_line_height > show_line_height) {
-    start_x -= (new_line_width - line_width) / 2;
-    end_x += (new_line_width - line_width) / 2;
+  if (target_width >= line_width + 2 * left_pad) {
+    start_x -= (target_width - line_width) / 2;
+    end_x += (target_width - line_width) / 2;
+    console.log("FIT");
   }
 
-  if (expected_show_line_height < show_line_height) {
-    var view_left_pad = 25;
-    var left_pad = line_height * view_left_pad / show_line_height;
+  if (target_width < line_width) {
     start_x -= left_pad;
-    end_x -= line_width - new_line_width + left_pad;
+    end_x -= line_width - target_width + left_pad;
+    console.log("ZOOM");
   }
 
-  var view_port_line_height = line_height * view_height / show_line_height;
-  var bottom_pad = line_height * show_bottom_pad / show_line_height;
-  var y = end_y - view_port_line_height / 2 + bottom_pad;
+  var y = end_y - target_line_height / 2 + target_bottom_pad;
   return [start_x, end_x, y];
 }
 function get_line_height_boundary(line) {
