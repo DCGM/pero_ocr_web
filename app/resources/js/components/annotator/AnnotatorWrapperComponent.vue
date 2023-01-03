@@ -72,8 +72,8 @@ export default {
         select_row(row_uuid) {
             this.$refs.annotator_component.canvasSelectRowAnnotation(row_uuid);
         },
-        zoom_row(uuid, show_line_height, show_bottom_pad) {
-          this.$refs.annotator_component.canvasZoomAnnotation(uuid, show_line_height, show_bottom_pad);
+        zoom_row(uuid, show_line_height, show_bottom_pad, normalized_caret_position = 0) {
+          this.$refs.annotator_component.canvasZoomAnnotation(uuid, show_line_height, show_bottom_pad, normalized_caret_position);
         },
         validate_row_annotation(uuid) {
           this.$refs.annotator_component.validateRowAnnotation(uuid);

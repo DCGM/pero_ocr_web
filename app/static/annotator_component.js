@@ -7001,7 +7001,8 @@ __webpack_require__.r(__webpack_exports__);
       this.$refs.annotator_component.canvasSelectRowAnnotation(row_uuid);
     },
     zoom_row: function zoom_row(uuid, show_line_height, show_bottom_pad) {
-      this.$refs.annotator_component.canvasZoomAnnotation(uuid, show_line_height, show_bottom_pad);
+      var normalized_caret_position = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+      this.$refs.annotator_component.canvasZoomAnnotation(uuid, show_line_height, show_bottom_pad, normalized_caret_position);
     },
     validate_row_annotation: function validate_row_annotation(uuid) {
       this.$refs.annotator_component.validateRowAnnotation(uuid);
@@ -56990,64 +56991,81 @@ function canvasZoomImage() {
  */
 
 function canvasZoomAnnotation(uuid, show_line_height, show_bottom_pad) {
+  var normalized_caret_position = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
   var row = this.annotations.rows.find(function (item) {
     return item.uuid === uuid;
   });
   if (!row) return;
-  var focus_line_points = getFocusLinePoints(row, show_line_height, show_bottom_pad, this.scope.view.viewSize);
-  var start_x = focus_line_points[0];
-  var end_x = focus_line_points[1];
+  var focus_line_points = getFocusLinePoints(row, show_line_height, show_bottom_pad, this.scope.view.bounds.x, this.scope.view.bounds.x + this.scope.view.bounds.width, this.scope.view.viewSize.width, this.scope.view.viewSize.height, normalized_caret_position);
+  var line_x0 = focus_line_points[0];
+  var line_x1 = focus_line_points[1];
   var y = focus_line_points[2];
-  console.log(start_x, end_x, y);
 
   if (!this.scope.view.zoom_animation.on && !this.scope.view.translate_animation.on) {
     this.scope.view.zoom_animation.reset();
     this.scope.view.zoom_animation.start_zoom = this.scope.view.zoom;
-    this.scope.view.zoom_animation.end_zoom = this.scope.view.zoom * (this.scope.view.bounds.width / (end_x - start_x));
+    this.scope.view.zoom_animation.end_zoom = this.scope.view.zoom * (this.scope.view.bounds.width / (line_x1 - line_x0));
     this.scope.view.zoom_animation.p = 3;
     this.scope.view.zoom_animation.total_time = 0.5;
     this.scope.view.zoom_animation.on = true;
     this.scope.view.translate_animation.reset();
     this.scope.view.translate_animation.start_point = this.scope.view.center;
-    this.scope.view.translate_animation.end_point = new paper.Point((start_x + end_x) / 2, y);
-    console.log(this.scope.view.translate_animation.end_point);
+    this.scope.view.translate_animation.end_point = new paper.Point((line_x0 + line_x1) / 2, y);
     this.scope.view.translate_animation.p = 3;
     this.scope.view.translate_animation.total_time = 0.5;
     this.scope.view.translate_animation.on = true;
   }
 }
-function getFocusLinePoints(line, target_view_line_height, target_view_bottom_pad, view_size) {
+function getFocusLinePoints(line, target_view_line_height, target_view_bottom_pad, port_x0, port_x1, view_port_width, view_port_height, normalized_caret_position) {
   var width_boundary = get_line_width_boundary(line);
   var height_boundary = get_line_height_boundary(line);
-  var start_x = width_boundary[0];
-  var end_x = width_boundary[1];
-  var start_y = height_boundary[0];
-  var end_y = height_boundary[1];
-  var line_width = end_x - start_x;
+  var line_x0 = width_boundary[0];
+  var line_x1 = width_boundary[1];
+  var line_y0 = height_boundary[0];
+  var line_y1 = height_boundary[1];
+  var line_width = line_x1 - line_x0;
   var line_height = line.heights.down + line.heights.up;
-  var view_width = view_size.width;
-  var view_height = view_size.height;
-  var current_view_line_height = line_height * (view_width / line_width);
-  var target_line_height = line_height * view_height / target_view_line_height;
-  var target_width = line_height * view_width / target_view_line_height;
+  var port_width = port_x1 - port_x0;
+  var current_view_line_height = line_height * (view_port_width / line_width);
+  var target_line_height = line_height * view_port_height / target_view_line_height;
+  var target_width = line_height * view_port_width / target_view_line_height;
   var target_bottom_pad = line_height * target_view_bottom_pad / target_view_line_height;
   var view_left_pad = 25;
   var left_pad = line_height * view_left_pad / target_view_line_height;
 
   if (target_width >= line_width + 2 * left_pad) {
-    start_x -= (target_width - line_width) / 2;
-    end_x += (target_width - line_width) / 2;
-    console.log("FIT");
+    line_x0 -= (target_width - line_width) / 2;
+    line_x1 += (target_width - line_width) / 2;
+  } else {
+    if (normalized_caret_position == 0) {
+      line_x0 -= left_pad;
+      line_x1 -= line_width - target_width + left_pad;
+    } else {
+      var caret_position = line_x0 + line_width * normalized_caret_position;
+      var half_port_width = port_width / 2;
+      var offset = port_width / 8;
+      var current_focus = port_x0 + half_port_width;
+
+      if (caret_position > current_focus + half_port_width - offset || caret_position < current_focus - half_port_width + offset) {
+        current_focus = caret_position;
+      } // clip focus
+
+
+      if (current_focus + half_port_width > line_x1 + left_pad) {
+        current_focus = line_x1 - half_port_width + left_pad;
+      }
+
+      if (current_focus - half_port_width < line_x0 - left_pad) {
+        current_focus = line_x0 + half_port_width - left_pad;
+      }
+
+      line_x0 = current_focus - half_port_width;
+      line_x1 = current_focus + half_port_width;
+    }
   }
 
-  if (target_width < line_width) {
-    start_x -= left_pad;
-    end_x -= line_width - target_width + left_pad;
-    console.log("ZOOM");
-  }
-
-  var y = end_y - target_line_height / 2 + target_bottom_pad;
-  return [start_x, end_x, y];
+  var y = line_y1 - target_line_height / 2 + target_bottom_pad;
+  return [line_x0, line_x1, y];
 }
 function get_line_height_boundary(line) {
   var height_min = 100000000000000000000000;

@@ -89,6 +89,24 @@ class TextLine
         this.checkbox_span.setAttribute("tabindex", "-1");
     }
 
+    get_normalized_caret_position()
+    {
+        let caret_span = this.get_caret_span();
+        if (this.check_caret_is_at_the_beginning_of_the_first_span(caret_span))
+        {
+            return 0;
+        }
+        let selection = document.getSelection();
+        let caret_position = selection.anchorOffset;
+        caret_span = caret_span.previousSibling;
+        while (caret_span != null)
+        {
+            caret_position += caret_span.textContent.length;
+            caret_span = caret_span.previousSibling;
+        }
+        return caret_position / this.text.length;
+    }
+
     set_line_confidences_to_text_line_element(text_to_show, confidences_to_show)
     {
         let chars = text_to_show.split("");

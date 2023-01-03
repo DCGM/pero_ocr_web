@@ -342,27 +342,34 @@ export function canvasZoomImage() {
  * * this: annotator_component
  * @param uuid
  */
-export function canvasZoomAnnotation(uuid, show_line_height, show_bottom_pad) {
+export function canvasZoomAnnotation(uuid, show_line_height, show_bottom_pad, normalized_caret_position = 0) {
     let row = this.annotations.rows.find(item => item.uuid === uuid);
     if (!row) return;
 
-    let focus_line_points = getFocusLinePoints(row, show_line_height, show_bottom_pad, this.scope.view.viewSize);
-    let start_x = focus_line_points[0];
-    let end_x = focus_line_points[1];
+    let focus_line_points = getFocusLinePoints(row,
+                                               show_line_height,
+                                               show_bottom_pad,
+                                               this.scope.view.bounds.x,
+                                               this.scope.view.bounds.x + this.scope.view.bounds.width,
+                                               this.scope.view.viewSize.width,
+                                               this.scope.view.viewSize.height,
+                                               normalized_caret_position);
+    let line_x0 = focus_line_points[0];
+    let line_x1 = focus_line_points[1];
     let y = focus_line_points[2];
 
     if (!this.scope.view.zoom_animation.on && !this.scope.view.translate_animation.on)
     {
         this.scope.view.zoom_animation.reset();
         this.scope.view.zoom_animation.start_zoom = this.scope.view.zoom;
-        this.scope.view.zoom_animation.end_zoom = this.scope.view.zoom * (this.scope.view.bounds.width / (end_x - start_x));
+        this.scope.view.zoom_animation.end_zoom = this.scope.view.zoom * (this.scope.view.bounds.width / (line_x1 - line_x0));
         this.scope.view.zoom_animation.p = 3;
         this.scope.view.zoom_animation.total_time = 0.5;
         this.scope.view.zoom_animation.on = true;
 
         this.scope.view.translate_animation.reset();
         this.scope.view.translate_animation.start_point = this.scope.view.center;
-        this.scope.view.translate_animation.end_point = new paper.Point((start_x + end_x) / 2, y);
+        this.scope.view.translate_animation.end_point = new paper.Point((line_x0 + line_x1) / 2, y);
         this.scope.view.translate_animation.p = 3;
         this.scope.view.translate_animation.total_time = 0.5;
         this.scope.view.translate_animation.on = true;
@@ -371,40 +378,65 @@ export function canvasZoomAnnotation(uuid, show_line_height, show_bottom_pad) {
 
 
 
-export function getFocusLinePoints(line, target_view_line_height,
-                                   target_view_bottom_pad, view_size) {
+export function getFocusLinePoints(line,
+                                   target_view_line_height,
+                                   target_view_bottom_pad,
+                                   port_x0,
+                                   port_x1,
+                                   view_port_width,
+                                   view_port_height,
+                                   normalized_caret_position) {
 
     let width_boundary = get_line_width_boundary(line);
     let height_boundary = get_line_height_boundary(line);
 
-    let start_x = width_boundary[0];
-    let end_x = width_boundary[1];
-    let start_y = height_boundary[0];
-    let end_y = height_boundary[1];
-    let line_width = end_x - start_x;
+    let line_x0 = width_boundary[0];
+    let line_x1 = width_boundary[1];
+    let line_y0 = height_boundary[0];
+    let line_y1 = height_boundary[1];
+    let line_width = line_x1 - line_x0;
     let line_height = line.heights.down + line.heights.up;
-    let view_width = view_size.width;
-    let view_height = view_size.height;
+    let port_width = port_x1 - port_x0;
 
-    let current_view_line_height = line_height * (view_width / line_width);
-    let target_line_height = (line_height * view_height) / target_view_line_height;
-    let target_width = (line_height * view_width) / target_view_line_height;
+    let current_view_line_height = line_height * (view_port_width / line_width);
+    let target_line_height = (line_height * view_port_height) / target_view_line_height;
+    let target_width = (line_height * view_port_width) / target_view_line_height;
     let target_bottom_pad = (line_height * target_view_bottom_pad) / target_view_line_height;
     let view_left_pad = 25;
     let left_pad = (line_height * view_left_pad) / target_view_line_height;
 
     if (target_width >= (line_width + 2 * left_pad)) {
-        start_x -= (target_width - line_width) / 2;
-        end_x += (target_width - line_width) / 2;
+        line_x0 -= (target_width - line_width) / 2;
+        line_x1 += (target_width - line_width) / 2;
+    }
+    else {
+        if (normalized_caret_position == 0) {
+            line_x0 -= left_pad;
+            line_x1 -= line_width - target_width + left_pad;
+        }
+        else {
+            let caret_position = line_x0 + line_width * normalized_caret_position;
+            let half_port_width = port_width / 2;
+            let offset = port_width / 8;
+            let current_focus = port_x0 + half_port_width;
+            if ((caret_position > current_focus + half_port_width - offset) ||
+                (caret_position < current_focus - half_port_width + offset)) {
+                current_focus = caret_position;
+            }
+            // clip focus
+            if (current_focus + half_port_width > line_x1 + left_pad) {
+                current_focus = line_x1 - half_port_width + left_pad;
+            }
+            if (current_focus - half_port_width < line_x0 - left_pad) {
+                current_focus = line_x0 + half_port_width - left_pad;
+            }
+            line_x0 = current_focus - half_port_width;
+            line_x1 = current_focus + half_port_width;
+        }
     }
 
-    if (target_width < line_width) {
-        start_x -= left_pad;
-        end_x -= line_width - target_width + left_pad;
-    }
-
-    let y = end_y - target_line_height / 2 + target_bottom_pad;
-    return [start_x, end_x, y];
+    let y = line_y1 - target_line_height / 2 + target_bottom_pad;
+    return [line_x0, line_x1, y];
 }
 
 
