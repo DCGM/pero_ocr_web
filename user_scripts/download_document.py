@@ -71,6 +71,7 @@ if __name__ == '__main__':
         print("##############################################################")
         if not log_in(session, args.login, args.password, args.url, '/auth/login', '/document/documents'):
             print('ERROR DURING LOGGING IN')
+            exit(-1)
         print("##############################################################")
 
         print()
@@ -79,6 +80,7 @@ if __name__ == '__main__':
         done, page_uuids = get_document_ids(session, args.url, '/document/get_document_image_ids', args.document_id)
         if not done:
             print('ERROR DURING GETTING PAGES IDS')
+            exit(-1)
         print("##############################################################")
 
         print()
