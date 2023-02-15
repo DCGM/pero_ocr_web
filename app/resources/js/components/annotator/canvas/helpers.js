@@ -349,10 +349,11 @@ export function canvasZoomAnnotation(uuid, show_line_height, show_bottom_pad, no
     let focus_line_points = getFocusLinePoints(row,
                                                show_line_height,
                                                show_bottom_pad,
-                                               this.scope.view.bounds.x,
-                                               this.scope.view.bounds.x + this.scope.view.bounds.width,
+                                               25,
                                                this.scope.view.viewSize.width,
                                                this.scope.view.viewSize.height,
+                                               this.scope.view.bounds.x,
+                                               this.scope.view.bounds.x + this.scope.view.bounds.width,
                                                normalized_caret_position);
     let line_x0 = focus_line_points[0];
     let line_x1 = focus_line_points[1];
@@ -376,71 +377,87 @@ export function canvasZoomAnnotation(uuid, show_line_height, show_bottom_pad, no
     }
 }
 
+/*
+image - coordinates, sizes, etc. relatively to original image
+view - coordinates, sizes, etc. relatively to browser view
+target - coordinates, sizes, etc. after focusing
 
+Variables without target specify coordinates, sizes, etc. before focusing (current)
+*/
 
 export function getFocusLinePoints(line,
-                                   target_view_line_height,
-                                   target_view_bottom_pad,
-                                   port_x0,
-                                   port_x1,
+                                   view_target_line_height,
+                                   view_target_bottom_pad,
+                                   view_target_left_pad,
                                    view_port_width,
                                    view_port_height,
+                                   image_port_x0,
+                                   image_port_x1,
                                    normalized_caret_position) {
 
-    let width_boundary = get_line_width_boundary(line);
-    let height_boundary = get_line_height_boundary(line);
+    let image_line_width_boundary = get_image_line_width_boundary(line);
+    let image_line_height_boundary = get_image_line_height_boundary(line);
+    let image_line_x0 = image_line_width_boundary[0];
+    let image_line_x1 = image_line_width_boundary[1];
+    let image_line_y0 = image_line_height_boundary[0];
+    let image_line_y1 = image_line_height_boundary[1];
+    let image_line_width = image_line_x1 - image_line_x0;
+    let image_line_height = line.heights.down + line.heights.up;
+    let image_port_width = image_port_x1 - image_port_x0;
 
-    let line_x0 = width_boundary[0];
-    let line_x1 = width_boundary[1];
-    let line_y0 = height_boundary[0];
-    let line_y1 = height_boundary[1];
-    let line_width = line_x1 - line_x0;
-    let line_height = line.heights.down + line.heights.up;
-    let port_width = port_x1 - port_x0;
+    let view_to_image_target_scale = image_line_height /  view_target_line_height;
+    let image_target_port_height = view_port_height * view_to_image_target_scale;
+    let image_target_port_width = view_port_width * view_to_image_target_scale;
+    let image_target_bottom_pad =  view_target_bottom_pad * view_to_image_target_scale;
+    let image_target_left_pad = view_target_left_pad * view_to_image_target_scale;
 
-    let current_view_line_height = line_height * (view_port_width / line_width);
-    let target_line_height = (line_height * view_port_height) / target_view_line_height;
-    let target_width = (line_height * view_port_width) / target_view_line_height;
-    let target_bottom_pad = (line_height * target_view_bottom_pad) / target_view_line_height;
-    let view_left_pad = 25;
-    let left_pad = (line_height * view_left_pad) / target_view_line_height;
+    let image_target_port_x0;
+    let image_target_port_x1;
 
-    if (target_width >= (line_width + 2 * left_pad)) {
-        line_x0 -= (target_width - line_width) / 2;
-        line_x1 += (target_width - line_width) / 2;
+    // line fits in the view
+    if (image_target_port_width >= (image_line_width + 2 * image_target_left_pad)) {
+        let center_pad = (image_target_port_width - image_line_width) / 2;
+        image_target_port_x0 = image_line_x0 - center_pad;
+        image_target_port_x1 = image_line_x1 + center_pad;
     }
     else {
         if (normalized_caret_position == 0) {
-            line_x0 -= left_pad;
-            line_x1 -= line_width - target_width + left_pad;
+            image_target_port_x0 = image_line_x0 - image_target_left_pad;
+            image_target_port_x1 = image_target_port_x0 + image_target_port_width;
         }
+        // focus based on caret position
         else {
-            let caret_position = line_x0 + line_width * normalized_caret_position;
-            let half_port_width = port_width / 2;
-            let offset = port_width / 8;
-            let current_focus = port_x0 + half_port_width;
-            if ((caret_position > current_focus + half_port_width - offset) ||
-                (caret_position < current_focus - half_port_width + offset)) {
-                current_focus = caret_position;
+            let image_caret_position = image_line_x0 + image_line_width * normalized_caret_position;
+            let image_half_port_width = image_port_width / 2;
+            let image_offset = image_port_width / 8;
+            let image_current_focus = image_port_x0 + image_half_port_width;
+            // do not refocus each time caret position is changed
+            if ((image_caret_position > image_current_focus + image_half_port_width - image_offset) ||
+                (image_caret_position < image_current_focus - image_half_port_width + image_offset)) {
+                image_current_focus = image_caret_position;
             }
             // clip focus
-            if (current_focus + half_port_width > line_x1 + left_pad) {
-                current_focus = line_x1 - half_port_width + left_pad;
+            if (image_current_focus + image_half_port_width > image_line_x1 + image_target_left_pad) {
+                image_current_focus = image_line_x1 - image_half_port_width + image_target_left_pad;
             }
-            if (current_focus - half_port_width < line_x0 - left_pad) {
-                current_focus = line_x0 + half_port_width - left_pad;
+            if (image_current_focus - image_half_port_width < image_line_x0 - image_target_left_pad) {
+                image_current_focus = image_line_x0 + image_half_port_width - image_target_left_pad;
             }
-            line_x0 = current_focus - half_port_width;
-            line_x1 = current_focus + half_port_width;
+            image_target_port_x0 = image_current_focus - image_half_port_width;
+            image_target_port_x1 = image_current_focus + image_half_port_width;
         }
     }
 
-    let y = line_y1 - target_line_height / 2 + target_bottom_pad;
-    return [line_x0, line_x1, y];
+    let y = image_line_y1 + image_target_bottom_pad - image_target_port_height / 2;
+    return [image_target_port_x0, image_target_port_x1, y];
 }
 
 
-export function get_line_height_boundary(line) {
+export function to_image_coords(x, image_line_height) {
+    return (image_line_height * view_left_pad) / view_target_line_height;
+}
+
+export function get_image_line_height_boundary(line) {
     let height_min = 100000000000000000000000;
     let height_max = 0;
     for (let coord of line.points) {
@@ -455,7 +472,7 @@ export function get_line_height_boundary(line) {
 }
 
 
-export function get_line_width_boundary(line) {
+export function get_image_line_width_boundary(line) {
     let width_min = 100000000000000000000000;
     let width_max = 0;
     for (let coord of line.points) {
