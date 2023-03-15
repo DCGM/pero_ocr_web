@@ -6,7 +6,7 @@ import numpy as np
 import os
 import datetime
 from app.db.general import get_image_by_id
-from pero_ocr.document_ocr.layout import PageLayout
+from pero_ocr.core.layout import PageLayout
 
 
 def set_whole_page_region_layout_to_document(document):

@@ -10,7 +10,7 @@ import cv2
 
 from client_helper import join_url, log_in
 
-from pero_ocr.document_ocr.layout import PageLayout
+from pero_ocr.core.layout import PageLayout
 from pero_ocr.document_ocr.page_parser import PageParser
 from datasets.charset import get_chars_mapping
 from utils.line_fixer import align_text, get_loss

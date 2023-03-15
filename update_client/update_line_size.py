@@ -13,7 +13,7 @@ from shutil import copyfile
 from os.path import isfile, join
 
 from client_helper import join_url, log_in, check_request
-from pero_ocr.document_ocr.layout import PageLayout
+from pero_ocr.core.layout import PageLayout
 from pero_ocr.document_ocr.page_parser import PageParser
 
 

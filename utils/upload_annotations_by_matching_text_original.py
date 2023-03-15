@@ -1,13 +1,9 @@
 import sys
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
-from pero_ocr.document_ocr.layout import PageLayout
-from utils.update_page_layout import update_page_layout
 from app.db.model import TextLine, Annotation
 import argparse
-import os
 import uuid
-from shutil import copyfile
 
 
 def parseargs():

@@ -1,7 +1,7 @@
 import sys
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
-from pero_ocr.document_ocr.layout import PageLayout
+from pero_ocr.core.layout import PageLayout
 from utils.update_page_layout import update_page_layout
 from app.db.model import Document, DocumentState, Image
 import argparse

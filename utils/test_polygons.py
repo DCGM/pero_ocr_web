@@ -5,7 +5,7 @@ from app.db import Base, TextRegion, Image, Document
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from sqlalchemy import create_engine, select
-from pero_ocr.document_ocr.layout import TextLine, guess_line_heights_from_polygon
+from pero_ocr.core.layout import TextLine, guess_line_heights_from_polygon
 
 from app.db.model import str_points2D_to_np, str_points_to_np
 from app.db import TextLine as DbTextLine

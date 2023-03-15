@@ -1,0 +1,12 @@
+requests
+torch
+lxml
+numpy
+opencv-python
+safe_gpu
+shapely==1.8.5
+scipy
+arabic_reshaper
+scikit-image
+scikit-learn
+brnolm

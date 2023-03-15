@@ -10,10 +10,8 @@ from flask import jsonify
 import uuid
 import datetime
 
-from pero_ocr.document_ocr.layout import PageLayout
-from pero_ocr.force_alignment import force_align
-from pero_ocr.confidence_estimation import get_letter_confidence
-from pero_ocr.confidence_estimation import get_letter_confidence, get_line_confidence
+from pero_ocr.core.layout import PageLayout
+from pero_ocr.core.confidence_estimation import get_line_confidence
 
 
 def insert_lines_to_db(ocr_results_folder, file_names):

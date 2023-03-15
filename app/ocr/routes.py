@@ -7,7 +7,7 @@ from natsort import natsorted
 import copy
 import sqlalchemy
 import unicodedata
-from pero_ocr.document_ocr.arabic_helper import ArabicHelper
+from pero_ocr.core.arabic_helper import ArabicHelper
 from flask import render_template, request, current_app, send_file
 from flask import url_for, redirect, flash, jsonify
 from flask_login import login_required, current_user
