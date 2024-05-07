@@ -129,7 +129,9 @@ def check_and_process_ocr_request(config, session, gpu_mode):
         module_logger.info("ANNOTATED LINES: {}".format(annotated_count))
         module_logger.info("EMBED MODEL: {}".format("embed_id" in ocr_json))
 
-        if (ocr_json["checkpoint"].endswith(".pth") and annotated_count >= min_annotated_lines_for_finetuning) or \
+        if model_config["OCR"]["METHOD"] == "pytorch_ocr-transformer":
+            pass
+        elif (ocr_json["checkpoint"].endswith(".pth") and annotated_count >= min_annotated_lines_for_finetuning) or \
                 (annotated_count >= min_annotated_lines_for_embed_selection and "embed_id" in ocr_json):
             annotated_xmls_folder = os.path.join(working_dir, "annotated_xmls")
             os.makedirs(annotated_xmls_folder)
@@ -141,7 +143,9 @@ def check_and_process_ocr_request(config, session, gpu_mode):
             module_logger.info("##############################################################")
             module_logger.info("")
 
-        if ocr_json["checkpoint"].endswith(".pth") and annotated_count >= min_annotated_lines_for_finetuning:
+        if model_config["OCR"]["METHOD"] == "pytorch_ocr-transformer":
+            pass
+        elif ocr_json["checkpoint"].endswith(".pth") and annotated_count >= min_annotated_lines_for_finetuning:
             model_path = finetune_model(working_dir,
                                         train_pytorch_ocr_path,
                                         model_config,
