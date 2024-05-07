@@ -180,7 +180,7 @@ def check_and_process_ocr_request(config, session, gpu_mode):
     module_logger.info("##############################################################")
     module_logger.info("")
 
-    if ocr_json["checkpoint"].endswith(".pth"):
+    if ocr_json["checkpoint"].endswith(".pth") and model_config["OCR"]["METHOD"] != "pytorch_ocr-transformer":
         export_model(export_model_path,
                      model_path,
                      ocr_json["net_name"],
