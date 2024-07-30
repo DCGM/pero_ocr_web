@@ -31,7 +31,9 @@ def main():
     engine = create_engine(database_url, convert_unicode=True)
     db_session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
 
-    requests_for_doc = db_session.query(Request).order_by(Request.created_date.desc())
+    requests_for_doc = (db_session.query(Request).
+                        where(Request.state == RequestState.IN_PROGRESS).
+                        order_by(Request.created_date.desc()))
 
     newest_requests_for_doc = {}
     for request in requests_for_doc:
