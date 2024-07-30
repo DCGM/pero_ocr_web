@@ -32,7 +32,7 @@ def main():
     db_session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
 
     requests_for_doc = (db_session.query(Request).
-                        where(Request.state == RequestState.IN_PROGRESS).
+                        filter(Request.state == RequestState.IN_PROGRESS).
                         order_by(Request.created_date.desc()))
 
     newest_requests_for_doc = {}
