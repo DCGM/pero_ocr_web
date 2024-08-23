@@ -49,12 +49,13 @@ def get_user_documents(user):
     return user_created_documents + collaborators_documents
 
 
-def get_requests(document_ids=None):
+def get_requests(document_ids=None, limit=1000):
     db_requests = db_session.query(Request)
     if document_ids is not None:
         db_requests = db_requests.join(Document).filter(Document.id.in_(document_ids))
 
     db_requests = db_requests.order_by(Request.created_date)
+    db_requests = db_requests.limit(limit)
     db_requests = db_requests.all()[::-1]
 
     return db_requests
