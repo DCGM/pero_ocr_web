@@ -54,7 +54,7 @@ def documents():
 
 @bp.route('/user_documents')
 @login_required
-def documents():
+def documents_user():
     if is_user_trusted(current_user):
        user_documents = get_all_documents()
     else:
