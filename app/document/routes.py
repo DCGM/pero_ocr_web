@@ -63,7 +63,19 @@ def documents_user():
        user_documents = get_user_documents(current_user)
 
     user_documents = sorted(user_documents, key=lambda x: x.created_date)[::-1]
-    return jsonify(data=user_documents, default=str)
+    user_documents_json = []
+    for user_document in user_documents:
+        user_documents_json.append({
+            'id': str(user_document.id),
+            'name': user_document.name,
+            'state': user_document.state.value,
+            'line_count': user_document.line_count,
+            'annotated_line_count': user_document.annotated_line_count,
+            'created_date': user_document.created_date,
+            'is_public': user_document.is_public,
+            'user_id': str(user_document.user)
+        })
+    return jsonify(data=user_documents_json, default=str)
 
 
 @bp.route('/public_documents')
