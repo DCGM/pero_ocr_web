@@ -77,7 +77,9 @@ def documents_user():
             'is_public': user_document.is_public,
             'user_id': str(user_document.user_id)
         })
-    print(user_documents_json[:10])
+    print('HALOOOOO')
+    print(user_documents_json)
+    print('HALOOOOO')
     return jsonify(data=user_documents_json, default=str)
 
 
