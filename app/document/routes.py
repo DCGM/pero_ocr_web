@@ -68,10 +68,9 @@ def documents_user():
         user_documents_json.append({
             'id': str(user_document.id),
             'name': user_document.name,
-            'state': user_document.state.value,
             'line_count': user_document.line_count,
             'annotated_line_count': user_document.annotated_line_count,
-            'created_date': str(user_document.created_date),
+            'created_date': user_document.created_date,
             'is_public': user_document.is_public,
             'user_id': str(user_document.user)
         })
