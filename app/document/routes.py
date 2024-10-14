@@ -2,10 +2,11 @@ import _thread
 from email.policy import default
 
 import sqlalchemy
+
 from app.document import bp
 from flask_login import login_required, current_user
 from flask import render_template, redirect, url_for, request, send_file, flash, jsonify
-from flask import current_app, escape
+from flask import current_app, escape, Response
 from app.document.general import create_document, check_and_remove_document, save_image, \
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
     remove_image, get_document_images, get_page_layout, get_page_layout_text, update_confidences, is_user_trusted,\
@@ -68,19 +69,16 @@ def documents_user():
     user_documents_json = []
     for user_document in user_documents:
         user_documents_json.append({
-            'id': str(user_document.id),
+            'id': user_document.id,
             'name': user_document.name,
             'state': user_document.state.value,
             'line_count': user_document.line_count,
             'annotated_line_count': user_document.annotated_line_count,
             'created_date': user_document.created_date,
             'is_public': user_document.is_public,
-            'user_id': str(user_document.user_id)
+            'user_id': user_document.user_id
         })
-    print('HALOOOOO')
-    print(user_documents_json)
-    print('HALOOOOO')
-    return jsonify(data=user_documents_json, default=str)
+    return Response(json.dumps(user_documents_json, default=str),  mimetype='application/json')
 
 
 @bp.route('/public_documents')
