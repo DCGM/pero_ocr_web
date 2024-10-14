@@ -68,7 +68,7 @@ def documents_user():
         user_documents_json.append({
             'id': str(user_document.id),
             'name': user_document.name,
-            'state': user_document.state.value,
+            'state': user_document.state,
             'line_count': user_document.line_count,
             'annotated_line_count': user_document.annotated_line_count,
             'created_date': user_document.created_date,
