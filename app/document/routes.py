@@ -31,6 +31,8 @@ import json
 import re
 from natsort import natsorted
 
+from pero_ocr.core.layout import logger
+
 
 @bp.route('/documents')
 @login_required
@@ -75,6 +77,7 @@ def documents_user():
             'is_public': user_document.is_public,
             'user_id': str(user_document.user_id)
         })
+    print(user_documents_json[:10])
     return jsonify(data=user_documents_json, default=str)
 
 
