@@ -52,6 +52,18 @@ def documents():
                            processed_pages_counter=processed_pages_counter)
 
 
+@bp.route('/user_documents')
+@login_required
+def documents():
+    if is_user_trusted(current_user):
+       user_documents = get_all_documents()
+    else:
+       user_documents = get_user_documents(current_user)
+
+    user_documents = sorted(user_documents, key=lambda x: x.created_date)[::-1]
+    return jsonify(user_documents)
+
+
 @bp.route('/public_documents')
 def public_documents():
     db_documents = get_public_documents()
