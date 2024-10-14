@@ -63,7 +63,7 @@ def documents_user():
        user_documents = get_user_documents(current_user)
 
     user_documents = sorted(user_documents, key=lambda x: x.created_date)[::-1]
-    return jsonify(user_documents, default=str)
+    return jsonify(data=user_documents, default=str)
 
 
 @bp.route('/public_documents')
