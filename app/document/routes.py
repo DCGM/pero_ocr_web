@@ -1,4 +1,6 @@
 import _thread
+from email.policy import default
+
 import sqlalchemy
 from app.document import bp
 from flask_login import login_required, current_user
@@ -61,7 +63,7 @@ def documents_user():
        user_documents = get_user_documents(current_user)
 
     user_documents = sorted(user_documents, key=lambda x: x.created_date)[::-1]
-    return jsonify(user_documents)
+    return jsonify(user_documents, default=str)
 
 
 @bp.route('/public_documents')
