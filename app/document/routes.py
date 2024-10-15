@@ -76,9 +76,25 @@ def documents_user():
             'annotated_line_count': user_document.annotated_line_count,
             'created_date': user_document.created_date,
             'is_public': user_document.is_public,
-            'user_id': user_document.user_id
+            'owner_id': user_document.user_id,
+            'owner_name': user_document.user.first_name + ' ' + user_document.user.last_name,
+            'owner_username': user_document.user.username,
+            'user_id': current_user.id,
+            'user_name': current_user.first_name + ' ' + current_user.last_name,
+            'user_username': current_user.username
         })
     return Response(json.dumps(user_documents_json, default=str),  mimetype='application/json')
+
+
+@bp.route('/is_owner/<string:document_id>')
+@login_required
+def is_owner(document_id):
+    if is_user_trusted(current_user):
+       return Response(json.dumps({'is_owner': True}),  mimetype='application/json')
+    document = get_document_by_id(document_id)
+    if document.user_id == current_user.id:
+        return Response(json.dumps({'is_owner': True}),  mimetype='application/json')
+    return Response(json.dumps({'is_owner': False}),  mimetype='application/json')
 
 
 @bp.route('/public_documents')
