@@ -78,10 +78,12 @@ def documents_user():
             'is_public': user_document.is_public,
             'owner_id': user_document.user_id,
             'owner_name': user_document.user.first_name + ' ' + user_document.user.last_name,
-            'owner_username': user_document.user.username,
+            'owner_username': user_document.user.email,
+            'owner_institution': user_document.user.institution,
             'user_id': current_user.id,
             'user_name': current_user.first_name + ' ' + current_user.last_name,
-            'user_username': current_user.username
+            'user_username': current_user.email,
+            'user_institution': current_user.institution
         })
     return Response(json.dumps(user_documents_json, default=str),  mimetype='application/json')
 
