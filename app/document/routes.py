@@ -80,10 +80,7 @@ def documents_user():
             'owner_name': user_document.user.first_name + ' ' + user_document.user.last_name,
             'owner_username': user_document.user.email,
             'owner_institution': user_document.user.institution,
-            'user_id': current_user.id,
-            'user_name': current_user.first_name + ' ' + current_user.last_name,
-            'user_username': current_user.email,
-            'user_institution': current_user.institution
+            'is_owner': user_document.user_id == current_user.id
         })
     return Response(json.dumps(user_documents_json, default=str),  mimetype='application/json')
 
