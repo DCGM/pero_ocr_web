@@ -60,14 +60,19 @@ def documents():
 @bp.route('/user_documents')
 @login_required
 def documents_user():
+    trusted_user = False
     if is_user_trusted(current_user):
        user_documents = get_all_documents()
+       trusted_user = True
     else:
        user_documents = get_user_documents(current_user)
 
     user_documents = sorted(user_documents, key=lambda x: x.created_date)[::-1]
     user_documents_json = []
     for user_document in user_documents:
+        is_owner_tmp = user_document.user_id == current_user.id
+        if trusted_user:
+            is_owner_tmp = True
         user_documents_json.append({
             'id': user_document.id,
             'name': user_document.name,
@@ -80,7 +85,7 @@ def documents_user():
             'owner_name': user_document.user.first_name + ' ' + user_document.user.last_name,
             'owner_username': user_document.user.email,
             'owner_institution': user_document.user.institution,
-            'is_owner': user_document.user_id == current_user.id
+            'is_owner': is_owner_tmp
         })
     return Response(json.dumps(user_documents_json, default=str),  mimetype='application/json')
 
