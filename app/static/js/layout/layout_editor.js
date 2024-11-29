@@ -133,7 +133,7 @@ class LayoutEditor{
             this.previous_object[this.previous_object.length-1].order = object.order;
         }
         this.last_action = "reorder_objects";
-        this.redraw_order()
+        this.redraw_order();
     }
 
     make_append(object){
@@ -536,7 +536,7 @@ class LayoutEditor{
                         ignore: obj.ignore,
                         deleted: obj.deleted,
                         order: obj.order
-                    }
+                    };
                 }
             }
             console.log(obj_to_send);

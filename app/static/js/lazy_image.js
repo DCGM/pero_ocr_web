@@ -36,7 +36,7 @@ async function add_lazy(element, imageObserver){
             }
         }
     } else {
-        global_lazy_list.push(element)
+        global_lazy_list.push(element);
     }
 }
 
