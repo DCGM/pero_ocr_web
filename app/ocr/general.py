@@ -11,7 +11,7 @@ import uuid
 import datetime
 
 from pero_ocr.core.layout import PageLayout
-from pero_ocr.core.confidence_estimation import get_line_confidence
+from pero_ocr.core.confidence_estimation import get_character_confidences
 
 
 def insert_lines_to_db(ocr_results_folder, file_names):
@@ -58,9 +58,9 @@ def get_confidences(line):
         char_map = dict([(c, i) for i, c in enumerate(line.characters)])
         c_idx = np.asarray([char_map[c] for c in line.transcription])
         try:
-            confidences = get_line_confidence(line, c_idx)
+            confidences = get_character_confidences(line, c_idx)
         except ValueError:
-            print('ERROR: Known error in get_line_confidence() - Please, fix it. Logit slice has zero length.')
+            print('ERROR: Known error in get_character_confidences() - Please, fix it. Logit slice has zero length.')
             confidences = np.ones(len(line.transcription)) * 0.5
         return confidences
     return np.asarray([])
