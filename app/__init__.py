@@ -71,9 +71,14 @@ def create_app():
     from app.ocr_api import bp as ocr_api_bp
     app.register_blueprint(ocr_api_bp, url_prefix='/ocr_api')
 
-    @app.teardown_appcontext
-    def shutdown_session(exception=None):
+    #@app.teardown_appcontext
+    #def shutdown_session(exception=None):
+    #    db_session.remove()
+
+    @app.after_request
+    def remove_session(response):
         db_session.remove()
+        return response
 
     @app.errorhandler(500)
     def internal_error(error):

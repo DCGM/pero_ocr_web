@@ -1,9 +1,12 @@
 import _thread
+from email.policy import default
+
 import sqlalchemy
+
 from app.document import bp
 from flask_login import login_required, current_user
 from flask import render_template, redirect, url_for, request, send_file, flash, jsonify
-from flask import current_app, escape
+from flask import current_app, escape, Response
 from app.document.general import create_document, check_and_remove_document, save_image, \
     get_collaborators_select_data, save_collaborators, is_document_owner, is_user_owner_or_collaborator,\
     remove_image, get_document_images, get_page_layout, get_page_layout_text, update_confidences, is_user_trusted,\
@@ -29,6 +32,8 @@ import json
 import re
 from natsort import natsorted
 
+from pero_ocr.core.layout import logger
+
 
 @bp.route('/documents')
 @login_required
@@ -50,6 +55,50 @@ def documents():
 
     return render_template('document/documents.html', documents=user_documents, previews=previews,
                            processed_pages_counter=processed_pages_counter)
+
+
+@bp.route('/user_documents')
+@login_required
+def documents_user():
+    trusted_user = False
+    if is_user_trusted(current_user):
+       user_documents = get_all_documents()
+       trusted_user = True
+    else:
+       user_documents = get_user_documents(current_user)
+
+    user_documents = sorted(user_documents, key=lambda x: x.created_date)[::-1]
+    user_documents_json = []
+    for user_document in user_documents:
+        is_owner_tmp = user_document.user_id == current_user.id
+        if trusted_user:
+            is_owner_tmp = True
+        user_documents_json.append({
+            'id': user_document.id,
+            'name': user_document.name,
+            'state': user_document.state.value,
+            'line_count': user_document.line_count,
+            'annotated_line_count': user_document.annotated_line_count,
+            'created_date': user_document.created_date,
+            'is_public': user_document.is_public,
+            'owner_id': user_document.user_id,
+            'owner_name': user_document.user.first_name + ' ' + user_document.user.last_name,
+            'owner_username': user_document.user.email,
+            'owner_institution': user_document.user.institution,
+            'is_owner': is_owner_tmp
+        })
+    return Response(json.dumps(user_documents_json, default=str),  mimetype='application/json')
+
+
+@bp.route('/is_owner/<string:document_id>')
+@login_required
+def is_owner(document_id):
+    if is_user_trusted(current_user):
+       return Response(json.dumps({'is_owner': True}),  mimetype='application/json')
+    document = get_document_by_id(document_id)
+    if document.user_id == current_user.id:
+        return Response(json.dumps({'is_owner': True}),  mimetype='application/json')
+    return Response(json.dumps({'is_owner': False}),  mimetype='application/json')
 
 
 @bp.route('/public_documents')
