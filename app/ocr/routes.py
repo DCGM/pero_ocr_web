@@ -153,49 +153,58 @@ def create_edit_annotation():
     data = request.get_json()
     annotation = data['annotation']
     annotation_type = data['annotation_type']
-    image_id = data['image_id']
     points = ' '.join(map(lambda p: f'{int(p["x"])},{int(p["y"])}', annotation['points']))
-
     baseline = None
     heights = None
     if annotation_type == 'row':
         baseline = ' '.join(map(lambda p: f'{int(p["x"])},{int(p["y"])}', annotation['baseline']))
         heights = f"{annotation['heights'][0]} {annotation['heights'][1]}"
 
-    if image_id:  # Create new row/region
-        insert_data = None
-        if annotation_type == 'row':  # Row
-            insert_data = TextLine(
-                id=annotation['uuid'],
-                region_id=annotation['region_annotation_uuid'],
-                text=annotation['text'],
-                points=points,
-                baseline=baseline,
-                heights=heights,
-                order=1  # TODO
-            )
-        elif annotation_type == 'region':  # Region
-            insert_data = TextRegion(
-                id=annotation['uuid'],
-                points=points,
-                image_id=image_id,
-                order=42  # TODO
-            )
-        db_session.add(insert_data)
-        db_session.commit()
-        return 'created', 200
-    else:  # Edit existing row/region
-        if annotation_type == 'row':
-            text_line = get_text_line_by_id(annotation['uuid'])
-            #
+    if annotation_type == 'row':
+        text_line = get_text_line_by_id(annotation['uuid'])
+        if text_line is not None:
             text_line.points = points
             text_line.baseline = baseline
             text_line.heights = heights
-        elif annotation_type == 'region':
-            text_region = get_text_region_by_id(annotation['uuid'])
+            db_session.commit()
+            return 'edited', 200
+    elif annotation_type == 'region':
+        text_region = get_text_region_by_id(annotation['uuid'])
+        if text_region is not None:
             text_region.points = points
-        db_session.commit()
+            db_session.commit()
         return 'edited', 200
+    else:
+        return 'Unknown annotation type', 400
+
+
+    insert_data = None
+    if annotation_type == 'row':  # Row
+        region_id = data['region_id']
+        if not region_id:
+            return 'Annotation does not exist and image_id is not set', 400
+        insert_data = TextLine(
+            id=annotation['uuid'],
+            region_id=region_id,
+            text=annotation['text'],
+            points=points,
+            baseline=baseline,
+            heights=heights,
+            order=1  # TODO
+        )
+    elif annotation_type == 'region':  # Region
+        image_id = data['image_id']
+        if not image_id:
+            return 'Annotation does not exist and image_id is not set', 400
+        insert_data = TextRegion(
+            id=annotation['uuid'],
+            points=points,
+            image_id=image_id,
+            order=42  # TODO
+        )
+    db_session.add(insert_data)
+    db_session.commit()
+    return 'created', 200
 
 # SELECT PAGE
 ########################################################################################################################
