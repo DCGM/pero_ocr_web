@@ -482,9 +482,10 @@ def save_annotations():
 def delete_line(line_id, delete_flag):
     # Get text_line
     text_line = get_text_line_by_id(line_id)
-    if text_line:
-        document = text_line.region.image.document
+    if text_line is None:
+        return "Line does not exist.", 404
 
+    document = text_line.region.image.document
     #
     if not is_user_owner_or_collaborator(document.id, current_user):
         flash(u'You do not have sufficient rights to add annotations to the document!', 'danger')
