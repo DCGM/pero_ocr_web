@@ -180,7 +180,7 @@ def create_edit_annotation():
 
     insert_data = None
     if annotation_type == 'row':  # Row
-        region_id = data['region_id']
+        region_id = annotation['region_annotation_uuid']
         if not region_id:
             return 'Annotation does not exist and image_id is not set', 400
         insert_data = TextLine(
