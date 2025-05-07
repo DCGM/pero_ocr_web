@@ -3,7 +3,7 @@ class ImageList
 {
     constructor(objects_to_change, page_name = 'show_results')
     {
-        this.page_name = page_name
+        this.page_name = page_name;
         this.objects_to_change = objects_to_change;
         this.images = $('.scrolling-wrapper .figure');
 
@@ -73,7 +73,7 @@ class ImageList
 
         for (let o of this.objects_to_change)
         {
-            o.change_image(this.image_id, this.change_url.bind(this), this.line_id)
+            o.change_image(this.image_id, this.change_url.bind(this), this.line_id);
         }
         window.localStorage.setItem('last_opened_page_'+this.document_id, this.image_index);
     }
