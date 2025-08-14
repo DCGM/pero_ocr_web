@@ -462,6 +462,27 @@ def get_public_image(image_id):
     return get_image_common(image_id, True)
 
 
+@bp.route('/get_logits/<string:image_id>')
+@login_required
+def get_logits(image_id):
+    try:
+        image_db = get_image_by_id(image_id)
+    except sqlalchemy.exc.StatementError:
+        return "Image does not exist.", 404
+
+    if not is_granted_acces_for_page(image_id, current_user):
+        return "You do not have access to the requested images.", 403
+
+    logits_path = os.path.join(current_app.config['OCR_RESULTS_FOLDER'], str(image_db.document.id), "{}.logits".format(image_db.id))
+    if not os.path.isfile(logits_path):
+        print("ERROR: Could not find logits on disk. image id: {}, logits path: {}.".format(image_id, logits_path))
+        raise NotFound()
+
+    logits_name = "{}.logits".format(os.path.splitext(image_db.filename)[0])
+
+    return send_file(logits_path, as_attachment=True, attachment_filename=logits_name, cache_timeout=10000000)
+
+
 @bp.route('/download_document_pages/<string:document_id>')
 @login_required
 def get_document_pages(document_id):
