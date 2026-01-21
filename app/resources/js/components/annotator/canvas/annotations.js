@@ -358,7 +358,7 @@ export function createAnnotationView(annotation, type) {
         // Find annotation and make it active
         if (!this.camera_move && (this.canvasIsToolActive(this.scale_move_tool) || this.canvasIsToolActive(this.join_rows_tool)) && !this.left_control_active && !this.left_alt_active)
             activateAnnotation(type);
-    }
+    };
 
     let self = this;
     function activateAnnotation(type) {

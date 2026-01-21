@@ -91,7 +91,7 @@ class ArabicReshaper
         this.forward_mapping['ۓ'] = ['ﮰ', '', '', 'ﮱ'];
         this.forward_mapping['‍'] = ['‍', '‍', '‍', '‍'];
 
-        this.backward_mapping = {}
+        this.backward_mapping = {};
         for (let letter in this.forward_mapping)
         {
             for (let letter_option of this.forward_mapping[letter])
@@ -227,7 +227,7 @@ class ArabicReshaper
                 {
                     if (seq['chars'].length > 0)
                     {
-                        let arabic_seq = []
+                        let arabic_seq = [];
                         let number_of_ending_spaces = 0;
                         for (let i of seq['chars'].slice().reverse())
                         {
@@ -267,7 +267,7 @@ class ArabicReshaper
 
         if (seq['chars'].length > 0)
         {
-            let arabic_seq = []
+            let arabic_seq = [];
             let number_of_ending_spaces = 0;
             for (let i of seq['chars'].slice().reverse())
             {
