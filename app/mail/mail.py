@@ -2,15 +2,28 @@ from drymail import SMTPMailer, Message
 from flask import current_app
 import traceback
 
+from email.utils import formatdate, make_msgid
+
 
 def send_mail(subject, body, sender, recipients, host):
     client = SMTPMailer(host=host)
-    message = Message(subject=subject, sender=sender, receivers=recipients, html=body)
+
+    message = Message(
+        subject=subject,
+        sender=sender,
+        receivers=recipients,
+        html=body,
+    )
+
+    message.message["Date"] = formatdate(localtime=True)
+    message.message["Message-ID"] = make_msgid(domain="pero-ocr.fit.vut.cz")
+
     print()
     print("SENDING MAIL")
     print()
     print(message)
     print()
+
     client.send(message)
 
 
