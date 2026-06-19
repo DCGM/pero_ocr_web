@@ -20,7 +20,7 @@
     "laravel-mix": "^4.0.16",
     "paper": "^0.12.15",
     "paper-jsdom-canvas": "^0.12.11",
-    "resolve-url-loader": "^3.1.0",
+    "resolve-url-loader": "^5.0.0",
     "sass": "^1.35.2",
     "sass-loader": "^7.3.1",
     "vue": "^2.6.14",
