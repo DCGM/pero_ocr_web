@@ -32,7 +32,7 @@ class TextLine
             for(var c of this.confidences){
                 this.line_confidence += (1 - c) ** power_const;
             }
-            this.line_confidence = 1 - (this.line_confidence / this.confidences.length) ** (1.0/power_const)
+            this.line_confidence = 1 - (this.line_confidence / this.confidences.length) ** (1.0/power_const);
         } else {
             this.line_confidence = 1;
         }
@@ -183,7 +183,7 @@ class TextLine
                 }
                 */
             }
-            let span_text = ""
+            let span_text = "";
             for (let letter_index of span_letter_indexes['indexes'])
             {
                 let char = visual_text.charAt(letter_index);
@@ -221,7 +221,7 @@ class TextLine
                     rgb = rgb.substring(4, rgb.length-1).replace(/ /g, '').split(',');
                     color = parseInt(rgb[1]);
                 }
-                let span_letter_indexes = {'indexes':[], 'color': color}
+                let span_letter_indexes = {'indexes':[], 'color': color};
                 if ($(span).hasClass('user-input'))
                 {
                     span_letter_indexes['user_input'] = true;
@@ -253,7 +253,7 @@ class TextLine
             let inside_ligature = false;
             let caret_in_span = false;
             let caret_offset = 0;
-            let new_span_letter_indexes = {'indexes':[], 'color': 255}
+            let new_span_letter_indexes = {'indexes':[], 'color': 255};
             for (let span_letter_indexes of current_letter_indexes_to_spans_mapping)
             {
                 if ('user_input' in span_letter_indexes)

@@ -1941,6 +1941,6 @@
         latlng = L.latLng(latlng);
         this.lat = latlng.lat;
         this.lng = latlng.lng;
-    }
+    };
 
 }, window));

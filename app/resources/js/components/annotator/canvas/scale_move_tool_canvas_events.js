@@ -215,7 +215,7 @@ export function canvasMouseDownEv(event) {
     let canvasMousePosition = new paper.Point(event.offsetX, event.offsetY);
     let viewPosition = this.scope.view.viewToProject(canvasMousePosition);
 
-    let checks = []
+    let checks = [];
     if (this.active_region && this.left_alt_active)
         checks.push({path: this.active_region.view.path, segm_type: 'region_path'});
     else if (this.active_row && this.left_control_active) {
